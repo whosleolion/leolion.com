@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Leo Lion — Directing Portfolio. 25+ productions across NYC, Edinburgh, Seattle. Firebird Project, Phoenix Theatre Ensemble." />
+  <meta name="description" content="Leo Lion — Directing Portfolio. 27+ productions across NYC, Edinburgh, Seattle. Firebird Project, Phoenix Theatre Ensemble." />
   <title>Directing — Leo Lion</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
@@ -27,14 +27,47 @@
       line-height: 0.86; margin-bottom: 1rem;
     }
 
-    .show-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+      padding: 1.5rem 0; border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+    .filter-group { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .filter-group__label {
+      font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+      align-self: center; margin-right: 0.25rem; white-space: nowrap;
+    }
+    .filter-btn {
+      font-family: var(--font-ui); font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--white); color: var(--white); }
+    .filter-btn.active { background: var(--accent); color: var(--black); border-color: var(--accent); }
+
+    /* ── Show grid — contained, gapped ── */
+    .show-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
 
     .show-card {
-      display: block; text-decoration: none; color: inherit;
-      background: var(--near-black);
+      display: block; width: 100%; padding: 0;
+      background: var(--near-black); border: 1px solid var(--border);
+      cursor: pointer; text-align: left;
+      transition: border-color 0.2s;
     }
+    .show-card:hover { border-color: var(--muted); }
+    .show-card[hidden] { display: none; }
+
     .show-card__img-wrap {
-      aspect-ratio: 16/9; overflow: hidden; position: relative;
+      aspect-ratio: 16/9; overflow: hidden; position: relative; display: block;
     }
     .show-card__img {
       width: 100%; height: 100%; object-fit: cover; object-position: top; display: block;
@@ -42,12 +75,10 @@
       transition: transform 0.5s var(--ease-out-expo), filter 0.3s;
     }
     .show-card:hover .show-card__img {
-      transform: scale(1.04);
-      filter: brightness(0.9) saturate(1);
+      transform: scale(1.03); filter: brightness(0.9) saturate(1);
     }
     .show-card__caption {
-      padding: 0.85rem 1rem 1rem;
-      border-top: 1px solid var(--border);
+      padding: 0.85rem 1rem 1rem; border-top: 1px solid var(--border);
     }
     .show-card__year {
       font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
@@ -55,16 +86,99 @@
       margin-bottom: 0.2rem;
     }
     .show-card__title {
-      font-family: var(--font-display); font-size: clamp(0.8rem, 1.15vw, 1rem);
+      font-family: var(--font-display); font-size: clamp(0.8rem, 1.1vw, 0.95rem);
       line-height: 1.05; color: var(--white); margin-bottom: 0.2rem;
     }
     .show-card__org {
       font-family: var(--font-ui); font-size: 0.58rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    }
+
+    /* ── Also-produced ── */
+    .also-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .also-card { background: var(--near-black); border: 1px solid var(--border); }
+    .also-card__img-wrap { aspect-ratio: 3/4; overflow: hidden; }
+    .also-card__img {
+      width: 100%; height: 100%; object-fit: cover; object-position: top; display: block;
+      filter: brightness(0.65) saturate(0.5);
+      transition: filter 0.3s;
+    }
+    .also-card:hover .also-card__img { filter: brightness(0.82) saturate(0.8); }
+    .also-card__caption { padding: 0.65rem 0.75rem 0.75rem; border-top: 1px solid var(--border); }
+    .also-card__title {
+      font-family: var(--font-display); font-size: 0.72rem; line-height: 1.05;
+      color: var(--white); margin-bottom: 0.15rem;
+    }
+    .also-card__role {
+      font-family: var(--font-ui); font-size: 0.52rem; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
     }
 
-    @media (max-width: 900px) { .show-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .show-grid { grid-template-columns: 1fr; } }
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .lightbox[hidden] { display: none; }
+    .lightbox__overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.88);
+    }
+    .lightbox__panel {
+      position: relative; z-index: 1;
+      background: var(--near-black); border: 1px solid var(--border);
+      max-width: 780px; width: 100%; max-height: 90vh; overflow-y: auto;
+      display: grid; grid-template-columns: 55% 45%;
+    }
+    .lightbox__close {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.85rem; line-height: 1;
+      width: 2rem; height: 2rem; cursor: pointer; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.15s;
+    }
+    .lightbox__close:hover { color: var(--white); }
+    .lightbox__img-wrap { overflow: hidden; }
+    .lightbox__img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+    .lightbox__body {
+      padding: 2rem 1.75rem; display: flex; flex-direction: column; gap: 0.6rem;
+      justify-content: center;
+    }
+    .lightbox__year {
+      font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
+    }
+    .lightbox__title {
+      font-family: var(--font-display); font-size: clamp(1.25rem, 2.5vw, 2rem);
+      line-height: 0.95;
+    }
+    .lightbox__org {
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    }
+    .lightbox__quote {
+      font-size: 0.85rem; font-style: italic; color: var(--muted); line-height: 1.5;
+    }
+    .lightbox__desc {
+      font-size: 0.9rem; color: var(--white); line-height: 1.7;
+    }
+    .lightbox__link {
+      margin-top: 0.5rem; align-self: flex-start;
+    }
+
+    @media (max-width: 960px) { .show-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .show-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) {
+      .also-grid { grid-template-columns: repeat(3, 1fr); }
+      .lightbox__panel { grid-template-columns: 1fr; }
+      .lightbox__img-wrap { aspect-ratio: 16/9; }
+    }
   </style>
 </head>
 <body>
@@ -91,304 +205,594 @@
     <span class="label">Directing Portfolio · 2013–Present</span>
     <h1 class="dir-hero__title" id="dir-heading">DIRECTING</h1>
     <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:600px;">
-      25+ productions across NYC, Edinburgh, and Seattle. Firebird Project · Phoenix Theatre Ensemble · Dacha Theatre.
+      27+ productions across NYC, Edinburgh, and Seattle. Firebird Project · Phoenix Theatre Ensemble · Dacha Theatre.
     </p>
   </div>
 </section>
 
 <main>
-  <section aria-label="Show portfolio" style="padding-top:0;">
-    <div class="show-grid">
 
-      <a href="liars-night.html" class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/liars-night.png" alt="Liar's Night" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2026</p>
-          <h2 class="show-card__title">LIAR'S NIGHT</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </a>
+  <!-- DIRECTED WORKS -->
+  <section class="section" aria-label="Directed works" style="padding-top:2rem;">
+    <div class="container">
 
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/robin-hood.jpg" alt="Robin Hood" loading="lazy" />
+      <div class="filter-bar" role="group" aria-label="Filter productions">
+        <div class="filter-group">
+          <span class="filter-group__label">Org</span>
+          <button class="filter-btn active" type="button" data-filter="org" data-val="all">All</button>
+          <button class="filter-btn" type="button" data-filter="org" data-val="firebird">Firebird</button>
+          <button class="filter-btn" type="button" data-filter="org" data-val="phoenix">Phoenix</button>
+          <button class="filter-btn" type="button" data-filter="org" data-val="other">Other</button>
         </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2026</p>
-          <h2 class="show-card__title">ROBIN HOOD</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
+        <div class="filter-group">
+          <span class="filter-group__label">Type</span>
+          <button class="filter-btn active" type="button" data-filter="type" data-val="all">All</button>
+          <button class="filter-btn" type="button" data-filter="type" data-val="adult">Adult</button>
+          <button class="filter-btn" type="button" data-filter="type" data-val="youth">Youth</button>
+          <button class="filter-btn" type="button" data-filter="type" data-val="game">Game Shows</button>
         </div>
       </div>
 
-      <a href="helpme/" class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/helpme.png" alt="Help Me!!!!" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2025</p>
-          <h2 class="show-card__title">HELP ME!!!!</h2>
-          <p class="show-card__org">Firebird Project · Edinburgh/NYC</p>
-        </div>
-      </a>
+      <div class="show-grid" id="show-grid">
 
-      <a href="trouble-feature.html" class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/trouble-feature.png" alt="Trouble Feature" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2025</p>
-          <h2 class="show-card__title">TROUBLE FEATURE</h2>
-          <p class="show-card__org">Firebird &#215; The TEAM · NYC</p>
-        </div>
-      </a>
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2026" data-title="ROBIN HOOD"
+          data-org-label="Firebird Project · NYC"
+          data-quote="Hope, be it ever so faint, bringeth a gleam into darkness"
+          data-desc="Action-packed medieval epic about youth caught between law and freedom under tyranny. Ensemble-devised."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/robin-hood.jpg" alt="Robin Hood" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2026</p>
+            <h2 class="show-card__title">ROBIN HOOD</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
 
-      <a href="metamorphosis.html" class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/metamorphosis.jpg" alt="Kafkatech: Metamorphosis" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2024</p>
-          <h2 class="show-card__title">KAFKATECH: METAMORPHOSIS</h2>
-          <p class="show-card__org">Phoenix Ensemble · NYC</p>
-        </div>
-      </a>
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="game"
+          data-year="2026" data-title="LIAR'S NIGHT"
+          data-org-label="Firebird Project · NYC"
+          data-quote="Play. Drink. Lie. Repeat."
+          data-desc="Post-apocalyptic murder mystery party with social deduction at a carnival apocalypse."
+          data-href="liars-night.html">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/liars-night.png" alt="Liar's Night" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2026</p>
+            <h2 class="show-card__title">LIAR'S NIGHT</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
 
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/midsummer.png" alt="Dice: A Midsummer Night's Dream" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2024</p>
-          <h2 class="show-card__title">DICE: A MIDSUMMER NIGHT'S DREAM</h2>
-          <p class="show-card__org">Dacha Theatre · Seattle</p>
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="adult"
+          data-year="2025" data-title="THE CRUCIBLE"
+          data-org-label="Firebird &#215; Phoenix · Nyack, NY"
+          data-quote="Something is wrong with the children of Salem"
+          data-desc="Explores moral panic when old grudges emerge, threatening community cohesion."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/crucible.jpg" alt="The Crucible" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2025</p>
+            <h2 class="show-card__title">THE CRUCIBLE</h2>
+            <p class="show-card__org">Firebird &#215; Phoenix · Nyack, NY</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2025" data-title="HELP ME!!!!"
+          data-org-label="Firebird Project · Edinburgh / NYC"
+          data-quote="Thank goodness you're here! A dead mime needs help!"
+          data-desc="Interactive seance where audiences solve puzzles and play charades to help a ghost family pierce the veil."
+          data-href="helpme/">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/helpme.png" alt="Help Me!!!!" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2025</p>
+            <h2 class="show-card__title">HELP ME!!!!</h2>
+            <p class="show-card__org">Firebird Project · Edinburgh / NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="game"
+          data-year="2025" data-title="TROUBLE FEATURE"
+          data-org-label="Firebird &#215; The TEAM · NYC"
+          data-quote="Do you like scary movies?"
+          data-desc="Horror-themed game show with rotating improv cast attempting survival scenarios."
+          data-href="trouble-feature.html">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/trouble-feature.png" alt="Trouble Feature" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2025</p>
+            <h2 class="show-card__title">TROUBLE FEATURE</h2>
+            <p class="show-card__org">Firebird &#215; The TEAM · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="adult"
+          data-year="2024" data-title="KAFKATECH: METAMORPHOSIS"
+          data-org-label="Phoenix Ensemble · NYC"
+          data-quote="It's shocking, what can suddenly happen to a person…"
+          data-desc="Immersive audio-driven experience at a hypnotic corporate retreat, devised from Kafka's anti-capitalist fable."
+          data-href="metamorphosis.html">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/metamorphosis.jpg" alt="Kafkatech: Metamorphosis" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2024</p>
+            <h2 class="show-card__title">KAFKATECH: METAMORPHOSIS</h2>
+            <p class="show-card__org">Phoenix Ensemble · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="other" data-type="game"
+          data-year="2024" data-title="DICE: A MIDSUMMER NIGHT'S DREAM"
+          data-org-label="Dacha Theatre · Seattle"
+          data-quote="Name what part I am for, and proceed!"
+          data-desc="Innovative format where audience dice rolls randomly cast actors nightly in a phantasmagoric carnival version."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/midsummer.png" alt="Dice: A Midsummer Night's Dream" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2024</p>
+            <h2 class="show-card__title">DICE: A MIDSUMMER NIGHT'S DREAM</h2>
+            <p class="show-card__org">Dacha Theatre · Seattle</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2023" data-title="THE SNOW QUEEN"
+          data-org-label="Firebird Project · NYC"
+          data-quote="You will know more than you do now…"
+          data-desc="Journey through the seasons as a girl rescues her best friend. Explores growing apart. Teen-devised."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/snow-queen.jpg" alt="The Snow Queen" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2023</p>
+            <h2 class="show-card__title">THE SNOW QUEEN</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="adult"
+          data-year="2023" data-title="THE WIND IN THE WILLOWS"
+          data-org-label="Phoenix Ensemble · Nyack, NY"
+          data-quote="Here today, in next week tomorrow!"
+          data-desc="Physical theater rendition celebrating community, found family, and outdoor beauty."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/wind-willows.jpg" alt="The Wind in the Willows" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2023</p>
+            <h2 class="show-card__title">THE WIND IN THE WILLOWS</h2>
+            <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2023" data-title="ROSSUM'S UNIVERSAL ROBOTS"
+          data-org-label="Firebird Project · NYC"
+          data-quote="It is better to be alive"
+          data-desc="1920 futuristic thriller exploring the ethics of AI and technological creation in the human image."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/rur-2023.png" alt="Rossum's Universal Robots" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2023</p>
+            <h2 class="show-card__title">ROSSUM'S UNIVERSAL ROBOTS</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="game"
+          data-year="2023" data-title="SCANDALTON: LIVE"
+          data-org-label="Phoenix Ensemble · NYC"
+          data-quote="You bring the tea, we spill it."
+          data-desc="Regency-era roleplaying game with audience-created rumors, styled after literary drama."
+          data-href="scandalton.html">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/scandalton.png" alt="Scandalton: Live" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2023</p>
+            <h2 class="show-card__title">SCANDALTON: LIVE</h2>
+            <p class="show-card__org">Phoenix Ensemble · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="adult"
+          data-year="2022" data-title="THE IMPORTANCE OF BEING EARNEST"
+          data-org-label="Phoenix Ensemble · Nyack, NY"
+          data-quote="Style, not sincerity, is the vital thing"
+          data-desc="Glitzy outdoor dollhouse staging of Wilde's farce. Mainstage at Phoenix Festival, Top 10 of 2022 by Theatrescene."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/earnest.png" alt="The Importance of Being Earnest" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2022</p>
+            <h2 class="show-card__title">THE IMPORTANCE OF BEING EARNEST</h2>
+            <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="adult"
+          data-year="2022" data-title="THE HARMFULNESS OF TOBACCO"
+          data-org-label="Phoenix Ensemble · Nyack, NY"
+          data-quote="What's the point of all this!?"
+          data-desc="Flashmob-inspired solo show based on Chekhov's short play, adapted for performer John Lenartz."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/harmfulness.png" alt="The Harmfulness of Tobacco" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2022</p>
+            <h2 class="show-card__title">THE HARMFULNESS OF TOBACCO</h2>
+            <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="other" data-type="adult"
+          data-year="2022" data-title="THE DRACULA FILES"
+          data-org-label="Fordham University Studio"
+          data-quote="Knowledge is stronger than memory"
+          data-desc="BA Thesis. Nonlinear interactive retelling of Dracula with epistolary scenes and a hidden timeline."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/dracula.png" alt="The Dracula Files" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2022</p>
+            <h2 class="show-card__title">THE DRACULA FILES</h2>
+            <p class="show-card__org">Fordham University Studio</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="other" data-type="adult"
+          data-year="2021" data-title="THE ROOTS THAT CLUTCH"
+          data-org-label="U of Toronto FOOT Conference"
+          data-quote="Maybe it feels unreal?"
+          data-desc="Poem in Zoom-dates exploring a couple separated by COVID border closures. University of Toronto FOOT Conference 2021."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/roots.png" alt="The Roots That Clutch" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2021</p>
+            <h2 class="show-card__title">THE ROOTS THAT CLUTCH</h2>
+            <p class="show-card__org">U of Toronto FOOT Conference</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2020" data-title="MACBETH: ONLINE"
+          data-org-label="Firebird Project · Online"
+          data-quote="Blood will have blood"
+          data-desc="Multi-media rendition remotely devised by seven teens, examining violent fate fulfillment and inherited legacies."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/macbeth.png" alt="Macbeth: Online" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2020</p>
+            <h2 class="show-card__title">MACBETH: ONLINE</h2>
+            <p class="show-card__org">Firebird Project · Online</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="phoenix" data-type="adult"
+          data-year="2020" data-title="THE DEATH OF IVAN ILYICH"
+          data-org-label="Phoenix Ensemble · NYC"
+          data-quote="Death happens to other people!"
+          data-desc="Group therapy session for dead people. US Premiere of Steven Sharkey's adaptation."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/ivan.png" alt="The Death of Ivan Ilyich" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2020</p>
+            <h2 class="show-card__title">THE DEATH OF IVAN ILYICH</h2>
+            <p class="show-card__org">Phoenix Ensemble · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2019" data-title="AN ENEMY OF THE PEOPLE"
+          data-org-label="Firebird Project · NYC"
+          data-quote="The people don't need any new ideas"
+          data-desc="Dreamlike Scandinavian noir about a family and town torn apart by a water virus discovery."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/enemy.png" alt="An Enemy of the People" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2019</p>
+            <h2 class="show-card__title">AN ENEMY OF THE PEOPLE</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2019" data-title="JULIUS CAESAR"
+          data-org-label="Firebird Project · NYC"
+          data-quote="Cry havoc and let slip the dogs of war"
+          data-desc="Apocalyptic daycare staging exploring early power hunger."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/caesar.png" alt="Julius Caesar" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2019</p>
+            <h2 class="show-card__title">JULIUS CAESAR</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2018" data-title="THE TEMPEST"
+          data-org-label="Firebird Project · NYC"
+          data-quote="Our little life is rounded with a sleep"
+          data-desc="Highly physical arena staging, newly adapted by Zoe Senese-Grossberg and Leo Lion."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/tempest.png" alt="The Tempest" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2018</p>
+            <h2 class="show-card__title">THE TEMPEST</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2018" data-title="R.U.R."
+          data-org-label="Firebird Project · NYC"
+          data-quote="It is better to be alive"
+          data-desc="Y2K and Apple-infused horror alternate history, adapted by Zoe Senese-Grossberg and Leo Lion."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/rur-2018.png" alt="R.U.R." loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2018</p>
+            <h2 class="show-card__title">R.U.R.</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2018" data-title="OUR TOWN"
+          data-org-label="Firebird Project · NYC"
+          data-quote="This is the way we were"
+          data-desc="Tech rehearsal meditation on community and time. Metatheatrical Thornton Wilder staging."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/our-town.png" alt="Our Town" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2018</p>
+            <h2 class="show-card__title">OUR TOWN</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2017" data-title="ROMEO + JULIET"
+          data-org-label="Firebird Project · NYC"
+          data-quote="These are the hands that cut our youth in twain"
+          data-desc="Half-adult/half-teen cast explores generational clash and deadly parent-child disconnect. Original adaptation by Zoe Senese-Grossberg and Leo Lion."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/romeo-juliet.png" alt="Romeo + Juliet" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2017</p>
+            <h2 class="show-card__title">ROMEO + JULIET</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2016" data-title="TREASURE ISLAND"
+          data-org-label="Firebird Project · NYC"
+          data-quote="We must go on, because we can't turn back"
+          data-desc="Shanty-fueled epistolary quest on the high seas. Original adaptation with teen ensemble."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/treasure-island.png" alt="Treasure Island" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2016</p>
+            <h2 class="show-card__title">TREASURE ISLAND</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2015" data-title="ALICE'S ADVENTURES IN WONDERLAND"
+          data-org-label="Firebird Project · NYC"
+          data-quote="Little hands make vain pretence our wanderings to guide"
+          data-desc="Playful, poetic dream iteration with puppets, visual effects, foley sound, and ballet. Teen cast."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/alice.png" alt="Alice's Adventures in Wonderland" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2015</p>
+            <h2 class="show-card__title">ALICE'S ADVENTURES IN WONDERLAND</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="adult"
+          data-year="2014" data-title="eXPRESSO"
+          data-org-label="Firebird Project · NYC"
+          data-quote="Show me where it says I can't have a cow in here!"
+          data-desc="Farcical drama about an indie coffee shop battling a monopoly. Co-written by a father-son duo post-Occupy Wall Street."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/expresso.png" alt="eXpresso" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2014</p>
+            <h2 class="show-card__title">eXPRESSO</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2013" data-title="DOWN THE CHOCOLATE RIVER"
+          data-org-label="Firebird Project · NYC"
+          data-quote="So much time and so little to do. Strike that. Reverse it."
+          data-desc="Off-Broadway staging of the 1971 Willy Wonka film directed by a 13-year-old. Homeschooled theater community."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/chocolate-river.png" alt="Down the Chocolate River" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2013</p>
+            <h2 class="show-card__title">DOWN THE CHOCOLATE RIVER</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+      </div><!-- /.show-grid -->
+    </div><!-- /.container -->
+  </section>
+
+  <!-- ALSO PRODUCED -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="also-heading">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="label">Producer</span>
+          <h2 class="section-title" id="also-heading" style="font-size:clamp(1.5rem,3vw,2rem);">ALSO PRODUCED</h2>
         </div>
       </div>
+      <div class="also-grid">
 
-      <a href="scandalton.html" class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/scandalton.png" alt="Scandalton" loading="lazy" />
+        <div class="also-card">
+          <div class="also-card__img-wrap">
+            <img class="also-card__img" src="images/directing/frankenstein.png" alt="Frankenstein" loading="lazy" />
+          </div>
+          <div class="also-card__caption">
+            <p class="also-card__title">FRANKENSTEIN</p>
+            <p class="also-card__role">Phoenix · Producer</p>
+          </div>
         </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2023</p>
-          <h2 class="show-card__title">SCANDALTON: LIVE</h2>
-          <p class="show-card__org">Phoenix Ensemble · NYC</p>
-        </div>
-      </a>
 
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/snow-queen.jpg" alt="The Snow Queen" loading="lazy" />
+        <div class="also-card">
+          <div class="also-card__img-wrap">
+            <img class="also-card__img" src="images/directing/bedfellows.png" alt="Bedfellows" loading="lazy" />
+          </div>
+          <div class="also-card__caption">
+            <p class="also-card__title">BEDFELLOWS</p>
+            <p class="also-card__role">Phoenix · Producer</p>
+          </div>
         </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2023</p>
-          <h2 class="show-card__title">THE SNOW QUEEN</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
+
+        <div class="also-card">
+          <div class="also-card__img-wrap">
+            <img class="also-card__img" src="images/directing/boy-my-greatness.png" alt="Boy, My Greatness" loading="lazy" />
+          </div>
+          <div class="also-card__caption">
+            <p class="also-card__title">BOY, MY GREATNESS</p>
+            <p class="also-card__role">Phoenix · Producer</p>
+          </div>
         </div>
+
+        <div class="also-card">
+          <div class="also-card__img-wrap">
+            <img class="also-card__img" src="images/directing/nurse.png" alt="Nurse" loading="lazy" />
+          </div>
+          <div class="also-card__caption">
+            <p class="also-card__title">NURSE</p>
+            <p class="also-card__role">Phoenix · Producer</p>
+          </div>
+        </div>
+
+        <div class="also-card">
+          <div class="also-card__img-wrap">
+            <img class="also-card__img" src="images/directing/if-i-live.png" alt="If I Live" loading="lazy" />
+          </div>
+          <div class="also-card__caption">
+            <p class="also-card__title">IF I LIVE</p>
+            <p class="also-card__role">Phoenix · Producer</p>
+          </div>
+        </div>
+
+        <div class="also-card">
+          <div class="also-card__img-wrap">
+            <img class="also-card__img" src="images/directing/seagull.png" alt="The Seagull" loading="lazy" />
+          </div>
+          <div class="also-card__caption">
+            <p class="also-card__title">THE SEAGULL</p>
+            <p class="also-card__role">Phoenix · Producer</p>
+          </div>
+        </div>
+
       </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/wind-willows.jpg" alt="The Wind in the Willows" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2023</p>
-          <h2 class="show-card__title">THE WIND IN THE WILLOWS</h2>
-          <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/rur-2023.png" alt="Rossum's Universal Robots" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2023</p>
-          <h2 class="show-card__title">ROSSUM'S UNIVERSAL ROBOTS</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/harmfulness.png" alt="The Harmfulness of Tobacco" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2022</p>
-          <h2 class="show-card__title">THE HARMFULNESS OF TOBACCO</h2>
-          <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/earnest.png" alt="The Importance of Being Earnest" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2022</p>
-          <h2 class="show-card__title">THE IMPORTANCE OF BEING EARNEST</h2>
-          <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/dracula.png" alt="The Dracula Files" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2022</p>
-          <h2 class="show-card__title">THE DRACULA FILES</h2>
-          <p class="show-card__org">Fordham University Studio</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/roots.png" alt="The Roots That Clutch" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2021</p>
-          <h2 class="show-card__title">THE ROOTS THAT CLUTCH</h2>
-          <p class="show-card__org">U of Toronto FOOT Conference</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/macbeth.png" alt="Macbeth: Online" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2020</p>
-          <h2 class="show-card__title">MACBETH: ONLINE</h2>
-          <p class="show-card__org">Firebird Project · Online</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/ivan.png" alt="The Death of Ivan Ilyich" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2020</p>
-          <h2 class="show-card__title">THE DEATH OF IVAN ILYICH</h2>
-          <p class="show-card__org">Phoenix Ensemble · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/enemy.png" alt="An Enemy of the People" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2019</p>
-          <h2 class="show-card__title">AN ENEMY OF THE PEOPLE</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/caesar.png" alt="Julius Caesar" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2019</p>
-          <h2 class="show-card__title">JULIUS CAESAR</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/tempest.png" alt="The Tempest" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2018</p>
-          <h2 class="show-card__title">THE TEMPEST</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/rur-2018.png" alt="R.U.R." loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2018</p>
-          <h2 class="show-card__title">R.U.R.</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/our-town.png" alt="Our Town" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2018</p>
-          <h2 class="show-card__title">OUR TOWN</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/romeo-juliet.png" alt="Romeo + Juliet" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2017</p>
-          <h2 class="show-card__title">ROMEO + JULIET</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/treasure-island.png" alt="Treasure Island" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2016</p>
-          <h2 class="show-card__title">TREASURE ISLAND</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/alice.png" alt="Alice's Adventures in Wonderland" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2015</p>
-          <h2 class="show-card__title">ALICE'S ADVENTURES IN WONDERLAND</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/expresso.png" alt="eXpresso" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2014</p>
-          <h2 class="show-card__title">eXPRESSO</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
-      <div class="show-card">
-        <div class="show-card__img-wrap">
-          <img class="show-card__img" src="images/directing/chocolate-river.png" alt="Down the Chocolate River" loading="lazy" />
-        </div>
-        <div class="show-card__caption">
-          <p class="show-card__year">2013</p>
-          <h2 class="show-card__title">DOWN THE CHOCOLATE RIVER</h2>
-          <p class="show-card__org">Firebird Project · NYC</p>
-        </div>
-      </div>
-
     </div>
   </section>
+
 </main>
+
+<!-- LIGHTBOX -->
+<div id="show-lightbox" class="lightbox" hidden aria-modal="true" role="dialog" aria-label="Show detail">
+  <div class="lightbox__overlay"></div>
+  <div class="lightbox__panel">
+    <button class="lightbox__close" type="button" aria-label="Close">&#215;</button>
+    <div class="lightbox__img-wrap">
+      <img class="lightbox__img" src="" alt="" />
+    </div>
+    <div class="lightbox__body">
+      <p class="lightbox__year"></p>
+      <h2 class="lightbox__title"></h2>
+      <p class="lightbox__org"></p>
+      <p class="lightbox__quote"></p>
+      <p class="lightbox__desc"></p>
+      <a class="lightbox__link btn btn--ghost" href="#" target="_blank" rel="noopener" hidden>More Info &#8594;</a>
+    </div>
+  </div>
+</div>
 
 <section class="section contact-section" aria-labelledby="dir-contact-heading">
   <div class="container">
@@ -420,6 +824,91 @@
     </div>
   </div>
 </footer>
+
 <script src="js/main.js"></script>
+<script>
+/* ── Filter system ── */
+(function () {
+  const cards = Array.from(document.querySelectorAll('.show-card'));
+  let activeOrg = 'all';
+  let activeType = 'all';
+
+  function applyFilter() {
+    cards.forEach(function (card) {
+      var matchOrg = activeOrg === 'all' || card.dataset.org === activeOrg;
+      var matchType = activeType === 'all' || card.dataset.type === activeType;
+      card.hidden = !(matchOrg && matchType);
+    });
+  }
+
+  document.querySelectorAll('[data-filter="org"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-filter="org"]').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeOrg = btn.dataset.val;
+      applyFilter();
+    });
+  });
+
+  document.querySelectorAll('[data-filter="type"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-filter="type"]').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeType = btn.dataset.val;
+      applyFilter();
+    });
+  });
+})();
+
+/* ── Lightbox ── */
+(function () {
+  var lb        = document.getElementById('show-lightbox');
+  var lbImg     = lb.querySelector('.lightbox__img');
+  var lbYear    = lb.querySelector('.lightbox__year');
+  var lbTitle   = lb.querySelector('.lightbox__title');
+  var lbOrg     = lb.querySelector('.lightbox__org');
+  var lbQuote   = lb.querySelector('.lightbox__quote');
+  var lbDesc    = lb.querySelector('.lightbox__desc');
+  var lbLink    = lb.querySelector('.lightbox__link');
+
+  function open(card) {
+    lbImg.src   = card.querySelector('img').src;
+    lbImg.alt   = card.querySelector('img').alt;
+    lbYear.textContent  = card.dataset.year  || '';
+    lbTitle.textContent = card.dataset.title || '';
+    lbOrg.textContent   = card.dataset.orgLabel || '';
+    lbQuote.textContent = card.dataset.quote ? '“' + card.dataset.quote + '”' : '';
+    lbDesc.textContent  = card.dataset.desc  || '';
+
+    var href = card.dataset.href;
+    if (href) {
+      lbLink.href   = href;
+      lbLink.hidden = false;
+    } else {
+      lbLink.hidden = true;
+    }
+
+    lb.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    lb.querySelector('.lightbox__close').focus();
+  }
+
+  function close() {
+    lb.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.show-card').forEach(function (card) {
+    card.addEventListener('click', function () { open(card); });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(card); }
+    });
+  });
+
+  lb.querySelector('.lightbox__close').addEventListener('click', close);
+  lb.querySelector('.lightbox__overlay').addEventListener('click', close);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+</script>
 </body>
 </html>
