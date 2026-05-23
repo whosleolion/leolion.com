@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Leo Lion — Plays. Full-length and one-act plays available on the New Play Exchange." />
+  <title>Plays — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #2ecf7a; --accent-dim: rgba(46,207,122,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .pw-hero {
+      min-height: 55svh; display: flex; flex-direction: column; justify-content: flex-end;
+      padding-top: var(--nav-h); position: relative; overflow: hidden; background: var(--black);
+    }
+    .pw-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 40%, rgba(46,207,122,0.06), transparent 55%);
+      pointer-events: none;
+    }
+    .pw-hero__content {
+      position: relative; z-index: 1;
+      padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-bottom: 4rem; max-width: calc(var(--max-w) + 2 * var(--gutter));
+    }
+    .pw-hero__title { font-family: var(--font-display); font-size: clamp(4rem, 12vw, 12rem); line-height: 0.86; margin-bottom: 1rem; }
+
+    .play-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+    .play-card {
+      display: grid; grid-template-columns: 280px 1fr;
+      background: var(--near-black); border: 1px solid var(--border);
+      text-decoration: none; color: inherit;
+      transition: border-color 0.2s;
+    }
+    .play-card:hover { border-color: var(--accent); }
+    .play-card__img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.7); transition: filter 0.3s; }
+    .play-card:hover .play-card__img { filter: saturate(1); }
+    .play-card__body { padding: 2rem; display: flex; flex-direction: column; justify-content: center; }
+    .play-card__format {
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
+    }
+    .play-card__title { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 0.95; margin-bottom: 1rem; }
+    .play-card__desc { font-size: 0.9rem; color: var(--muted); line-height: 1.75; margin-bottom: 1.5rem; }
+    .play-card__meta { font-family: var(--font-ui); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+    @media (max-width: 900px) { .play-grid { grid-template-columns: 1fr; } .play-card { grid-template-columns: 1fr; } .play-card__img { aspect-ratio: 16/7; object-fit: cover; } }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html" aria-current="page">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Get In Touch</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="pw-hero" aria-labelledby="pw-heading">
+  <div class="pw-hero__content">
+    <span class="label">Plays by Leo Lion</span>
+    <h1 class="pw-hero__title" id="pw-heading">PLAYS</h1>
+    <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:560px;">
+      Full-length and one-act plays. Available for production through the New Play Exchange.
+    </p>
+  </div>
+</section>
+
+<main>
+  <section class="section" style="padding-top:0;" aria-label="Plays">
+    <div class="play-grid">
+
+      <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
+        <img class="play-card__img" src="images/playwriting/where-are-you.png" alt="Where Are You" />
+        <div class="play-card__body">
+          <p class="play-card__format">Full-Length · Cast: 5</p>
+          <h2 class="play-card__title">WHERE ARE YOU</h2>
+          <p class="play-card__desc">In high school, the four of them solved mysteries together. Now it's halfway into the first semester of college and they aren't the people they used to be. A true-crime club's reunion in their haunted hometown gets off on the wrong foot when the resident deadbeat brings his new girlfriend home without consulting the gang.</p>
+          <p class="play-card__meta">New Play Exchange &#8594;</p>
+        </div>
+      </a>
+
+      <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
+        <img class="play-card__img" src="images/playwriting/demolition.png" alt="Demolition" />
+        <div class="play-card__body">
+          <p class="play-card__format">One-Act · Cast: Flexible</p>
+          <h2 class="play-card__title">DEMOLITION</h2>
+          <p class="play-card__desc">Lola is going through a breakup and she has nowhere to live and she hasn't been sleeping. As her days start to blur together in disarming ways, she fights to find stable footing and figure out how to use her heart again.</p>
+          <p class="play-card__meta">New Play Exchange &#8594;</p>
+        </div>
+      </a>
+
+      <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
+        <img class="play-card__img" src="images/playwriting/widdershins.png" alt="Widdershins" />
+        <div class="play-card__body">
+          <p class="play-card__format">One-Act · Cast: 4</p>
+          <h2 class="play-card__title">WIDDERSHINS</h2>
+          <p class="play-card__desc">A writer is undergoing a psychotic break. But really a receptionist is starring in a commercial for a phone case. But actually an armed robbery is happening. Or group therapy. The lives of uncertain characters of an indeterminate reality hang in the balance.</p>
+          <p class="play-card__meta">New Play Exchange &#8594;</p>
+        </div>
+      </a>
+
+      <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
+        <img class="play-card__img" src="images/playwriting/low-stakes.png" alt="Low Stakes" />
+        <div class="play-card__body">
+          <p class="play-card__format">One-Act · Cast: 2</p>
+          <h2 class="play-card__title">LOW STAKES</h2>
+          <p class="play-card__desc">Mia never does hookups like this. Being a vampire slayer does not leave a lot of room for a love life. Val has only been a vampire for a little while. She's wondering if this could turn into something serious. Or whether Mia is going to try to kill her again.</p>
+          <p class="play-card__meta">New Play Exchange &#8594;</p>
+        </div>
+      </a>
+
+    </div>
+  </section>
+</main>
+
+<section class="section contact-section" aria-labelledby="pw-contact-heading">
+  <div class="container">
+    <span class="label">Interested in producing?</span>
+    <h2 class="section-title" id="pw-contact-heading" style="margin-bottom:1rem;">GET IN TOUCH</h2>
+    <p class="contact-desc">All plays are available through the New Play Exchange. Reach out directly for production inquiries.</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=Playwriting Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://newplayexchange.org" class="btn btn--ghost" target="_blank" rel="noopener">New Play Exchange</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
+      <nav class="footer-links">
+        <a href="directing.html">Directing Portfolio</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&#169; 2026 Leo Lion.</p>
+      <div class="footer-social"><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

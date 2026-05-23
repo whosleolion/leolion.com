@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Insomnia — An all-night immersive theatrical experience, midnight to sunrise. JetLag Festival." />
+  <title>Insomnia — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #7b52ff; --accent-dim: rgba(123,82,255,0.1); }
+    .lock-hero {
+      min-height: 100svh; display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding-top: var(--nav-h);
+      padding-left: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-right: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      position: relative; overflow: hidden;
+      background: linear-gradient(170deg, #050510 0%, #0a0818 40%, #080808 100%);
+    }
+    .lock-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(123,82,255,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 60%, rgba(123,82,255,0.08) 0%, transparent 40%),
+        radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 42% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 68% 35%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 72% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,0.4) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .lock-title {
+      font-family: var(--font-display);
+      font-size: clamp(5rem, 14vw, 14rem);
+      line-height: 0.86; margin-bottom: 1.5rem; position: relative;
+    }
+    .lock-time {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2vw, 1.75rem);
+      color: var(--accent); letter-spacing: 0.08em;
+      margin-bottom: 2.5rem; display: block; position: relative;
+    }
+    .lock-ctas { display: flex; gap: 1rem; flex-wrap: wrap; position: relative; }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Bring This to Your Festival</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="lock-hero" aria-labelledby="insomnia-heading">
+    <span class="label" style="position:relative;">All-Night Immersive Theatre · JetLag Festival</span>
+    <h1 class="lock-title" id="insomnia-heading">INSOMNIA</h1>
+    <span class="lock-time">Midnight &#8594; Sunrise</span>
+    <div class="lock-ctas">
+      <a href="https://instagram.com/insomnia.show" class="btn btn--primary" target="_blank" rel="noopener">@insomnia.show</a>
+      <a href="mailto:leo@firebird.nyc?subject=Insomnia - Festival Programming Inquiry" class="btn btn--ghost">Inquire About This Show</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="index.html" class="footer-logo">LEO LION</a>
+        <p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="directing.html">Directing Portfolio</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://iwasneverhere.show" target="_blank" rel="noopener">I Was Never Here</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&#169; 2026 Leo Lion · The Firebird Project.</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/insomnia.show" target="_blank" rel="noopener">@insomnia.show</a>
+        <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a>
+        <a href="mailto:leo@firebird.nyc">Email</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

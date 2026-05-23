@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Metamorphosis — Immersive audio-driven theatre devised from Kafka's anti-capitalist fable. Phoenix Theatre Ensemble, NYC 2024." />
+  <title>Metamorphosis — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #4a9eff; --accent-dim: rgba(74,158,255,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .meta-hero {
+      min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end;
+      padding-top: var(--nav-h); position: relative; overflow: hidden;
+    }
+    .meta-hero__bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(8,8,8,0.3) 0%, rgba(8,8,8,0.95) 75%, #080808 100%);
+      z-index: 1;
+    }
+    .meta-hero__img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; object-position: top; filter: saturate(0.4) brightness(0.6);
+    }
+    .meta-hero__content {
+      position: relative; z-index: 2;
+      padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-bottom: 5rem;
+      max-width: calc(var(--max-w) + 2 * var(--gutter));
+    }
+    .meta-hero__title {
+      font-family: var(--font-display); font-size: clamp(4rem, 9vw, 10rem);
+      line-height: 0.88; letter-spacing: 0.01em; margin-bottom: 1.5rem;
+    }
+    .meta-hero__quote {
+      font-size: clamp(1rem, 1.8vw, 1.3rem); font-style: italic;
+      color: var(--accent); margin-bottom: 1.25rem; line-height: 1.5;
+    }
+    .meta-hero__desc {
+      font-size: clamp(0.9rem, 1.3vw, 1.05rem); color: var(--muted);
+      line-height: 1.8; margin-bottom: 2.5rem;
+    }
+
+    .meta-credit {
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+      margin-bottom: 1.75rem;
+    }
+    .meta-tagline {
+      font-family: var(--font-display); font-size: clamp(1rem, 1.8vw, 1.3rem);
+      color: var(--accent); line-height: 1.5; margin-bottom: 1.5rem;
+    }
+    .meta-desc { font-size: 1rem; color: var(--muted); line-height: 1.8; }
+    .meta-video-wrap {
+      position: relative; padding-bottom: 56.25%; height: 0;
+      overflow: hidden; margin-top: 2.5rem; background: var(--near-black);
+    }
+    .meta-video-wrap iframe {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+    }
+
+    .meta-review {
+      border-left: 3px solid var(--accent); padding-left: 2rem;
+      margin: 0;
+    }
+    .meta-review p {
+      font-size: clamp(1.1rem, 1.8vw, 1.4rem); color: var(--white);
+      line-height: 1.6; font-style: italic; margin-bottom: 0.75rem;
+    }
+    .meta-review cite {
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-style: normal;
+    }
+
+    .meta-gallery {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 4px; margin-top: 1.5rem;
+    }
+    .meta-gallery img {
+      width: 100%; aspect-ratio: 3/2; object-fit: cover; display: block;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .meta-gallery img:hover { opacity: 0.8; }
+    .lb {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.94); align-items: center; justify-content: center;
+    }
+    .lb.open { display: flex; }
+    .lb__img { max-width: 90vw; max-height: 90vh; object-fit: contain; display: block; }
+    .lb__close, .lb__arrow {
+      background: none; border: none; color: var(--white); cursor: pointer;
+      font-family: var(--font-display); line-height: 1; opacity: 0.6; transition: opacity 0.15s;
+    }
+    .lb__close:hover, .lb__arrow:hover { opacity: 1; }
+    .lb__close { position: fixed; top: 1.5rem; right: 1.5rem; font-size: 2.5rem; }
+    .lb__arrow { position: fixed; top: 50%; transform: translateY(-50%); font-size: 3rem; padding: 1rem; }
+    .lb__prev { left: 0; }
+    .lb__next { right: 0; }
+    .lb__counter {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+    }
+    .meta-photo-credit {
+      font-family: var(--font-ui); font-size: 0.65rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-top: 0.75rem;
+    }
+    .meta-photo-credit a { color: var(--accent); }
+
+    @media (max-width: 768px) {
+      .meta-gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Produce This</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="meta-hero" aria-labelledby="meta-heading">
+  <img class="meta-hero__img" src="images/directing/metamorphosis.jpg" alt="Metamorphosis" loading="eager" />
+  <div class="meta-hero__bg" aria-hidden="true"></div>
+  <div class="meta-hero__content">
+    <span class="label">Immersive Theatre · Phoenix Ensemble · NYC 2024</span>
+    <h1 class="meta-hero__title" id="meta-heading">KAFKATECH:<br>METAMORPHOSIS</h1>
+    <p class="meta-hero__quote">"It's shocking, what can suddenly happen to a person…"</p>
+    <p class="meta-hero__desc">Immersive audio-driven theatre set inside a hypnotic corporate retreat — devised from Kafka's anti-capitalist fable.</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+      <a href="mailto:leo@firebird.nyc?subject=Metamorphosis - Production Inquiry" class="btn btn--primary">Inquire to Present</a>
+      <a href="https://phoenixtheatreensemble.org" class="btn btn--ghost" target="_blank" rel="noopener">Phoenix Theatre Ensemble</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <!-- ABOUT -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="meta-about-heading">
+    <div class="container">
+      <h2 class="section-title" id="meta-about-heading" style="margin-bottom:0.75rem;">ABOUT THE SHOW</h2>
+      <p class="meta-credit">Devised from Kafka by Clara Francesca &amp; Leo Lion · An Immersive Production by Phoenix Theatre Ensemble · Videography by Yev Gelman</p>
+      <p class="meta-tagline">"The bug inside is holding you back. KafkaTech can make you clean again. Join the METAMORPHOSIS."</p>
+      <p class="meta-desc" data-fade>This immersive audio-driven experience is set at an eerie hypnotic corporate retreat. A darkly humorous and beautifully strange exploration of self-help, corporate culture, and late-stage capitalist anxieties, METAMORPHOSIS fuses audio tech, physical theatre, and interactive sensory installations to remix Kafka's iconic anti-capitalist fable. What is your humanity worth? What are you willing to become? Is it ever enough?</p>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:2rem;">
+        <a href="downloads/Metamorphosis-Playbill-1.pdf" class="btn btn--ghost" target="_blank" rel="noopener">Digital Playbill</a>
+        <a href="https://podcasts.apple.com/us/podcast/whisper-in-the-wings-episode-460/id1573470927?i=1000654070061" class="btn btn--ghost" target="_blank" rel="noopener">Stage Whisper Podcast</a>
+      </div>
+      <div class="meta-video-wrap" data-fade>
+        <iframe
+          src="https://player.vimeo.com/video/957204640?h=5aa8ce83a8&title=0&byline=0&portrait=0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen
+          title="Metamorphosis — videography by Yev Gelman">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRESS -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="meta-press-heading">
+    <div class="container">
+      <span class="label">Press</span>
+      <blockquote class="meta-review" data-fade>
+        <p>"Soulless satirical doublespeak abounds…<br>Audience members may think to themselves,<br>'Gregor Samsa is me.'"</p>
+        <cite>— Theatrescene</cite>
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="meta-gallery-heading">
+    <div class="container">
+      <span class="label" id="meta-gallery-heading">Photos by Lijah Scheider</span>
+      <div class="meta-gallery">
+        <img src="images/metamorphosis/meta-01.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-02.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-03.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-04.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-05.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-06.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-07.jpg" alt="Metamorphosis production photo" loading="lazy" />
+        <img src="images/metamorphosis/meta-08.jpg" alt="Metamorphosis production photo" loading="lazy" />
+      </div>
+      <p class="meta-photo-credit">Photography: <a href="https://instagram.com/lijahsflix" target="_blank" rel="noopener">@lijahsflix</a></p>
+    </div>
+  </section>
+</main>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo lightbox">
+  <img class="lb__img" id="lb-img" src="" alt="" />
+  <button class="lb__close" id="lb-close" aria-label="Close">×</button>
+  <button class="lb__arrow lb__prev" id="lb-prev" aria-label="Previous">‹</button>
+  <button class="lb__arrow lb__next" id="lb-next" aria-label="Next">›</button>
+  <p class="lb__counter" id="lb-counter"></p>
+</div>
+
+<section class="section contact-section" aria-labelledby="meta-contact-heading">
+  <div class="container">
+    <span class="label">Production Inquiries</span>
+    <h2 class="section-title" id="meta-contact-heading" style="margin-bottom:1rem;">GET IN TOUCH</h2>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=Metamorphosis - Production Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://phoenixtheatreensemble.org" class="btn btn--ghost" target="_blank" rel="noopener">Phoenix Ensemble</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
+      <nav class="footer-links">
+        <a href="directing.html">Directing Portfolio</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://phoenixtheatreensemble.org" target="_blank" rel="noopener">Phoenix Ensemble</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Leo Lion.</p>
+      <div class="footer-social"><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+<script>
+  (function () {
+    var imgs = Array.from(document.querySelectorAll('.meta-gallery img'));
+    var lb = document.getElementById('lb');
+    var lbImg = document.getElementById('lb-img');
+    var lbCounter = document.getElementById('lb-counter');
+    var current = 0;
+    function open(idx) {
+      current = idx;
+      lbImg.src = imgs[current].src;
+      lbImg.alt = imgs[current].alt;
+      lbCounter.textContent = (current + 1) + ' / ' + imgs.length;
+      lb.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function close() { lb.classList.remove('open'); document.body.style.overflow = ''; }
+    function prev() { open((current - 1 + imgs.length) % imgs.length); }
+    function next() { open((current + 1) % imgs.length); }
+    imgs.forEach(function (img, i) { img.addEventListener('click', function () { open(i); }); });
+    document.getElementById('lb-close').addEventListener('click', close);
+    document.getElementById('lb-prev').addEventListener('click', function (e) { e.stopPropagation(); prev(); });
+    document.getElementById('lb-next').addEventListener('click', function (e) { e.stopPropagation(); next(); });
+    lb.addEventListener('click', function (e) { if (e.target === lb) close(); });
+    document.addEventListener('keydown', function (e) {
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    });
+  })();
+</script>
+</body>
+</html>

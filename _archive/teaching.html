@@ -1,0 +1,336 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Leo Lion — Teaching artist and program director. Firebird Youth Theater, Firebird Workshops (adult/corporate), and Firebird RPG. NYC and beyond." />
+  <title>Teaching &amp; Programs — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    /* Program hub cards */
+    .programs-hub {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 2.5rem;
+    }
+    .hub-card {
+      background: var(--near-black);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: background 0.2s;
+    }
+    .hub-card:hover { background: var(--card); }
+    .hub-card__label {
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
+    }
+    .hub-card__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+      line-height: 1; letter-spacing: 0.02em;
+    }
+    .hub-card__audience {
+      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2);
+    }
+    .hub-card__desc {
+      font-size: 0.85rem; color: var(--muted); line-height: 1.65; flex: 1;
+    }
+    .hub-card__link {
+      display: inline-flex; align-items: center; gap: 0.4em;
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+      transition: gap 0.2s; margin-top: auto;
+    }
+    .hub-card__link:hover { gap: 0.75em; }
+
+    /* Track record */
+    .cred-list {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border); border: 1px solid var(--border);
+    }
+    .cred-item {
+      background: var(--near-black); padding: 1.5rem 2rem;
+      display: grid; grid-template-columns: 2.5rem 1fr auto;
+      gap: 1.25rem; align-items: center;
+    }
+    .cred-item__icon { font-size: 1.25rem; }
+    .cred-item__text { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+    .cred-item__text strong { color: var(--white); }
+    .cred-item__year {
+      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* Summer CTA block */
+    .summer-cta {
+      background: var(--near-black); border: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 2rem; padding: 2.5rem; align-items: center;
+      margin-top: 3rem;
+      transition: background 0.2s;
+    }
+    .summer-cta:hover { background: var(--card); }
+    .summer-cta__label {
+      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+    .summer-cta__title {
+      font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.5rem);
+      line-height: 1; margin-bottom: 0.5rem;
+    }
+    .summer-cta__sub { font-size: 0.85rem; color: var(--muted); }
+
+    /* Philosophy */
+    .philosophy-block {
+      max-width: 720px; margin: 0 auto; text-align: center;
+    }
+    .philosophy-block p {
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.8; color: var(--muted); font-style: italic;
+    }
+    .philosophy-block p strong { color: var(--white); font-style: normal; }
+
+    /* Offerings list (detailed) */
+    .offerings-list {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border); border: 1px solid var(--border);
+    }
+    .offering-row {
+      background: var(--near-black); padding: 1.75rem 2rem;
+      display: grid; grid-template-columns: 200px 1fr auto;
+      gap: 2rem; align-items: center; transition: background 0.2s;
+    }
+    .offering-row:hover { background: var(--card); }
+    .offering-row__title {
+      font-family: var(--font-display); font-size: 1.5rem; line-height: 1; letter-spacing: 0.02em;
+    }
+    .offering-row__track {
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-top: 0.25rem;
+    }
+    .offering-row__desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    @media (max-width: 900px) {
+      .programs-hub { grid-template-columns: 1fr; }
+      .summer-cta { grid-template-columns: 1fr; gap: 1.25rem; }
+      .offering-row { grid-template-columns: 1fr; gap: 0.75rem; }
+      .cred-item { grid-template-columns: 2rem 1fr; }
+      .cred-item__year { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="teaching.html" class="active">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
+      <li><a href="https://www.helpmetheshow.com" target="_blank" rel="noopener" class="nav-cta">HELP ME!!!!</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div>
+      <span class="label">Leo Lion · Since 2010</span>
+      <h1 class="page-header__title">WORKSHOPS</h1>
+    </div>
+    <div class="page-header__meta">
+      <p>Youth · Adults · Games</p>
+      <p>NYC &amp; Virtual</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- INTRO -->
+  <section class="section" style="border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="philosophy-block" data-fade>
+        <!-- TODO: Leo to rewrite in own voice -->
+        <p>I've been a teaching artist since 2010, leading <strong>youth education programs, adult workshops, and tabletop gaming sessions</strong> across NYC. My approach is experiential and student-driven: we make real things together, and the making is the lesson.</p>
+      </div>
+    </div>
+      <div class="container">
+      <div class="programs-hub" style="grid-template-columns:repeat(2,1fr);">
+
+        <div class="hub-card" data-fade>
+          <p class="hub-card__label">Ages 8–18 · NYC</p>
+          <h3 class="hub-card__title">FIREBIRD YOUTH THEATER</h3>
+          <p class="hub-card__desc">Summer Conservatory, weekly classes (Improv, Shakespeare, Playmakers), and private coaching for young artists ages 8–18. NYC since 2013.</p>
+          <a href="https://youth.firebird.nyc" target="_blank" rel="noopener" class="hub-card__link">Visit Firebird Youth Theater →</a>
+        </div>
+
+        <div class="hub-card" data-fade>
+          <p class="hub-card__label">Adults · Organizations · All Ages</p>
+          <h3 class="hub-card__title">FIREBIRD WORKSHOPS</h3>
+          <p class="hub-card__desc">Improv for organizations, corporate team-building, creative collaboration workshops, and professional D&D campaigns. Custom formats for any group size or context. In-person NYC or online.</p>
+          <a href="mailto:leo@firebird.nyc?subject=Workshop Inquiry" class="hub-card__link">Book a Session →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK RECORD -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="track-heading">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="label">Credentials</span>
+          <h2 class="section-title" id="track-heading">TRACK RECORD</h2>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);">
+        <div style="background:var(--near-black);padding:1.25rem 2rem;display:flex;justify-content:space-between;gap:2rem;align-items:baseline;" data-fade>
+          <p style="font-size:0.9rem;color:var(--muted);">Teaching artist</p>
+          <p style="font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap;">Since 2010</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.25rem 2rem;display:flex;justify-content:space-between;gap:2rem;align-items:baseline;" data-fade>
+          <p style="font-size:0.9rem;color:var(--muted);">Improv Fledglings — original ensemble program, festival performances, original show formats</p>
+          <p style="font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap;">Ongoing</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.25rem 2rem;display:flex;justify-content:space-between;gap:2rem;align-items:baseline;" data-fade>
+          <p style="font-size:0.9rem;color:var(--muted);">National History Day — student winner (Iago), via Firebird education programs</p>
+          <p style="font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap;">Recent</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.25rem 2rem;display:flex;justify-content:space-between;gap:2rem;align-items:baseline;" data-fade>
+          <p style="font-size:0.9rem;color:var(--muted);">Corporate &amp; org workshops — improv, collaboration, communication</p>
+          <p style="font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap;">Available</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUMMER CONSERVATORY CTA -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="summer-cta-heading">
+    <div class="container">
+      <span class="label">Now Enrolling</span>
+      <a href="https://youth.firebird.nyc/conservatory.html#register" target="_blank" rel="noopener" class="summer-cta" data-fade>
+        <div>
+          <p class="summer-cta__label">Firebird Youth Theater · Summer 2026</p>
+          <h2 class="summer-cta__title" id="summer-cta-heading">Summer Conservatory 2026</h2>
+          <p class="summer-cta__sub">7 weeks · Ages 12–18 · June 29 – August 13 · From $450/week · Cre8ive Studios, NYC</p>
+        </div>
+        <span class="btn btn--primary" style="flex-shrink:0;">Register Now →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- OFFERINGS — compact -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="offerings-heading">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="label">What I Teach</span>
+          <h2 class="section-title" id="offerings-heading" style="font-size:clamp(1.5rem,3vw,2rem);">DISCIPLINES</h2>
+        </div>
+        <a href="mailto:leo@firebird.nyc" class="btn btn--outline">Book a Session →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">ACTING</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Youth · Adults · Private</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">IMPROV</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Youth · Adults · Corporate</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">PLAYWRITING</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Youth · Adults · Private</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">SHAKESPEARE</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Youth · Adults</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">DEVISING</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Youth · Adults · Ensemble</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">FILMMAKING</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Youth · Private</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">D&amp;D &amp; RPG</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">All Ages · Events</p>
+        </div>
+        <div style="background:var(--near-black);padding:1.5rem;">
+          <p style="font-family:var(--font-display);font-size:1.25rem;line-height:1;margin-bottom:0.35rem;">TEAM-BUILDING</p>
+          <p style="font-family:var(--font-ui);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;">Corporate · Groups</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOK -->
+  <section class="section contact-section" aria-labelledby="teaching-contact-heading">
+    <div class="container">
+      <span class="label">Let's Work Together</span>
+      <h2 class="section-title" id="teaching-contact-heading" style="margin-bottom:1rem;">GET IN<br>TOUCH</h2>
+      <p class="contact-desc">Private coaching, youth programs, adult workshops, corporate team-building, or D&D campaigns — reach out and we'll find the right format.</p>
+      <div class="contact-ctas">
+        <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
+        <a href="https://youth.firebird.nyc" target="_blank" rel="noopener" class="btn btn--ghost">Firebird Youth Theater →</a>
+      </div>
+      <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--muted);">NYC &amp; Virtual · leo@firebird.nyc</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="index.html" class="footer-logo">LEO LION</a>
+        <p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="directing.html">Directing</a>
+        <a href="playwriting.html">Playwriting</a>
+        <a href="teaching.html">Workshops</a>
+        <a href="https://www.helpmetheshow.com" target="_blank" rel="noopener">HELP ME!!!!</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Leo Lion. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/@whosleolion" target="_blank" rel="noopener">TikTok</a>
+        <a href="mailto:leo@firebird.nyc">Email</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

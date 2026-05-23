@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Leo Lion — Professional Game Host. D&D, Fiasco, Dread, and original adventures. NYC." />
+  <title>RPG — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #f5a623; --accent-dim: rgba(245,166,35,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .rpg-hero {
+      min-height: 55svh; display: flex; flex-direction: column; justify-content: flex-end;
+      padding-top: var(--nav-h); position: relative; overflow: hidden; background: var(--black);
+    }
+    .rpg-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 60%, rgba(245,166,35,0.07), transparent 55%);
+      pointer-events: none;
+    }
+    .rpg-hero__content {
+      position: relative; z-index: 1;
+      padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-bottom: 4rem; max-width: calc(var(--max-w) + 2 * var(--gutter));
+    }
+    .rpg-hero__title { font-family: var(--font-display); font-size: clamp(5rem, 14vw, 14rem); line-height: 0.86; margin-bottom: 1rem; }
+
+    .review-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    .review-card { background: var(--card); border: 1px solid var(--border); padding: 1.75rem; }
+    .review-card__stars { color: var(--accent); font-size: 0.85rem; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+    .review-card__text { font-size: 0.9rem; color: var(--white); line-height: 1.7; font-style: italic; margin-bottom: 0.75rem; }
+    .review-card__meta { font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+    .adventure-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 2rem; }
+    .adv-card { position: relative; overflow: hidden; aspect-ratio: 3/4; background: var(--near-black); }
+    .adv-card__img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.7) brightness(0.8); transition: transform 0.4s, filter 0.3s; }
+    .adv-card:hover .adv-card__img { transform: scale(1.04); filter: saturate(1) brightness(0.6); }
+    .adv-card__overlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 1.5rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+    }
+    .adv-card__label { font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem; }
+    .adv-card__title { font-family: var(--font-display); font-size: clamp(0.9rem, 1.5vw, 1.2rem); color: var(--white); line-height: 1.1; margin-bottom: 0.5rem; }
+    .adv-card__desc { font-size: 0.75rem; color: var(--muted); line-height: 1.5; opacity: 0; transform: translateY(6px); transition: opacity 0.25s, transform 0.25s; }
+    .adv-card:hover .adv-card__desc { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) { .adventure-grid { grid-template-columns: repeat(2, 1fr); } .review-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Request a Session</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="rpg-hero" aria-labelledby="rpg-heading">
+  <div class="rpg-hero__content">
+    <span class="label">Professional Game Host · NYC</span>
+    <h1 class="rpg-hero__title" id="rpg-heading">RPG</h1>
+    <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:600px;">
+      Leo runs professional tabletop RPG sessions: D&amp;D 5e, Fiasco, Kids on Bikes hacks, and Dread. In-person and online, all ages and experience levels. Member of CAST PARTY RPG and LAST PLACE ON EARTH, BROOKLYN rosters.
+    </p>
+  </div>
+</section>
+
+<main>
+
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="rpg-reviews-heading">
+    <div class="container">
+      <span class="label">Player Reviews</span>
+      <h2 class="section-title" id="rpg-reviews-heading" style="margin-bottom:0;">WHAT PLAYERS SAY</h2>
+      <div class="review-row">
+        <div class="review-card" data-fade>
+          <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+          <p class="review-card__text">"One of the most unforgettable D&amp;D experiences — surreal twists, explosive moments. DM's storytelling was razor-sharp, reactive."</p>
+          <p class="review-card__meta">Run, Simulacrum, Run!</p>
+        </div>
+        <div class="review-card" data-fade style="--delay:0.1s">
+          <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+          <p class="review-card__text">"Megastar DM — truly unique and exciting homebrew adventure, evocative narration, collaborative and engaging gameplay, GREAT npc voices."</p>
+          <p class="review-card__meta">Father's Day Session</p>
+        </div>
+        <div class="review-card" data-fade style="--delay:0.2s">
+          <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+          <p class="review-card__text">"Funny, good twists and turns, challenging from both a combat and role play perspective. Rated 11/10."</p>
+          <p class="review-card__meta">One-Shot Session</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="rpg-adventures-heading">
+    <div class="container">
+      <span class="label">Original Adventures · D&amp;D 5e · 4–6 Players</span>
+      <h2 class="section-title" id="rpg-adventures-heading" style="margin-bottom:0;">ORIGINAL<br>ADVENTURES</h2>
+      <div class="adventure-grid">
+        <div class="adv-card">
+          <img class="adv-card__img" src="images/rpg/simulacrum.png" alt="Run, Simulacrum, Run!" loading="lazy" />
+          <div class="adv-card__overlay">
+            <p class="adv-card__label">Mind-Bending</p>
+            <h3 class="adv-card__title">"Run, Simulacrum, Run!"</h3>
+            <p class="adv-card__desc">Reality wrinkles reveal everything is not as it seems. World-hopping escape from an illusory world. Comparable to Severance, The Truman Show, and Maniac.</p>
+          </div>
+        </div>
+        <div class="adv-card">
+          <img class="adv-card__img" src="images/rpg/dogwall.jpg" alt="A Dogwall Holiday" loading="lazy" />
+          <div class="adv-card__overlay">
+            <p class="adv-card__label">Urban Fantasy Noir</p>
+            <h3 class="adv-card__title">"A Dogwall Holiday"</h3>
+            <p class="adv-card__desc">Adventurers-for-hire investigate a case involving frost and blood in Dogwall, a shady magical metropolis district. Dark alleys, sharp blades, ice cold crime.</p>
+          </div>
+        </div>
+        <div class="adv-card">
+          <img class="adv-card__img" src="images/rpg/frosthold.png" alt="Storm the Frosthold" loading="lazy" />
+          <div class="adv-card__overlay">
+            <p class="adv-card__label">Whimsical Heist</p>
+            <h3 class="adv-card__title">"Storm the Frosthold"</h3>
+            <p class="adv-card__desc">Mercenary crew storms the Frostfather's fortress to rob the jolly tyrant blind. You can absolutely kill Santa.</p>
+          </div>
+        </div>
+        <div class="adv-card">
+          <img class="adv-card__img" src="images/rpg/smelter.png" alt="Enter the Smelter" loading="lazy" />
+          <div class="adv-card__overlay">
+            <p class="adv-card__label">Pirate Adventure</p>
+            <h3 class="adv-card__title">"Enter the Smelter"</h3>
+            <p class="adv-card__desc">Pirate-themed adventure in a perilous cave where sins can be absolved. Your life will change forever — provided you live long enough to see the end.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<section class="section contact-section" aria-labelledby="rpg-contact-heading">
+  <div class="container">
+    <span class="label">Book a Session</span>
+    <h2 class="section-title" id="rpg-contact-heading" style="margin-bottom:1rem;">REQUEST<br>A SESSION</h2>
+    <p class="contact-desc">In-person and online. All ages and experience levels. NYC theater spaces or your location.</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=RPG Session Request" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://instagram.com/whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">@whosleolion</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
+      <nav class="footer-links">
+        <a href="directing.html">Directing Portfolio</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&#169; 2026 Leo Lion.</p>
+      <div class="footer-social"><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Trouble Feature — A horror-themed game show by The Firebird Project & The TEAM. NYC 2025." />
+  <title>Trouble Feature — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #e01c1c; --accent-dim: rgba(224,28,28,0.1); }
+    .lock-hero {
+      min-height: 100svh; display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding-top: var(--nav-h);
+      padding-left: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-right: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      position: relative; overflow: hidden;
+    }
+    .lock-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 65% 40%, rgba(224,28,28,0.07), transparent 55%);
+      pointer-events: none;
+    }
+    .lock-title {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 10vw, 12rem);
+      line-height: 0.88; margin-bottom: 1.5rem; position: relative;
+    }
+    .lock-tagline {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2vw, 1.75rem);
+      color: var(--accent); font-style: italic;
+      margin-bottom: 2.5rem; position: relative;
+    }
+    .lock-ctas { display: flex; gap: 1rem; flex-wrap: wrap; position: relative; }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Produce This</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="lock-hero" aria-labelledby="tf-heading">
+    <span class="label">Interactive Horror · Firebird &#215; The TEAM · NYC 2025</span>
+    <h1 class="lock-title" id="tf-heading">TROUBLE<br>FEATURE</h1>
+    <p class="lock-tagline">"Do you like scary movies?"</p>
+    <div class="lock-ctas">
+      <a href="https://www.youtube.com/watch?v=4pRvs74FrQM" class="btn btn--primary" target="_blank" rel="noopener">Watch on YouTube</a>
+      <a href="mailto:leo@firebird.nyc?subject=Trouble Feature - Production Inquiry" class="btn btn--ghost">Inquire to Produce</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
+      <nav class="footer-links">
+        <a href="directing.html">Directing Portfolio</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&#169; 2026 Leo Lion · The Firebird Project.</p>
+      <div class="footer-social"><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

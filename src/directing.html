@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Leo Lion — Directing Portfolio. 25+ productions across NYC, Edinburgh, Seattle. Firebird Project, Phoenix Theatre Ensemble." />
+  <title>Directing — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .dir-hero {
+      min-height: 55svh; display: flex; flex-direction: column; justify-content: flex-end;
+      padding-top: var(--nav-h); position: relative; overflow: hidden; background: var(--black);
+    }
+    .dir-hero__content {
+      padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-bottom: 4rem; max-width: calc(var(--max-w) + 2 * var(--gutter));
+    }
+    .dir-hero__title {
+      font-family: var(--font-display); font-size: clamp(5rem, 14vw, 14rem);
+      line-height: 0.86; margin-bottom: 1rem;
+    }
+
+    .show-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+
+    .show-card {
+      display: block; text-decoration: none; color: inherit;
+      background: var(--near-black);
+    }
+    .show-card__img-wrap {
+      aspect-ratio: 16/9; overflow: hidden; position: relative;
+    }
+    .show-card__img {
+      width: 100%; height: 100%; object-fit: cover; object-position: top; display: block;
+      filter: brightness(0.72) saturate(0.65);
+      transition: transform 0.5s var(--ease-out-expo), filter 0.3s;
+    }
+    .show-card:hover .show-card__img {
+      transform: scale(1.04);
+      filter: brightness(0.9) saturate(1);
+    }
+    .show-card__caption {
+      padding: 0.85rem 1rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .show-card__year {
+      font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.2rem;
+    }
+    .show-card__title {
+      font-family: var(--font-display); font-size: clamp(0.8rem, 1.15vw, 1rem);
+      line-height: 1.05; color: var(--white); margin-bottom: 0.2rem;
+    }
+    .show-card__org {
+      font-family: var(--font-ui); font-size: 0.58rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    }
+
+    @media (max-width: 900px) { .show-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .show-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html" aria-current="page">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Hire / Produce</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="dir-hero" aria-labelledby="dir-heading">
+  <div class="dir-hero__content">
+    <span class="label">Directing Portfolio · 2013–Present</span>
+    <h1 class="dir-hero__title" id="dir-heading">DIRECTING</h1>
+    <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:600px;">
+      25+ productions across NYC, Edinburgh, and Seattle. Firebird Project · Phoenix Theatre Ensemble · Dacha Theatre.
+    </p>
+  </div>
+</section>
+
+<main>
+  <section aria-label="Show portfolio" style="padding-top:0;">
+    <div class="show-grid">
+
+      <a href="liars-night.html" class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/liars-night.png" alt="Liar's Night" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2026</p>
+          <h2 class="show-card__title">LIAR'S NIGHT</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </a>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/robin-hood.jpg" alt="Robin Hood" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2026</p>
+          <h2 class="show-card__title">ROBIN HOOD</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <a href="helpme/" class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/helpme.png" alt="Help Me!!!!" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2025</p>
+          <h2 class="show-card__title">HELP ME!!!!</h2>
+          <p class="show-card__org">Firebird Project · Edinburgh/NYC</p>
+        </div>
+      </a>
+
+      <a href="trouble-feature.html" class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/trouble-feature.png" alt="Trouble Feature" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2025</p>
+          <h2 class="show-card__title">TROUBLE FEATURE</h2>
+          <p class="show-card__org">Firebird &#215; The TEAM · NYC</p>
+        </div>
+      </a>
+
+      <a href="metamorphosis.html" class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/metamorphosis.jpg" alt="Kafkatech: Metamorphosis" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2024</p>
+          <h2 class="show-card__title">KAFKATECH: METAMORPHOSIS</h2>
+          <p class="show-card__org">Phoenix Ensemble · NYC</p>
+        </div>
+      </a>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/midsummer.png" alt="Dice: A Midsummer Night's Dream" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2024</p>
+          <h2 class="show-card__title">DICE: A MIDSUMMER NIGHT'S DREAM</h2>
+          <p class="show-card__org">Dacha Theatre · Seattle</p>
+        </div>
+      </div>
+
+      <a href="scandalton.html" class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/scandalton.png" alt="Scandalton" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2023</p>
+          <h2 class="show-card__title">SCANDALTON: LIVE</h2>
+          <p class="show-card__org">Phoenix Ensemble · NYC</p>
+        </div>
+      </a>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/snow-queen.jpg" alt="The Snow Queen" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2023</p>
+          <h2 class="show-card__title">THE SNOW QUEEN</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/wind-willows.jpg" alt="The Wind in the Willows" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2023</p>
+          <h2 class="show-card__title">THE WIND IN THE WILLOWS</h2>
+          <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/rur-2023.png" alt="Rossum's Universal Robots" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2023</p>
+          <h2 class="show-card__title">ROSSUM'S UNIVERSAL ROBOTS</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/harmfulness.png" alt="The Harmfulness of Tobacco" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2022</p>
+          <h2 class="show-card__title">THE HARMFULNESS OF TOBACCO</h2>
+          <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/earnest.png" alt="The Importance of Being Earnest" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2022</p>
+          <h2 class="show-card__title">THE IMPORTANCE OF BEING EARNEST</h2>
+          <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/dracula.png" alt="The Dracula Files" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2022</p>
+          <h2 class="show-card__title">THE DRACULA FILES</h2>
+          <p class="show-card__org">Fordham University Studio</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/roots.png" alt="The Roots That Clutch" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2021</p>
+          <h2 class="show-card__title">THE ROOTS THAT CLUTCH</h2>
+          <p class="show-card__org">U of Toronto FOOT Conference</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/macbeth.png" alt="Macbeth: Online" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2020</p>
+          <h2 class="show-card__title">MACBETH: ONLINE</h2>
+          <p class="show-card__org">Firebird Project · Online</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/ivan.png" alt="The Death of Ivan Ilyich" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2020</p>
+          <h2 class="show-card__title">THE DEATH OF IVAN ILYICH</h2>
+          <p class="show-card__org">Phoenix Ensemble · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/enemy.png" alt="An Enemy of the People" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2019</p>
+          <h2 class="show-card__title">AN ENEMY OF THE PEOPLE</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/caesar.png" alt="Julius Caesar" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2019</p>
+          <h2 class="show-card__title">JULIUS CAESAR</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/tempest.png" alt="The Tempest" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2018</p>
+          <h2 class="show-card__title">THE TEMPEST</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/rur-2018.png" alt="R.U.R." loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2018</p>
+          <h2 class="show-card__title">R.U.R.</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/our-town.png" alt="Our Town" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2018</p>
+          <h2 class="show-card__title">OUR TOWN</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/romeo-juliet.png" alt="Romeo + Juliet" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2017</p>
+          <h2 class="show-card__title">ROMEO + JULIET</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/treasure-island.png" alt="Treasure Island" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2016</p>
+          <h2 class="show-card__title">TREASURE ISLAND</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/alice.png" alt="Alice's Adventures in Wonderland" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2015</p>
+          <h2 class="show-card__title">ALICE'S ADVENTURES IN WONDERLAND</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/expresso.png" alt="eXpresso" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2014</p>
+          <h2 class="show-card__title">eXPRESSO</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+      <div class="show-card">
+        <div class="show-card__img-wrap">
+          <img class="show-card__img" src="images/directing/chocolate-river.png" alt="Down the Chocolate River" loading="lazy" />
+        </div>
+        <div class="show-card__caption">
+          <p class="show-card__year">2013</p>
+          <h2 class="show-card__title">DOWN THE CHOCOLATE RIVER</h2>
+          <p class="show-card__org">Firebird Project · NYC</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<section class="section contact-section" aria-labelledby="dir-contact-heading">
+  <div class="container">
+    <span class="label">Work Together</span>
+    <h2 class="section-title" id="dir-contact-heading" style="margin-bottom:1rem;">HIRE / PRODUCE</h2>
+    <p class="contact-desc">Interested in working with Leo as a director, or in producing one of these shows?</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://thefirebirdproject.org" class="btn btn--ghost" target="_blank" rel="noopener">The Firebird Project</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
+      <nav class="footer-links">
+        <a href="directing.html">Directing</a>
+        <a href="playwriting.html">Playwriting</a>
+        <a href="workshops.html">Workshops</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&#169; 2026 Leo Lion · The Firebird Project.</p>
+      <div class="footer-social"><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

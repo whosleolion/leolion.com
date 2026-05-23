@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Scandalton: Live — A Regency-era roleplaying game for audiences. Produce this show." />
+  <title>Scandalton: Live — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #d4a843; --accent-dim: rgba(212,168,67,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .show-hero-full {
+      min-height: 100svh; display: grid; grid-template-columns: 1fr 1fr;
+      padding-top: var(--nav-h); position: relative; overflow: hidden;
+    }
+    .show-hero-full::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 40%, rgba(212,168,67,0.07), transparent 60%);
+      pointer-events: none;
+    }
+    .shf-content {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 4rem max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      padding-right: var(--gutter); z-index: 1;
+    }
+    .shf-title { font-family: var(--font-display); font-size: clamp(3.5rem, 7vw, 8rem); line-height: 0.9; margin-bottom: 1.5rem; }
+    .shf-tagline { font-family: var(--font-display); font-size: clamp(1.25rem, 2vw, 1.75rem); color: var(--accent); margin-bottom: 1.25rem; letter-spacing: 0.05em; }
+    .shf-desc { font-size: clamp(0.9rem, 1.3vw, 1.05rem); color: var(--muted); line-height: 1.8; max-width: 500px; margin-bottom: 2.5rem; }
+    .shf-image { position: relative; overflow: hidden; }
+    .shf-image img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+    .proof-block {
+      background: var(--card); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent); padding: 2.5rem;
+      margin-top: 2rem;
+    }
+    .proof-block__label { font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .proof-block__text { font-size: 1rem; color: var(--white); line-height: 1.75; }
+    .proof-block__link { margin-top: 1.5rem; display: inline-flex; align-items: center; gap: 0.4em; font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); transition: gap 0.2s; }
+    .proof-block__link:hover { gap: 0.7em; }
+
+    .specs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 2rem; }
+    .spec-cell { background: var(--near-black); padding: 1.75rem; }
+    .spec-cell__label { font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .spec-cell__value { font-family: var(--font-display); font-size: 1.5rem; line-height: 1; color: var(--white); }
+    .spec-cell__sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; }
+
+    @media (max-width: 900px) {
+      .show-hero-full { grid-template-columns: 1fr; }
+      .shf-image { height: 340px; }
+      .specs-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) { .specs-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Produce This</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="show-hero-full" aria-labelledby="sc-heading">
+  <div class="shf-content">
+    <span class="label">Interactive Theatre · Phoenix Ensemble 2023</span>
+    <h1 class="shf-title" id="sc-heading">SCANDALTON</h1>
+    <p class="shf-tagline">"You bring the tea, we spill it."</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem;">
+      <span class="hero-role-tag">Regency Era</span>
+      <span class="hero-role-tag">Live RPG</span>
+      <span class="hero-role-tag">Audience-Created</span>
+      <span class="hero-role-tag">Comedy</span>
+    </div>
+    <p class="shf-desc">A Regency-era live roleplaying game where audience members create the rumors, supply the drama, and watch their scandals explode onstage. Come write your own season of Bridgerton with us!</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+      <a href="mailto:leo@firebird.nyc?subject=Scandalton - Production Inquiry" class="btn btn--primary">Inquire to Produce</a>
+      <a href="https://instagram.com/scandalton" class="btn btn--ghost" target="_blank" rel="noopener">@scandalton</a>
+    </div>
+  </div>
+  <div class="shf-image" aria-hidden="true">
+    <img src="images/scandalton.png" alt="Scandalton: Live" loading="eager" />
+  </div>
+</section>
+
+<main>
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="poc-heading">
+    <div class="container">
+      <h2 class="section-title" id="poc-heading" style="margin-bottom:2rem;">Bring Scandalton to Your Stage</h2>
+      <p style="font-size:1rem;color:var(--muted);line-height:1.8;max-width:850px;margin-bottom:2rem;">
+        Scandalton premiered at the Phoenix Theatre Ensemble in NYC and has since been produced by Dacha Theatre in Seattle. The show is a repeatable, adaptable event that plays differently every night.
+      </p>
+      <div class="proof-block" data-fade>
+        <p class="proof-block__label">Dacha Theatre Production · Seattle, WA</p>
+        <p class="proof-block__text">Scandalton was remounted by Dacha Theatre with their resident ensemble cast, as an off-night offering on the regency set of their production of Kate Hammil's <em>Emma</em>. Looking for a pop-up show for your own stage? Scandalton is ready: all it needs is a company willing to dress up and cause a scene.</p>
+        <a href="https://dachatheatre.com" class="proof-block__link" target="_blank" rel="noopener">Dacha Theatre &#8594;</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="tt-heading">
+    <div class="container">
+      <span class="label">On TikTok</span>
+      <h2 class="section-title" id="tt-heading" style="margin-bottom:2rem;">@SCANDALTON</h2>
+      <div style="display:flex;justify-content:center;">
+        <blockquote class="tiktok-embed"
+          cite="https://www.tiktok.com/@scandalton"
+          data-unique-id="scandalton"
+          data-embed-type="creator"
+          style="max-width:780px;min-width:288px;width:100%;">
+          <section><a target="_blank" href="https://www.tiktok.com/@scandalton">@scandalton on TikTok</a></section>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="section contact-section" aria-labelledby="sc-contact-heading">
+  <div class="container">
+    <span class="label">Bring It To Your Stage</span>
+    <h2 class="section-title" id="sc-contact-heading" style="margin-bottom:1rem;">PRODUCE<br>SCANDALTON</h2>
+    <p class="contact-desc">If your company wants a repeatable, audience-driven event show with proven legs — Scandalton is ready. Reach out to discuss production packages.</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=Scandalton - Production Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://instagram.com/scandalton" class="btn btn--ghost" target="_blank" rel="noopener">@scandalton</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
+      <nav class="footer-links">
+        <a href="directing.html">Directing Portfolio</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&#169; 2026 Leo Lion.</p>
+      <div class="footer-social"><a href="https://instagram.com/scandalton" target="_blank" rel="noopener">@scandalton</a><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+<script async src="https://www.tiktok.com/embed.js"></script>
+</body>
+</html>
