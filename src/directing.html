@@ -42,8 +42,9 @@
     .filter-btn {
       font-family: var(--font-ui); font-size: 0.6rem; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 0.35rem 0.85rem;
+      padding: 0.35rem 0.9rem;
       border: 1px solid var(--border);
+      border-radius: 999px;
       background: transparent; color: var(--muted); cursor: pointer;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
@@ -172,6 +173,8 @@
       margin-top: 0.5rem; align-self: flex-start;
     }
 
+    .section { padding: clamp(2rem, 4vw, 3rem) 0; }
+
     @media (max-width: 960px) { .show-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 560px) { .show-grid { grid-template-columns: 1fr; } }
     @media (max-width: 700px) {
@@ -229,7 +232,6 @@
           <button class="filter-btn active" type="button" data-filter="type" data-val="all">All</button>
           <button class="filter-btn" type="button" data-filter="type" data-val="adult">Adult</button>
           <button class="filter-btn" type="button" data-filter="type" data-val="youth">Youth</button>
-          <button class="filter-btn" type="button" data-filter="type" data-val="game">Game Shows</button>
         </div>
       </div>
 
@@ -248,6 +250,23 @@
           <div class="show-card__caption">
             <p class="show-card__year">2026</p>
             <h2 class="show-card__title">ROBIN HOOD</h2>
+            <p class="show-card__org">Firebird Project · NYC</p>
+          </div>
+        </button>
+
+        <button type="button" class="show-card"
+          data-org="firebird" data-type="youth"
+          data-year="2026" data-title="THE WAR OF THE WORLDS"
+          data-org-label="Firebird Project · NYC"
+          data-quote="No one would have believed, in the last years of the nineteenth century…"
+          data-desc="Ensemble-devised adaptation of H.G. Wells. Adapted by Leo Lion &amp; Izzy Pflanz."
+          data-href="">
+          <div class="show-card__img-wrap">
+            <img class="show-card__img" src="images/directing/war-of-the-worlds.jpg" alt="The War of the Worlds" loading="lazy" />
+          </div>
+          <div class="show-card__caption">
+            <p class="show-card__year">2026</p>
+            <h2 class="show-card__title">THE WAR OF THE WORLDS</h2>
             <p class="show-card__org">Firebird Project · NYC</p>
           </div>
         </button>
@@ -323,7 +342,7 @@
         <button type="button" class="show-card"
           data-org="phoenix" data-type="adult"
           data-year="2024" data-title="KAFKATECH: METAMORPHOSIS"
-          data-org-label="Phoenix Ensemble · NYC"
+          data-org-label="Phoenix Theatre Ensemble · NYC"
           data-quote="It's shocking, what can suddenly happen to a person…"
           data-desc="Immersive audio-driven experience at a hypnotic corporate retreat, devised from Kafka's anti-capitalist fable."
           data-href="metamorphosis.html">
@@ -333,7 +352,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2024</p>
             <h2 class="show-card__title">KAFKATECH: METAMORPHOSIS</h2>
-            <p class="show-card__org">Phoenix Ensemble · NYC</p>
+            <p class="show-card__org">Phoenix Theatre Ensemble · NYC</p>
           </div>
         </button>
 
@@ -374,7 +393,7 @@
         <button type="button" class="show-card"
           data-org="phoenix" data-type="adult"
           data-year="2023" data-title="THE WIND IN THE WILLOWS"
-          data-org-label="Phoenix Ensemble · Nyack, NY"
+          data-org-label="Phoenix Theatre Ensemble · Nyack, NY"
           data-quote="Here today, in next week tomorrow!"
           data-desc="Physical theater rendition celebrating community, found family, and outdoor beauty."
           data-href="">
@@ -384,7 +403,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2023</p>
             <h2 class="show-card__title">THE WIND IN THE WILLOWS</h2>
-            <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+            <p class="show-card__org">Phoenix Theatre Ensemble · Nyack, NY</p>
           </div>
         </button>
 
@@ -408,7 +427,7 @@
         <button type="button" class="show-card"
           data-org="phoenix" data-type="game"
           data-year="2023" data-title="SCANDALTON: LIVE"
-          data-org-label="Phoenix Ensemble · NYC"
+          data-org-label="Phoenix Theatre Ensemble · NYC"
           data-quote="You bring the tea, we spill it."
           data-desc="Regency-era roleplaying game with audience-created rumors, styled after literary drama."
           data-href="scandalton.html">
@@ -418,14 +437,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2023</p>
             <h2 class="show-card__title">SCANDALTON: LIVE</h2>
-            <p class="show-card__org">Phoenix Ensemble · NYC</p>
+            <p class="show-card__org">Phoenix Theatre Ensemble · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="phoenix" data-type="adult"
           data-year="2022" data-title="THE IMPORTANCE OF BEING EARNEST"
-          data-org-label="Phoenix Ensemble · Nyack, NY"
+          data-org-label="Phoenix Theatre Ensemble · Nyack, NY"
           data-quote="Style, not sincerity, is the vital thing"
           data-desc="Glitzy outdoor dollhouse staging of Wilde's farce. Mainstage at Phoenix Festival, Top 10 of 2022 by Theatrescene."
           data-href="">
@@ -435,14 +454,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2022</p>
             <h2 class="show-card__title">THE IMPORTANCE OF BEING EARNEST</h2>
-            <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+            <p class="show-card__org">Phoenix Theatre Ensemble · Nyack, NY</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="phoenix" data-type="adult"
           data-year="2022" data-title="THE HARMFULNESS OF TOBACCO"
-          data-org-label="Phoenix Ensemble · Nyack, NY"
+          data-org-label="Phoenix Theatre Ensemble · Nyack, NY"
           data-quote="What's the point of all this!?"
           data-desc="Flashmob-inspired solo show based on Chekhov's short play, adapted for performer John Lenartz."
           data-href="">
@@ -452,7 +471,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2022</p>
             <h2 class="show-card__title">THE HARMFULNESS OF TOBACCO</h2>
-            <p class="show-card__org">Phoenix Ensemble · Nyack, NY</p>
+            <p class="show-card__org">Phoenix Theatre Ensemble · Nyack, NY</p>
           </div>
         </button>
 
@@ -510,7 +529,7 @@
         <button type="button" class="show-card"
           data-org="phoenix" data-type="adult"
           data-year="2020" data-title="THE DEATH OF IVAN ILYICH"
-          data-org-label="Phoenix Ensemble · NYC"
+          data-org-label="Phoenix Theatre Ensemble · NYC"
           data-quote="Death happens to other people!"
           data-desc="Group therapy session for dead people. US Premiere of Steven Sharkey's adaptation."
           data-href="">
@@ -520,7 +539,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2020</p>
             <h2 class="show-card__title">THE DEATH OF IVAN ILYICH</h2>
-            <p class="show-card__org">Phoenix Ensemble · NYC</p>
+            <p class="show-card__org">Phoenix Theatre Ensemble · NYC</p>
           </div>
         </button>
 
@@ -715,7 +734,7 @@
           </div>
           <div class="also-card__caption">
             <p class="also-card__title">FRANKENSTEIN</p>
-            <p class="also-card__role">Phoenix · Producer</p>
+            <p class="also-card__role">Firebird · Producer</p>
           </div>
         </div>
 
@@ -725,7 +744,7 @@
           </div>
           <div class="also-card__caption">
             <p class="also-card__title">BEDFELLOWS</p>
-            <p class="also-card__role">Phoenix · Producer</p>
+            <p class="also-card__role">Firebird · Producer</p>
           </div>
         </div>
 
@@ -735,7 +754,7 @@
           </div>
           <div class="also-card__caption">
             <p class="also-card__title">BOY, MY GREATNESS</p>
-            <p class="also-card__role">Phoenix · Producer</p>
+            <p class="also-card__role">Firebird · Producer</p>
           </div>
         </div>
 
@@ -745,7 +764,7 @@
           </div>
           <div class="also-card__caption">
             <p class="also-card__title">NURSE</p>
-            <p class="also-card__role">Phoenix · Producer</p>
+            <p class="also-card__role">Firebird · Producer</p>
           </div>
         </div>
 
@@ -755,7 +774,7 @@
           </div>
           <div class="also-card__caption">
             <p class="also-card__title">IF I LIVE</p>
-            <p class="also-card__role">Phoenix · Producer</p>
+            <p class="also-card__role">Firebird · Producer</p>
           </div>
         </div>
 
@@ -765,7 +784,7 @@
           </div>
           <div class="also-card__caption">
             <p class="also-card__title">THE SEAGULL</p>
-            <p class="also-card__role">Phoenix · Producer</p>
+            <p class="also-card__role">Firebird · Producer</p>
           </div>
         </div>
 

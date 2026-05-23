@@ -1,7 +1,7 @@
 # Productions Reference
 
 Leo's complete production history. Update this file to correct org, director, year, type, or any other details.
-Used to tag the directing portfolio (filter system) and populate lightbox descriptions.
+Used to tag the directing portfolio (filter system) and populate lightbox descriptions. Phoenix Ensemble should always be Phoenix Theatre Ensemble. 
 
 ---
 
@@ -9,10 +9,11 @@ Used to tag the directing portfolio (filter system) and populate lightbox descri
 
 | Year | Title | Org | Tag: Org | Tag: Type | Notes |
 |------|-------|-----|----------|-----------|-------|
-| 2026 | Robin Hood | Firebird Project | firebird | youth | Ensemble-devised |
+| 2026 | Robin Hood | Firebird Project | firebird | youth | Ensemble-devised | Adapted by Leo Lion & Izzy Pflanz
 | 2026 | Liar's Night | Firebird Project | firebird | game | Murder mystery party; social deduction |
 | 2025 | The Crucible | Firebird × Phoenix | phoenix | adult | Co-production; Nyack, NY |
 | 2025 | Help Me!!!! | Firebird Project | firebird | adult | Edinburgh Fringe + NYC; interactive seance |
+| 2026 | The War of the Worlds | Firebird Project | firebird | youth | Ensemble-devised | Adapted by Leo Lion & Izzy Pflanz
 | 2025 | Trouble Feature | Firebird × The TEAM | firebird | game | Horror game show; Petri Projects |
 | 2024 | Kafkatech: Metamorphosis | Phoenix Ensemble | phoenix | adult | Immersive; devised from Kafka |
 | 2024 | Dice: A Midsummer Night's Dream | Dacha Theatre | other | game | Seattle; audience-dice-roll casting |
@@ -42,16 +43,16 @@ Used to tag the directing portfolio (filter system) and populate lightbox descri
 ## ALSO PRODUCED (not directed by Leo)
 
 These appear in the "Also Produced" section on the directing page with vertical portrait cards.
-Director and year info below is **uncertain — please correct**.
+Director and year info below is **uncertain — please correct**. zoe sg is Zoe Senese-Grossberg.
 
 | Title | Org | Director | Year | Notes |
 |-------|-----|----------|------|-------|
-| Frankenstein | Phoenix Ensemble | ? | ? | |
-| Bedfellows | Phoenix Ensemble | ? | ? | |
-| Boy, My Greatness | Phoenix Ensemble | ? | ? | Verify exact title |
-| Nurse | Phoenix Ensemble | ? | ? | Verify exact title |
-| If I Live | Phoenix Ensemble | ? | ? | |
-| The Seagull | Phoenix Ensemble | ? | ? | |
+| Frankenstein | firebird | adapted & directed zoe sg
+| Bedfellows | firebird | written & directed zoe sg
+| Boy My Greatness | firebird | written & directed zoe sg
+| Nurse | firebird | created & performed by Ayun Halliday, directed by Spencer Kayden
+| If I Live | firebird | created by Rae Bell & Sophie Falvey, directed by Zoe Sg
+| The Seagull | firebird | adapted & directed zoe sg
 
 ---
 
