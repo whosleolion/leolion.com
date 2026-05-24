@@ -1,2 +1,15 @@
 [build]
   publish = "src"
+
+# Serve helpme.leolion.com and helpmetheshow.com from /helpme/
+[[redirects]]
+  from = "https://helpme.leolion.com/*"
+  to = "/helpme/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://helpmetheshow.com/*"
+  to = "https://helpme.leolion.com/:splat"
+  status = 301
+  force = true
