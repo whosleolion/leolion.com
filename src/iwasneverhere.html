@@ -8,9 +8,16 @@
   <link rel="stylesheet" href="css/style.css" />
   <style>
     :root { --accent: #00c896; --accent-dim: rgba(0,200,150,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
     .spy-hero {
       min-height: 100svh; display: flex; flex-direction: column;
-      justify-content: center; align-items: flex-start;
+      justify-content: center; align-items: center;
       padding-top: var(--nav-h);
       padding-left: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
       padding-right: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
@@ -24,20 +31,61 @@
         radial-gradient(ellipse at 80% 30%, rgba(0,200,150,0.05) 0%, transparent 40%);
       pointer-events: none;
     }
-    .spy-title {
-      font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 11rem);
-      line-height: 0.86; margin-bottom: 1.5rem; position: relative;
+
+    .spy-logo {
+      max-width: min(560px, 80vw); width: 100%;
+      display: block; margin-bottom: 1rem; position: relative;
     }
     .spy-sub {
-      font-family: var(--font-display); font-size: clamp(1rem, 2vw, 1.6rem);
-      color: var(--accent); margin-bottom: 2.5rem; position: relative;
+      font-family: var(--font-display); font-size: clamp(1.2rem, 2vw, 1.6rem);
+      color: var(--accent); margin-bottom: 1.5rem; position: relative;
+      max-width: 600px; line-height: 1.3;
     }
-    .spy-ctas { display: flex; gap: 1rem; flex-wrap: wrap; position: relative; }
     .classified {
       display: inline-block; font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
       letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
-      border: 1px solid var(--accent); padding: 0.3em 0.75em; margin-bottom: 1rem;
+      border: 1px solid var(--accent); padding: 0.3em 0.75em; margin-bottom: 0.6rem;
       position: relative;
+    }
+
+    /* Tighter section padding scoped to this page */
+    body .section { padding: clamp(2rem, 4.5vw, 3.5rem) 0; }
+
+    /* Image buttons */
+    .spy-img-btns {
+      display: flex; gap: 1.25rem; flex-wrap: wrap;
+      align-items: flex-end; position: relative;
+    }
+    .spy-img-btn {
+      display: inline-block;
+      transition: opacity 0.2s, transform 0.18s;
+    }
+    .spy-img-btn:hover { opacity: 0.8; transform: translateY(-4px); }
+    .spy-img-btn img {
+      height: 140px; width: auto; display: block;
+    }
+
+    /* Sections */
+    .spy-dark { background: #040a07; }
+
+    .spy-history { width: 100%; margin-top: 1.5rem; }
+    .spy-history-row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 1.5rem; padding: 1rem 0;
+      border-bottom: 1px solid rgba(0,200,150,0.15);
+      font-family: var(--font-ui); font-size: 0.85rem; align-items: baseline;
+    }
+    .spy-history-prod { color: var(--white); font-weight: 600; }
+    .spy-history-venue { color: var(--muted); text-align: right; }
+
+    @media (max-width: 768px) {
+      .spy-img-btn img { height: 100px; }
+      .spy-img-btns { gap: 0.75rem; }
+      .spy-history-row { grid-template-columns: 1fr; gap: 0.2rem; }
+      .spy-history-venue { text-align: left; }
+    }
+    @media (max-width: 480px) {
+      .spy-img-btn img { height: 80px; }
     }
   </style>
 </head>
@@ -52,6 +100,9 @@
     <ul class="nav-links" role="list">
       <li><a href="index.html#about">About</a></li>
       <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
       <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
     </ul>
   </div>
@@ -60,15 +111,53 @@
 <main>
   <section class="spy-hero" aria-labelledby="iwnh-heading">
     <span class="classified">&#9632; Classified</span>
-    <span class="label" style="position:relative;">Edinburgh Fringe 2026 · The Firebird Project</span>
-    <h1 class="spy-title" id="iwnh-heading">I WAS<br>NEVER HERE.</h1>
+    <span class="label" style="position:relative;margin-bottom:0.75rem;display:block;">Edinburgh Fringe 2026 · The Firebird Project</span>
+    <h1 id="iwnh-heading" style="position:relative;margin:0 0 1rem;">
+      <img src="images/iwasneverhere/never here logo.png" alt="I Was Never Here" class="spy-logo" />
+    </h1>
     <p class="spy-sub">This sleeper agent is on a high-stakes mission.<br>Your objective? Help him remember what the hell it is.</p>
-    <div class="spy-ctas">
-      <a href="https://iwasneverhere.show" class="btn btn--primary" target="_blank" rel="noopener">iwasneverhere.show</a>
-      <a href="https://instagram.com/iwasneverhere.show" class="btn btn--ghost" target="_blank" rel="noopener">Follow the Mission</a>
+    <div class="spy-img-btns">
+      <a href="https://www.gofundme.com/f/iwasneverhere" class="spy-img-btn" target="_blank" rel="noopener">
+        <img src="images/iwasneverhere/buttons/6.png" alt="Make a Donation" />
+      </a>
+      <!-- TODO: replace # with press release URL -->
+      <a href="#" class="spy-img-btn">
+        <img src="images/iwasneverhere/buttons/7.png" alt="Press" />
+      </a>
+      <a href="https://arishik.wixsite.com/iwasneverherefilm" class="spy-img-btn" target="_blank" rel="noopener">
+        <img src="images/iwasneverhere/buttons/8.png" alt="Secret Bonus Content" />
+      </a>
+      <a href="https://tickets.thespaceuk.com/event/911:5402/" class="spy-img-btn" target="_blank" rel="noopener">
+        <img src="images/iwasneverhere/buttons/9.png" alt="Fringe Tickets" />
+      </a>
     </div>
   </section>
+
+  <section class="section spy-dark" style="border-top:1px solid rgba(0,200,150,0.15);" aria-label="Production History">
+    <div class="container">
+      <span class="label">Production History</span>
+      <div class="spy-history" data-fade>
+        <div class="spy-history-row">
+          <span class="spy-history-prod">Edinburgh Fringe 2026</span>
+          <span class="spy-history-venue">The Space UK · Edinburgh, Scotland</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
+
+<section class="section contact-section" id="iwnh-inquire" aria-label="Inquiries">
+  <div class="container">
+    <span class="label">Inquiries</span>
+    <h2 class="section-title" style="margin-bottom:1rem;">Produce Spy Show</h2>
+    <p class="contact-desc">Interested in producing or booking <em>I Was Never Here</em>? Too bad. There is no spy show.</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=I Was Never Here - Production Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://instagram.com/thereisnospyshow" class="btn btn--ghost" target="_blank" rel="noopener">@thereisnospyshow</a>
+    </div>
+  </div>
+</section>
 
 <footer class="site-footer">
   <div class="container">
@@ -87,7 +176,7 @@
     <div class="footer-bottom">
       <p class="footer-copy">&#169; 2026 Leo Lion · The Firebird Project.</p>
       <div class="footer-social">
-        <a href="https://instagram.com/iwasneverhere.show" target="_blank" rel="noopener">@iwasneverhere.show</a>
+        <a href="https://instagram.com/thereisnospyshow" target="_blank" rel="noopener">@thereisnospyshow</a>
         <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a>
         <a href="mailto:leo@firebird.nyc">Email</a>
       </div>

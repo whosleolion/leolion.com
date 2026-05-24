@@ -3,127 +3,294 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Liar's Night — A multidimensional night of social deduction, set at a carnival at the end of the world. Post-apocalyptic murder mystery party by Wally Alpern & Leo Lion." />
+  <meta name="description" content="Liar's Night — A multidimensional night of social deduction, set at a carnival at the end of the world." />
   <title>Liar's Night — Leo Lion</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
     :root { --accent: #cc44ff; --accent-dim: rgba(204,68,255,0.1); }
+
     [data-fade] {
       opacity: 0; transform: translateY(20px);
-      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition: opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo);
       transition-delay: var(--delay, 0s);
     }
     [data-fade].visible { opacity: 1; transform: none; }
 
+    /* ─── HERO ─────────────────────────────── */
     .ln-hero {
-      min-height: 100svh; display: flex; flex-direction: column;
+      min-height: 100svh;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       justify-content: flex-end;
-      padding-top: var(--nav-h); position: relative; overflow: hidden;
-      background: #060408;
     }
-    .ln-hero__bg {
+    .ln-hero__photo {
       position: absolute; inset: 0; z-index: 1;
-      background:
-        radial-gradient(ellipse at 50% 40%, rgba(204,68,255,0.12) 0%, transparent 55%),
-        radial-gradient(ellipse at 20% 80%, rgba(204,68,255,0.06) 0%, transparent 40%);
     }
-    .ln-hero__logo {
+    .ln-hero__photo img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 40%;
+      display: block;
+    }
+    .ln-hero__overlay {
       position: absolute; inset: 0; z-index: 2;
-      display: flex; align-items: center; justify-content: center;
-      padding-top: var(--nav-h);
-    }
-    .ln-hero__logo img {
-      width: min(680px, 85vw); opacity: 0.15;
-      filter: saturate(0) brightness(2);
+      background:
+        linear-gradient(to top,
+          #060408 0%,
+          rgba(6,4,8,0.82) 35%,
+          rgba(6,4,8,0.35) 65%,
+          rgba(6,4,8,0.55) 100%),
+        radial-gradient(ellipse at 50% 50%, rgba(80,0,140,0.25) 0%, transparent 70%);
     }
     .ln-hero__content {
       position: relative; z-index: 3;
       padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
       padding-bottom: 5rem;
-      max-width: calc(var(--max-w) + 2 * var(--gutter));
+    }
+    .ln-hero__label {
+      display: block;
+      margin-bottom: 1.25rem;
     }
     .ln-hero__title {
       font-family: var(--font-display);
-      font-size: clamp(5rem, 14vw, 14rem);
-      line-height: 0.86; margin-bottom: 1.25rem;
+      font-size: clamp(5.5rem, 18vw, 18rem);
+      line-height: 0.85;
+      margin: 0 0 1.5rem;
+      letter-spacing: -0.01em;
     }
     .ln-hero__sub {
       font-family: var(--font-display);
-      font-size: clamp(1rem, 2vw, 1.6rem);
-      color: var(--accent); line-height: 1.3;
-      margin-bottom: 2.5rem; max-width: 700px;
+      font-size: clamp(1.1rem, 2.2vw, 1.85rem);
+      color: var(--accent);
+      line-height: 1.3;
+      margin-bottom: 3rem;
+      max-width: 720px;
     }
+    .ln-hero__ctas { display: flex; gap: 1rem; flex-wrap: wrap; }
 
-    .ln-stats {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 1px; background: var(--border); border: 1px solid var(--border);
-      margin-top: 2.5rem;
-    }
-    .ln-stat { background: var(--near-black); padding: 1.75rem; }
-    .ln-stat__num {
-      font-family: var(--font-display); font-size: 2.5rem;
-      color: var(--accent); line-height: 1; margin-bottom: 0.4rem;
-    }
-    .ln-stat__label {
-      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
-    }
-
-    .ln-cast-grid {
-      display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem;
-      margin-top: 2rem;
-    }
-    .ln-cast-card { text-align: center; }
-    .ln-cast-card img {
-      width: 100%; aspect-ratio: 1; object-fit: cover; object-position: top;
-      display: block; filter: saturate(0.6) brightness(0.85);
-      transition: filter 0.2s;
-    }
-    .ln-cast-card:hover img { filter: saturate(1) brightness(1); }
-    .ln-cast-card__name {
-      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
-      margin-top: 0.6rem;
-    }
-
+    /* ─── GALLERY ────────────────────────────── */
     .ln-gallery {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 4px; margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
     }
-    .ln-gallery img {
-      width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
-      cursor: pointer; transition: opacity 0.2s;
+    .ln-gallery__item {
+      overflow: hidden; cursor: pointer;
+      position: relative;
     }
-    .ln-gallery img:hover { opacity: 0.8; }
+    .ln-gallery__item img {
+      width: 100%; aspect-ratio: 4/3;
+      object-fit: cover; display: block;
+      transition: transform 0.4s ease, opacity 0.3s;
+    }
+    .ln-gallery__item:hover img {
+      transform: scale(1.03); opacity: 0.85;
+    }
+    .ln-gallery-meta {
+      padding: 0.65rem max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
 
+    /* ─── ABOUT ──────────────────────────────── */
+    .ln-about-heading {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 4.5vw, 4rem);
+      line-height: 0.9;
+      margin: 0 0 2.5rem;
+    }
+    .ln-about-cols {
+      display: grid;
+      grid-template-columns: 5fr 4fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .ln-about-lead {
+      font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+      line-height: 1.75;
+      color: var(--white);
+      font-weight: 400;
+    }
+    .ln-about-secondary {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+    .ln-about-secondary p + p { margin-top: 1rem; }
+    .ln-about-footnote {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ─── CAST ───────────────────────────────── */
+    .ln-cast-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      margin-top: 2rem;
+      max-width: var(--max-w);
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .ln-cast-card {
+      position: relative; overflow: hidden;
+    }
+    .ln-cast-card img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+      transition: transform 0.35s ease;
+    }
+    .ln-cast-card:hover img { transform: scale(1.04); }
+    .ln-cast-card__name {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 1.5rem 0.5rem 0.5rem;
+      background: linear-gradient(to top, rgba(6,4,8,0.9) 0%, transparent 100%);
+      font-family: var(--font-ui);
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .ln-cast-card:hover .ln-cast-card__name { opacity: 1; }
+
+    /* ─── TRAILER ────────────────────────────── */
+    .ln-trailer { background: #030205; }
+    .ln-trailer-inner {
+      display: flex;
+      justify-content: center;
+      padding-bottom: 5rem;
+    }
+    .ln-shorts-wrap {
+      width: min(380px, 88vw);
+      aspect-ratio: 9/16;
+      background: #000;
+      border: 1px solid rgba(204,68,255,0.18);
+      overflow: hidden;
+    }
+    .ln-shorts-wrap iframe {
+      width: 100%; height: 100%;
+      border: none; display: block;
+    }
+
+    /* ─── HISTORY ────────────────────────────── */
+    .ln-history { margin-top: 1.5rem; }
+    .ln-history-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 2rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+    }
+    .ln-history-prod { color: var(--white); font-weight: 600; }
+    .ln-history-venue { color: var(--muted); }
+
+    /* ─── LIGHTBOX ───────────────────────────── */
     .lb {
       display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.94); align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.96);
+      align-items: center; justify-content: center;
     }
     .lb.open { display: flex; }
     .lb__img { max-width: 90vw; max-height: 90vh; object-fit: contain; display: block; }
     .lb__close, .lb__arrow {
-      background: none; border: none; color: var(--white); cursor: pointer;
-      font-family: var(--font-display); line-height: 1; opacity: 0.6; transition: opacity 0.15s;
+      background: none; border: none; color: var(--white);
+      cursor: pointer; line-height: 1; opacity: 0.5; transition: opacity 0.15s;
+      font-family: var(--font-display);
     }
     .lb__close:hover, .lb__arrow:hover { opacity: 1; }
-    .lb__close { position: fixed; top: 1.5rem; right: 1.5rem; font-size: 2.5rem; }
+    .lb__close { position: fixed; top: 1.5rem; right: 1.75rem; font-size: 2.5rem; }
     .lb__arrow { position: fixed; top: 50%; transform: translateY(-50%); font-size: 3rem; padding: 1rem; }
-    .lb__prev { left: 0; }
-    .lb__next { right: 0; }
+    .lb__prev { left: 0; } .lb__next { right: 0; }
     .lb__counter {
       position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
+      font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600;
       letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
     }
 
-    @media (max-width: 900px) {
-      .ln-cast-grid { grid-template-columns: repeat(4, 1fr); }
-      .ln-stats { grid-template-columns: repeat(2, 1fr); }
+    /* ─── RESPONSIVE ─────────────────────────── */
+    @media (max-width: 1024px) {
+      .ln-about-cols { grid-template-columns: 1fr 1fr; gap: 3rem; }
     }
-    @media (max-width: 600px) {
-      .ln-cast-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    @media (max-width: 768px) {
+      .ln-about-cols { grid-template-columns: 1fr; gap: 2rem; }
       .ln-gallery { grid-template-columns: repeat(2, 1fr); }
+      .ln-about-footnote { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    }
+    @media (max-width: 520px) {
+      .ln-cast-grid { grid-template-columns: repeat(3, 1fr); }
+      .ln-gallery { grid-template-columns: repeat(2, 1fr); }
+      .ln-cast-card__name { opacity: 1; }
+    }
+
+    /* ─── CAST CURSOR ────────────────────────────── */
+    .ln-cast-card { cursor: pointer; }
+
+    /* ─── UPDATES FORM ───────────────────────────── */
+    .ln-form-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+      max-width: 640px;
+    }
+    .ln-form-input {
+      flex: 1 1 200px;
+      padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ln-form-input::placeholder { color: var(--muted); }
+    .ln-form-input:focus { border-color: var(--accent); }
+    .ln-form-btn { flex-shrink: 0; }
+    .ln-form-note {
+      margin-top: 0.75rem;
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* ─── LIGHTBOX CAPTION ───────────────────────── */
+    .lb__caption {
+      position: fixed; bottom: 3.5rem; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--white);
+      white-space: nowrap; opacity: 0.8;
     }
   </style>
 </head>
@@ -138,21 +305,25 @@
     <ul class="nav-links" role="list">
       <li><a href="index.html#about">About</a></li>
       <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
       <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
     </ul>
   </div>
 </nav>
 
+<!-- ═══ HERO ═══════════════════════════════════════════════════════ -->
 <section class="ln-hero" aria-labelledby="ln-heading">
-  <div class="ln-hero__bg" aria-hidden="true"></div>
-  <div class="ln-hero__logo" aria-hidden="true">
-    <img src="images/liars-night/title-logo.png" alt="" />
+  <div class="ln-hero__photo" aria-hidden="true">
+    <img src="images/liars-night/hero.png" alt="" />
   </div>
+  <div class="ln-hero__overlay" aria-hidden="true"></div>
   <div class="ln-hero__content">
-    <span class="label">Event Theatre · Created by Wally Alpern &amp; Leo Lion</span>
+    <span class="label ln-hero__label">Event Theatre · Created by Wally Alpern &amp; Leo Lion</span>
     <h1 class="ln-hero__title" id="ln-heading">LIAR'S<br>NIGHT</h1>
-    <p class="ln-hero__sub">A multidimensional night of social deduction, set at a carnival at the end of the world.</p>
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <p class="ln-hero__sub">A multidimensional night of social deduction,<br>set at a carnival at the end of the world.</p>
+    <div class="ln-hero__ctas">
       <a href="mailto:leo@firebird.nyc?subject=Liar%27s Night - Booking Inquiry" class="btn btn--primary">Book This Show</a>
       <a href="https://instagram.com/liarsnight_official" class="btn btn--ghost" target="_blank" rel="noopener">@liarsnight_official</a>
     </div>
@@ -161,116 +332,134 @@
 
 <main>
 
+  <!-- ═══ ABOUT ══════════════════════════════════════════════════════ -->
   <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="ln-about-heading">
     <div class="container">
-      <span class="label">About the Show</span>
-      <h2 class="section-title" id="ln-about-heading" style="margin-bottom:2rem;">THE LAST GREAT<br>PARTY</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;">
-        <p style="font-size:clamp(1.1rem,1.8vw,1.35rem);line-height:1.75;color:var(--white);font-weight:400;" data-fade>
+      <div class="ln-about-cols">
+        <p class="ln-about-lead" data-fade>
           Experience a post-apocalyptic murder mystery party, with debauchery, drinks, and a devious killer on the loose!
+LIAR’S NIGHT is a multidimensional night of social deduction, set at a carnival at the end of the world.<br><br> A party, a game of mafia, an immersive theatre event all rolled into one - play on the side of good or evil, compete in carnival games, win prizes and complete side-quests, or just share a drink with a few beautiful strangers at the end of time.
+The show features a cast of performer NPCs that help guide the story, a live voting engine, a secondary Underworld location, and much more for those with curious eyes to see and discover…
         </p>
-        <div style="font-size:0.95rem;color:var(--muted);line-height:1.85;" data-fade>
-          <p>Players choose sides of good or evil, participate in carnival games, win prizes, and complete side-quests — all while performer NPCs run the investigation, the trials, and the increasingly chaotic last rites of civilization. A live voting engine, minigames, and a secondary Underworld location make every night play differently.</p>
-          <p style="margin-top:1rem;">Inspired by <em>Mafia</em>, <em>Werewolf</em>, and <em>Blood on the Clocktower</em>.</p>
+        <div class="ln-about-secondary" data-fade>
+            <div class="ln-shorts-wrap" data-fade>
+        <iframe
+          src="https://www.youtube.com/embed/K7H41eiddU8"
+          title="Liar's Night — Official Trailer"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
         </div>
       </div>
-      <div class="ln-stats" data-fade>
-        <div class="ln-stat">
-          <p class="ln-stat__num">25–35</p>
-          <p class="ln-stat__label">Players</p>
-        </div>
-        <div class="ln-stat">
-          <p class="ln-stat__num">3</p>
-          <p class="ln-stat__label">Hours of Play</p>
-        </div>
-        <div class="ln-stat">
-          <p class="ln-stat__num">7</p>
-          <p class="ln-stat__label">Performer NPCs</p>
-        </div>
-        <div class="ln-stat">
-          <p class="ln-stat__num">&#x221E;</p>
-          <p class="ln-stat__label">Ways It Can End</p>
-        </div>
+      <div class="ln-about-footnote" data-fade>
+        <span>25–35 players &nbsp;&middot;&nbsp; 3 hours</span>
+        <span style="font-style:italic;font-weight:400;">Inspired by <em>Mafia</em>, <em>Werewolf</em>, and <em>Blood on the Clocktower</em></span>
       </div>
+
     </div>
   </section>
 
-  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="ln-cast-heading">
-    <div class="container">
+  <!-- ═══ CAST ═══════════════════════════════════════════════════════ -->
+  <section style="border-top:1px solid var(--border);padding:0 0 0;" aria-label="The Cast">
+    <div class="container" style="padding-top:3rem;padding-bottom:1rem;">
       <span class="label">The Cast</span>
-      <h2 class="section-title" id="ln-cast-heading" style="margin-bottom:2rem;">WHO RUNS<br>THE WORLD</h2>
-      <div class="ln-cast-grid">
-        <div class="ln-cast-card">
-          <img src="images/liars-night/archivist.png" alt="The Archivist" loading="lazy" />
-          <p class="ln-cast-card__name">Archivist</p>
-        </div>
-        <div class="ln-cast-card">
-          <img src="images/liars-night/barkeep.png" alt="The Barkeep" loading="lazy" />
-          <p class="ln-cast-card__name">Barkeep</p>
-        </div>
-        <div class="ln-cast-card">
-          <img src="images/liars-night/corpse.png" alt="The Corpse" loading="lazy" />
-          <p class="ln-cast-card__name">Corpse</p>
-        </div>
-        <div class="ln-cast-card">
-          <img src="images/liars-night/executioner.png" alt="The Executioner" loading="lazy" />
-          <p class="ln-cast-card__name">Executioner</p>
-        </div>
-        <div class="ln-cast-card">
-          <img src="images/liars-night/front-of-house.png" alt="Front of House" loading="lazy" />
-          <p class="ln-cast-card__name">Front of House</p>
-        </div>
-        <div class="ln-cast-card">
-          <img src="images/liars-night/gallowsman.png" alt="The Gallowsman" loading="lazy" />
-          <p class="ln-cast-card__name">Gallowsman</p>
-        </div>
-        <div class="ln-cast-card">
-          <img src="images/liars-night/hell-band.png" alt="Hell Band" loading="lazy" />
-          <p class="ln-cast-card__name">Hell Band</p>
-        </div>
+    </div>
+    <div class="ln-cast-grid" data-fade>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/archivist.png" alt="The Archivist" loading="lazy" />
+        <span class="ln-cast-card__name">Archivist</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/barkeep.png" alt="The Barkeep" loading="lazy" />
+        <span class="ln-cast-card__name">Barkeep</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/corpse.png" alt="The Corpse" loading="lazy" />
+        <span class="ln-cast-card__name">Corpse</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/dealer.png" alt="The Dealer" loading="lazy" />
+        <span class="ln-cast-card__name">Dealer</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/executioner.png" alt="The Executioner" loading="lazy" />
+        <span class="ln-cast-card__name">Executioner</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/front-of-house.png" alt="Front of House" loading="lazy" />
+        <span class="ln-cast-card__name">Front of House</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/gallowsman.png" alt="The Gallowsman" loading="lazy" />
+        <span class="ln-cast-card__name">Gallowsman</span>
+      </div>
+      <div class="ln-cast-card">
+        <img src="images/liars-night/hell-band.png" alt="Hell Band" loading="lazy" />
+        <span class="ln-cast-card__name">Hell Band</span>
       </div>
     </div>
   </section>
 
-  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="ln-gallery-heading">
-    <div class="container">
-      <span class="label" id="ln-gallery-heading">Photos by Anna Rishik · Romania, Brooklyn</span>
-      <div class="ln-gallery">
-        <img src="images/liars-night/photo-01.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-02.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-03.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-04.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-05.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-06.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-07.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-08.png" alt="Liar's Night production photo" loading="lazy" />
-        <img src="images/liars-night/photo-09.png" alt="Liar's Night production photo" loading="lazy" />
-      </div>
-      <p style="font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.75rem;">Photography: Anna Rishik</p>
-    </div>
-  </section>
+
 
 </main>
 
+<!-- ═══ LIGHTBOX ══════════════════════════════════════════════════════ -->
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo lightbox">
   <img class="lb__img" id="lb-img" src="" alt="" />
   <button class="lb__close" id="lb-close" aria-label="Close">&#215;</button>
   <button class="lb__arrow lb__prev" id="lb-prev" aria-label="Previous">&#8249;</button>
   <button class="lb__arrow lb__next" id="lb-next" aria-label="Next">&#8250;</button>
   <p class="lb__counter" id="lb-counter"></p>
+  <p class="lb__caption" id="lb-caption"></p>
 </div>
 
+<!-- ═══ UPDATES ═══════════════════════════════════════════════════════ -->
+<section class="section" style="border-top:1px solid var(--border);" aria-labelledby="ln-updates-heading">
+  <div class="container">
+    <span class="label">Stay in the Loop</span>
+    <h2 class="section-title" id="ln-updates-heading" style="margin-bottom:1rem;">FIRST TO KNOW</h2>
+    <p style="color:var(--muted);max-width:540px;margin-bottom:2.5rem;line-height:1.75;">Be first to know when Liar's Night comes to your city!</p>
+    <form class="ln-updates-form" method="post" action="https://formspree.io/f/REPLACE_WITH_YOUR_ID" novalidate>
+      <div class="ln-form-row">
+        <input class="ln-form-input" type="text" name="name" placeholder="Your name" autocomplete="name" />
+        <input class="ln-form-input" type="email" name="email" placeholder="Your email" required autocomplete="email" />
+        <button class="btn btn--primary ln-form-btn" type="submit">Notify Me</button>
+      </div>
+      <p class="ln-form-note">Your email won't be shared.</p>
+    </form>
+  </div>
+</section>
+
+<!-- ═══ INQUIRE ════════════════════════════════════════════════════════ -->
 <section class="section contact-section" aria-labelledby="ln-contact-heading">
   <div class="container">
     <span class="label">Inquiries</span>
-    <h2 class="section-title" id="ln-contact-heading" style="margin-bottom:1rem;">LET'S<br>MAKE A DEAL</h2>
-    <p class="contact-desc">Interested in booking Liar's Night for your venue, festival, or event? Leo and The Firebird Project want to hear from you.</p>
+    <h2 class="section-title" id="ln-contact-heading" style="margin-bottom:1rem;">LET'S MAKE A DEAL</h2>
+    <p class="contact-desc">Interested in booking Liar's Night for your venue, festival, or event? We at the Carnival want to hear from you.</p>
     <div class="contact-ctas">
       <a href="mailto:leo@firebird.nyc?subject=Liar%27s Night - Booking Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
       <a href="https://instagram.com/liarsnight_official" class="btn btn--ghost" target="_blank" rel="noopener">@liarsnight_official</a>
     </div>
   </div>
 </section>
+
+<!-- ═══ GALLERY ════════════════════════════════════════════════════════ -->
+<div style="border-top:1px solid var(--border);" aria-label="Production photos">
+  <div class="ln-gallery">
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-01.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-02.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-03.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-04.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-05.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-06.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-07.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-08.png" alt="Liar's Night production photo" loading="lazy" /></div>
+    <div class="ln-gallery__item"><img src="images/liars-night/photo-09.png" alt="Liar's Night production photo" loading="lazy" /></div>
+  </div>
+  <p class="ln-gallery-meta">Photography: Anna Rishik</p>
+</div>
 
 <footer class="site-footer">
   <div class="container">
@@ -296,26 +485,44 @@
     </div>
   </div>
 </footer>
+
 <script src="js/main.js"></script>
 <script>
   (function () {
-    var imgs = Array.from(document.querySelectorAll('.ln-gallery img'));
     var lb = document.getElementById('lb');
     var lbImg = document.getElementById('lb-img');
     var lbCounter = document.getElementById('lb-counter');
+    var lbCaption = document.getElementById('lb-caption');
+    var activeSet = [];
+    var showCaption = false;
     var current = 0;
-    function open(idx) {
-      current = idx;
-      lbImg.src = imgs[current].src;
-      lbImg.alt = imgs[current].alt;
-      lbCounter.textContent = (current + 1) + ' / ' + imgs.length;
+
+    function show() {
+      var img = activeSet[current];
+      lbImg.src = img.src;
+      lbImg.alt = img.alt;
+      lbCounter.textContent = (current + 1) + ' / ' + activeSet.length;
+      lbCaption.textContent = showCaption ? (img.alt || '') : '';
       lb.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
+    function openSet(set, idx, caption) {
+      activeSet = set; current = idx; showCaption = !!caption; show();
+    }
     function close() { lb.classList.remove('open'); document.body.style.overflow = ''; }
-    function prev() { open((current - 1 + imgs.length) % imgs.length); }
-    function next() { open((current + 1) % imgs.length); }
-    imgs.forEach(function (img, i) { img.addEventListener('click', function () { open(i); }); });
+    function prev() { current = (current - 1 + activeSet.length) % activeSet.length; show(); }
+    function next() { current = (current + 1) % activeSet.length; show(); }
+
+    var galleryImgs = Array.from(document.querySelectorAll('.ln-gallery__item img'));
+    document.querySelectorAll('.ln-gallery__item').forEach(function (item, i) {
+      item.addEventListener('click', function () { openSet(galleryImgs, i, false); });
+    });
+
+    var castImgs = Array.from(document.querySelectorAll('.ln-cast-card img'));
+    document.querySelectorAll('.ln-cast-card').forEach(function (card, i) {
+      card.addEventListener('click', function () { openSet(castImgs, i, true); });
+    });
+
     document.getElementById('lb-close').addEventListener('click', close);
     document.getElementById('lb-prev').addEventListener('click', function (e) { e.stopPropagation(); prev(); });
     document.getElementById('lb-next').addEventListener('click', function (e) { e.stopPropagation(); next(); });

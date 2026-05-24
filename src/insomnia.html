@@ -3,11 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Insomnia — An all-night immersive theatrical experience, midnight to sunrise. JetLag Festival." />
+  <meta name="description" content="Insomnia — An all-night immersive theatrical experience, midnight to sunrise. You snooze, you win." />
   <title>Insomnia — Leo Lion</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
     :root { --accent: #7b52ff; --accent-dim: rgba(123,82,255,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
     .lock-hero {
       min-height: 100svh; display: flex; flex-direction: column;
       justify-content: center; align-items: flex-start;
@@ -15,7 +22,11 @@
       padding-left: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
       padding-right: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
       position: relative; overflow: hidden;
-      background: linear-gradient(170deg, #050510 0%, #0a0818 40%, #080808 100%);
+      background-image:
+        linear-gradient(170deg, rgba(5,5,16,0.82) 0%, rgba(10,8,24,0.72) 40%, rgba(8,8,8,0.68) 100%),
+        url('images/insomnia/insomnia hero.png');
+      background-size: cover;
+      background-position: center;
     }
     .lock-hero::before {
       content: ''; position: absolute; inset: 0;
@@ -42,6 +53,42 @@
       margin-bottom: 2.5rem; display: block; position: relative;
     }
     .lock-ctas { display: flex; gap: 1rem; flex-wrap: wrap; position: relative; }
+
+    .insomnia-bg { background: linear-gradient(180deg, #08060f 0%, #080808 100%); }
+
+    .insomnia-hook {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 3vw, 2.4rem);
+      color: var(--white); line-height: 1.3; margin-bottom: 2.5rem;
+    }
+
+    .insomnia-two-col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start;
+    }
+
+    .insomnia-video-wrap {
+      width: 100%; max-width: 960px;
+      aspect-ratio: 16/9;
+      background: #000; border: 1px solid rgba(123,82,255,0.2);
+      overflow: hidden;
+    }
+    .insomnia-video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    .insomnia-history { width: 100%; margin-top: 1.5rem; }
+    .insomnia-history-row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 1.5rem; padding: 1rem 0;
+      border-bottom: 1px solid rgba(123,82,255,0.15);
+      font-family: var(--font-ui); font-size: 0.85rem; align-items: baseline;
+    }
+    .insomnia-history-prod { color: var(--white); font-weight: 600; }
+    .insomnia-history-venue { color: var(--muted); text-align: right; }
+
+    @media (max-width: 768px) {
+      .insomnia-two-col { grid-template-columns: 1fr; gap: 2rem; }
+      .insomnia-history-row { grid-template-columns: 1fr; gap: 0.2rem; }
+      .insomnia-history-venue { text-align: left; }
+    }
   </style>
 </head>
 <body>
@@ -55,6 +102,9 @@
     <ul class="nav-links" role="list">
       <li><a href="index.html#about">About</a></li>
       <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
       <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
     </ul>
   </div>
@@ -66,11 +116,70 @@
     <h1 class="lock-title" id="insomnia-heading">INSOMNIA</h1>
     <span class="lock-time">Midnight &#8594; Sunrise</span>
     <div class="lock-ctas">
-      <a href="https://instagram.com/insomnia.show" class="btn btn--primary" target="_blank" rel="noopener">@insomnia.show</a>
-      <a href="mailto:leo@firebird.nyc?subject=Insomnia - Festival Programming Inquiry" class="btn btn--ghost">Inquire About This Show</a>
+      <a href="#insomnia-inquire" class="btn btn--primary">Inquire to Produce</a>
+      <a href="https://instagram.com/insomnia.show" class="btn btn--ghost" target="_blank" rel="noopener">@insomnia.show</a>
     </div>
   </section>
+
+  <section class="section insomnia-bg" style="border-top:1px solid rgba(123,82,255,0.2);" aria-label="About">
+    <div class="container">
+      <span class="label">About</span>
+      <div style="margin-top:2rem;">
+        <p class="insomnia-hook" data-fade>Does theatre make you snore?<br>You'll feel right at home at Insomnia — the immersive all-night theatrical experience where audiences are encouraged to doze off. You snooze, you win.</p>
+          <div style="font-size:clamp(1rem,1.6vw,1.15rem);color:var(--white);line-height:1.8;" data-fade>
+            <p>Insomnia is a durational all-night performance that runs from midnight to sunrise. You can experience it at your leisure — stay for the whole night, or drop in for a nap-sized chunk. We recommend bringing a warm blanket. Clowning, improvisation, interactive theatre, meditation, musical reverie, adorable stuffed animals, decaf and waffles - there’s something for everyone in Insomnia.</p>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section insomnia-bg" id="insomnia-video" style="border-top:1px solid rgba(123,82,255,0.2);" aria-label="Watch">
+    <div class="container">
+      <span class="label">Watch</span>
+      <div class="insomnia-video-wrap" style="margin-top:2rem;" data-fade>
+        <iframe
+          src="https://www.youtube.com/embed/urkLhv217JQ"
+          title="Insomnia — Documentation"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </section>
+
+  <section class="section insomnia-bg" style="border-top:1px solid rgba(123,82,255,0.2);" aria-label="Production History">
+    <div class="container">
+      <span class="label">Production History</span>
+      <div class="insomnia-history" data-fade>
+        <div class="insomnia-history-row">
+          <span class="insomnia-history-prod">Insomnia</span>
+          <span class="insomnia-history-venue">JetLag Festival 2022</span>
+        </div>
+                <div class="insomnia-history-row">
+          <span class="insomnia-history-prod">Escape 2 Insomnia</span>
+          <span class="insomnia-history-venue">JetLag Festival 2023</span>
+        </div>
+                <div class="insomnia-history-row">
+          <span class="insomnia-history-prod">The Insomnia Diner</span>
+          <span class="insomnia-history-venue">JetLag Festival 2025</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
+
+<section class="section contact-section" id="insomnia-inquire" aria-label="Inquiries">
+  <div class="container">
+    <span class="label">Inquiries</span>
+    <h2 class="section-title" style="margin-bottom:1rem;">Produce This Show</h2>
+    <p class="contact-desc">Interested in bringing Insomnia to your festival, venue, or event? The Lion Brothers are dreaming to hear from you.</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=Insomnia - Festival Programming Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://instagram.com/insomnia.show" class="btn btn--ghost" target="_blank" rel="noopener">@insomnia.show</a>
+    </div>
+  </div>
+</section>
 
 <footer class="site-footer">
   <div class="container">

@@ -3,11 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Trouble Feature — A horror-themed game show by The Firebird Project & The TEAM. NYC 2025." />
+  <meta name="description" content="Trouble Feature — An improvised horror comedy game show by The Firebird Project & The TEAM. NYC 2025." />
   <title>Trouble Feature — Leo Lion</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
     :root { --accent: #e01c1c; --accent-dim: rgba(224,28,28,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
     .lock-hero {
       min-height: 100svh; display: flex; flex-direction: column;
       justify-content: center; align-items: flex-start;
@@ -15,10 +22,17 @@
       padding-left: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
       padding-right: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
       position: relative; overflow: hidden;
+      background-image:
+        linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 100%),
+        url('images/troublefeature/tf-hero.jpeg');
+      background-size: cover;
+      background-position: center;
     }
     .lock-hero::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 65% 40%, rgba(224,28,28,0.07), transparent 55%);
+      background:
+        radial-gradient(ellipse at 65% 40%, rgba(224,28,28,0.18), transparent 55%),
+        radial-gradient(ellipse at 10% 80%, rgba(224,28,28,0.10), transparent 45%);
       pointer-events: none;
     }
     .lock-title {
@@ -33,6 +47,34 @@
       margin-bottom: 2.5rem; position: relative;
     }
     .lock-ctas { display: flex; gap: 1rem; flex-wrap: wrap; position: relative; }
+
+    .tf-two-col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start;
+    }
+    .tf-video-wrap {
+      width: 100%; max-width: 960px;
+      aspect-ratio: 16/9;
+      background: #000; border: 1px solid rgba(224,28,28,0.2);
+      overflow: hidden;
+    }
+    .tf-video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    .tf-history { width: 100%; margin-top: 1.5rem; }
+    .tf-history-row {
+      display: grid; grid-template-columns: 5.5rem 1fr auto;
+      gap: 1.5rem; padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-ui); font-size: 0.85rem; align-items: baseline;
+    }
+    .tf-history-year { color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
+    .tf-history-prod { color: var(--white); font-weight: 600; }
+    .tf-history-venue { color: var(--muted); text-align: right; }
+
+    @media (max-width: 768px) {
+      .tf-two-col { grid-template-columns: 1fr; gap: 2rem; }
+      .tf-history-row { grid-template-columns: 4rem 1fr; }
+      .tf-history-venue { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -46,6 +88,9 @@
     <ul class="nav-links" role="list">
       <li><a href="index.html#about">About</a></li>
       <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
       <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
     </ul>
   </div>
@@ -57,17 +102,78 @@
     <h1 class="lock-title" id="tf-heading">TROUBLE<br>FEATURE</h1>
     <p class="lock-tagline">"Do you like scary movies?"</p>
     <div class="lock-ctas">
-      <a href="https://www.youtube.com/watch?v=4pRvs74FrQM" class="btn btn--primary" target="_blank" rel="noopener">Watch on YouTube</a>
-      <a href="mailto:leo@firebird.nyc?subject=Trouble Feature - Production Inquiry" class="btn btn--ghost">Inquire to Produce</a>
+      <a href="#tf-video" class="btn btn--primary">About the Show</a>
+      <a href="#tf-inquire" class="btn btn--ghost">Inquire to Produce</a>
     </div>
   </section>
+
+  <section class="section" style="border-top:1px solid var(--border);" aria-label="About the Show">
+    <div class="container">
+      <span class="label">About</span>
+      <div class="tf-two-col" style="margin-top:2rem;">
+        <p style="font-size:clamp(1.1rem,1.8vw,1.35rem);line-height:1.75;color:var(--white);font-weight:400;" data-fade>
+          In this improvised horror comedy show, a rotating cast of improv performers compete to survive by pulling blocks from an increasingly shaky tower.
+        </p>
+        <div style="font-size:0.95rem;color:var(--muted);line-height:1.85;" data-fade>
+          <p>In an innovative format inspired by cult-hit roleplaying game <em>Dread</em>, and fueled by a love of campy horror, we perform an original B-movie at every show, scored by a live improv band!</p>
+          <p style="margin-top:1rem;">Only one player can become the FINAL GIRL, so bring a friend, grab a drink, and see who will live long enough to see the credits roll.</p>
+          <p style="margin-top:1.25rem;font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Trouble Feature's pilot season was supported by The TEAM's Petri Projects 2024–25.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tf-video" style="border-top:1px solid var(--border);background:#060202;" aria-label="Watch">
+    <div class="container">
+      <span class="label">Watch</span>
+      <div class="tf-video-wrap" style="margin-top:2rem;" data-fade>
+        <iframe
+          src="https://www.youtube.com/embed/4pRvs74FrQM"
+          title="Trouble Feature — Watch on YouTube"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="border-top:1px solid var(--border);" aria-label="Production History">
+    <div class="container">
+      <span class="label">Production History</span>
+      <div class="tf-history" data-fade>
+        <div class="tf-history-row">
+          <span class="tf-history-year">2025</span>
+          <span class="tf-history-prod">Homecoming Stabber</span>
+          <span class="tf-history-venue">Caveat, NYC</span>
+        </div>
+        <div class="tf-history-row">
+          <span class="tf-history-year">2025</span>
+          <span class="tf-history-prod">Clicksource Unraveled</span>
+          <span class="tf-history-venue">Caveat, NYC</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
+
+<section class="section contact-section" id="tf-inquire" aria-label="Inquire to Produce">
+  <div class="container">
+    <span class="label">Inquiries</span>
+    <h2 class="section-title" style="margin-bottom:1rem;">Produce This Show</h2>
+    <p class="contact-desc">Interested in bringing Trouble Feature to your venue, festival, or event? We want to hear from you... if you dare.</p>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc?subject=Trouble Feature - Production Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://instagram.com/whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">@whosleolion</a>
+    </div>
+  </div>
+</section>
 
 <footer class="site-footer">
   <div class="container">
     <div class="footer-inner">
       <div><a href="index.html" class="footer-logo">LEO LION</a><p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p></div>
-      <nav class="footer-links">
+      <nav class="footer-links" aria-label="Footer navigation">
         <a href="directing.html">Directing Portfolio</a>
         <a href="helpme/">HELP ME!!!!</a>
         <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
@@ -75,7 +181,10 @@
     </div>
     <div class="footer-bottom">
       <p class="footer-copy">&#169; 2026 Leo Lion · The Firebird Project.</p>
-      <div class="footer-social"><a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a><a href="mailto:leo@firebird.nyc">Email</a></div>
+      <div class="footer-social">
+        <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a>
+        <a href="mailto:leo@firebird.nyc">Email</a>
+      </div>
     </div>
   </div>
 </footer>
