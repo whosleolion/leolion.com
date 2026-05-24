@@ -16,20 +16,16 @@
     [data-fade].visible { opacity: 1; transform: none; }
 
     .pw-hero {
-      min-height: 55svh; display: flex; flex-direction: column; justify-content: flex-end;
-      padding-top: var(--nav-h); position: relative; overflow: hidden; background: var(--black);
-    }
-    .pw-hero::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 70% 40%, rgba(46,207,122,0.06), transparent 55%);
-      pointer-events: none;
+      padding-top: calc(var(--nav-h) + 3.5rem);
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--black);
     }
     .pw-hero__content {
-      position: relative; z-index: 1;
       padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
-      padding-bottom: 4rem; max-width: calc(var(--max-w) + 2 * var(--gutter));
+      max-width: calc(var(--max-w) + 2 * var(--gutter));
     }
-    .pw-hero__title { font-family: var(--font-display); font-size: clamp(4rem, 12vw, 12rem); line-height: 0.86; margin-bottom: 1rem; }
+    .pw-hero__title { font-family: var(--font-display); font-size: clamp(3.5rem, 7vw, 7rem); line-height: 0.9; margin-bottom: 0.75rem; }
 
     /* ── Original plays — vertical list ── */
     .play-grid {
@@ -44,7 +40,7 @@
     }
     .play-card:first-child { border-top: 1px solid var(--border); }
     .play-card:hover { border-color: var(--accent); }
-    .play-card__img-wrap { overflow: hidden; }
+    .play-card__img-wrap { overflow: hidden; aspect-ratio: 1; }
     .play-card__img {
       width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
       filter: saturate(0.65) brightness(0.8);
@@ -98,7 +94,7 @@
 
     @media (max-width: 768px) {
       .play-card { grid-template-columns: 1fr; }
-      .play-card__img-wrap { aspect-ratio: 16/7; }
+      .play-card__img-wrap { aspect-ratio: 1; }
       .play-card__body { border-left: none; border-top: 1px solid var(--border); }
       .adapt-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -121,7 +117,7 @@
       <li><a href="playwriting.html" aria-current="page">Playwriting</a></li>
       <li><a href="workshops.html">Workshops</a></li>
       <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
-      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Get In Touch</a></li>
+      <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
     </ul>
   </div>
 </nav>
@@ -130,8 +126,8 @@
   <div class="pw-hero__content">
     <span class="label">Plays by Leo Lion</span>
     <h1 class="pw-hero__title" id="pw-heading">PLAYS</h1>
-    <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:560px;">
-      Full-length and one-act plays. Available for production through the New Play Exchange.
+    <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:850px;">
+      Full-length and one-act plays, and stage adaptations of classic books.
     </p>
   </div>
 </section>
@@ -155,6 +151,18 @@
           </div>
         </a>
 
+ <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
+          <div class="play-card__img-wrap">
+            <img class="play-card__img" src="images/playwriting/low-stakes.png" alt="Low Stakes" loading="lazy" />
+          </div>
+          <div class="play-card__body">
+            <p class="play-card__format">One-Act · Cast: 2</p>
+            <h2 class="play-card__title">LOW STAKES</h2>
+            <p class="play-card__desc">Mia never does hookups like this. Being a vampire slayer does not leave a lot of room for a love life. Val has only been a vampire for a little while. She's wondering if this could turn into something serious. Or whether Mia is going to try to kill her again.</p>
+            <span class="play-card__link">New Play Exchange &#8594;</span>
+          </div>
+        </a>
+        
         <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
           <div class="play-card__img-wrap">
             <img class="play-card__img" src="images/playwriting/demolition.png" alt="Demolition" loading="lazy" />
@@ -179,18 +187,6 @@
           </div>
         </a>
 
-        <a href="https://newplayexchange.org" class="play-card" target="_blank" rel="noopener" data-fade>
-          <div class="play-card__img-wrap">
-            <img class="play-card__img" src="images/playwriting/low-stakes.png" alt="Low Stakes" loading="lazy" />
-          </div>
-          <div class="play-card__body">
-            <p class="play-card__format">One-Act · Cast: 2</p>
-            <h2 class="play-card__title">LOW STAKES</h2>
-            <p class="play-card__desc">Mia never does hookups like this. Being a vampire slayer does not leave a lot of room for a love life. Val has only been a vampire for a little while. She's wondering if this could turn into something serious. Or whether Mia is going to try to kill her again.</p>
-            <span class="play-card__link">New Play Exchange &#8594;</span>
-          </div>
-        </a>
-
       </div>
     </div>
   </section>
@@ -208,7 +204,7 @@
 
         <div class="adapt-card" data-fade>
           <div class="adapt-card__img-wrap">
-            <img class="adapt-card__img" src="images/alice.png" alt="Alice's Adventures in Wonderland" loading="lazy" />
+            <img class="adapt-card__img" src="images/directing/alice.png" alt="Alice's Adventures in Wonderland" loading="lazy" />
           </div>
           <div class="adapt-card__caption">
             <p class="adapt-card__title">ALICE'S ADVENTURES IN WONDERLAND</p>
@@ -218,7 +214,7 @@
 
         <div class="adapt-card" data-fade>
           <div class="adapt-card__img-wrap">
-            <img class="adapt-card__img" src="images/treasure.png" alt="Treasure Island" loading="lazy" />
+            <img class="adapt-card__img" src="images/directing/treasure-island.png" alt="Treasure Island" loading="lazy" />
           </div>
           <div class="adapt-card__caption">
             <p class="adapt-card__title">TREASURE ISLAND</p>
@@ -238,7 +234,7 @@
 
         <div class="adapt-card" data-fade>
           <div class="adapt-card__img-wrap">
-            <img class="adapt-card__img" src="images/wotw.jpg" alt="War of the Worlds" loading="lazy" />
+            <img class="adapt-card__img" src="images/directing/war-of-the-worlds.jpg" alt="War of the Worlds" loading="lazy" />
           </div>
           <div class="adapt-card__caption">
             <p class="adapt-card__title">WAR OF THE WORLDS</p>
@@ -258,7 +254,7 @@
 
         <div class="adapt-card" data-fade>
           <div class="adapt-card__img-wrap">
-            <img class="adapt-card__img" src="images/tobacco.png" alt="The Harmfulness of Tobacco" loading="lazy" />
+            <img class="adapt-card__img" src="images/directing/harmfulness.png" alt="The Harmfulness of Tobacco" loading="lazy" />
           </div>
           <div class="adapt-card__caption">
             <p class="adapt-card__title">THE HARMFULNESS OF TOBACCO</p>
@@ -286,7 +282,7 @@
   <div class="container">
     <span class="label">Interested in producing?</span>
     <h2 class="section-title" id="pw-contact-heading" style="margin-bottom:1rem;">GET IN TOUCH</h2>
-    <p class="contact-desc">All plays are available through the New Play Exchange. Reach out directly for production inquiries.</p>
+    <p class="contact-desc">All my scripts are available through the New Play Exchange. Reach out directly for production inquiries.</p>
     <div class="contact-ctas">
       <a href="mailto:leo@firebird.nyc?subject=Playwriting Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
       <a href="https://newplayexchange.org" class="btn btn--ghost" target="_blank" rel="noopener">New Play Exchange</a>

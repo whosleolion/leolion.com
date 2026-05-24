@@ -5,37 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="HELP ME!!!! — A dead mime needs help. Interactive séance by Leo Lion & The Firebird Project. Edinburgh Fringe 2025. Touring 2026." />
   <title>HELP ME!!!! — Leo Lion · The Firebird Project</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500;600;700&family=Rye&display=swap" rel="stylesheet">
   <style>
-    /* ============================================================
-       HELP ME!!!! — Standalone sub-site stylesheet
-       Fonts: Playfair Display (display), Inter (ui), Rye (accent)
-    ============================================================ */
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@400;500;600;700&family=Rye&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --hm-black: #0a0a0a;
+      --hm-black:      #0a0a0a;
       --hm-near-black: #111;
-      --hm-white: #f5f0e8;
-      --hm-accent: #c8102e;
-      --hm-gold: #d4a843;
-      --hm-muted: rgba(245,240,232,0.55);
-      --hm-border: rgba(245,240,232,0.12);
-      --hm-card: #161410;
-      --hm-gutter: clamp(1.25rem, 5vw, 3rem);
-      --hm-max-w: 1160px;
-      --hm-nav-h: 68px;
+      --hm-dark:       #14141f;
+      --hm-white:      #f5f0e8;
+      --hm-accent:     #ff3366;
+      --hm-gold:       #d4a843;
+      --hm-green:      #00cc88;
+      --hm-muted:      rgba(245,240,232,0.55);
+      --hm-dim:        #a0a0b0;
+      --hm-border:     rgba(255,255,255,0.07);
+      --hm-border-mid: rgba(255,255,255,0.12);
+      --hm-gutter:     clamp(1.25rem, 5vw, 3rem);
+      --hm-max-w:      1100px;
+      --hm-nav-h:      64px;
     }
     html { scroll-behavior: smooth; }
     body { background: var(--hm-black); color: var(--hm-white); font-family: 'Inter', sans-serif; line-height: 1.6; }
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
 
-    /* NAV */
+    /* ── NAV ── */
     .hmnav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: var(--hm-nav-h); background: var(--hm-black);
-      border-bottom: 1px solid var(--hm-border);
+      height: var(--hm-nav-h); background: rgba(10,10,10,0.95);
+      border-bottom: 1px solid var(--hm-border); backdrop-filter: blur(8px);
       display: flex; align-items: center;
     }
     .hmnav__inner {
@@ -43,149 +43,260 @@
       margin: 0 auto; padding: 0 var(--hm-gutter);
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .hmnav__logo { font-family: 'Rye', serif; font-size: 1.25rem; color: var(--hm-white); letter-spacing: 0.05em; }
+    .hmnav__logo { font-family: 'Rye', serif; font-size: 1.15rem; color: var(--hm-white); letter-spacing: 0.05em; }
     .hmnav__links { display: flex; align-items: center; gap: 1.5rem; }
-    .hmnav__links a { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); transition: color 0.2s; }
+    .hmnav__links a { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); transition: color 0.2s; }
     .hmnav__links a:hover { color: var(--hm-white); }
     .hmnav__cta {
-      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-      background: var(--hm-accent); color: var(--hm-white) !important;
-      padding: 0.5em 1.25em; transition: opacity 0.2s;
+      display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      background: var(--hm-accent); color: var(--hm-white); padding: 0.5em 1.25em; transition: opacity 0.2s;
     }
     .hmnav__cta:hover { opacity: 0.85; }
 
-    /* CONTAINERS */
-    .hm-section { padding: 5rem var(--hm-gutter); }
-    .hm-container { max-width: var(--hm-max-w); margin: 0 auto; }
-    .hm-label {
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+    /* ── SHARED ── */
+    .hm-section { padding: 4rem var(--hm-gutter); }
+    .hm-section--border { border-top: 1px solid var(--hm-border); }
+    .hm-inner { max-width: var(--hm-max-w); margin: 0 auto; }
+    .hm-eyebrow {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
       color: var(--hm-accent); display: block; margin-bottom: 0.75rem;
     }
-    .hm-title {
-      font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 6vw, 5rem);
-      line-height: 1.05; color: var(--hm-white); margin-bottom: 1.5rem;
+    .hm-rye { font-family: 'Rye', Georgia, serif; color: var(--hm-white); line-height: 1.15; }
+    .hm-playfair { font-family: 'Playfair Display', Georgia, serif; color: var(--hm-white); line-height: 1.15; }
+    .hm-divider { border-top: 1px solid var(--hm-border); margin-top: 1.5rem; padding-top: 1.25rem; }
+
+    /* ── TOUR BADGE ── */
+    .hm-badge {
+      display: inline-block; padding: 0.55rem 1.4rem; border-radius: 999px;
+      background: #111; color: #fff; font-size: 0.78rem; font-weight: 800;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      animation: hm-glow 2.5s ease-in-out infinite;
+    }
+    @keyframes hm-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+      50%       { box-shadow: 0 0 14px 4px rgba(255,255,255,0.35); }
     }
 
-    /* BUTTONS */
-    .hm-btn {
-      display: inline-block; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; padding: 0.75em 1.75em; border: none; cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s; text-align: center;
+    /* ── TOUR DATES ── */
+    #tour { padding-top: 2.5rem; }
+    .hm-tour-header { text-align: center; margin-bottom: 2.5rem; }
+    .hm-dates-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    .hm-date-card {
+      background: var(--hm-dark); border: 1px solid var(--hm-border); border-radius: 8px;
+      padding: 2rem 1.5rem; text-align: center; display: block;
+      transition: transform 0.25s, border-color 0.25s;
     }
-    .hm-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-    .hm-btn--primary { background: var(--hm-accent); color: var(--hm-white); }
-    .hm-btn--ghost { background: transparent; color: var(--hm-white); border: 1px solid var(--hm-border); }
-    .hm-btn--ghost:hover { border-color: var(--hm-white); }
-    .hm-btn--gold { background: var(--hm-gold); color: #000; }
-
-    /* ── TOUR ── */
-    #tour { padding-top: calc(var(--hm-nav-h) + 5rem); }
-    .hm-tour-grid { display: grid; grid-template-columns: 1fr; gap: 0; border: 1px solid var(--hm-border); margin-top: 2rem; }
-    .hm-tour-row {
-      display: grid; grid-template-columns: 1fr 1fr 1.5fr auto;
-      align-items: center; gap: 1.5rem; padding: 1.5rem 2rem;
-      border-bottom: 1px solid var(--hm-border);
-      transition: background 0.2s;
+    .hm-date-card:hover { transform: translateY(-4px); border-color: var(--hm-accent); }
+    .hm-card-city { font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; line-height: 1.2; }
+    .hm-card-venue { font-size: 0.85rem; color: var(--hm-dim); line-height: 1.45; margin-bottom: 0.4rem; }
+    .hm-card-date { font-size: 0.82rem; font-weight: 600; color: var(--hm-accent); margin-bottom: 1.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .hm-ticket-btn {
+      display: inline-block; background: transparent; border: 2px solid var(--hm-accent);
+      color: var(--hm-accent); padding: 0.5rem 1.5rem; border-radius: 4px;
+      font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+      transition: background 0.2s, color 0.2s;
     }
-    .hm-tour-row:last-child { border-bottom: none; }
-    .hm-tour-row:hover { background: rgba(245,240,232,0.03); }
-    .hm-tour-city { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--hm-white); }
-    .hm-tour-venue { font-size: 0.85rem; color: var(--hm-muted); }
-    .hm-tour-date { font-size: 0.85rem; color: var(--hm-muted); font-weight: 500; }
-    .hm-tour-inquire { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-accent); white-space: nowrap; }
-    .hm-tour-inquire:hover { text-decoration: underline; }
+    .hm-date-card:hover .hm-ticket-btn { background: var(--hm-accent); color: #fff; }
+    .hm-tour-footer { text-align: center; margin-top: 2rem; font-size: 0.85rem; color: #666680; }
+    .hm-tour-footer a { color: var(--hm-dim); text-decoration: underline; transition: color 0.2s; }
+    .hm-tour-footer a:hover { color: #fff; }
 
-    /* ── ABOUT / SLIDESHOW ── */
+    /* ── ABOUT ── */
     .hm-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
-    .hm-slideshow { position: relative; overflow: hidden; aspect-ratio: 4/3; background: #111; }
-    .hm-slideshow__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s; }
-    .hm-slideshow__img.active { opacity: 1; }
-    .hm-about-desc { font-size: 1rem; color: var(--hm-white); line-height: 1.8; margin-bottom: 1.5rem; }
-    .hm-about-quotes { list-style: none; margin: 1.25rem 0; }
-    .hm-about-quotes li { font-size: 0.9rem; color: var(--hm-muted); line-height: 1.6; padding: 0.4rem 0; padding-left: 1rem; border-left: 2px solid var(--hm-accent); margin-bottom: 0.5rem; font-style: italic; }
-    .hm-specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--hm-border); border: 1px solid var(--hm-border); margin: 1.75rem 0; }
-    .hm-spec { background: var(--hm-near-black); padding: 1.25rem; }
-    .hm-spec__label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--hm-muted); margin-bottom: 0.35rem; }
-    .hm-spec__val { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--hm-white); }
+    .hm-image-col { display: flex; flex-direction: column; gap: 1rem; }
 
-    .hm-team { margin-top: 2rem; }
-    .hm-team-title { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--hm-accent); margin-bottom: 1rem; }
-    .hm-team-row { display: flex; gap: 0.5rem; align-items: baseline; padding: 0.5rem 0; border-bottom: 1px solid var(--hm-border); }
-    .hm-team-role { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hm-muted); min-width: 200px; }
-    .hm-team-name { font-size: 0.9rem; color: var(--hm-white); }
+    .hm-slideshow-wrap {
+      position: relative; aspect-ratio: 4/2.6;
+      background: var(--hm-dark); border: 1px solid var(--hm-border); border-radius: 6px; overflow: hidden;
+    }
+    .hm-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.9s ease; }
+    .hm-slide.active { opacity: 1; }
+    .hm-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hm-dots { position: absolute; bottom: 0.75rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.4rem; z-index: 2; }
+    .hm-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3);
+      border: none; padding: 0; cursor: pointer; transition: background 0.2s, transform 0.2s;
+    }
+    .hm-dot:hover { background: rgba(255,255,255,0.6); }
+    .hm-dot.active { background: var(--hm-accent); transform: scale(1.25); }
 
-    .hm-video-wrap { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; margin-top: 2rem; }
-    .hm-video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    .hm-video-wrap {
+      position: relative; aspect-ratio: 16/9;
+      background: #000; border-radius: 6px; overflow: hidden; border: 1px solid var(--hm-border);
+    }
+    .hm-video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .hm-video-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #555570; text-align: center; display: block; margin-top: 0.4rem; }
+
+    .hm-about-body { font-size: 0.97rem; color: #fff; line-height: 1.8; }
+    .hm-quotes-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #555570; display: block; margin-bottom: 0.7rem; }
+    .hm-quotes-list { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+    .hm-quotes-list li { font-size: 0.85rem; color: #c0c0d8; line-height: 1.5; padding-left: 1rem; position: relative; }
+    .hm-quotes-list li::before { content: '\201C'; position: absolute; left: 0; color: var(--hm-accent); font-size: 1rem; line-height: 1.4; }
+
+    .hm-specs { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+    .hm-spec { font-size: 0.78rem; color: #fff; line-height: 1.5; }
+    .hm-spec strong { display: block; color: var(--hm-dim); font-weight: 500; font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 0.2rem; }
+
+    .hm-team { display: flex; flex-direction: column; gap: 0.3rem; }
+    .hm-team-row { display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+    .hm-team-role { font-size: 0.65rem; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #555570; white-space: nowrap; flex-shrink: 0; }
+    .hm-team-name { font-size: 0.78rem; color: #b0b0c8; line-height: 1.4; }
 
     /* ── PRESS ── */
-    .hm-press-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
-    .hm-review {
-      background: var(--hm-card); border: 1px solid var(--hm-border); padding: 2rem;
-      display: flex; flex-direction: column; gap: 1rem;
+    .hm-press-header { text-align: center; margin-bottom: 3rem; }
+    .hm-press-heading { font-family: 'Rye', Georgia, serif; font-size: clamp(1.6rem, 3vw, 2.2rem); color: #fff; display: block; margin-bottom: 0.4rem; }
+    .hm-press-sub { font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #a0a0b0; }
+    .hm-press-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: stretch; }
+    .hm-review-card {
+      background: #111118; border: 1px solid var(--hm-border); border-top: 3px solid var(--hm-border-mid); border-radius: 6px;
+      padding: 1.75rem; display: flex; flex-direction: column;
+      transition: border-color 0.25s, transform 0.25s;
     }
-    .hm-review--featured { border-color: var(--hm-gold); }
-    .hm-review__stars { color: var(--hm-gold); font-size: 0.85rem; letter-spacing: 0.08em; }
-    .hm-review__text { font-size: 0.92rem; color: var(--hm-white); line-height: 1.7; font-style: italic; flex: 1; }
-    .hm-review__source { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--hm-muted); }
-    .hm-review__byline { font-size: 0.72rem; color: var(--hm-muted); margin-top: -0.5rem; }
-    .hm-award { background: var(--hm-card); border: 1px solid var(--hm-border); border-left: 3px solid var(--hm-gold); padding: 1.5rem 2rem; margin-top: 1.5rem; display: flex; gap: 1.5rem; align-items: center; }
-    .hm-award__icon { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--hm-gold); }
-    .hm-award__label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--hm-gold); margin-bottom: 0.25rem; }
-    .hm-award__text { font-size: 0.9rem; color: var(--hm-white); }
+    .hm-review-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.18); border-top-color: rgba(255,255,255,0.3); }
+    .hm-review-card--featured { border-top: 3px solid var(--hm-gold); background: #12100a; }
+    .hm-review-card--featured:hover { border-color: rgba(212,168,67,0.35); border-top-color: var(--hm-gold); }
+    .hm-review-outlet { font-size: 0.88rem; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: #fff; margin-bottom: 0.6rem; }
+    .hm-review-stars { font-size: 1.7rem; letter-spacing: 2px; color: var(--hm-gold); margin-bottom: 1.1rem; line-height: 1; }
+    .hm-review-quote { font-style: italic; font-size: 0.9rem; line-height: 1.65; color: #e0e0ec; flex-grow: 1; margin-bottom: 1.4rem; padding-left: 1.1rem; border-left: 2px solid rgba(255,255,255,0.1); }
+    .hm-review-card--featured .hm-review-quote { border-left-color: rgba(212,168,67,0.4); }
+    .hm-review-byline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); margin-top: auto; }
+    .hm-review-author { font-size: 0.8rem; color: #666680; }
+    .hm-review-link { font-size: 0.72rem; font-weight: 600; color: var(--hm-accent); white-space: nowrap; transition: opacity 0.2s; }
+    .hm-review-link:hover { opacity: 0.75; }
+
+    .hm-award-row { display: flex; justify-content: center; margin-top: 2rem; }
+    .hm-award {
+      display: inline-flex; flex-direction: column; align-items: center; gap: 0.35rem;
+      padding: 1.25rem 2.5rem; border: 1px solid rgba(212,168,67,0.3); border-radius: 4px;
+      background: rgba(212,168,67,0.04); text-align: center; max-width: 420px;
+    }
+    .hm-award__label { font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: var(--hm-gold); }
+    .hm-award__title { font-size: 1rem; font-weight: 700; color: #fff; }
+    .hm-award__source { font-size: 0.9rem; color: #fff; font-style: italic; }
 
     /* ── MERCH ── */
-    .hm-merch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
-    .hm-merch-card { background: var(--hm-card); border: 1px solid var(--hm-border); overflow: hidden; }
-    .hm-merch-card__img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-    .hm-merch-card__body { padding: 1.5rem 2rem; }
-    .hm-merch-card__badge { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--hm-accent); margin-bottom: 0.5rem; }
-    .hm-merch-card__title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--hm-white); margin-bottom: 0.75rem; }
-    .hm-merch-card__desc { font-size: 0.88rem; color: var(--hm-muted); line-height: 1.6; margin-bottom: 1.25rem; }
+    .hm-merch-header { text-align: center; margin-bottom: 2.5rem; }
+    .hm-merch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 800px; margin: 0 auto; }
+    .hm-merch-card { background: var(--hm-dark); border: 1px solid var(--hm-border); border-radius: 8px; overflow: hidden; }
+    .hm-merch-img { aspect-ratio: 1; overflow: hidden; }
+    .hm-merch-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hm-merch-info { padding: 1.5rem; }
+    .hm-merch-badge { display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--hm-gold); border: 1px solid rgba(212,168,67,0.35); padding: 0.2rem 0.6rem; border-radius: 20px; margin-bottom: 0.75rem; }
+    .hm-merch-name { font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .hm-merch-desc { font-size: 0.85rem; color: var(--hm-dim); line-height: 1.55; margin-bottom: 1.1rem; }
+    .hm-merch-btn { display: inline-block; padding: 0.55rem 1.4rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; background: var(--hm-accent); color: #fff; transition: opacity 0.2s; }
+    .hm-merch-btn:hover { opacity: 0.85; }
 
     /* ── BOOK ── */
-    .hm-book { text-align: center; }
-    .hm-book__ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
-    .hm-book__or { font-size: 0.72rem; color: var(--hm-muted); display: flex; align-items: center; gap: 0.75rem; }
-    .hm-book__or::before, .hm-book__or::after { content: ''; flex: 1; height: 1px; background: var(--hm-border); }
+    .hm-book { text-align: center; max-width: 560px; margin: 0 auto; }
+    .hm-book-actions { display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 2.5rem; }
+    .hm-book-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem; background: var(--hm-accent); color: #fff;
+      font-size: 0.82rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 0.9rem 2rem; border-radius: 4px; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .hm-book-btn:hover { opacity: 0.85; }
+    .hm-book-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .hm-book-or { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+    .hm-book-email { font-size: 1.05rem; font-weight: 600; color: var(--hm-dim); transition: color 0.2s; }
+    .hm-book-email:hover { color: #fff; }
+    .hm-book-company { font-size: 0.72rem; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; margin-top: 2.5rem; }
+    .hm-book-company a { color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); transition: border-color 0.2s; }
+    .hm-book-company a:hover { border-color: rgba(255,255,255,0.3); }
 
-    /* ── BIO ── */
-    .hm-bio-grid { display: grid; grid-template-columns: 340px 1fr; gap: 4rem; align-items: start; }
-    .hm-bio-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; object-position: top; }
-    .hm-bio-text { font-size: 0.95rem; color: var(--hm-muted); line-height: 1.85; }
-    .hm-bio-text p + p { margin-top: 1rem; }
-    .hm-bio-links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
-    .hm-bio-link { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-accent); }
-    .hm-bio-link:hover { text-decoration: underline; }
+    /* ── LEO BIO ── */
+    .hm-bio-grid { display: grid; grid-template-columns: 260px 1fr; gap: 3.5rem; align-items: start; max-width: 1000px; margin: 0 auto; }
+    .hm-bio-photo { width: 260px; height: 260px; border-radius: 50%; background: var(--hm-dark); border: 2px solid var(--hm-border); overflow: hidden; flex-shrink: 0; }
+    .hm-bio-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .hm-bio-role { font-size: 0.82rem; color: #fff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .hm-bio-text { font-size: 0.95rem; color: var(--hm-dim); line-height: 1.85; }
+    .hm-bio-text p + p { margin-top: 0.9rem; }
+    .hm-bio-text strong { color: #d0d0e0; font-weight: 500; }
+    .hm-bio-links { margin-top: 1.75rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+    .hm-bio-link { font-size: 0.82rem; font-weight: 600; color: var(--hm-accent); letter-spacing: 0.5px; transition: opacity 0.2s; }
+    .hm-bio-link:hover { opacity: 0.7; }
+    .hm-bio-link-sec { font-size: 0.82rem; color: #666680; border-bottom: 1px solid rgba(255,255,255,0.15); transition: color 0.2s; }
+    .hm-bio-link-sec:hover { color: var(--hm-dim); }
 
     /* ── SPY PROMO ── */
-    .hm-spy { background: #050a07; border-top: 1px solid rgba(0,200,150,0.2); }
-    .hm-spy-grid { display: grid; grid-template-columns: 320px 1fr; gap: 4rem; align-items: center; }
-    .hm-spy-img { width: 100%; aspect-ratio: 1; object-fit: cover; filter: saturate(0.6); }
-    .hm-spy-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #00c896; margin-bottom: 0.75rem; }
-    .hm-spy-title { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1; color: var(--hm-white); margin-bottom: 1rem; }
-    .hm-spy-desc { font-size: 1rem; color: var(--hm-muted); line-height: 1.75; margin-bottom: 1.5rem; }
+    .hm-spy-section {
+      text-align: center; position: relative; overflow: hidden; padding: 3rem var(--hm-gutter);
+      border-top: 1px solid rgba(0,204,136,0.15); border-bottom: 1px solid rgba(0,204,136,0.15);
+    }
+    .hm-spy-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse at center, rgba(0,204,136,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hm-spy-inner { max-width: 500px; margin: 0 auto; position: relative; z-index: 1; }
+    .hm-spy-label { font-size: 0.9rem; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: var(--hm-green); margin-bottom: 1.25rem; display: block; }
+    .hm-spy-poster { width: 100%; max-width: 400px; margin: 0 auto 1.75rem; display: block; }
+    .hm-spy-desc { font-size: 1rem; color: #fff; line-height: 1.7; font-weight: 600; margin-bottom: 2rem; }
+    .hm-spy-cta {
+      display: inline-block; border: 2px solid var(--hm-green); color: var(--hm-green);
+      font-size: 0.82rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      padding: 0.8rem 2.2rem; border-radius: 4px; background: #000; transition: background 0.25s, color 0.25s;
+    }
+    .hm-spy-cta:hover { background: var(--hm-green); color: #060f09; }
 
     /* ── FOOTER ── */
     .hm-footer { background: var(--hm-near-black); border-top: 1px solid var(--hm-border); padding: 3rem var(--hm-gutter); text-align: center; }
-    .hm-footer__logo { font-family: 'Rye', serif; font-size: 1.5rem; color: var(--hm-white); margin-bottom: 1rem; display: block; }
+    .hm-footer__logo { font-family: 'Rye', serif; font-size: 1.4rem; color: var(--hm-white); margin-bottom: 1rem; display: block; }
     .hm-footer__links { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
-    .hm-footer__links a { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); transition: color 0.2s; }
+    .hm-footer__links a { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); transition: color 0.2s; }
     .hm-footer__links a:hover { color: var(--hm-white); }
     .hm-footer__copy { font-size: 0.72rem; color: var(--hm-muted); }
 
+    /* ── HERO ── */
+    .hm-hero {
+      background: var(--hm-black); padding-top: var(--hm-nav-h);
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .hm-hero__badge-row { padding: 2rem 0 1rem; text-align: center; }
+    .hm-hero__logo-img {
+      width: min(680px, 90vw); height: auto; display: block; margin: 0 auto;
+    }
+    .hm-hero__bottom {
+      padding: 1.5rem var(--hm-gutter) 4rem; text-align: center;
+    }
+    .hm-get-tickets {
+      display: inline-block; padding: 0.75rem 2.5rem; border-radius: 999px;
+      border: 2px solid rgba(245,240,232,0.85); color: var(--hm-white);
+      font-size: 0.82rem; font-weight: 800; letter-spacing: 0.25em; text-transform: uppercase;
+      transition: background 0.2s, color 0.2s;
+    }
+    .hm-get-tickets:hover { background: var(--hm-white); color: var(--hm-black); }
+
+    /* ── LOGO WALL ── */
+    .hm-logos-header { text-align: center; margin-bottom: 0.75rem; }
+    .hm-logos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+    .hm-logos-grid img {
+      width: 100%; height: 200px;
+      object-fit: contain; object-position: center; display: block;
+    }
+
     /* ── RESPONSIVE ── */
-    @media (max-width: 820px) {
+    @media (max-width: 900px) { .hm-dates-grid { grid-template-columns: repeat(2, 1fr); } .hm-logos-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 780px) {
       .hm-about-grid { grid-template-columns: 1fr; }
+      .hm-image-col { order: -1; }
       .hm-press-grid { grid-template-columns: 1fr; }
-      .hm-bio-grid { grid-template-columns: 1fr; }
-      .hm-spy-grid { grid-template-columns: 1fr; }
-      .hm-merch-grid { grid-template-columns: 1fr; }
-      .hm-specs { grid-template-columns: 1fr 1fr 1fr; }
+      .hm-bio-grid { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+      .hm-bio-links { justify-content: center; }
       .hmnav__links { display: none; }
     }
-    @media (max-width: 560px) {
-      .hm-tour-row { grid-template-columns: 1fr; gap: 0.5rem; }
-      .hm-specs { grid-template-columns: 1fr; }
+    @media (max-width: 520px) {
+      .hm-dates-grid { grid-template-columns: 1fr; }
+      .hm-merch-grid { grid-template-columns: 1fr; }
+      .hm-logos-grid { grid-template-columns: repeat(3, 1fr); }
+      .hm-logos-grid img { height: 160px; padding: 1rem 1.25rem; }
+      .hm-logos-grid img:nth-child(4n) { border-right: 1px solid var(--hm-border); }
+      .hm-logos-grid img:nth-child(3n) { border-right: none; }
     }
   </style>
 </head>
@@ -201,63 +312,110 @@
       <a href="#press">Press</a>
       <a href="#merch">Merch</a>
       <a href="#book">Book</a>
-      <a href="https://leolion.com" target="_blank" rel="noopener">Leo Lion</a>
+      <a href="#leo">Leo Lion</a>
     </div>
-    <a href="#tour" class="hm-btn hm-btn--primary hmnav__cta">Get Tickets</a>
+    <a href="#tour" class="hmnav__cta">Get Tickets</a>
   </div>
 </nav>
 
-<!-- TOUR -->
+<!-- HERO -->
+<section class="hm-hero" aria-label="HELP ME!!!!">
+  <div class="hm-hero__badge-row">
+    <span class="hm-badge">Now Touring &mdash; June 2026</span>
+  </div>
+  <img class="hm-hero__logo-img" src="images/helpme-logo.png" alt="HELP ME!!!! — An Interactive Mime S&eacute;ance" loading="eager" />
+  <div class="hm-hero__bottom">
+    <a href="#tour" class="hm-get-tickets">Get Tickets</a>
+  </div>
+</section>
+
+<!-- TOUR DATES -->
 <section id="tour" class="hm-section">
-  <div class="hm-container">
-    <span class="hm-label">On Tour 2026</span>
-    <h2 class="hm-title">Tour Dates</h2>
-    <div class="hm-tour-grid">
-      <div class="hm-tour-row">
-        <p class="hm-tour-city">Chicago</p>
-        <p class="hm-tour-venue">The Annoyance Theatre</p>
-        <p class="hm-tour-date">Wed · Jun 3, 2026</p>
-        <a href="https://chicago.helpmetheshow.com" class="hm-btn hm-btn--primary" target="_blank" rel="noopener">Get Tickets</a>
-      </div>
-      <div class="hm-tour-row">
-        <p class="hm-tour-city">Kansas City</p>
-        <p class="hm-tour-venue">Greenwood Social Hall</p>
-        <p class="hm-tour-date">Sun · Jun 7, 2026</p>
-        <a href="https://kansascity.helpmetheshow.com" class="hm-btn hm-btn--primary" target="_blank" rel="noopener">Get Tickets</a>
-      </div>
-      <div class="hm-tour-row">
-        <p class="hm-tour-city">Austin</p>
-        <p class="hm-tour-venue">Fallout Theater</p>
-        <p class="hm-tour-date">Thu · Jun 12, 2026</p>
-        <a href="https://austin.helpmetheshow.com" class="hm-btn hm-btn--primary" target="_blank" rel="noopener">Get Tickets</a>
-      </div>
-      <div class="hm-tour-row">
-        <p class="hm-tour-city">San Francisco</p>
-        <p class="hm-tour-venue">Church of Clown</p>
-        <p class="hm-tour-date">Fri · Jun 19, 2026</p>
-        <a href="https://sanfrancisco.helpmetheshow.com" class="hm-btn hm-btn--primary" target="_blank" rel="noopener">Get Tickets</a>
-      </div>
+  <div class="hm-inner">
+    <div class="hm-tour-header">
+      <h2 class="hm-rye" style="font-size:clamp(1.8rem,4vw,2.6rem);">Tour Dates</h2>
     </div>
-    <p style="margin-top:1.5rem;font-size:0.88rem;color:var(--hm-muted);">Want to bring HELP ME!!!! to your venue? <a href="mailto:programs@firebird.nyc?subject=Booking Inquiry: HELP ME!!!!" style="color:var(--hm-accent);">Get in touch &#8594;</a></p>
+    <div class="hm-dates-grid">
+      <a href="https://chicago.helpmetheshow.com" class="hm-date-card" target="_blank" rel="noopener">
+        <div class="hm-card-city">Chicago</div>
+        <div class="hm-card-venue">The Annoyance Theatre</div>
+        <div class="hm-card-date">Wed &middot; Jun 3, 2026</div>
+        <span class="hm-ticket-btn">Get Tickets</span>
+      </a>
+      <a href="https://kansascity.helpmetheshow.com" class="hm-date-card" target="_blank" rel="noopener">
+        <div class="hm-card-city">Kansas City</div>
+        <div class="hm-card-venue">Greenwood Social Hall</div>
+        <div class="hm-card-date">Sun &middot; Jun 7, 2026</div>
+        <span class="hm-ticket-btn">Get Tickets</span>
+      </a>
+      <a href="https://austin.helpmetheshow.com" class="hm-date-card" target="_blank" rel="noopener">
+        <div class="hm-card-city">Austin</div>
+        <div class="hm-card-venue">Fallout Theater</div>
+        <div class="hm-card-date">Thu &middot; Jun 12, 2026</div>
+        <span class="hm-ticket-btn">Get Tickets</span>
+      </a>
+      <a href="https://sanfrancisco.helpmetheshow.com" class="hm-date-card" target="_blank" rel="noopener">
+        <div class="hm-card-city">San Francisco</div>
+        <div class="hm-card-venue">Church of Clown</div>
+        <div class="hm-card-date">Fri &middot; Jun 19, 2026</div>
+        <span class="hm-ticket-btn">Get Tickets</span>
+      </a>
+    </div>
+    <p class="hm-tour-footer">
+      Want to bring HELP ME!!!! to your venue?
+      <a href="mailto:leo@firebird.nyc">Get in touch &rarr;</a>
+    </p>
   </div>
 </section>
 
 <!-- ABOUT -->
-<section id="about" class="hm-section" style="border-top:1px solid var(--hm-border);">
-  <div class="hm-container">
-    <span class="hm-label">About the Show</span>
+<section id="about" class="hm-section hm-section--border">
+  <div class="hm-inner">
     <div class="hm-about-grid">
+
       <div>
-        <div class="hm-slideshow" id="slideshow" aria-label="Show photos">
-          <img class="hm-slideshow__img active" src="images/slide1.jpg" alt="Help Me!!!! production photo" />
-          <img class="hm-slideshow__img" src="images/slide2.jpg" alt="Help Me!!!! production photo" />
-          <img class="hm-slideshow__img" src="images/slide3.jpg" alt="Help Me!!!! production photo" />
-          <img class="hm-slideshow__img" src="images/slide4.jpg" alt="Help Me!!!! production photo" />
-          <img class="hm-slideshow__img" src="images/slide5.jpg" alt="Help Me!!!! production photo" />
-          <img class="hm-slideshow__img" src="images/slide6.jpg" alt="Help Me!!!! production photo" />
-          <img class="hm-slideshow__img" src="images/slide7.jpg" alt="Help Me!!!! production photo" />
+        <span class="hm-eyebrow">About the Show</span>
+        <h2 class="hm-playfair" style="font-weight:700;font-size:clamp(2rem,4vw,2.8rem);margin-bottom:1.5rem;">What is<br>HELP ME!!!!?</h2>
+        <p class="hm-about-body">Thank goodness you&rsquo;re here! A dead mime needs help. At this interactive s&eacute;ance, audiences must think outside the box to help a family of ghosts resolve their unfinished business. Play charades, solve puzzles and pierce the veil between life and death on a madcap quest for forbidden knowledge.</p>
+
+        <div class="hm-divider">
+          <span class="hm-quotes-label">Audiences Say</span>
+          <ul class="hm-quotes-list">
+            <li>Instantly gripping.</li>
+            <li>An unforgettable night out!</li>
+            <li>Expected raucous fun with unexpected existential pathos.</li>
+            <li>The most memorable show I&rsquo;ve seen at the Fringe so far.</li>
+            <li>Lion is a master of life-affirming joy.</li>
+          </ul>
         </div>
-        <div class="hm-video-wrap" style="margin-top:1rem;">
+
+        <div class="hm-divider">
+          <div class="hm-specs">
+            <div class="hm-spec"><strong>Duration</strong>~70 minutes</div>
+            <div class="hm-spec"><strong>Format</strong>Immersive &middot; Interactive</div>
+            <div class="hm-spec"><strong>World Premiere</strong>Edinburgh Fringe 2025</div>
+            <div class="hm-spec"><strong>Producer</strong>The Firebird Project</div>
+          </div>
+        </div>
+
+        <div class="hm-divider">
+          <div class="hm-team">
+            <div class="hm-team-row"><span class="hm-team-role">Creator &amp; Performer</span><span class="hm-team-name">Leo Lion</span></div>
+            <div class="hm-team-row"><span class="hm-team-role">Director</span><span class="hm-team-name">Yev Gelman</span></div>
+            <div class="hm-team-row"><span class="hm-team-role">Voices</span><span class="hm-team-name">Joshua Brelsford &amp; Clara Francesca</span></div>
+            <div class="hm-team-row"><span class="hm-team-role">Consulting Artist &mdash; Movement</span><span class="hm-team-name">Izzy Pflanz</span></div>
+            <div class="hm-team-row"><span class="hm-team-role">Consulting Artist &mdash; Magic</span><span class="hm-team-name">Reuven Glezer</span></div>
+            <div class="hm-team-row"><span class="hm-team-role">Props &amp; Merchandise</span><span class="hm-team-name">Sofe Cote &amp; Liat Guvenc</span></div>
+            <div class="hm-team-row"><span class="hm-team-role">Lighting Design</span><span class="hm-team-name">Julia Smith, Peter W. Mitchell, Allie Yu Hu &amp; Mark Oliver Sillett</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hm-image-col">
+        <div class="hm-slideshow-wrap" id="hm-slideshow">
+          <div class="hm-dots" id="hm-dots"></div>
+        </div>
+        <div class="hm-video-wrap">
           <iframe
             src="https://www.youtube.com/embed/d1ls1y6hMdE?rel=0&modestbranding=1&color=white"
             allow="autoplay; fullscreen; picture-in-picture"
@@ -265,141 +423,156 @@
             title="HELP ME!!!! — Watch the Reel">
           </iframe>
         </div>
+        <span class="hm-video-label">Watch the Reel</span>
       </div>
-      <div>
-        <h2 class="hm-title" style="font-size:clamp(2rem,5vw,3.5rem);">What is HELP ME!!!!?</h2>
-        <p class="hm-about-desc">Thank goodness you're here! A dead mime needs help. At this interactive séance, audiences must think outside the box to help a family of ghosts resolve their unfinished business. Play charades, solve puzzles and pierce the veil between life and death on a madcap quest for forbidden knowledge.</p>
-        <ul class="hm-about-quotes">
-          <li>Instantly gripping.</li>
-          <li>An unforgettable night out!</li>
-          <li>Expected raucous fun with unexpected existential pathos.</li>
-          <li>The most memorable show I've seen at the Fringe so far.</li>
-          <li>Lion is a master of life-affirming joy.</li>
-        </ul>
-        <div class="hm-specs">
-          <div class="hm-spec"><p class="hm-spec__label">Duration</p><p class="hm-spec__val">~70 min</p></div>
-          <div class="hm-spec"><p class="hm-spec__label">Format</p><p class="hm-spec__val">Immersive · Interactive</p></div>
-          <div class="hm-spec"><p class="hm-spec__label">World Premiere</p><p class="hm-spec__val">Edinburgh Fringe 2025</p></div>
-        </div>
-        <p style="font-size:0.8rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--hm-muted);">A Production of <a href="https://thefirebirdproject.org" target="_blank" rel="noopener" style="color:var(--hm-accent);">The Firebird Project</a></p>
-        <div class="hm-team" style="margin-top:1.75rem;">
-          <p class="hm-team-title">Creative Team</p>
-          <div class="hm-team-row"><span class="hm-team-role">Creator &amp; Performer</span><span class="hm-team-name">Leo Lion</span></div>
-          <div class="hm-team-row"><span class="hm-team-role">Director</span><span class="hm-team-name">Yev Gelman</span></div>
-          <div class="hm-team-row"><span class="hm-team-role">Voices</span><span class="hm-team-name">Joshua Brelsford &amp; Clara Francesca</span></div>
-          <div class="hm-team-row"><span class="hm-team-role">Consulting Artist — Movement</span><span class="hm-team-name">Izzy Pflanz</span></div>
-          <div class="hm-team-row"><span class="hm-team-role">Consulting Artist — Magic</span><span class="hm-team-name">Reuven Glezer</span></div>
-          <div class="hm-team-row"><span class="hm-team-role">Props &amp; Merchandise</span><span class="hm-team-name">Sofe Cote &amp; Liat Guvenc</span></div>
-          <div class="hm-team-row"><span class="hm-team-role">Lighting Design</span><span class="hm-team-name">Julia Smith, Peter W. Mitchell, Allie Yu Hu &amp; Mark Oliver Sillett</span></div>
-        </div>
-      </div>
+
     </div>
   </div>
 </section>
 
 <!-- PRESS -->
-<section id="press" class="hm-section" style="border-top:1px solid var(--hm-border);">
-  <div class="hm-container">
-    <span class="hm-label">Edinburgh Fringe 2025 · World Premiere</span>
-    <h2 class="hm-title">Press &amp; Reviews</h2>
-    <div class="hm-press-grid">
-      <div class="hm-review">
-        <div>
-          <p class="hm-review__stars">&#9733;&#9733;&#9733;&#9733;</p>
-          <p class="hm-review__source">The Scotsman</p>
-        </div>
-        <p class="hm-review__text">"It's perhaps what it might feel like to be trapped in an escape room with an excellent mime performer&#8230; It's clever stuff, and he's very funny in his spontaneous interactions. The audience participation, as a result, never feels forced or embarrassing."</p>
-        <p class="hm-review__byline">David Kettle</p>
-      </div>
-      <div class="hm-review hm-review--featured">
-        <div>
-          <p class="hm-review__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
-          <p class="hm-review__source">BingeFringe Magazine · Featured</p>
-        </div>
-        <p class="hm-review__text">"Creator and performer Leo Lion gives a remarkably nimble and emotional performance, transforming from Levi to each family member with dexterity and clarity&#8230; Somewhere between an escape room, a séance, and a mime show — interactive, hilarious, and touching. An existential must-see."</p>
-        <p class="hm-review__byline">Eve Miller</p>
-      </div>
-      <div class="hm-review">
-        <div>
-          <p class="hm-review__stars">&#9733;&#9733;&#9733;&#9733;</p>
-          <p class="hm-review__source">The Real Chrisparkle</p>
-        </div>
-        <p class="hm-review__text">"This cleverly structured, extraordinarily creative show is a mixture of mime and clown, with a little bit of charades and game show thrown in for good measure. Advice to future audiences: the more you put into it, the more you get out of it! Amazing talent and tremendous fun."</p>
-        <p class="hm-review__byline">Christopher Poppe</p>
-      </div>
+<section id="press" class="hm-section hm-section--border">
+  <div class="hm-inner">
+    <div class="hm-press-header">
+      <span class="hm-press-heading">Press &amp; Reviews</span>
+      <span class="hm-press-sub">Edinburgh Fringe 2025 &middot; World Premiere</span>
     </div>
-    <div class="hm-award">
-      <p class="hm-award__icon">&#9733;</p>
-      <div>
-        <p class="hm-award__label">Nomination · Best Theatre</p>
-        <p class="hm-award__text">2025 Spooky Awards — Horror at the Fringe</p>
+    <div class="hm-press-grid">
+
+      <div class="hm-review-card">
+        <div class="hm-review-outlet">The Scotsman</div>
+        <div class="hm-review-stars">&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="hm-review-quote">&ldquo;It&rsquo;s perhaps what it might feel like to be trapped in an escape room with an excellent mime performer&hellip; It&rsquo;s clever stuff, and he&rsquo;s very funny in his spontaneous interactions. The audience participation, as a result, never feels forced or embarrassing.&rdquo;</p>
+        <div class="hm-review-byline">
+          <span class="hm-review-author">&mdash; David Kettle</span>
+          <a class="hm-review-link" href="https://www.scotsman.com/arts-and-culture/edinburgh-festivals/theatre-and-stage/fringe-theatre-reviews-dregs-help-me-edinburgh-5276365" target="_blank" rel="noopener">Read review &#8599;</a>
+        </div>
+      </div>
+
+      <div class="hm-review-card hm-review-card--featured">
+        <div class="hm-review-outlet">BingeFringe Magazine</div>
+        <div class="hm-review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="hm-review-quote">&ldquo;Creator and performer Leo Lion gives a remarkably nimble and emotional performance, transforming from Levi to each family member with dexterity and clarity&hellip; Somewhere between an escape room, a s&eacute;ance, and a mime show &mdash; interactive, hilarious, and touching. An existential must-see.&rdquo;</p>
+        <div class="hm-review-byline">
+          <span class="hm-review-author">&mdash; Eve Miller</span>
+          <a class="hm-review-link" href="https://www.bingefringe.com/2025/08/22/review-help-me-firebird-nyc-edfringe-2025-%E2%98%85%E2%98%85%E2%98%85%E2%98%85%E2%98%85/" target="_blank" rel="noopener">Read review &#8599;</a>
+        </div>
+      </div>
+
+      <div class="hm-review-card">
+        <div class="hm-review-outlet">The Real Chrisparkle</div>
+        <div class="hm-review-stars">&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="hm-review-quote">&ldquo;This cleverly structured, extraordinarily creative show is a mixture of mime and clown, with a little bit of charades and game show thrown in for good measure. Advice to future audiences: the more you put into it, the more you get out of it! Amazing talent and tremendous fun.&rdquo;</p>
+        <div class="hm-review-byline">
+          <span class="hm-review-author">&mdash; Christopher Poppe</span>
+          <a class="hm-review-link" href="https://therealchrisparkle.com/2025/08/18/edinburgh-fringe-2025-reviews-the-infant-help-me-all-over-the-plate-a-stand-up-comedy-tasting-menu-dirty-money-stuart-mcpherson-crisps-and-a-lie-down-derby-day-and-how-cant-i-help/" target="_blank" rel="noopener">Read review &#8599;</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="hm-award-row">
+      <div class="hm-award">
+        <span class="hm-award__label">Nominated</span>
+        <span class="hm-award__title">Best Theatre &mdash; 2025</span>
+        <span class="hm-award__source">The Spooky Awards &middot; Horror at the Fringe</span>
       </div>
     </div>
   </div>
 </section>
 
 <!-- MERCH -->
-<section id="merch" class="hm-section" style="border-top:1px solid var(--hm-border);">
-  <div class="hm-container">
-    <span class="hm-label">Merch</span>
-    <h2 class="hm-title">Unfinished Business</h2>
+<section id="merch" class="hm-section hm-section--border">
+  <div class="hm-inner">
+    <div class="hm-merch-header">
+      <h2 class="hm-rye" style="font-size:clamp(1.8rem,4vw,2.4rem);">Merch</h2>
+    </div>
     <div class="hm-merch-grid">
       <div class="hm-merch-card">
-        <img class="hm-merch-card__img" src="images/merch-cardgame.png" alt="Unfinished Business card game" loading="lazy" />
-        <div class="hm-merch-card__body">
-          <p class="hm-merch-card__badge">Coming Soon</p>
-          <h3 class="hm-merch-card__title">Unfinished Business</h3>
-          <p class="hm-merch-card__desc">The HELP ME!!!! card game. Bring the séance to your table.</p>
-          <p style="font-size:0.78rem;color:var(--hm-muted);">In development</p>
+        <div class="hm-merch-img">
+          <img src="https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/9796fee1-f449-41cf-aca8-24240a50fe78/hm-merch2.png?content-type=image%2Fpng" alt="Unfinished Business card game" loading="lazy" />
+        </div>
+        <div class="hm-merch-info">
+          <span class="hm-merch-badge">Coming Soon</span>
+          <h3 class="hm-merch-name">Unfinished Business</h3>
+          <p class="hm-merch-desc">The HELP ME!!!! card game. Bring the s&eacute;ance to your table.</p>
         </div>
       </div>
       <div class="hm-merch-card">
-        <img class="hm-merch-card__img" src="images/merch-shotglass.png" alt="Notokin Shot Glass" loading="lazy" />
-        <div class="hm-merch-card__body">
-          <p class="hm-merch-card__badge">Available Now</p>
-          <h3 class="hm-merch-card__title">Notokin Shot Glass</h3>
-          <p class="hm-merch-card__desc">To keep you in good spirits.</p>
-          <a href="https://www.paypal.com/ncp/payment/UATLUB4YSGQT2" class="hm-btn hm-btn--gold" target="_blank" rel="noopener">Buy Now</a>
+        <div class="hm-merch-img">
+          <img src="https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/c53830a7-0349-48d9-a6d2-d194ed055c8f/hm-merch1.png?content-type=image%2Fpng" alt="Notokin Shot Glass" loading="lazy" />
+        </div>
+        <div class="hm-merch-info">
+          <h3 class="hm-merch-name">Notokin Shot Glass</h3>
+          <p class="hm-merch-desc">To keep you in good spirits.</p>
+          <a href="https://www.paypal.com/ncp/payment/UATLUB4YSGQT2" class="hm-merch-btn" target="_blank" rel="noopener">Buy Now</a>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO WALL -->
+<section class="hm-section hm-section--border">
+  <div class="hm-inner">
+    <div class="hm-logos-header">
+      <span class="hm-eyebrow">As Seen At</span>
+    </div>
+    <div class="hm-logos-grid">
+      <img src="images/logos/5.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/6.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/7.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/8.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/9.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/10.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/11.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/12.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/13.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/14.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/15.png" alt="Partner venue or organization" loading="eager" />
+      <img src="images/logos/16.png" alt="Partner venue or organization" loading="eager" />
     </div>
   </div>
 </section>
 
 <!-- BOOK -->
-<section id="book" class="hm-section" style="border-top:1px solid var(--hm-border);">
-  <div class="hm-container">
+<section id="book" class="hm-section hm-section--border">
+  <div class="hm-inner">
     <div class="hm-book">
-      <span class="hm-label">For Presenters &amp; Venues</span>
-      <h2 class="hm-title">Book HELP ME!!!!</h2>
-      <div class="hm-book__ctas">
-        <a href="downloads/help-me-show-sheet.pdf" class="hm-btn hm-btn--ghost" target="_blank" rel="noopener">Download Show Sheet</a>
-        <span class="hm-book__or">or</span>
-        <a href="mailto:programs@firebird.nyc?subject=Booking%20Inquiry%3A%20HELP%20ME!!!!" class="hm-btn hm-btn--primary">programs@firebird.nyc</a>
+      <span class="hm-eyebrow">For Presenters &amp; Venues</span>
+      <h2 class="hm-rye" style="font-size:clamp(1.7rem,3.5vw,2.4rem);margin-top:0.5rem;">Book <em style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">HELP ME!!!!</em></h2>
+      <div class="hm-book-actions">
+        <a href="https://static1.squarespace.com/static/640fa7267ced4b222f26b019/t/69d3f000ca7e087b7d31e797/1775497216579/HELP+ME+ONE+PAGE.pdf" target="_blank" rel="noopener" class="hm-book-btn">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          Download Show Sheet
+        </a>
+        <span class="hm-book-or">or</span>
+        <a href="mailto:programs@firebird.nyc?subject=Booking%20Inquiry%3A%20HELP%20ME!!!!" class="hm-book-email">programs@firebird.nyc</a>
       </div>
-      <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--hm-muted);">A production of <a href="https://thefirebirdproject.org" target="_blank" rel="noopener" style="color:var(--hm-accent);">The Firebird Project</a></p>
+      <p class="hm-book-company">A production of <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">The Firebird Project</a></p>
     </div>
   </div>
 </section>
 
 <!-- LEO BIO -->
-<section id="leo" class="hm-section" style="border-top:1px solid var(--hm-border);">
-  <div class="hm-container">
-    <span class="hm-label">Creator &amp; Performer</span>
+<section id="leo" class="hm-section hm-section--border">
+  <div class="hm-inner">
     <div class="hm-bio-grid">
-      <img class="hm-bio-img" src="images/leo-headshot.jpg" alt="Leo Lion" loading="lazy" />
+      <div class="hm-bio-photo">
+        <img src="https://images.squarespace-cdn.com/content/v1/640fa7267ced4b222f26b019/032e7a73-edc7-466c-945c-1181acfc3196/Leo+Headshot+Crop.JPG" alt="Leo Lion" />
+      </div>
       <div>
-        <h2 class="hm-title">Leo Lion</h2>
-        <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--hm-muted);margin-bottom:1.5rem;">Director · Performer · Educator · Game Artist · Brooklyn, NY</p>
+        <span class="hm-eyebrow">Creator &amp; Performer</span>
+        <h2 class="hm-playfair" style="font-weight:700;font-size:clamp(1.8rem,4vw,2.4rem);margin-bottom:0.4rem;">Leo Lion</h2>
+        <p class="hm-bio-role">Director &middot; Performer &middot; Educator &middot; Game Artist &middot; Brooklyn, NY</p>
         <div class="hm-bio-text">
-          <p>Leo Lion is a multidisciplinary theatre-maker with a 12-year career spanning acting, directing, creative producing, improv, game design, and arts education. His practice draws from classic texts, physical theatre, clown, improv, and roleplaying games — creating work according to the motto <em>surprise yourself!</em></p>
-          <p>He is the Founder &amp; Artistic Director of The Firebird Project, an NYC arts production and education company creating dynamic new works inspired by classical and mythic stories. He also serves as Associate Artistic Director of the Phoenix Theatre Ensemble in NYC/Rockland County.</p>
-          <p>A Member of the Dramatists Guild and the Stage Directors &amp; Choreographers Society, Leo holds a BA in Theatre (Directing) from Fordham University '22.</p>
+          <p>Leo Lion is a multidisciplinary theatre-maker with a 12-year career spanning acting, directing, creative producing, improv, game design, and arts education. His practice draws from <strong>classic texts, physical theatre, clown, improv, and roleplaying games</strong> &mdash; creating work according to the motto <strong>surprise yourself!</strong></p>
+          <p>He is the Founder &amp; Artistic Director of <strong>The Firebird Project</strong>, an NYC arts production and education company creating dynamic new works inspired by classical and mythic stories. He also serves as Associate Artistic Director of the <strong>Phoenix Theatre Ensemble</strong> in NYC/Rockland County.</p>
+          <p>A Member of the <strong>Dramatists Guild</strong> and the <strong>Stage Directors &amp; Choreographers Society</strong>, Leo holds a BA in Theatre (Directing) from Fordham University &rsquo;22.</p>
         </div>
         <div class="hm-bio-links">
-          <a href="https://leolion.com" class="hm-bio-link" target="_blank" rel="noopener">leolion.com &#8594;</a>
-          <a href="https://instagram.com/whosleolion" class="hm-bio-link" target="_blank" rel="noopener">@whosleolion</a>
-          <a href="https://thefirebirdproject.org" class="hm-bio-link" target="_blank" rel="noopener">thefirebirdproject.org</a>
+          <a href="../index.html#about" class="hm-bio-link">leolion.com &rarr;</a>
+          <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener" class="hm-bio-link-sec">@whosleolion</a>
+          <a href="https://thefirebirdproject.org" target="_blank" rel="noopener" class="hm-bio-link-sec">thefirebirdproject.org</a>
         </div>
       </div>
     </div>
@@ -407,47 +580,82 @@
 </section>
 
 <!-- I WAS NEVER HERE PROMO -->
-<section class="hm-section hm-spy" style="border-top:1px solid var(--hm-border);">
-  <div class="hm-container">
-    <div class="hm-spy-grid">
-      <img class="hm-spy-img" src="images/iwasneverhere-square.png" alt="I Was Never Here" loading="lazy" />
-      <div>
-        <p class="hm-spy-label">Leo Lion's Next Show</p>
-        <h2 class="hm-spy-title">I WAS NEVER HERE.</h2>
-        <p class="hm-spy-desc">This sleeper agent is on a high-stakes mission. Your objective? Help him remember what the hell it is.</p>
-        <p style="font-size:0.88rem;color:var(--hm-muted);margin-bottom:1.5rem;">Coming to Edinburgh Fringe 2026.</p>
-        <a href="https://iwasneverhere.show" class="hm-btn hm-btn--ghost" target="_blank" rel="noopener">Learn More &#8594;</a>
-      </div>
+<section class="hm-spy-section">
+  <div class="hm-spy-glow"></div>
+  <div class="hm-inner">
+    <div class="hm-spy-inner">
+      <span class="hm-spy-label">Leo Lion&rsquo;s Next Show</span>
+      <img class="hm-spy-poster" src="https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/bdea7a36-4f75-4544-836a-d97439f79680/I+WAS+NEVER+HERE+SQUARE%285%29.png" alt="I Was Never Here" loading="lazy" />
+      <p class="hm-spy-desc">This sleeper agent is on a high-stakes mission. Your objective? Help him remember what the hell it is.<br>Coming to Edinburgh Fringe 2026.</p>
+      <a href="https://iwasneverhere.show" target="_blank" rel="noopener" class="hm-spy-cta">Learn More &rarr;</a>
     </div>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer class="hm-footer">
-  <a href="https://leolion.com" class="hm-footer__logo">LEO LION</a>
+  <a href="../index.html" class="hm-footer__logo">LEO LION</a>
   <nav class="hm-footer__links" aria-label="Footer links">
     <a href="#tour">Tour</a>
     <a href="#about">About</a>
     <a href="#press">Press</a>
+    <a href="#merch">Merch</a>
     <a href="#book">Book</a>
-    <a href="https://leolion.com" target="_blank" rel="noopener">leolion.com</a>
+    <a href="../index.html">leolion.com</a>
     <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
     <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">@whosleolion</a>
   </nav>
-  <p class="hm-footer__copy">&#169; 2026 Leo Lion · The Firebird Project · <a href="mailto:programs@firebird.nyc" style="color:var(--hm-accent);">programs@firebird.nyc</a></p>
+  <p class="hm-footer__copy">&copy; 2026 Leo Lion &middot; The Firebird Project &middot; <a href="mailto:programs@firebird.nyc" style="color:var(--hm-accent);">programs@firebird.nyc</a></p>
 </footer>
 
 <script>
-  (function() {
-    var slides = Array.from(document.querySelectorAll('.hm-slideshow__img'));
-    var current = 0;
-    function next() {
-      slides[current].classList.remove('active');
-      current = (current + 1) % slides.length;
-      slides[current].classList.add('active');
-    }
-    setInterval(next, 4000);
-  })();
+(function () {
+  var photos = [
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/4bf07e64-9bfb-4af4-a924-435663fa0fa5/helpmeslide1.jpg',
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/85315a67-9b05-4fc5-85e9-0ff80bee9a6b/helpmeslide2.jpg',
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/389274e8-2db3-4715-a800-9e5429b5575f/helpmeslide3.jpg',
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/f045743a-0c3d-4f33-97b4-49bd8d7e20fc/helpmeslide4.jpg',
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/3a4197ae-ad04-4031-8770-dcc158897d6b/helpmeslide5.jpg',
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/47c970ee-c9ad-44f1-b4df-33ff7bc4cee5/helpmeslide6.jpg',
+    'https://images.squarespace-cdn.com/content/640fa7267ced4b222f26b019/5e669601-a625-41de-9df0-3d2ed8e2cf8b/helpmeslide7.jpg'
+  ];
+
+  var wrap   = document.getElementById('hm-slideshow');
+  var dotsEl = document.getElementById('hm-dots');
+  if (!wrap || !photos.length) return;
+
+  var current = 0, slides = [], dots = [];
+
+  photos.forEach(function (src, i) {
+    var div = document.createElement('div');
+    div.className = 'hm-slide' + (i === 0 ? ' active' : '');
+    var img = document.createElement('img');
+    img.src = src;
+    img.alt = 'HELP ME!!!! production photo ' + (i + 1);
+    div.appendChild(img);
+    wrap.insertBefore(div, dotsEl);
+    slides.push(div);
+  });
+
+  photos.forEach(function (_, i) {
+    var btn = document.createElement('button');
+    btn.className = 'hm-dot' + (i === 0 ? ' active' : '');
+    btn.setAttribute('aria-label', 'Go to photo ' + (i + 1));
+    btn.addEventListener('click', function () { goTo(i); });
+    dotsEl.appendChild(btn);
+    dots.push(btn);
+  });
+
+  setInterval(function () { goTo((current + 1) % photos.length); }, 4000);
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
+})();
 </script>
 </body>
 </html>

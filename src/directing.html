@@ -15,16 +15,18 @@
     [data-fade].visible { opacity: 1; transform: none; }
 
     .dir-hero {
-      min-height: 55svh; display: flex; flex-direction: column; justify-content: flex-end;
-      padding-top: var(--nav-h); position: relative; overflow: hidden; background: var(--black);
+      padding-top: calc(var(--nav-h) + 3.5rem);
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--black);
     }
     .dir-hero__content {
       padding: 0 max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
-      padding-bottom: 4rem; max-width: calc(var(--max-w) + 2 * var(--gutter));
+      max-width: calc(var(--max-w) + 2 * var(--gutter));
     }
     .dir-hero__title {
-      font-family: var(--font-display); font-size: clamp(5rem, 14vw, 14rem);
-      line-height: 0.86; margin-bottom: 1rem;
+      font-family: var(--font-display); font-size: clamp(3.5rem, 7vw, 7rem);
+      line-height: 0.9; margin-bottom: 0.75rem;
     }
 
     /* ── Filter bar ── */
@@ -62,6 +64,7 @@
     .show-card {
       display: flex; flex-direction: column;
       width: 100%; padding: 0; margin: 0;
+      min-height: 0;
       align-self: start;
       appearance: none; -webkit-appearance: none;
       background: var(--near-black); border: 1px solid var(--border);
@@ -72,14 +75,12 @@
     .show-card[hidden] { display: none; }
 
     .show-card__img-wrap {
-      position: relative;
-      padding-top: 56.25%; /* 16:9 */
+      aspect-ratio: 16/9;
       overflow: hidden;
       flex-shrink: 0;
     }
     .show-card__img {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
+      width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block;
       filter: brightness(0.72) saturate(0.65);
       transition: transform 0.5s var(--ease-out-expo), filter 0.3s;
     }
@@ -141,8 +142,8 @@
     .lightbox__panel {
       position: relative; z-index: 1;
       background: var(--near-black); border: 1px solid var(--border);
-      max-width: 780px; width: 100%; max-height: 90vh; overflow-y: auto;
-      display: grid; grid-template-columns: 55% 45%;
+      max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto;
+      display: flex; flex-direction: column;
     }
     .lightbox__close {
       position: absolute; top: 0.75rem; right: 0.75rem;
@@ -153,11 +154,11 @@
       transition: color 0.15s;
     }
     .lightbox__close:hover { color: var(--white); }
-    .lightbox__img-wrap { overflow: hidden; }
-    .lightbox__img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+    .lightbox__img-wrap { overflow: hidden; flex-shrink: 0; }
+    .lightbox__img { width: 100%; height: auto; display: block; }
     .lightbox__body {
-      padding: 2rem 1.75rem; display: flex; flex-direction: column; gap: 0.6rem;
-      justify-content: center;
+      padding: 1.5rem 1.75rem 2rem; display: flex; flex-direction: column; gap: 0.6rem;
+      border-top: 1px solid var(--border);
     }
     .lightbox__year {
       font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
@@ -187,8 +188,7 @@
     @media (max-width: 560px) { .show-grid { grid-template-columns: 1fr; } }
     @media (max-width: 700px) {
       .also-grid { grid-template-columns: repeat(3, 1fr); }
-      .lightbox__panel { grid-template-columns: 1fr; }
-      .lightbox__img-wrap { aspect-ratio: 16/9; }
+      .lightbox { padding: 1rem; }
     }
   </style>
 </head>
@@ -206,7 +206,7 @@
       <li><a href="playwriting.html">Playwriting</a></li>
       <li><a href="workshops.html">Workshops</a></li>
       <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
-      <li><a href="mailto:leo@firebird.nyc" class="nav-cta">Hire / Produce</a></li>
+      <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
     </ul>
   </div>
 </nav>
@@ -216,7 +216,7 @@
     <span class="label">Directing Portfolio · 2013–Present</span>
     <h1 class="dir-hero__title" id="dir-heading">DIRECTING</h1>
     <p style="font-size:clamp(1rem,1.5vw,1.15rem);color:var(--muted);line-height:1.8;max-width:600px;">
-      27+ productions across NYC, Edinburgh, and Seattle. Firebird Project · Phoenix Theatre Ensemble · Dacha Theatre.
+      27+ productions across NYC, Edinburgh, and Seattle.
     </p>
   </div>
 </section>
@@ -224,7 +224,7 @@
 <main>
 
   <!-- DIRECTED WORKS -->
-  <section class="section" aria-label="Directed works" style="padding-top:2rem;">
+  <section class="section" aria-label="Directed works" style="padding-top:1.5rem;">
     <div class="container">
 
       <div class="filter-bar" role="group" aria-label="Filter productions">
@@ -248,7 +248,7 @@
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2026" data-title="ROBIN HOOD"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="Hope, be it ever so faint, bringeth a gleam into darkness"
           data-desc="An action packed medieval epic about young people caught between law and freedom in an age of tyranny. Devised by a teen ensemble."
           data-href="">
@@ -258,14 +258,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2026</p>
             <h2 class="show-card__title">ROBIN HOOD</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2026" data-title="THE WAR OF THE WORLDS"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="No one would have believed, in the last years of the nineteenth century…"
           data-desc="Ensemble-devised adaptation of H.G. Wells. Adapted by Leo Lion &amp; Izzy Pflanz."
           data-href="">
@@ -275,7 +275,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2026</p>
             <h2 class="show-card__title">THE WAR OF THE WORLDS</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
@@ -384,7 +384,7 @@
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2023" data-title="THE SNOW QUEEN"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="You will know more than you do now…"
           data-desc="What happens when we grow up? How do we cope with change, growing apart, becoming someone we don&#39;t recognize? Follow a young girl&#39;s epic journey through the seasons of the year as she seeks to rescue her best friend. Devised by a cross-generational quartet of teen artists."
           data-href="">
@@ -394,7 +394,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2023</p>
             <h2 class="show-card__title">THE SNOW QUEEN</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
@@ -520,7 +520,7 @@
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2020" data-title="MACBETH: ONLINE"
-          data-org-label="Firebird Project · Online"
+          data-org-label="Firebird Youth Theater · Online"
           data-quote="Blood will have blood"
           data-desc="A multi media rendition of Macbeth, remotely devised by seven teen artists, examining the violent and disturbing ways we fulfill or defy our fates, as well as the bloody legacies we inherit and those we pass on to the generations to come."
           data-href="">
@@ -530,7 +530,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2020</p>
             <h2 class="show-card__title">MACBETH: ONLINE</h2>
-            <p class="show-card__org">Firebird Project · Online</p>
+            <p class="show-card__org">Firebird Youth Theater · Online</p>
           </div>
         </button>
 
@@ -552,9 +552,9 @@
         </button>
 
         <button type="button" class="show-card"
-          data-org="firebird" data-type="adult"
+          data-org="firebird" data-type="youth"
           data-year="2019" data-title="AN ENEMY OF THE PEOPLE"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="The people don't need any new ideas"
           data-desc="A dreamlike Scandinavian noir. A family and a town are torn apart by the discovery of a virus in the water. How far will you go with the whole world against you?"
           data-href="">
@@ -564,14 +564,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2019</p>
             <h2 class="show-card__title">AN ENEMY OF THE PEOPLE</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
-          data-org="firebird" data-type="adult"
+          data-org="firebird" data-type="youth"
           data-year="2019" data-title="JULIUS CAESAR"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="Cry havoc and let slip the dogs of war"
           data-desc="Rugrat Romans joust to the death in this apocalyptic daycare. Where does the hunger for power come from? How early does it set in?"
           data-href="">
@@ -581,14 +581,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2019</p>
             <h2 class="show-card__title">JULIUS CAESAR</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
-          data-org="firebird" data-type="adult"
+          data-org="firebird" data-type="youth"
           data-year="2018" data-title="THE TEMPEST"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="Our little life is rounded with a sleep"
           data-desc="This island is alive! In this highly physical arena staging of the classic poetic comedy, newly adapted in a fast paced, raw, modern telling by Zoe Senese-Grossberg and Leo Lion."
           data-href="">
@@ -598,14 +598,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2018</p>
             <h2 class="show-card__title">THE TEMPEST</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
-          data-org="firebird" data-type="adult"
+          data-org="firebird" data-type="youth"
           data-year="2018" data-title="R.U.R."
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="It is better to be alive"
           data-desc="Sometime around 2000, an indie dev team on an island lab unveil their invention: a synthetic person. A Y2K and Apple infused vision of humanity&#39;s last days, in a horror-fueled alternate history by Zoe Senese-Grossberg and Leo Lion."
           data-href="">
@@ -615,14 +615,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2018</p>
             <h2 class="show-card__title">R.U.R.</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
-          data-org="firebird" data-type="adult"
+          data-org="firebird" data-type="youth"
           data-year="2018" data-title="OUR TOWN"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="This is the way we were"
           data-desc="A tech rehearsal becomes a meditation on community, on waiting, on time. As is what happens while you&#39;re busy making other plans, Thornton Wilder&#39;s haunting chronicle seeps through the fourth wall in this metatheatrical staging."
           data-href="">
@@ -632,14 +632,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2018</p>
             <h2 class="show-card__title">OUR TOWN</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2017" data-title="ROMEO + JULIET"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="These are the hands that cut our youth in twain"
           data-desc="Generations clash, role models fail, and love stories don&#39;t come true. A modern staging with a half-adult, half-teenager cast gets at the heart of the disconnect between parents and children — a rift that too often turns deadly. Original adaptation by Zoe Senese-Grossberg and Leo Lion."
           data-href="">
@@ -649,14 +649,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2017</p>
             <h2 class="show-card__title">ROMEO + JULIET</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2016" data-title="TREASURE ISLAND"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="We must go on, because we can't turn back"
           data-desc="A shanty-fueled epistolary quest on the high seas, brought to life by a band dressed like a pirate ship ensemble of teen actors. In this original adaptation, a stolen pirate map sends a young boy on a swashbuckling search to find glory, a father figure, or the wrong end of a blade."
           data-href="">
@@ -666,14 +666,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2016</p>
             <h2 class="show-card__title">TREASURE ISLAND</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2015" data-title="ALICE'S ADVENTURES IN WONDERLAND"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="Little hands make vain pretence our wanderings to guide"
           data-desc="A deeply playful, visually poetic, dreamy iteration of the beloved nonsense novella. Riddled with puppets, visual effects, live foley sound, ballet, and more, this original adaptation performed by a cast of teen actors celebrates the precious, fleeting magic of childhood play."
           data-href="">
@@ -683,14 +683,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2015</p>
             <h2 class="show-card__title">ALICE'S ADVENTURES IN WONDERLAND</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
-          data-org="firebird" data-type="adult"
+          data-org="firebird" data-type="youth"
           data-year="2014" data-title="eXPRESSO"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="Show me where it says I can't have a cow in here!"
           data-desc="A tonally bizarre farcical drama about an indie coffee shop&#39;s battle against monopoly. Co-written by a dad and his thirteen year old son in the wake of Occupy Wall Street, eXpresso is a history-told fable about the chaos of capitalism."
           data-href="">
@@ -700,14 +700,14 @@
           <div class="show-card__caption">
             <p class="show-card__year">2014</p>
             <h2 class="show-card__title">eXPRESSO</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
         <button type="button" class="show-card"
           data-org="firebird" data-type="youth"
           data-year="2013" data-title="DOWN THE CHOCOLATE RIVER"
-          data-org-label="Firebird Project · NYC"
+          data-org-label="Firebird Youth Theater · NYC"
           data-quote="So much time and so little to do. Strike that. Reverse it."
           data-desc="A homeschooled theater community makes their spring show: a questionably legal staging of the 1971 Willy Wonka movie. Performed in the wake of Broadway Theater, directed by a 13-year-old kid, an ironic retelling of the strangely dark candy fairy tale."
           data-href="">
@@ -717,7 +717,7 @@
           <div class="show-card__caption">
             <p class="show-card__year">2013</p>
             <h2 class="show-card__title">DOWN THE CHOCOLATE RIVER</h2>
-            <p class="show-card__org">Firebird Project · NYC</p>
+            <p class="show-card__org">Firebird Youth Theater · NYC</p>
           </div>
         </button>
 
@@ -730,8 +730,7 @@
     <div class="container">
       <div class="section-header">
         <div>
-          <span class="label">Producer</span>
-          <h2 class="section-title" id="also-heading" style="font-size:clamp(1.5rem,3vw,2rem);">ALSO PRODUCED</h2>
+          <h2 class="section-title" id="also-heading" style="font-size:clamp(1.5rem,3vw,2rem);">ALSO PRODUCED:</h2>
         </div>
       </div>
       <div class="also-grid">
@@ -823,9 +822,9 @@
 
 <section class="section contact-section" aria-labelledby="dir-contact-heading">
   <div class="container">
-    <span class="label">Work Together</span>
-    <h2 class="section-title" id="dir-contact-heading" style="margin-bottom:1rem;">HIRE / PRODUCE</h2>
-    <p class="contact-desc">Interested in working with Leo as a director, or in producing one of these shows?</p>
+    <span class="label">GET IN TOUCH</span>
+    <h2 class="section-title" id="dir-contact-heading" style="margin-bottom:1rem;">WORK WITH ME?</h2>
+    <p class="contact-desc">I direct mainstage shows, festival work, devising processes, pop-up experiences, and more. Let's make something ambitious.</p>
     <div class="contact-ctas">
       <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
       <a href="https://thefirebirdproject.org" class="btn btn--ghost" target="_blank" rel="noopener">The Firebird Project</a>
