@@ -56,10 +56,12 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1.5rem;
+      align-items: start;
     }
 
     .show-card {
-      display: block; width: 100%; padding: 0;
+      display: block; width: 100%; padding: 0; margin: 0;
+      appearance: none; -webkit-appearance: none;
       background: var(--near-black); border: 1px solid var(--border);
       cursor: pointer; text-align: left;
       transition: border-color 0.2s;
@@ -68,10 +70,11 @@
     .show-card[hidden] { display: none; }
 
     .show-card__img-wrap {
-      aspect-ratio: 5/2; overflow: hidden; position: relative; display: block;
+      aspect-ratio: 16/9; overflow: hidden; position: relative;
     }
     .show-card__img {
-      width: 100%; height: 100%; object-fit: cover; object-position: top; display: block;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
       filter: brightness(0.72) saturate(0.65);
       transition: transform 0.5s var(--ease-out-expo), filter 0.3s;
     }
@@ -79,19 +82,19 @@
       transform: scale(1.03); filter: brightness(0.9) saturate(1);
     }
     .show-card__caption {
-      padding: 0.85rem 1rem 1rem; border-top: 1px solid var(--border);
+      padding: 0.9rem 1rem 1.1rem; border-top: 1px solid var(--border);
     }
     .show-card__year {
-      font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
       letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
-      margin-bottom: 0.2rem;
+      margin-bottom: 0.25rem;
     }
     .show-card__title {
-      font-family: var(--font-display); font-size: clamp(0.8rem, 1.1vw, 0.95rem);
-      line-height: 1.05; color: var(--white); margin-bottom: 0.2rem;
+      font-family: var(--font-display); font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+      line-height: 1.05; color: var(--white); margin-bottom: 0.25rem;
     }
     .show-card__org {
-      font-family: var(--font-ui); font-size: 0.58rem; font-weight: 600;
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600;
       letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
     }
 
@@ -242,7 +245,7 @@
           data-year="2026" data-title="ROBIN HOOD"
           data-org-label="Firebird Project · NYC"
           data-quote="Hope, be it ever so faint, bringeth a gleam into darkness"
-          data-desc="Action-packed medieval epic about youth caught between law and freedom under tyranny. Ensemble-devised."
+          data-desc="An action packed medieval epic about young people caught between law and freedom in an age of tyranny. Devised by a teen ensemble."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/robin-hood.jpg" alt="Robin Hood" loading="lazy" />
@@ -276,7 +279,7 @@
           data-year="2026" data-title="LIAR'S NIGHT"
           data-org-label="Firebird Project · NYC"
           data-quote="Play. Drink. Lie. Repeat."
-          data-desc="Post-apocalyptic murder mystery party with social deduction at a carnival apocalypse."
+          data-desc="Experience a post apocalyptic murder mystery party, with debauchery, drinks, and a devious killer on the loose! A multidimensional night of social deduction, set at a carnival at the end of the world."
           data-href="liars-night.html">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/liars-night.png" alt="Liar's Night" loading="lazy" />
@@ -292,8 +295,8 @@
           data-org="phoenix" data-type="adult"
           data-year="2025" data-title="THE CRUCIBLE"
           data-org-label="Firebird &#215; Phoenix · Nyack, NY"
-          data-quote="Something is wrong with the children of Salem"
-          data-desc="Explores moral panic when old grudges emerge, threatening community cohesion."
+          data-quote="Something is wrong with the children of Salem and their parents are desperate to set it right."
+          data-desc="As fingers are pointed and old grudges emerge, the community slips into a moral panic that threatens to tear their entire society asunder."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/crucible.jpg" alt="The Crucible" loading="lazy" />
@@ -310,7 +313,7 @@
           data-year="2025" data-title="HELP ME!!!!"
           data-org-label="Firebird Project · Edinburgh / NYC"
           data-quote="Thank goodness you're here! A dead mime needs help!"
-          data-desc="Interactive seance where audiences solve puzzles and play charades to help a ghost family pierce the veil."
+          data-desc="At this interactive seance, audiences must help a family of ghosts resolve their unfinished business. Play charades, solve puzzles and pierce the veil between life and death on a madcap quest for forbidden knowledge."
           data-href="helpme/">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/helpme.png" alt="Help Me!!!!" loading="lazy" />
@@ -327,7 +330,7 @@
           data-year="2025" data-title="TROUBLE FEATURE"
           data-org-label="Firebird &#215; The TEAM · NYC"
           data-quote="Do you like scary movies?"
-          data-desc="Horror-themed game show with rotating improv cast attempting survival scenarios."
+          data-desc="A rotating cast of improv performers attempt to survive classic horror movie scenarios in this boozy, bawdy, bloody game show fueled by a love of campy horror. Only one player can become final girl, so join us, grab a drink, and see who lives long enough to see the credits roll."
           data-href="trouble-feature.html">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/trouble-feature.png" alt="Trouble Feature" loading="lazy" />
@@ -344,7 +347,7 @@
           data-year="2024" data-title="KAFKATECH: METAMORPHOSIS"
           data-org-label="Phoenix Theatre Ensemble · NYC"
           data-quote="It's shocking, what can suddenly happen to a person…"
-          data-desc="Immersive audio-driven experience at a hypnotic corporate retreat, devised from Kafka's anti-capitalist fable."
+          data-desc="An immersive audio-driven experience set at an eerie hypnotic corporate retreat. Devised from Kafka&#39;s legendary anti-capitalist fable. What is your humanity worth? What are you willing to become? Is it ever enough?"
           data-href="metamorphosis.html">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/metamorphosis.jpg" alt="Kafkatech: Metamorphosis" loading="lazy" />
@@ -361,7 +364,7 @@
           data-year="2024" data-title="DICE: A MIDSUMMER NIGHT'S DREAM"
           data-org-label="Dacha Theatre · Seattle"
           data-quote="Name what part I am for, and proceed!"
-          data-desc="Innovative format where audience dice rolls randomly cast actors nightly in a phantasmagoric carnival version."
+          data-desc="In Dacha&#39;s innovative Shakespeare Dice format, the actors learn all the parts, and audience rolls dice to randomly cast them each night. An unpredictable ride through a phantasmagoric carnival rendition of Shakespeare&#39;s most magical comedy."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/midsummer.png" alt="Dice: A Midsummer Night's Dream" loading="lazy" />
@@ -378,7 +381,7 @@
           data-year="2023" data-title="THE SNOW QUEEN"
           data-org-label="Firebird Project · NYC"
           data-quote="You will know more than you do now…"
-          data-desc="Journey through the seasons as a girl rescues her best friend. Explores growing apart. Teen-devised."
+          data-desc="What happens when we grow up? How do we cope with change, growing apart, becoming someone we don&#39;t recognize? Follow a young girl&#39;s epic journey through the seasons of the year as she seeks to rescue her best friend. Devised by a cross-generational quartet of teen artists."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/snow-queen.jpg" alt="The Snow Queen" loading="lazy" />
@@ -395,7 +398,7 @@
           data-year="2023" data-title="THE WIND IN THE WILLOWS"
           data-org-label="Phoenix Theatre Ensemble · Nyack, NY"
           data-quote="Here today, in next week tomorrow!"
-          data-desc="Physical theater rendition celebrating community, found family, and outdoor beauty."
+          data-desc="A high paced physical theater rendition of Kenneth Grahame&#39;s beloved Victorian fairy tale. Join Mole, Rat, Badger, and Toad on a both hilarious and nostalgic outdoor adventure that celebrates the joys of community, found family, and the profound beauty of the outdoors."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/wind-willows.jpg" alt="The Wind in the Willows" loading="lazy" />
@@ -412,7 +415,7 @@
           data-year="2023" data-title="ROSSUM'S UNIVERSAL ROBOTS"
           data-org-label="Firebird Project · NYC"
           data-quote="It is better to be alive"
-          data-desc="1920 futuristic thriller exploring the ethics of AI and technological creation in the human image."
+          data-desc="This futuristic thriller from 1920, which coined the word &#39;robot,&#39; explores the ethics and decision making behind robotics and AI. Why do we insist upon creating AI in our own image, and where will it end?"
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/rur-2023.png" alt="Rossum's Universal Robots" loading="lazy" />
@@ -429,7 +432,7 @@
           data-year="2023" data-title="SCANDALTON: LIVE"
           data-org-label="Phoenix Theatre Ensemble · NYC"
           data-quote="You bring the tea, we spill it."
-          data-desc="Regency-era roleplaying game with audience-created rumors, styled after literary drama."
+          data-desc="A regency era roleplaying game with audience created rumors. Imagine if Austen and the Bront&#235;s got drunk and wrote a Choose Your Own Adventure."
           data-href="scandalton.html">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/scandalton.png" alt="Scandalton: Live" loading="lazy" />
@@ -446,7 +449,7 @@
           data-year="2022" data-title="THE IMPORTANCE OF BEING EARNEST"
           data-org-label="Phoenix Theatre Ensemble · Nyack, NY"
           data-quote="Style, not sincerity, is the vital thing"
-          data-desc="Glitzy outdoor dollhouse staging of Wilde's farce. Mainstage at Phoenix Festival, Top 10 of 2022 by Theatrescene."
+          data-desc="A glitzy, dollhouse-styled outdoor staging of Wilde&#39;s farce of Victorian ideals and double identities. Mainstage at Phoenix Festival, named &#39;Top 10 of 2022&#39; by Theatrescene."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/earnest.png" alt="The Importance of Being Earnest" loading="lazy" />
@@ -463,7 +466,7 @@
           data-year="2022" data-title="THE HARMFULNESS OF TOBACCO"
           data-org-label="Phoenix Theatre Ensemble · Nyack, NY"
           data-quote="What's the point of all this!?"
-          data-desc="Flashmob-inspired solo show based on Chekhov's short play, adapted for performer John Lenartz."
+          data-desc="In this flashmob-inspired solo show, a speech at a fundraising event goes a little off the rails. Based on the short play by Anton Chekhov, adapted for John Lenartz."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/harmfulness.png" alt="The Harmfulness of Tobacco" loading="lazy" />
@@ -480,7 +483,7 @@
           data-year="2022" data-title="THE DRACULA FILES"
           data-org-label="Fordham University Studio"
           data-quote="Knowledge is stronger than memory"
-          data-desc="BA Thesis. Nonlinear interactive retelling of Dracula with epistolary scenes and a hidden timeline."
+          data-desc="BA Thesis. A nonlinear interactive retelling of Stoker&#39;s gothic novel. Audiences explore epistolary scenes while piecing together the secret timeline of an extinction-level threat."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/dracula.png" alt="The Dracula Files" loading="lazy" />
@@ -497,7 +500,7 @@
           data-year="2021" data-title="THE ROOTS THAT CLUTCH"
           data-org-label="U of Toronto FOOT Conference"
           data-quote="Maybe it feels unreal?"
-          data-desc="Poem in Zoom-dates exploring a couple separated by COVID border closures. University of Toronto FOOT Conference 2021."
+          data-desc="A poem in Zoom-dates. A couple separated in the early days of COVID try to overcome a physical border by meeting somewhere in between. University of Toronto FDOT (Forum of Original Theatre, Theory &amp; Thought) Conference 2021."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/roots.png" alt="The Roots That Clutch" loading="lazy" />
@@ -514,7 +517,7 @@
           data-year="2020" data-title="MACBETH: ONLINE"
           data-org-label="Firebird Project · Online"
           data-quote="Blood will have blood"
-          data-desc="Multi-media rendition remotely devised by seven teens, examining violent fate fulfillment and inherited legacies."
+          data-desc="A multi media rendition of Macbeth, remotely devised by seven teen artists, examining the violent and disturbing ways we fulfill or defy our fates, as well as the bloody legacies we inherit and those we pass on to the generations to come."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/macbeth.png" alt="Macbeth: Online" loading="lazy" />
@@ -531,7 +534,7 @@
           data-year="2020" data-title="THE DEATH OF IVAN ILYICH"
           data-org-label="Phoenix Theatre Ensemble · NYC"
           data-quote="Death happens to other people!"
-          data-desc="Group therapy session for dead people. US Premiere of Steven Sharkey's adaptation."
+          data-desc="At a group therapy session for dead people, Ivan is brought to life. A recently dead man gives his final confession. US Premiere of Steven Sharkey&#39;s adaptation."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/ivan.png" alt="The Death of Ivan Ilyich" loading="lazy" />
@@ -548,7 +551,7 @@
           data-year="2019" data-title="AN ENEMY OF THE PEOPLE"
           data-org-label="Firebird Project · NYC"
           data-quote="The people don't need any new ideas"
-          data-desc="Dreamlike Scandinavian noir about a family and town torn apart by a water virus discovery."
+          data-desc="A dreamlike Scandinavian noir. A family and a town are torn apart by the discovery of a virus in the water. How far will you go with the whole world against you?"
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/enemy.png" alt="An Enemy of the People" loading="lazy" />
@@ -565,7 +568,7 @@
           data-year="2019" data-title="JULIUS CAESAR"
           data-org-label="Firebird Project · NYC"
           data-quote="Cry havoc and let slip the dogs of war"
-          data-desc="Apocalyptic daycare staging exploring early power hunger."
+          data-desc="Rugrat Romans joust to the death in this apocalyptic daycare. Where does the hunger for power come from? How early does it set in?"
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/caesar.png" alt="Julius Caesar" loading="lazy" />
@@ -582,7 +585,7 @@
           data-year="2018" data-title="THE TEMPEST"
           data-org-label="Firebird Project · NYC"
           data-quote="Our little life is rounded with a sleep"
-          data-desc="Highly physical arena staging, newly adapted by Zoe Senese-Grossberg and Leo Lion."
+          data-desc="This island is alive! In this highly physical arena staging of the classic poetic comedy, newly adapted in a fast paced, raw, modern telling by Zoe Senese-Grossberg and Leo Lion."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/tempest.png" alt="The Tempest" loading="lazy" />
@@ -599,7 +602,7 @@
           data-year="2018" data-title="R.U.R."
           data-org-label="Firebird Project · NYC"
           data-quote="It is better to be alive"
-          data-desc="Y2K and Apple-infused horror alternate history, adapted by Zoe Senese-Grossberg and Leo Lion."
+          data-desc="Sometime around 2000, an indie dev team on an island lab unveil their invention: a synthetic person. A Y2K and Apple infused vision of humanity&#39;s last days, in a horror-fueled alternate history by Zoe Senese-Grossberg and Leo Lion."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/rur-2018.png" alt="R.U.R." loading="lazy" />
@@ -616,7 +619,7 @@
           data-year="2018" data-title="OUR TOWN"
           data-org-label="Firebird Project · NYC"
           data-quote="This is the way we were"
-          data-desc="Tech rehearsal meditation on community and time. Metatheatrical Thornton Wilder staging."
+          data-desc="A tech rehearsal becomes a meditation on community, on waiting, on time. As is what happens while you&#39;re busy making other plans, Thornton Wilder&#39;s haunting chronicle seeps through the fourth wall in this metatheatrical staging."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/our-town.png" alt="Our Town" loading="lazy" />
@@ -633,7 +636,7 @@
           data-year="2017" data-title="ROMEO + JULIET"
           data-org-label="Firebird Project · NYC"
           data-quote="These are the hands that cut our youth in twain"
-          data-desc="Half-adult/half-teen cast explores generational clash and deadly parent-child disconnect. Original adaptation by Zoe Senese-Grossberg and Leo Lion."
+          data-desc="Generations clash, role models fail, and love stories don&#39;t come true. A modern staging with a half-adult, half-teenager cast gets at the heart of the disconnect between parents and children — a rift that too often turns deadly. Original adaptation by Zoe Senese-Grossberg and Leo Lion."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/romeo-juliet.png" alt="Romeo + Juliet" loading="lazy" />
@@ -650,7 +653,7 @@
           data-year="2016" data-title="TREASURE ISLAND"
           data-org-label="Firebird Project · NYC"
           data-quote="We must go on, because we can't turn back"
-          data-desc="Shanty-fueled epistolary quest on the high seas. Original adaptation with teen ensemble."
+          data-desc="A shanty-fueled epistolary quest on the high seas, brought to life by a band dressed like a pirate ship ensemble of teen actors. In this original adaptation, a stolen pirate map sends a young boy on a swashbuckling search to find glory, a father figure, or the wrong end of a blade."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/treasure-island.png" alt="Treasure Island" loading="lazy" />
@@ -667,7 +670,7 @@
           data-year="2015" data-title="ALICE'S ADVENTURES IN WONDERLAND"
           data-org-label="Firebird Project · NYC"
           data-quote="Little hands make vain pretence our wanderings to guide"
-          data-desc="Playful, poetic dream iteration with puppets, visual effects, foley sound, and ballet. Teen cast."
+          data-desc="A deeply playful, visually poetic, dreamy iteration of the beloved nonsense novella. Riddled with puppets, visual effects, live foley sound, ballet, and more, this original adaptation performed by a cast of teen actors celebrates the precious, fleeting magic of childhood play."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/alice.png" alt="Alice's Adventures in Wonderland" loading="lazy" />
@@ -684,7 +687,7 @@
           data-year="2014" data-title="eXPRESSO"
           data-org-label="Firebird Project · NYC"
           data-quote="Show me where it says I can't have a cow in here!"
-          data-desc="Farcical drama about an indie coffee shop battling a monopoly. Co-written by a father-son duo post-Occupy Wall Street."
+          data-desc="A tonally bizarre farcical drama about an indie coffee shop&#39;s battle against monopoly. Co-written by a dad and his thirteen year old son in the wake of Occupy Wall Street, eXpresso is a history-told fable about the chaos of capitalism."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/expresso.png" alt="eXpresso" loading="lazy" />
@@ -701,7 +704,7 @@
           data-year="2013" data-title="DOWN THE CHOCOLATE RIVER"
           data-org-label="Firebird Project · NYC"
           data-quote="So much time and so little to do. Strike that. Reverse it."
-          data-desc="Off-Broadway staging of the 1971 Willy Wonka film directed by a 13-year-old. Homeschooled theater community."
+          data-desc="A homeschooled theater community makes their spring show: a questionably legal staging of the 1971 Willy Wonka movie. Performed in the wake of Broadway Theater, directed by a 13-year-old kid, an ironic retelling of the strangely dark candy fairy tale."
           data-href="">
           <div class="show-card__img-wrap">
             <img class="show-card__img" src="images/directing/chocolate-river.png" alt="Down the Chocolate River" loading="lazy" />
