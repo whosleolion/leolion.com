@@ -114,50 +114,41 @@
       border-color: rgba(240,237,230,0.2);
     }
     @media (max-width: 900px) {
-      /* Stack both children into a single overlapping grid cell */
+      /* Stacked layout: image on top, content below */
       .tour-hero {
-        grid-template-columns: 1fr;
-        grid-template-rows: 100svh;
+        display: flex;
+        flex-direction: column;
+        min-height: 100svh;
       }
-      /* Image fills the cell behind the content */
       .tour-hero__image-side {
-        grid-column: 1; grid-row: 1;
+        flex: 0 0 52vw;
+        max-height: 56vh;
         clip-path: none;
         z-index: 0;
       }
-      /* Show full figure on mobile — contain so arms aren't cropped */
       .tour-hero__image-side img {
-        object-fit: contain;
+        object-fit: cover;
         object-position: center 10%;
         transform: none;
       }
-      /* Logo + eyebrow centered on mobile */
+      .tour-hero__image-side::after {
+        background: linear-gradient(to bottom, transparent 55%, var(--black) 100%);
+      }
+      .tour-hero__content-side {
+        flex: 1;
+        align-items: flex-start;
+        padding-top: 0;
+        background: var(--black);
+      }
+      .tour-hero__content-side::after { background: none; }
+      .tour-hero__content {
+        padding: 1.5rem var(--gutter) 3rem;
+      }
       .tour-hero__logo { width: min(85vw, 380px); margin: 0 auto; }
       .tour-hero__byline {
         width: min(85vw, 380px);
         text-align: center;
         margin: 0 auto 0.75rem;
-        text-shadow: 0 1px 10px rgba(0,0,0,0.95), 0 0 24px rgba(0,0,0,0.7);
-      }
-      /* Bottom vignette */
-      .tour-hero__image-side::after {
-        background: linear-gradient(
-          to bottom,
-          transparent 40%,
-          rgba(8,8,8,0.95) 100%
-        );
-      }
-      /* Content overlays on top, pushed to the bottom where it's dark */
-      .tour-hero__content-side {
-        grid-column: 1; grid-row: 1;
-        z-index: 1;
-        align-items: flex-end;
-        padding-top: 0;
-      }
-      /* Suppress the desktop right-to-left fade on mobile */
-      .tour-hero__content-side::after { background: none; }
-      .tour-hero__content {
-        padding: calc(var(--nav-h) + 1rem) var(--gutter) 3rem;
       }
       /* Stack Liar's Night + IWNH on mobile instead of squishing side-by-side */
       .shows-grid { grid-template-columns: 1fr !important; }
