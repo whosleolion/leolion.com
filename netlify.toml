@@ -2,13 +2,13 @@
   publish = "src"
 
 [[redirects]]
-  from = "https://helpmetheshow.com/*"
-  to = "https://leolion.com/helpme"
+  from = "/helpme"
+  to = "https://helpme.leolion.com"
   status = 301
   force = true
 
 [[redirects]]
-  from = "https://www.helpmetheshow.com/*"
-  to = "https://leolion.com/helpme"
+  from = "/helpme/*"
+  to = "https://helpme.leolion.com/:splat"
   status = 301
   force = true
