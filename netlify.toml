@@ -1,2 +1,14 @@
 [build]
   publish = "src"
+
+[[redirects]]
+  from = "https://helpmetheshow.com/*"
+  to = "https://leolion.com/helpme"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.helpmetheshow.com/*"
+  to = "https://leolion.com/helpme"
+  status = 301
+  force = true
