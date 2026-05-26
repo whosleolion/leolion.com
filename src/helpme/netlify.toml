@@ -1,2 +1,26 @@
 [build]
   publish = "."
+
+[[redirects]]
+  from = "https://chicago.helpmetheshow.com/*"
+  to = "https://www.theannoyance.com/show/help-me!!!!"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://kansascity.helpmetheshow.com/*"
+  to = "https://www.eventbrite.com/e/help-me-an-interactive-mime-seance-tickets-1988046798491"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://austin.helpmetheshow.com/*"
+  to = "https://www.eventbrite.com/e/help-me-an-interactive-mime-seance-tickets-1987871456037"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://sanfrancisco.helpmetheshow.com/*"
+  to = "https://www.zeffy.com/en-US/ticketing/help-me-an-interactive-mime-seance"
+  status = 301
+  force = true
