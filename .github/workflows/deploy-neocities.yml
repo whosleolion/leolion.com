@@ -25,27 +25,48 @@ jobs:
             exit 1
           fi
 
-          curl_args=()
-          dests=()
+          # Neocities' /api/upload 500s on a single request covering this
+          # site's full ~130 file / ~125MB src/ tree (observed directly:
+          # batches of <=20 files and <=20MB each succeed every time, one
+          # request for everything does not) — so upload is chunked on
+          # both count and cumulative size, whichever limit is hit first.
+          batch=()
+          batch_size=0
+
+          upload_batch() {
+            local n=${#batch[@]}
+            if [ "$n" -eq 0 ]; then return; fi
+            local curl_args=()
+            local dest f entry
+            for entry in "${batch[@]}"; do
+              dest="${entry%%|*}"
+              f="${entry#*|}"
+              curl_args+=(-F "${dest}=@${f}")
+            done
+            echo "Uploading batch of $n file(s):"
+            printf '  %s\n' "${batch[@]%%|*}"
+            http_status=$(curl -sS -o /tmp/neocities-response.json -w "%{http_code}" \
+              -H "Authorization: Bearer ${NEOCITIES_API_KEY}" \
+              "${curl_args[@]}" \
+              https://neocities.org/api/upload)
+            echo "Response ($http_status):"
+            cat /tmp/neocities-response.json
+            echo
+            if [ "$http_status" -ne 200 ]; then
+              echo "Neocities upload failed with HTTP $http_status" >&2
+              exit 1
+            fi
+            batch=()
+            batch_size=0
+          }
+
           while IFS= read -r -d '' f; do
             dest="${f#src/}"
-            dests+=("$dest")
-            curl_args+=(-F "${dest}=@${f}")
+            size=$(stat -c%s "$f")
+            if [ "${#batch[@]}" -ge 20 ] || [ $((batch_size + size)) -gt 20000000 ]; then
+              upload_batch
+            fi
+            batch+=("${dest}|${f}")
+            batch_size=$((batch_size + size))
           done < <(find src -type f -print0)
-
-          echo "Uploading ${#dests[@]} file(s) to Neocities root:"
-          printf '  %s\n' "${dests[@]}"
-
-          http_status=$(curl -sS -o /tmp/neocities-response.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${NEOCITIES_API_KEY}" \
-            "${curl_args[@]}" \
-            https://neocities.org/api/upload)
-
-          echo "Response:"
-          cat /tmp/neocities-response.json
-          echo
-
-          if [ "$http_status" -ne 200 ]; then
-            echo "Neocities upload failed with HTTP $http_status" >&2
-            exit 1
-          fi
+          upload_batch
