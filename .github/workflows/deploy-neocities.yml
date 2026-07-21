@@ -1,0 +1,51 @@
+name: Deploy to Neocities
+
+# Ships src/ (the live site source) to the leolioncom Neocities site's root.
+# Destination path = the file's path with the leading "src/" stripped, e.g.
+# src/directing.html -> directing.html. Nothing outside src/ is ever uploaded.
+on:
+  push:
+    branches: ["master"]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload src/ to Neocities
+        env:
+          NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_LEOLIONCOM }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${NEOCITIES_API_KEY:-}" ]; then
+            echo "NEOCITIES_API_KEY_LEOLIONCOM secret is not set." >&2
+            exit 1
+          fi
+
+          curl_args=()
+          dests=()
+          while IFS= read -r -d '' f; do
+            dest="${f#src/}"
+            dests+=("$dest")
+            curl_args+=(-F "${dest}=@${f}")
+          done < <(find src -type f -print0)
+
+          echo "Uploading ${#dests[@]} file(s) to Neocities root:"
+          printf '  %s\n' "${dests[@]}"
+
+          http_status=$(curl -sS -o /tmp/neocities-response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${NEOCITIES_API_KEY}" \
+            "${curl_args[@]}" \
+            https://neocities.org/api/upload)
+
+          echo "Response:"
+          cat /tmp/neocities-response.json
+          echo
+
+          if [ "$http_status" -ne 200 ]; then
+            echo "Neocities upload failed with HTTP $http_status" >&2
+            exit 1
+          fi

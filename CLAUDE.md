@@ -51,3 +51,6 @@ Website-Redesign/
 - https://iwasneverhere.show
 - https://helpmetheshow.com (tour ticketing subdomains)
 - New Play Exchange (playwriting listings)
+
+## Deploy
+Neocities site `leolioncom` (leolion.com). Pushing to `master` runs `.github/workflows/deploy-neocities.yml`, which uploads every file under `src/` to the site root (only `src/` — nothing else in this repo is deployed). Auth is the `NEOCITIES_API_KEY_LEOLIONCOM` repo secret. `netlify.toml` is a leftover from an earlier hosting plan and is not active.
