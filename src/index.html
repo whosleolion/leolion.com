@@ -31,6 +31,7 @@
       padding-top: var(--nav-h);
       position: relative;
       overflow: hidden;
+      container-type: inline-size;
     }
     /* constellation — faint pulsing spy-network behind the hero text */
     .tour-hero__constellation {
@@ -82,16 +83,22 @@
       font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
       letter-spacing: 0.3em; text-transform: uppercase;
       color: var(--accent); margin-bottom: 0.75rem;
-      width: clamp(280px, 42vw, 580px); text-align: center;
     }
     .tour-hero__title {
-      margin: 0 0 1.25rem;
-      line-height: 1;
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 11cqi, 6rem);
+      line-height: 0.9;
+      letter-spacing: 0.01em;
+      color: var(--white);
+      margin: 0 0 0.5rem;
+      text-wrap: balance;
     }
-    .tour-hero__logo {
+    .tour-hero__title .line-2 { color: var(--accent); display: block; }
+    .tour-hero__tagline {
       display: block;
-      width: clamp(280px, 42vw, 580px);
-      height: auto;
+      font-family: var(--font-ui); font-size: 0.8rem; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1.5rem;
     }
     .tour-hero__cred {
       display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
@@ -161,12 +168,6 @@
       }
       .tour-hero__content {
         padding: 1.5rem var(--gutter) 3rem;
-      }
-      .tour-hero__logo { width: min(85vw, 380px); margin: 0 auto; }
-      .tour-hero__byline {
-        width: min(85vw, 380px);
-        text-align: center;
-        margin: 0 auto 0.75rem;
       }
       /* Stack Liar's Night + Help Me on mobile instead of squishing side-by-side */
       .shows-grid { grid-template-columns: 1fr !important; }
@@ -310,8 +311,10 @@
     <div class="tour-hero__content">
       <p class="tour-hero__byline">Leo Lion &amp; The Firebird Project present</p>
       <h1 class="tour-hero__title">
-        <img src="images/iwasneverhere/never here logo.png" alt="I Was Never Here" class="tour-hero__logo" />
+        I Was Never Here.
+        <span class="line-2">There Is No Spy Show.</span>
       </h1>
+      <span class="tour-hero__tagline">Everybody be normal.</span>
       <div class="tour-hero__cred">
         <span class="tour-hero__source">&#9632; Classified</span>
         <span class="tour-hero__divider">·</span>
