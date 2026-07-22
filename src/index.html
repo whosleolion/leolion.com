@@ -43,6 +43,7 @@
     }
     .tour-hero__image-side {
       position: relative; overflow: hidden;
+      height: 100svh;
     }
     .tour-hero__image-side::after {
       content: '';
@@ -122,6 +123,7 @@
       }
       .tour-hero__image-side {
         order: -1;
+        height: auto;
         flex: 0 0 52vw;
         max-height: 56vh;
         clip-path: none;
@@ -247,12 +249,11 @@
       </div>
       <div class="tour-hero__cities">
         <span class="tour-city-tag">Edinburgh · Aug 7&ndash;25</span>
-        <span class="tour-city-tag">No show Aug 16</span>
       </div>
     </div>
   </div>
   <div class="tour-hero__image-side" aria-hidden="true">
-    <img src="images/iwasneverhere/hero-iwnh.png" alt="" loading="eager" />
+    <img src="images/iwasneverhere/hero-iwnh.png" alt="" loading="eager" style="object-position: center 56%;" />
   </div>
 </section>
 
