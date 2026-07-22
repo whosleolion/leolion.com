@@ -19,13 +19,14 @@
 
     /* ---- TOUR HERO — split diagonal layout ---- */
     .tour-hero {
-      display: grid;
-      grid-template-columns: 55% 45%;
+      display: flex;
+      align-items: stretch;
       min-height: 100svh;
       background: var(--black);
       overflow: hidden;
     }
     .tour-hero__content-side {
+      flex: 1 1 auto; min-width: 0;
       display: flex; align-items: center;
       padding-top: var(--nav-h);
       position: relative;
@@ -42,8 +43,8 @@
       width: 100%;
     }
     .tour-hero__image-side {
+      flex: 0 0 45%;
       position: relative; overflow: hidden;
-      height: 100svh;
     }
     .tour-hero__image-side::after {
       content: '';
@@ -56,8 +57,8 @@
       );
     }
     .tour-hero__image-side img {
-      width: 100%; height: 100%;
-      object-fit: cover; object-position: center top;
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; object-position: center 56%;
     }
     .tour-hero__byline {
       font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
@@ -119,20 +120,15 @@
       .tour-hero {
         display: flex;
         flex-direction: column;
-        min-height: 100svh;
+        min-height: 0;
       }
       .tour-hero__image-side {
         order: -1;
-        height: auto;
-        flex: 0 0 52vw;
-        max-height: 56vh;
+        flex: 0 0 auto;
+        width: 100%;
+        aspect-ratio: 1080 / 2170;
         clip-path: none;
         z-index: 0;
-      }
-      .tour-hero__image-side img {
-        object-fit: cover;
-        object-position: center 10%;
-        transform: none;
       }
       .tour-hero__image-side::after {
         background: linear-gradient(to bottom, transparent 55%, var(--black) 100%);
@@ -253,7 +249,7 @@
     </div>
   </div>
   <div class="tour-hero__image-side" aria-hidden="true">
-    <img src="images/iwasneverhere/hero-iwnh.png" alt="" loading="eager" style="object-position: center 56%;" />
+    <img src="images/iwasneverhere/hero-iwnh.png" alt="" loading="eager" />
   </div>
 </section>
 
