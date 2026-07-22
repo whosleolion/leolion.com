@@ -30,12 +30,32 @@
       display: flex; align-items: center;
       padding-top: var(--nav-h);
       position: relative;
+      overflow: hidden;
     }
-    .tour-hero__content-side::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(to right, var(--black) 85%, transparent 100%);
-      pointer-events: none; z-index: 1;
+    /* constellation — faint pulsing spy-network behind the hero text */
+    .tour-hero__constellation {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+    }
+    .tour-hero__constellation svg { width: 100%; height: 100%; display: block; }
+    .tour-hero__constellation line { stroke: var(--accent); stroke-width: 1; opacity: 0.14; }
+    .tour-hero__constellation circle { fill: var(--accent); animation: node-pulse 5s ease-in-out infinite; }
+    @keyframes node-pulse {
+      0%, 100% { opacity: 0.16; }
+      50% { opacity: 0.55; }
+    }
+    .tour-hero__constellation .signal {
+      fill: none; stroke: var(--accent); stroke-width: 0.6; opacity: 0;
+      transform-box: fill-box; transform-origin: center;
+      animation: signal-ring 9s ease-out infinite;
+    }
+    @keyframes signal-ring {
+      0%, 78% { transform: scale(1); opacity: 0; }
+      84% { opacity: 0.45; }
+      100% { transform: scale(8); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tour-hero__constellation circle { animation: none; opacity: 0.3; }
+      .tour-hero__constellation .signal { animation: none; display: none; }
     }
     .tour-hero__content {
       position: relative; z-index: 2;
@@ -46,15 +66,13 @@
       flex: 0 0 27%;
       position: relative; overflow: hidden;
     }
+    /* clean angled seam instead of a fade — desktop only, mobile keeps the gradient below */
     .tour-hero__image-side::after {
       content: '';
-      position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: linear-gradient(
-        to right,
-        var(--black) 0%,
-        rgba(8,8,8,0.5) 8%,
-        rgba(8,8,8,0) 22%
-      );
+      position: absolute; left: 0; top: 0; width: 2px; height: 100%;
+      background: var(--accent); pointer-events: none;
+      transform-origin: top left;
+      transform: rotate(0.8deg);
     }
     .tour-hero__image-side img {
       position: absolute; inset: 0; width: 100%; height: 100%;
@@ -131,6 +149,8 @@
         z-index: 0;
       }
       .tour-hero__image-side::after {
+        left: 0; top: 0; right: 0; bottom: 0; width: auto; height: auto;
+        transform: none;
         background: linear-gradient(to bottom, transparent 55%, var(--black) 100%);
       }
       .tour-hero__content-side {
@@ -139,7 +159,6 @@
         padding-top: 0;
         background: var(--black);
       }
-      .tour-hero__content-side::after { background: none; }
       .tour-hero__content {
         padding: 1.5rem var(--gutter) 3rem;
       }
@@ -222,6 +241,72 @@
 <!-- TOUR HERO — I WAS NEVER HERE split diagonal -->
 <section class="tour-hero" aria-label="I Was Never Here — Edinburgh Fringe 2026">
   <div class="tour-hero__content-side">
+    <div class="tour-hero__constellation" aria-hidden="true">
+      <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice">
+        <g>
+          <line x1="60" y1="80" x2="180" y2="150" />
+          <line x1="180" y1="150" x2="320" y2="60" />
+          <line x1="320" y1="60" x2="460" y2="140" />
+          <line x1="460" y1="140" x2="540" y2="260" />
+          <line x1="180" y1="150" x2="250" y2="260" />
+          <line x1="250" y1="260" x2="400" y2="300" />
+          <line x1="400" y1="300" x2="540" y2="260" />
+          <line x1="250" y1="260" x2="100" y2="320" />
+          <line x1="100" y1="320" x2="60" y2="80" />
+          <line x1="100" y1="320" x2="40" y2="460" />
+          <line x1="40" y1="460" x2="190" y2="420" />
+          <line x1="190" y1="420" x2="250" y2="260" />
+          <line x1="190" y1="420" x2="330" y2="480" />
+          <line x1="330" y1="480" x2="400" y2="300" />
+          <line x1="330" y1="480" x2="480" y2="440" />
+          <line x1="480" y1="440" x2="540" y2="260" />
+          <line x1="480" y1="440" x2="560" y2="560" />
+          <line x1="330" y1="480" x2="420" y2="620" />
+          <line x1="420" y1="620" x2="560" y2="560" />
+          <line x1="420" y1="620" x2="260" y2="600" />
+          <line x1="260" y1="600" x2="190" y2="420" />
+          <line x1="260" y1="600" x2="120" y2="560" />
+          <line x1="120" y1="560" x2="40" y2="460" />
+          <line x1="120" y1="560" x2="80" y2="700" />
+          <line x1="80" y1="700" x2="230" y2="740" />
+          <line x1="230" y1="740" x2="260" y2="600" />
+          <line x1="230" y1="740" x2="380" y2="760" />
+          <line x1="380" y1="760" x2="420" y2="620" />
+          <line x1="380" y1="760" x2="500" y2="700" />
+          <line x1="500" y1="700" x2="560" y2="560" />
+        </g>
+        <g>
+          <circle cx="60" cy="80" r="4" style="animation-delay:-0.2s;animation-duration:4.4s" />
+          <circle cx="180" cy="150" r="3.5" style="animation-delay:-1.8s;animation-duration:5.2s" />
+          <circle cx="320" cy="60" r="4.5" style="animation-delay:-3.1s;animation-duration:4.8s" />
+          <circle cx="460" cy="140" r="3.5" style="animation-delay:-0.9s;animation-duration:5.6s" />
+          <circle cx="540" cy="260" r="4" style="animation-delay:-2.4s;animation-duration:4.2s" />
+          <circle cx="400" cy="300" r="5" style="animation-delay:-4.0s;animation-duration:5.9s" />
+          <circle cx="250" cy="260" r="4" style="animation-delay:-1.2s;animation-duration:5s" />
+          <circle cx="100" cy="320" r="3.5" style="animation-delay:-2.9s;animation-duration:4.6s" />
+          <circle cx="40" cy="460" r="4" style="animation-delay:-0.5s;animation-duration:5.3s" />
+          <circle cx="190" cy="420" r="4.5" style="animation-delay:-3.6s;animation-duration:4.9s" />
+          <circle cx="330" cy="480" r="5" style="animation-delay:-1.5s;animation-duration:6.1s" />
+          <circle cx="480" cy="440" r="3.5" style="animation-delay:-2.1s;animation-duration:4.3s" />
+          <circle cx="560" cy="560" r="4" style="animation-delay:-4.4s;animation-duration:5.4s" />
+          <circle cx="420" cy="620" r="4.5" style="animation-delay:-0.7s;animation-duration:5.7s" />
+          <circle cx="260" cy="600" r="4" style="animation-delay:-3.3s;animation-duration:4.7s" />
+          <circle cx="120" cy="560" r="3.5" style="animation-delay:-1.0s;animation-duration:5.1s" />
+          <circle cx="80" cy="700" r="4" style="animation-delay:-2.6s;animation-duration:4.5s" />
+          <circle cx="230" cy="740" r="3.5" style="animation-delay:-4.2s;animation-duration:5.8s" />
+          <circle cx="380" cy="760" r="4.5" style="animation-delay:-0.3s;animation-duration:5s" />
+          <circle cx="500" cy="700" r="4" style="animation-delay:-1.9s;animation-duration:4.9s" />
+        </g>
+        <g>
+          <circle class="signal" cx="320" cy="60" r="4" style="animation-delay:-1s;animation-duration:9s" vector-effect="non-scaling-stroke" />
+          <circle class="signal" cx="540" cy="260" r="4" style="animation-delay:-4.5s;animation-duration:11s" vector-effect="non-scaling-stroke" />
+          <circle class="signal" cx="190" cy="420" r="4.5" style="animation-delay:-7.2s;animation-duration:8s" vector-effect="non-scaling-stroke" />
+          <circle class="signal" cx="560" cy="560" r="4" style="animation-delay:-2.8s;animation-duration:12.5s" vector-effect="non-scaling-stroke" />
+          <circle class="signal" cx="230" cy="740" r="3.5" style="animation-delay:-9.6s;animation-duration:10s" vector-effect="non-scaling-stroke" />
+          <circle class="signal" cx="480" cy="440" r="3.5" style="animation-delay:-5.9s;animation-duration:9.5s" vector-effect="non-scaling-stroke" />
+        </g>
+      </svg>
+    </div>
     <div class="tour-hero__content">
       <p class="tour-hero__byline">Leo Lion &amp; The Firebird Project present</p>
       <h1 class="tour-hero__title">
