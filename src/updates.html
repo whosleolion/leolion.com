@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Updates from Leo Lion — new work, tour dates, game sessions, and announcements." />
+  <title>Updates — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .updates-list { max-width: 720px; }
+    .update-item {
+      padding: 1.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .update-item:first-child { padding-top: 0; }
+    .update-item:last-child { border-bottom: none; }
+    .update-item__date {
+      font-family: var(--font-ui);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .update-item__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.35rem, 2.5vw, 1.9rem);
+      line-height: 1.15;
+      margin-bottom: 0.6rem;
+    }
+    .update-item__text {
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .update-item__text a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
+    .update-item__text a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="updates.html" aria-current="page">Updates</a></li>
+      <li><a href="helpme/" class="nav-cta">HELP ME!!!!</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <h1 class="page-header__title">UPDATES</h1>
+    <p class="page-header__meta">News, dates &amp; announcements</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="updates-list">
+
+      <article class="update-item" data-fade>
+        <p class="update-item__date">August 2026</p>
+        <h2 class="update-item__title">I WAS NEVER HERE — Edinburgh Fringe</h2>
+        <p class="update-item__text">
+          The world premiere runs Aug 7–25 at theSpace @ Niddry Street Studio.
+          <a href="https://tickets.thespaceuk.com/event/911:5402/" target="_blank" rel="noopener">Tickets are booking now.</a>
+        </p>
+      </article>
+
+      <article class="update-item" data-fade>
+        <p class="update-item__date">2026 Season</p>
+        <h2 class="update-item__title">HELP ME!!!! is available to book</h2>
+        <p class="update-item__text">
+          The interactive séance is open for venue bookings.
+          <a href="helpme/">See the show page.</a>
+        </p>
+      </article>
+
+      <article class="update-item" data-fade>
+        <p class="update-item__date">Ongoing</p>
+        <h2 class="update-item__title">Workshops &amp; game sessions</h2>
+        <p class="update-item__text">
+          Directing and devising workshops, plus professional tabletop RPG sessions in NYC and online.
+          <a href="workshops.html">Details here.</a>
+        </p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- MAILING LIST -->
+<section class="section contact-section" aria-labelledby="newsletter-heading">
+  <div class="container">
+    <p class="label label--muted" id="newsletter-heading">Stay in the Loop</p>
+    <p class="contact-desc" style="margin-bottom:1.5rem;">New work, tour dates, game sessions, and more.</p>
+    <form class="newsletter-form" aria-label="Newsletter signup">
+      <input type="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address" />
+      <button type="submit">Subscribe</button>
+    </form>
+    <p class="newsletter-note">No spam, ever. Unsubscribe anytime.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="index.html" class="footer-logo">LEO LION</a>
+        <p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="directing.html">Directing</a>
+        <a href="playwriting.html">Playwriting</a>
+        <a href="workshops.html">Workshops</a>
+        <a href="updates.html">Updates</a>
+        <a href="https://www.helpmetheshow.com" target="_blank" rel="noopener">HELP ME!!!!</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Leo Lion. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/@whosleolion" target="_blank" rel="noopener">TikTok</a>
+        <a href="mailto:leo@firebird.nyc">Email</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
