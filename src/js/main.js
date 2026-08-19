@@ -38,19 +38,40 @@
   });
 })();
 
-/* Newsletter form */
+/* Newsletter form — posts to the form's action (Formspree) via fetch */
 (function () {
   document.querySelectorAll('.newsletter-form').forEach(form => {
-    form.addEventListener('submit', e => {
-      e.preventDefault();
+    form.addEventListener('submit', async e => {
       const input = form.querySelector('input[type="email"]');
       const btn = form.querySelector('button');
       if (!input || !input.value) return;
-      btn.textContent = 'Subscribed!';
-      btn.style.background = '#22c55e';
-      input.value = '';
-      input.disabled = true;
+      if (!form.action) return; // no endpoint wired up — let the browser handle it
+
+      e.preventDefault();
+      const label = btn.textContent;
       btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const done = (text, bg) => {
+        btn.textContent = text;
+        btn.style.background = bg;
+      };
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error('Request failed: ' + res.status);
+        done('Subscribed!', '#22c55e');
+        input.value = '';
+        input.disabled = true;
+      } catch (err) {
+        done('Try again', '#ef4444');
+        btn.disabled = false;
+        setTimeout(() => done(label, ''), 3000);
+      }
     });
   });
 })();

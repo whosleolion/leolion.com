@@ -463,8 +463,9 @@
     <div style="margin-top:3rem;">
       <p class="label label--muted">Stay in the Loop</p>
       <p class="contact-desc" style="margin-bottom:1.5rem;">New work, tour dates, game sessions, and more.</p>
-      <form class="newsletter-form" aria-label="Newsletter signup">
-        <input type="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address" />
+      <form class="newsletter-form" aria-label="Newsletter signup" action="https://formspree.io/f/mkjwkzjr" method="POST">
+        <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address" />
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none" />
         <button type="submit">Subscribe</button>
       </form>
       <p class="newsletter-note">No spam, ever. Unsubscribe anytime.</p>
