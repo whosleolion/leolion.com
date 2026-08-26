@@ -78,12 +78,6 @@
     }
     .bio-hero__title .hl-plays { color: var(--accent); }
     .bio-hero__title .hl-games { color: var(--accent2); }
-    .bio-hero__motto { display: flex; align-items: center; gap: 0.85rem; }
-    .bio-hero__motto-rule { display: block; width: 2.1rem; height: 1px; background: var(--muted); opacity: 0.5; }
-    .bio-hero__motto-text {
-      font-family: var(--font-ui); font-size: 0.8rem; font-style: italic;
-      letter-spacing: 0.03em; color: var(--muted);
-    }
     .bio-hero__cta {
       display: inline-flex; align-items: center; gap: 0.6rem; width: fit-content;
       font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
@@ -111,14 +105,16 @@
       box-shadow: inset 0 0 140px 30px rgba(8,8,8,0.4);
     }
     @media (max-width: 900px) {
-      .bio-hero { flex-direction: column; min-height: 0; }
-      .bio-hero__image-side { order: -1; flex: 0 0 auto; width: 100%; aspect-ratio: 13 / 14; }
+      .bio-hero { flex-direction: column; min-height: 100svh; }
+      .bio-hero__image-side { order: -1; flex: 0 0 auto; width: 100%; height: 40svh; }
       .bio-hero__image-blend {
         background: linear-gradient(to top, var(--black) 0%, rgba(8,8,8,0.9) 12%, rgba(8,8,8,0.45) 40%, rgba(8,8,8,0) 100%);
       }
-      .bio-hero__content-side { padding-top: 0; }
-      .bio-hero__content { padding: 2rem var(--gutter) 2.75rem; gap: 1.75rem; }
-      .bio-hero__title { font-size: clamp(2.1rem, 11vw, 2.75rem); max-width: none; }
+      .bio-hero__content-side { flex: 1 1 auto; padding-top: 0; justify-content: center; }
+      .bio-hero__content { padding: 1.1rem var(--gutter) 1.5rem; gap: 1.1rem; }
+      .bio-hero__kicker { gap: 0.3rem; }
+      .bio-hero__title { font-size: clamp(1.8rem, 8.5vw, 2.5rem); line-height: 1.06; max-width: none; }
+      .bio-hero__cta { margin-top: 0.15rem; }
       /* Stack Liar's Night + Help Me on mobile instead of squishing side-by-side */
       .shows-grid { grid-template-columns: 1fr !important; }
     }
@@ -204,12 +200,8 @@
         I make <span class="hl-plays">plays</span>, <span class="hl-games">games</span>,<br>
         and things in between.
       </h1>
-      <div class="bio-hero__motto">
-        <span class="bio-hero__motto-rule"></span>
-        <span class="bio-hero__motto-text">surprise yourself.</span>
-      </div>
       <a href="#shows" class="bio-hero__cta">
-        See the Work
+        such as&hellip;
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path></svg>
       </a>
     </div>
