@@ -15,8 +15,6 @@
     }
     [data-fade].visible { opacity: 1; transform: none; }
 
-    .bio-image img { object-position: center 15%; }
-
     /* ---- BIO HERO ---- */
     @font-face {
       font-family: 'Etna';
@@ -174,13 +172,30 @@
       .show-featured__body { padding: 2rem; }
     }
 
-    /* ---- PRESS & PRAISE ---- */
-    .review-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
-    .review-card { background: var(--card); border: 1px solid var(--border); padding: 1.75rem; }
-    .review-card__stars { color: var(--accent); font-size: 0.85rem; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
-    .review-card__text { font-size: 0.9rem; color: var(--white); line-height: 1.7; font-style: italic; margin-bottom: 0.75rem; }
-    .review-card__meta { font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-    @media (max-width: 900px) { .review-row { grid-template-columns: 1fr; } }
+    /* ---- PRESS: editorial pull-quotes, not testimonial-widget stars ---- */
+    .press-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; margin-top: 2rem; }
+    .press-quote { padding-left: 1.25rem; border-left: 2px solid var(--accent); }
+    .press-quote__mark {
+      display: block; font-family: 'Etna', var(--font-display); font-size: 3rem;
+      line-height: 0.8; color: var(--accent); margin-bottom: 0.4rem;
+    }
+    .press-quote__text { font-size: 1rem; line-height: 1.65; color: var(--white); font-style: italic; margin-bottom: 1rem; }
+    .press-quote__source { font-family: var(--font-ui); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-style: normal; }
+    @media (max-width: 900px) { .press-grid { grid-template-columns: 1fr; gap: 2rem; } }
+
+    /* ---- ABOUT: compact band, not a full standalone destination ---- */
+    #about.section { padding: clamp(2.75rem, 5vw, 3.5rem) 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .about-band__text { font-size: clamp(1.05rem, 1.6vw, 1.3rem); line-height: 1.7; color: var(--white); max-width: 62ch; }
+    .about-band__text a { color: var(--white); text-decoration: underline; text-decoration-color: rgba(240,237,230,0.4); text-underline-offset: 2px; }
+    .about-band__text a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+    .about-band__credentials { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+    .about-chip {
+      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--muted); border: 1px solid var(--border);
+      padding: 0.4rem 0.7rem; border-radius: 999px;
+    }
+    .about-band__funders { margin-top: 1.5rem; font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .about-band__funders span { color: var(--white); }
 
     /* ---- PROJECTS & PORTFOLIO (sub-sections) ---- */
     .subsection + .subsection { margin-top: clamp(3rem, 6vw, 4.5rem); }
@@ -286,6 +301,26 @@
   </div>
 </section>
 
+<!-- ABOUT: compact band, not a standalone destination — the hero already introduced him -->
+<section id="about" class="section" aria-label="About Leo Lion">
+  <div class="container">
+    <p class="about-band__text">
+      I'm a director, performer, and game designer from Brooklyn, NY — founder of <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">The Firebird Project</a> and associate artistic director at <a href="https://phoenixtheatreensemble.org" target="_blank" rel="noopener">Phoenix Theatre Ensemble</a>. I make original immersive and interactive experiences: the kind of shows that make you say <em>"you had to be there."</em>
+    </p>
+    <div class="about-band__credentials">
+      <span class="about-chip">Soho Mentorship 2026</span>
+      <span class="about-chip">Petri Projects Cohort 2025</span>
+      <span class="about-chip">SDC Member</span>
+      <span class="about-chip">Dramatists Guild Member</span>
+      <span class="about-chip">UCB Improv Grad</span>
+      <span class="about-chip">BA Theatre &mdash; Fordham '22</span>
+    </div>
+    <p class="about-band__funders">
+      Work supported by <span>NYSCA</span> &middot; <span>LMCC</span> &middot; <span>ART/NY</span> &middot; <span>Fractured Atlas</span>
+    </p>
+  </div>
+</section>
+
 <!-- PROJECTS & PORTFOLIO -->
 <section id="projects" class="section" aria-labelledby="projects-heading">
   <div class="container">
@@ -341,59 +376,22 @@
     <div class="section-header">
       <h2 class="section-title section-title--etna" id="praise-heading">Press</h2>
     </div>
-    <div class="review-row">
-      <div class="review-card" data-fade>
-        <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
-        <p class="review-card__text">"[Placeholder — drop in a real quote here.]"</p>
-        <p class="review-card__meta">Placeholder Source</p>
-      </div>
-      <div class="review-card" data-fade style="--delay:0.1s">
-        <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
-        <p class="review-card__text">"[Placeholder — drop in a real quote here.]"</p>
-        <p class="review-card__meta">Placeholder Source</p>
-      </div>
-      <div class="review-card" data-fade style="--delay:0.2s">
-        <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
-        <p class="review-card__text">"[Placeholder — drop in a real quote here.]"</p>
-        <p class="review-card__meta">Placeholder Source</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BIO -->
-<section id="about" class="section" aria-labelledby="bio-heading">
-  <div class="container">
-    <div class="bio-grid">
-      <div class="bio-image">
-        <img src="images/headshot.png" alt="Leo Lion headshot" loading="lazy" />
-        <div class="bio-image__frame" aria-hidden="true"></div>
-      </div>
-      <div class="bio-content" data-fade>
-        <span class="label">Hi, I'm</span>
-        <h2 class="section-title" id="bio-heading">LEO LION</h2>
-        <p class="bio-body">
-          I'm a director, performer, and game designer from Brooklyn, NY. I love to create original immersive and interactive experiences: the kind of shows that make you say <em>"you had to be there."</em>
-        </p>
-        <ul class="bio-credentials" aria-label="Credentials">
-          <li class="bio-credential"><strong>Founder & Artistic Director</strong> — The Firebird Project</li>
-          <li class="bio-credential"><strong>Associate Artistic Director</strong> — Phoenix Theatre Ensemble</li>
-          <li class="bio-credential"><strong>Soho Mentorship 2026</strong> — Soho House × Creative Futures Collective</li>
-          <li class="bio-credential"><strong>Petri Projects Cohort 2025</strong> — The TEAM)</li>
-          <li class="bio-credential"><strong>Member</strong> — Stage Directors & Choreographers Society</li>
-          <li class="bio-credential"><strong>Member</strong> — Dramatists Guild</li>
-          <li class="bio-credential"><strong>Graduate</strong> — UCB Improv</li>
-          <li class="bio-credential"><strong>BA Theatre (Directing)</strong> — Fordham University '22</li>
-        </ul>
-        <p style="font-family:var(--font-ui);font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;">
-          Work supported by <span style="color:var(--white);">NYSCA</span> · <span style="color:var(--white);">LMCC</span> · <span style="color:var(--white);">ART/NY</span> · <span style="color:var(--white);">Fractured Atlas</span>
-        </p>
-        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-          <a href="mailto:leo@firebird.nyc" class="btn btn--primary">Book a Meeting</a>
-          <a href="leo-lion-cv-2026.pdf" class="btn btn--ghost" target="_blank" rel="noopener">Download CV</a>
-          <a href="directing.html" class="btn btn--ghost">See My Work →</a>
-        </div>
-      </div>
+    <div class="press-grid">
+      <blockquote class="press-quote" data-fade>
+        <span class="press-quote__mark" aria-hidden="true">&ldquo;</span>
+        <p class="press-quote__text">[Placeholder — drop in a real pull-quote here.]</p>
+        <cite class="press-quote__source">Placeholder Publication</cite>
+      </blockquote>
+      <blockquote class="press-quote" data-fade style="--delay:0.1s">
+        <span class="press-quote__mark" aria-hidden="true">&ldquo;</span>
+        <p class="press-quote__text">[Placeholder — drop in a real pull-quote here.]</p>
+        <cite class="press-quote__source">Placeholder Publication</cite>
+      </blockquote>
+      <blockquote class="press-quote" data-fade style="--delay:0.2s">
+        <span class="press-quote__mark" aria-hidden="true">&ldquo;</span>
+        <p class="press-quote__text">[Placeholder — drop in a real pull-quote here.]</p>
+        <cite class="press-quote__source">Placeholder Publication</cite>
+      </blockquote>
     </div>
   </div>
 </section>
