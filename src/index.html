@@ -17,158 +17,108 @@
 
     .bio-image img { object-position: center 15%; }
 
-    /* ---- TOUR HERO — split diagonal layout ---- */
-    .tour-hero {
+    /* ---- BIO HERO ---- */
+    @font-face {
+      font-family: 'Etna';
+      src: url('fonts/etna.woff2') format('woff2'),
+           url('fonts/etna.woff') format('woff');
+      font-weight: 400 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    .bio-hero {
+      position: relative;
       display: flex;
       align-items: stretch;
       min-height: 82svh;
       background: var(--black);
       overflow: hidden;
     }
-    .tour-hero__content-side {
+    .bio-hero__content-side {
       flex: 1 1 auto; min-width: 0;
-      display: flex; align-items: center;
+      display: flex; flex-direction: column; justify-content: center;
       padding-top: var(--nav-h);
       position: relative;
-      overflow: hidden;
       container-type: inline-size;
     }
-    /* constellation — faint pulsing spy-network behind the hero text */
-    .tour-hero__constellation {
-      position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+    .bio-hero__glow-a {
+      position: absolute; top: -10%; left: -8%; width: 640px; height: 640px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(255,60,0,0.10) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
     }
-    .tour-hero__constellation svg { width: 100%; height: 100%; display: block; }
-    .tour-hero__constellation line { stroke: var(--accent); stroke-width: 1; opacity: 0.14; }
-    .tour-hero__constellation circle { fill: var(--accent); animation: node-pulse 5s ease-in-out infinite; }
-    @keyframes node-pulse {
-      0%, 100% { opacity: 0.16; }
-      50% { opacity: 0.55; }
+    .bio-hero__glow-b {
+      position: absolute; bottom: -16%; left: 16%; width: 520px; height: 520px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(255,214,0,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
-    .tour-hero__constellation .signal {
-      fill: none; stroke: var(--accent); stroke-width: 0.6; opacity: 0;
-      transform-box: fill-box; transform-origin: center;
-      animation: signal-ring 9s ease-out infinite;
-    }
-    @keyframes signal-ring {
-      0%, 78% { transform: scale(1); opacity: 0; }
-      84% { opacity: 0.45; }
-      100% { transform: scale(8); opacity: 0; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .tour-hero__constellation circle { animation: none; opacity: 0.3; }
-      .tour-hero__constellation .signal { animation: none; display: none; }
-    }
-    .tour-hero__content {
+    .bio-hero__content {
       position: relative; z-index: 2;
       padding: 4rem var(--gutter) 4rem max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
-      width: 100%;
+      display: flex; flex-direction: column; gap: 2.75rem;
     }
-    .tour-hero__image-side {
-      flex: 0 0 27%;
+    .bio-hero__kicker { display: flex; flex-direction: column; gap: 0.4rem; }
+    .bio-hero__name {
+      font-family: var(--font-ui); font-size: 0.85rem; font-weight: 600;
+      letter-spacing: 0.28em; text-transform: uppercase; color: var(--white);
+    }
+    .bio-hero__role {
+      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    }
+    .bio-hero__title {
+      font-family: 'Etna', var(--font-display);
+      font-weight: 700;
+      font-size: clamp(2.4rem, 6.5cqi, 5rem);
+      line-height: 1.02;
+      letter-spacing: 0.002em;
+      color: var(--white);
+      margin: 0;
+      text-wrap: balance;
+      max-width: 15ch;
+    }
+    .bio-hero__title .hl-plays { color: var(--accent); }
+    .bio-hero__title .hl-games { color: var(--accent2); }
+    .bio-hero__motto { display: flex; align-items: center; gap: 0.85rem; }
+    .bio-hero__motto-rule { display: block; width: 2.1rem; height: 1px; background: var(--muted); opacity: 0.5; }
+    .bio-hero__motto-text {
+      font-family: var(--font-ui); font-size: 0.8rem; font-style: italic;
+      letter-spacing: 0.03em; color: var(--muted);
+    }
+    .bio-hero__cta {
+      display: inline-flex; align-items: center; gap: 0.6rem; width: fit-content;
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--white); padding-bottom: 0.15rem;
+      border-bottom: 1px solid rgba(240,237,230,0.28);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .bio-hero__cta:hover { color: var(--accent); border-color: var(--accent); }
+    .bio-hero__cta svg { width: 0.85rem; height: 0.85rem; }
+    .bio-hero__image-side {
+      flex: 0 0 44%;
       position: relative; overflow: hidden;
     }
-    /* clean angled seam instead of a fade — desktop only, mobile keeps the gradient below */
-    .tour-hero__image-side::after {
-      content: '';
-      position: absolute; left: 0; top: 0; width: 2px; height: 100%;
-      background: var(--accent); pointer-events: none;
-      transform-origin: top left;
-      transform: rotate(0.8deg);
-    }
-    .tour-hero__image-side img {
+    .bio-hero__image-side img {
       position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover; object-position: center 56%;
+      object-fit: cover; object-position: center 30%;
     }
-    .tour-hero__byline {
-      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
-      letter-spacing: 0.3em; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 0.75rem;
+    .bio-hero__image-blend {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(to right, var(--black) 0%, rgba(8,8,8,0.86) 5%, rgba(8,8,8,0.5) 14%, rgba(8,8,8,0.14) 26%, rgba(8,8,8,0) 40%);
     }
-    .tour-hero__title {
-      font-family: var(--font-display);
-      font-size: clamp(2.2rem, 8cqi, 4.4rem);
-      line-height: 0.9;
-      letter-spacing: 0.01em;
-      color: var(--white);
-      margin: 0 0 0.5rem;
-      text-wrap: balance;
-    }
-    .tour-hero__title .line-2 { color: var(--accent); display: block; }
-    .tour-hero__tagline {
-      display: block;
-      font-family: var(--font-ui); font-size: 0.8rem; font-weight: 500;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 1.5rem;
-    }
-    .tour-hero__cred {
-      display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-    .tour-hero__stars { color: var(--accent2); font-size: 0.8rem; letter-spacing: 0.05em; }
-    .tour-hero__stars--dim { color: var(--accent); }
-    .tour-hero__source {
-      font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
-    }
-    .tour-hero__divider { color: var(--border); }
-    .tour-hero__desc {
-      font-size: clamp(1rem, 1.4vw, 1.1rem); color: var(--muted);
-      line-height: 1.8; max-width: 580px; margin-bottom: 2rem;
-    }
-    .tour-hero__ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 2rem; }
-    .tour-hero__on-tour {
-      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.22em; text-transform: uppercase;
-      color: var(--accent); display: flex; align-items: center; gap: 0.6em;
-      margin-bottom: 0.75rem;
-    }
-    .tour-hero__on-tour-dot {
-      display: inline-block; width: 8px; height: 8px; flex-shrink: 0;
-      border-radius: 50%; background: var(--accent);
-      animation: pulse 2s ease infinite;
-    }
-    .tour-hero__cities { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .tour-city-tag {
-      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 0.35em 0.9em; border: 1px solid var(--border);
-      color: var(--muted); border-radius: 100px;
-    }
-    .tour-hero .tour-city-tag {
-      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em;
-      padding: 0.5em 1.2em;
-      color: var(--white);
-      border-color: rgba(240,237,230,0.2);
+    .bio-hero__image-vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      box-shadow: inset 0 0 140px 30px rgba(8,8,8,0.4);
     }
     @media (max-width: 900px) {
-      /* Stacked layout: image on top, content below */
-      .tour-hero {
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
+      .bio-hero { flex-direction: column; min-height: 0; }
+      .bio-hero__image-side { order: -1; flex: 0 0 auto; width: 100%; aspect-ratio: 13 / 14; }
+      .bio-hero__image-blend {
+        background: linear-gradient(to top, var(--black) 0%, rgba(8,8,8,0.9) 12%, rgba(8,8,8,0.45) 40%, rgba(8,8,8,0) 100%);
       }
-      .tour-hero__image-side {
-        order: -1;
-        flex: 0 0 auto;
-        width: 100%;
-        aspect-ratio: 1080 / 2170;
-        clip-path: none;
-        z-index: 0;
-      }
-      .tour-hero__image-side::after {
-        left: 0; top: 0; right: 0; bottom: 0; width: auto; height: auto;
-        transform: none;
-        background: linear-gradient(to bottom, transparent 55%, var(--black) 100%);
-      }
-      .tour-hero__content-side {
-        flex: 1;
-        align-items: flex-start;
-        padding-top: 0;
-        background: var(--black);
-      }
-      .tour-hero__content {
-        padding: 1.5rem var(--gutter) 3rem;
-      }
+      .bio-hero__content-side { padding-top: 0; }
+      .bio-hero__content { padding: 2rem var(--gutter) 2.75rem; gap: 1.75rem; }
+      .bio-hero__title { font-size: clamp(2.1rem, 11vw, 2.75rem); max-width: none; }
       /* Stack Liar's Night + Help Me on mobile instead of squishing side-by-side */
       .shows-grid { grid-template-columns: 1fr !important; }
     }
@@ -240,109 +190,39 @@
   </div>
 </nav>
 
-<!-- TOUR HERO — I WAS NEVER HERE split diagonal -->
-<section class="tour-hero" aria-label="I Was Never Here — Edinburgh Fringe 2026">
-  <div class="tour-hero__content-side">
-    <div class="tour-hero__constellation" aria-hidden="true">
-      <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice">
-        <g>
-          <line x1="60" y1="80" x2="180" y2="150" />
-          <line x1="180" y1="150" x2="320" y2="60" />
-          <line x1="320" y1="60" x2="460" y2="140" />
-          <line x1="460" y1="140" x2="540" y2="260" />
-          <line x1="180" y1="150" x2="250" y2="260" />
-          <line x1="250" y1="260" x2="400" y2="300" />
-          <line x1="400" y1="300" x2="540" y2="260" />
-          <line x1="250" y1="260" x2="100" y2="320" />
-          <line x1="100" y1="320" x2="60" y2="80" />
-          <line x1="100" y1="320" x2="40" y2="460" />
-          <line x1="40" y1="460" x2="190" y2="420" />
-          <line x1="190" y1="420" x2="250" y2="260" />
-          <line x1="190" y1="420" x2="330" y2="480" />
-          <line x1="330" y1="480" x2="400" y2="300" />
-          <line x1="330" y1="480" x2="480" y2="440" />
-          <line x1="480" y1="440" x2="540" y2="260" />
-          <line x1="480" y1="440" x2="560" y2="560" />
-          <line x1="330" y1="480" x2="420" y2="620" />
-          <line x1="420" y1="620" x2="560" y2="560" />
-          <line x1="420" y1="620" x2="260" y2="600" />
-          <line x1="260" y1="600" x2="190" y2="420" />
-          <line x1="260" y1="600" x2="120" y2="560" />
-          <line x1="120" y1="560" x2="40" y2="460" />
-          <line x1="120" y1="560" x2="80" y2="700" />
-          <line x1="80" y1="700" x2="230" y2="740" />
-          <line x1="230" y1="740" x2="260" y2="600" />
-          <line x1="230" y1="740" x2="380" y2="760" />
-          <line x1="380" y1="760" x2="420" y2="620" />
-          <line x1="380" y1="760" x2="500" y2="700" />
-          <line x1="500" y1="700" x2="560" y2="560" />
-        </g>
-        <g>
-          <circle cx="60" cy="80" r="4" style="animation-delay:-0.2s;animation-duration:4.4s" />
-          <circle cx="180" cy="150" r="3.5" style="animation-delay:-1.8s;animation-duration:5.2s" />
-          <circle cx="320" cy="60" r="4.5" style="animation-delay:-3.1s;animation-duration:4.8s" />
-          <circle cx="460" cy="140" r="3.5" style="animation-delay:-0.9s;animation-duration:5.6s" />
-          <circle cx="540" cy="260" r="4" style="animation-delay:-2.4s;animation-duration:4.2s" />
-          <circle cx="400" cy="300" r="5" style="animation-delay:-4.0s;animation-duration:5.9s" />
-          <circle cx="250" cy="260" r="4" style="animation-delay:-1.2s;animation-duration:5s" />
-          <circle cx="100" cy="320" r="3.5" style="animation-delay:-2.9s;animation-duration:4.6s" />
-          <circle cx="40" cy="460" r="4" style="animation-delay:-0.5s;animation-duration:5.3s" />
-          <circle cx="190" cy="420" r="4.5" style="animation-delay:-3.6s;animation-duration:4.9s" />
-          <circle cx="330" cy="480" r="5" style="animation-delay:-1.5s;animation-duration:6.1s" />
-          <circle cx="480" cy="440" r="3.5" style="animation-delay:-2.1s;animation-duration:4.3s" />
-          <circle cx="560" cy="560" r="4" style="animation-delay:-4.4s;animation-duration:5.4s" />
-          <circle cx="420" cy="620" r="4.5" style="animation-delay:-0.7s;animation-duration:5.7s" />
-          <circle cx="260" cy="600" r="4" style="animation-delay:-3.3s;animation-duration:4.7s" />
-          <circle cx="120" cy="560" r="3.5" style="animation-delay:-1.0s;animation-duration:5.1s" />
-          <circle cx="80" cy="700" r="4" style="animation-delay:-2.6s;animation-duration:4.5s" />
-          <circle cx="230" cy="740" r="3.5" style="animation-delay:-4.2s;animation-duration:5.8s" />
-          <circle cx="380" cy="760" r="4.5" style="animation-delay:-0.3s;animation-duration:5s" />
-          <circle cx="500" cy="700" r="4" style="animation-delay:-1.9s;animation-duration:4.9s" />
-        </g>
-        <g>
-          <circle class="signal" cx="320" cy="60" r="4" style="animation-delay:-1s;animation-duration:9s" vector-effect="non-scaling-stroke" />
-          <circle class="signal" cx="540" cy="260" r="4" style="animation-delay:-4.5s;animation-duration:11s" vector-effect="non-scaling-stroke" />
-          <circle class="signal" cx="190" cy="420" r="4.5" style="animation-delay:-7.2s;animation-duration:8s" vector-effect="non-scaling-stroke" />
-          <circle class="signal" cx="560" cy="560" r="4" style="animation-delay:-2.8s;animation-duration:12.5s" vector-effect="non-scaling-stroke" />
-          <circle class="signal" cx="230" cy="740" r="3.5" style="animation-delay:-9.6s;animation-duration:10s" vector-effect="non-scaling-stroke" />
-          <circle class="signal" cx="480" cy="440" r="3.5" style="animation-delay:-5.9s;animation-duration:9.5s" vector-effect="non-scaling-stroke" />
-        </g>
-      </svg>
-    </div>
-    <div class="tour-hero__content">
-      <p class="tour-hero__byline">Leo Lion &amp; The Firebird Project present</p>
-      <h1 class="tour-hero__title">
-        I Was Never Here.
-        <span class="line-2">There Is No Spy Show.</span>
+<!-- HERO -->
+<section class="bio-hero" aria-label="Leo Lion">
+  <div class="bio-hero__content-side">
+    <div class="bio-hero__glow-a" aria-hidden="true"></div>
+    <div class="bio-hero__glow-b" aria-hidden="true"></div>
+    <div class="bio-hero__content">
+      <div class="bio-hero__kicker">
+        <span class="bio-hero__name">Leo Lion</span>
+        <span class="bio-hero__role">Director &middot; Performer &middot; Game Artist &middot; Brooklyn, NY</span>
+      </div>
+      <h1 class="bio-hero__title">
+        I make <span class="hl-plays">plays</span>, <span class="hl-games">games</span>,<br>
+        and things in between.
       </h1>
-      <span class="tour-hero__tagline">Everybody be normal.</span>
-      <div class="tour-hero__cred">
-        <span class="tour-hero__source">&#9632; Classified</span>
-        <span class="tour-hero__divider">·</span>
-        <span class="tour-hero__source">Edinburgh Fringe 2026 World Premiere</span>
-        <span class="tour-hero__divider">·</span>
-        <span class="tour-hero__source">Phoenix Festival, Nyack — Oct 16</span>
+      <div class="bio-hero__motto">
+        <span class="bio-hero__motto-rule"></span>
+        <span class="bio-hero__motto-text">surprise yourself.</span>
       </div>
-      <p class="tour-hero__desc">A blundering sleeper agent has lost his memory. You — an audience of initiate spies — must help him get it back: crack codes, defuse doomsday devices, and try to follow one simple rule. Don't talk about spy show.</p>
-      <div class="tour-hero__ctas">
-        <a href="https://spy.show/#dates" class="btn btn--primary" target="_blank" rel="noopener">See Upcoming Dates</a>
-      </div>
-      <div class="tour-hero__on-tour">
-        <span class="tour-hero__on-tour-dot"></span>
-        Up Next — Nyack, NY
-      </div>
-      <div class="tour-hero__cities">
-        <span class="tour-city-tag">Nyack · Oct 16</span>
-      </div>
+      <a href="#shows" class="bio-hero__cta">
+        See the Work
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path></svg>
+      </a>
     </div>
   </div>
-  <div class="tour-hero__image-side" aria-hidden="true">
-    <img src="images/iwasneverhere/hero-iwnh.png" alt="" loading="eager" />
+  <div class="bio-hero__image-side" aria-hidden="true">
+    <img src="images/leo-hero-seats.jpg" alt="" loading="eager" />
+    <div class="bio-hero__image-blend"></div>
+    <div class="bio-hero__image-vignette"></div>
   </div>
 </section>
 
 <!-- FEATURED SHOWS — available to book -->
-<section class="section featured-shows" aria-labelledby="shows-heading">
+<section id="shows" class="section featured-shows" aria-labelledby="shows-heading">
   <div class="container">
     <div class="section-header">
       <div>
