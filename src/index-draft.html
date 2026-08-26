@@ -213,8 +213,17 @@
     .portfolio-links { margin-top: 2.5rem; }
     .portfolio-links__row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
+    /* Etna headings for Projects / Press / Contact Me — no eyebrow label */
+    .section-title--etna {
+      font-family: 'Etna', var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.005em;
+    }
+
     @media (max-width: 900px) {
       .portfolio-grid { grid-template-columns: 1fr; }
+      #projects .section-header, #praise .section-header { display: block; text-align: center; }
+      #contact-heading { text-align: center; }
     }
   </style>
 </head>
@@ -281,10 +290,7 @@
 <section id="projects" class="section" aria-labelledby="projects-heading">
   <div class="container">
     <div class="section-header">
-      <div>
-        <span class="label">Like What?</span>
-        <h2 class="section-title" id="projects-heading">PROJECTS &amp; PORTFOLIO</h2>
-      </div>
+      <h2 class="section-title section-title--etna" id="projects-heading">Projects</h2>
     </div>
 
     <div class="subsection">
@@ -333,10 +339,7 @@
 <section id="praise" class="section" aria-labelledby="praise-heading">
   <div class="container">
     <div class="section-header">
-      <div>
-        <span class="label">And People Like That?</span>
-        <h2 class="section-title" id="praise-heading">PRESS &amp; PRAISE</h2>
-      </div>
+      <h2 class="section-title section-title--etna" id="praise-heading">Press</h2>
     </div>
     <div class="review-row">
       <div class="review-card" data-fade>
@@ -398,8 +401,7 @@
 <!-- CONTACT & FOLLOW -->
 <section id="contact" class="section contact-section" aria-labelledby="contact-heading">
   <div class="container">
-    <span class="label">Let's Talk!</span>
-    <h2 class="section-title" id="contact-heading" style="margin-bottom:1rem;">CONTACT &amp; FOLLOW</h2>
+    <h2 class="section-title section-title--etna" id="contact-heading" style="margin-bottom:1rem;">Contact Me</h2>
     <div class="contact-ctas">
       <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
       <a href="https://instagram.com/whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">Instagram</a>
