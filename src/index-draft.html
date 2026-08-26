@@ -226,7 +226,7 @@
     .link-underline:hover { color: var(--accent); border-color: var(--accent); }
 
     .portfolio-links { margin-top: 2.5rem; }
-    .portfolio-links__row { display: flex; gap: 1.75rem; flex-wrap: wrap; }
+    .portfolio-links__row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
     /* Etna headings for Projects / Press / Contact Me — no eyebrow label */
     .section-title--etna {
@@ -234,22 +234,6 @@
       font-weight: 700;
       letter-spacing: 0.005em;
     }
-
-    /* Button hierarchy: one solid CTA per section, everything else an underline link */
-    .contact-ctas { align-items: center; }
-    .newsletter-form {
-      border: none; border-radius: 0; overflow: visible;
-      border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
-      align-items: center;
-    }
-    .newsletter-form:focus-within { border-color: var(--accent); }
-    .newsletter-form input { background: transparent; padding: 0.4em 0; font-size: 0.95rem; }
-    .newsletter-form button {
-      background: transparent; color: var(--white); padding: 0; font-weight: 600;
-      border-bottom: 1px solid rgba(240,237,230,0.28); padding-bottom: 0.15rem;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .newsletter-form button:hover { background: transparent; color: var(--accent); border-color: var(--accent); }
 
     @media (max-width: 900px) {
       .portfolio-grid { grid-template-columns: 1fr; }
@@ -375,9 +359,9 @@
       <div class="portfolio-links">
         <span class="subsection-label">Full Portfolios</span>
         <div class="portfolio-links__row">
-          <a href="directing.html" class="link-underline">Directing &rarr;</a>
-          <a href="playwriting.html" class="link-underline">Playwriting &rarr;</a>
-          <a href="workshops.html" class="link-underline">Workshops &rarr;</a>
+          <a href="directing.html" class="btn btn--ghost">Directing &rarr;</a>
+          <a href="playwriting.html" class="btn btn--ghost">Playwriting &rarr;</a>
+          <a href="workshops.html" class="btn btn--ghost">Workshops &rarr;</a>
         </div>
       </div>
     </div>
@@ -417,8 +401,8 @@
     <h2 class="section-title section-title--etna" id="contact-heading" style="margin-bottom:1rem;">Contact Me</h2>
     <div class="contact-ctas">
       <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
-      <a href="https://instagram.com/whosleolion" class="link-underline" target="_blank" rel="noopener">Instagram</a>
-      <a href="https://www.tiktok.com/@whosleolion" class="link-underline" target="_blank" rel="noopener">TikTok</a>
+      <a href="https://instagram.com/whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.tiktok.com/@whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">TikTok</a>
     </div>
 
     <div style="margin-top:3rem;">
