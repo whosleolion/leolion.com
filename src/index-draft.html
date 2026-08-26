@@ -1,0 +1,439 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Leo Lion — Director, Performer, Educator, Game Artist. Brooklyn, NY. Founder of The Firebird Project. Edinburgh Fringe 2025 & 2026." />
+  <title>Leo Lion — Director · Performer · Game Artist</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    [data-fade] {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s var(--ease-out-expo), transform 0.65s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    .bio-image img { object-position: center 15%; }
+
+    /* ---- BIO HERO ---- */
+    @font-face {
+      font-family: 'Etna';
+      src: url('fonts/etna.woff2') format('woff2'),
+           url('fonts/etna.woff') format('woff');
+      font-weight: 400 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    .bio-hero {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      min-height: 82svh;
+      background: var(--black);
+      overflow: hidden;
+    }
+    .bio-hero__content-side {
+      flex: 1 1 auto; min-width: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding-top: var(--nav-h);
+      position: relative;
+      container-type: inline-size;
+    }
+    .bio-hero__glow-a {
+      position: absolute; top: -10%; left: -8%; width: 640px; height: 640px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(255,60,0,0.10) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
+    }
+    .bio-hero__glow-b {
+      position: absolute; bottom: -16%; left: 16%; width: 520px; height: 520px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(255,214,0,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    .bio-hero__content {
+      position: relative; z-index: 2;
+      padding: 4rem var(--gutter) 4rem max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
+      display: flex; flex-direction: column; gap: 2.75rem;
+    }
+    .bio-hero__kicker { display: flex; flex-direction: column; gap: 0.4rem; }
+    .bio-hero__name {
+      font-family: var(--font-ui); font-size: 0.85rem; font-weight: 600;
+      letter-spacing: 0.28em; text-transform: uppercase; color: var(--white);
+    }
+    .bio-hero__role {
+      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    }
+    .bio-hero__title {
+      font-family: 'Etna', var(--font-display);
+      font-weight: 700;
+      font-size: clamp(2.4rem, 6.5cqi, 5rem);
+      line-height: 1.02;
+      letter-spacing: 0.002em;
+      color: var(--white);
+      margin: 0;
+      text-wrap: balance;
+      max-width: 15ch;
+    }
+    .bio-hero__title .hl-plays { color: var(--accent); }
+    .bio-hero__title .hl-games { color: var(--accent2); }
+    .bio-hero__cta {
+      display: inline-flex; align-items: center; gap: 0.6rem; width: fit-content;
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--white); padding-bottom: 0.15rem;
+      border-bottom: 1px solid rgba(240,237,230,0.28);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .bio-hero__cta:hover { color: var(--accent); border-color: var(--accent); }
+    .bio-hero__cta svg { width: 0.85rem; height: 0.85rem; }
+    .bio-hero__cta-row {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem;
+    }
+    .bio-hero__cta-row .bio-hero__cta:nth-child(2) { margin-left: 1.25rem; }
+    .bio-hero__cta-row .bio-hero__cta:nth-child(3) {
+      margin-left: 2.5rem; color: var(--accent); border-color: var(--accent);
+      font-weight: 700;
+    }
+    .bio-hero__cta-row .bio-hero__cta:nth-child(3):hover { color: var(--accent2); border-color: var(--accent2); }
+    .bio-hero__image-side {
+      flex: 0 0 52%;
+      position: relative; overflow: hidden;
+    }
+    .bio-hero__image-side img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; object-position: center 30%;
+    }
+    .bio-hero__image-blend {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(to right, var(--black) 0%, rgba(8,8,8,0.86) 4%, rgba(8,8,8,0.5) 10%, rgba(8,8,8,0.14) 19%, rgba(8,8,8,0) 30%);
+    }
+    .bio-hero__image-vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      box-shadow: inset 0 0 140px 30px rgba(8,8,8,0.4);
+    }
+    @media (max-width: 900px) {
+      .bio-hero { flex-direction: column; min-height: 100svh; }
+      .bio-hero__image-side { order: -1; flex: 0 0 auto; width: 100%; height: 56svh; }
+      .bio-hero__image-blend {
+        background: linear-gradient(to top, var(--black) 0%, rgba(8,8,8,0.92) 6%, rgba(8,8,8,0.4) 18%, rgba(8,8,8,0) 34%);
+      }
+      .bio-hero__content-side { flex: 1 1 auto; padding-top: 0; justify-content: flex-start; }
+      .bio-hero__content { padding: 0.5rem var(--gutter) 1.5rem; gap: 0.9rem; }
+      .bio-hero__kicker { gap: 0.3rem; }
+      .bio-hero__title { font-size: clamp(1.8rem, 8.5vw, 2.5rem); line-height: 1.06; max-width: none; }
+      .bio-hero__cta-row { margin-top: 0.1rem; gap: 0.55rem; }
+      .bio-hero__cta-row .bio-hero__cta:nth-child(2) { margin-left: 0.6rem; }
+      .bio-hero__cta-row .bio-hero__cta:nth-child(3) { margin-left: 1.1rem; }
+      /* Stack Liar's Night + Help Me on mobile instead of squishing side-by-side */
+      .shows-grid { grid-template-columns: 1fr !important; }
+    }
+
+    /* ---- FEATURED SHOW (horizontal card) ---- */
+    .show-featured {
+      display: grid; grid-template-columns: 1fr 1.4fr; gap: 0;
+      background: var(--near-black); border: 1px solid var(--border);
+      overflow: hidden; margin-bottom: 1px; transition: background 0.2s;
+    }
+    .show-featured:hover { background: var(--card); }
+    .show-featured__img {
+      width: 100%; height: 100%; min-height: 360px;
+      object-fit: cover; object-position: center top;
+    }
+    .show-featured__body {
+      padding: 3rem; display: flex; flex-direction: column; justify-content: center;
+    }
+    .show-featured__status {
+      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5em;
+    }
+    .show-featured__status::before {
+      content: ''; display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; background: var(--accent);
+      animation: pulse 2s ease infinite;
+    }
+    .show-featured__title {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 6vw, 6rem);
+      line-height: 0.88; color: var(--white); margin-bottom: 1rem;
+    }
+    .show-featured__cities { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
+    .show-featured__desc { font-size: 0.9rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
+    .show-featured__ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    @media (max-width: 768px) {
+      .show-featured { grid-template-columns: 1fr; }
+      .show-featured__img { min-height: 260px; }
+      .show-featured__body { padding: 2rem; }
+    }
+
+    /* ---- PRESS & PRAISE ---- */
+    .review-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    .review-card { background: var(--card); border: 1px solid var(--border); padding: 1.75rem; }
+    .review-card__stars { color: var(--accent); font-size: 0.85rem; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+    .review-card__text { font-size: 0.9rem; color: var(--white); line-height: 1.7; font-style: italic; margin-bottom: 0.75rem; }
+    .review-card__meta { font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    @media (max-width: 900px) { .review-row { grid-template-columns: 1fr; } }
+
+    /* ---- PROJECTS & PORTFOLIO (sub-sections) ---- */
+    .subsection + .subsection { margin-top: clamp(3rem, 6vw, 4.5rem); }
+    .subsection-label {
+      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+      display: block; margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="#about">About</a></li>
+      <li><a href="directing.html">Directing</a></li>
+      <li><a href="playwriting.html">Playwriting</a></li>
+      <li><a href="workshops.html">Workshops</a></li>
+      <li><a href="updates.html">Updates</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
+      <li><a href="helpme/">HELP ME!!!!</a></li>
+      <li><a href="https://spy.show/#dates" target="_blank" rel="noopener" class="nav-cta">I WAS NEVER HERE</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="bio-hero" aria-label="Leo Lion">
+  <div class="bio-hero__content-side">
+    <div class="bio-hero__glow-a" aria-hidden="true"></div>
+    <div class="bio-hero__glow-b" aria-hidden="true"></div>
+    <div class="bio-hero__content">
+      <div class="bio-hero__kicker">
+        <span class="bio-hero__name">Leo Lion</span>
+        <span class="bio-hero__role">Director &middot; Performer &middot; Game Artist &middot; Brooklyn, NY</span>
+      </div>
+      <h1 class="bio-hero__title">
+        I make <span class="hl-plays">plays</span>, <span class="hl-games">games</span>,<br>
+        and things in between.
+      </h1>
+      <div class="bio-hero__cta-row">
+        <a href="#projects" class="bio-hero__cta">
+          like what?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path></svg>
+        </a>
+        <a href="#praise" class="bio-hero__cta">
+          and people like that?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path></svg>
+        </a>
+        <a href="#contact" class="bio-hero__cta">
+          let's talk!
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="bio-hero__image-side" aria-hidden="true">
+    <img src="images/leo-hero-seats.jpg" alt="" loading="eager" />
+    <div class="bio-hero__image-blend"></div>
+    <div class="bio-hero__image-vignette"></div>
+  </div>
+</section>
+
+<!-- PROJECTS & PORTFOLIO -->
+<section id="projects" class="section" aria-labelledby="projects-heading">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <span class="label">Like What?</span>
+        <h2 class="section-title" id="projects-heading">PROJECTS &amp; PORTFOLIO</h2>
+      </div>
+    </div>
+
+    <!-- Stack Liar's Night + Help Me on mobile instead of squishing side-by-side -->
+    <div class="subsection">
+      <span class="subsection-label">More Shows</span>
+      <div class="shows-grid">
+        <div class="show-card">
+          <img class="show-card__image" src="images/liars-night/hero.png" alt="" loading="lazy" />
+          <div class="show-card__body">
+            <span class="show-card__status">Available to Book</span>
+            <h3 class="show-card__title">LIAR'S NIGHT</h3>
+            <p class="show-card__desc">A multidimensional night of social deduction, set at a carnival at the end of the world.</p>
+          </div>
+          <div class="show-card__footer">
+            <a href="liars-night.html" class="btn btn--outline">Learn More</a>
+            <a href="mailto:leo@firebird.nyc?subject=Liar%27s Night - Booking Inquiry" class="btn btn--ghost">Book This Show</a>
+          </div>
+        </div>
+        <div class="show-card">
+          <img class="show-card__image" src="images/hero-hm.png" alt="" loading="lazy" />
+          <div class="show-card__body">
+            <span class="show-card__status">Available to Book</span>
+            <h3 class="show-card__title">HELP ME!!!!</h3>
+            <p class="show-card__desc"><em>Thank goodness you're here! A dead mime needs help!</em> An interactive séance where audiences solve puzzles, play charades, and pierce the veil between life and death.</p>
+          </div>
+          <div class="show-card__footer">
+            <a href="helpme/" class="btn btn--outline">Learn More</a>
+            <a href="mailto:programs@firebird.nyc?subject=Booking: HELP ME!!!!" class="btn btn--ghost">Book for Your Venue</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <span class="subsection-label">What I Do</span>
+      <div class="disciplines-grid">
+        <a href="directing.html" class="discipline-card" data-fade>
+          <div class="discipline-card__photo"><img src="images/index/kafkatech.jpg" alt="" loading="lazy" /></div>
+          <span class="discipline-card__title">DIRECTING</span>
+          <span class="discipline-card__desc">27+ productions from 2013–2026. Classical, devised, interactive, immersive.</span>
+        </a>
+        <a href="playwriting.html" class="discipline-card" data-fade>
+          <div class="discipline-card__photo"><img src="images/index/lowstakes.png" alt="" loading="lazy" /></div>
+          <span class="discipline-card__title">PLAYWRITING</span>
+          <span class="discipline-card__desc">Full-length plays, one-acts, adaptations, and licensable game formats. On New Play Exchange.</span>
+        </a>
+        <a href="workshops.html" class="discipline-card" data-fade>
+          <div class="discipline-card__photo"><img src="images/index/workshops.png" alt="" loading="lazy" /></div>
+          <span class="discipline-card__title">WORKSHOPS</span>
+          <span class="discipline-card__desc">Youth education, adult training, corporate team-building. Teaching artist since 2010.</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRESS & PRAISE -->
+<!-- TODO: placeholder quotes below — swap in real press/praise copy before this goes live -->
+<section id="praise" class="section" aria-labelledby="praise-heading">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <span class="label">And People Like That?</span>
+        <h2 class="section-title" id="praise-heading">PRESS &amp; PRAISE</h2>
+      </div>
+    </div>
+    <div class="review-row">
+      <div class="review-card" data-fade>
+        <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+        <p class="review-card__text">"[Placeholder — drop in a real quote here.]"</p>
+        <p class="review-card__meta">Placeholder Source</p>
+      </div>
+      <div class="review-card" data-fade style="--delay:0.1s">
+        <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+        <p class="review-card__text">"[Placeholder — drop in a real quote here.]"</p>
+        <p class="review-card__meta">Placeholder Source</p>
+      </div>
+      <div class="review-card" data-fade style="--delay:0.2s">
+        <p class="review-card__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+        <p class="review-card__text">"[Placeholder — drop in a real quote here.]"</p>
+        <p class="review-card__meta">Placeholder Source</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BIO -->
+<section id="about" class="section" aria-labelledby="bio-heading">
+  <div class="container">
+    <div class="bio-grid">
+      <div class="bio-image">
+        <img src="images/headshot.png" alt="Leo Lion headshot" loading="lazy" />
+        <div class="bio-image__frame" aria-hidden="true"></div>
+      </div>
+      <div class="bio-content" data-fade>
+        <span class="label">Hi, I'm</span>
+        <h2 class="section-title" id="bio-heading">LEO LION</h2>
+        <p class="bio-body">
+          I'm a director, performer, and game designer from Brooklyn, NY. I love to create original immersive and interactive experiences: the kind of shows that make you say <em>"you had to be there."</em>
+        </p>
+        <ul class="bio-credentials" aria-label="Credentials">
+          <li class="bio-credential"><strong>Founder & Artistic Director</strong> — The Firebird Project</li>
+          <li class="bio-credential"><strong>Associate Artistic Director</strong> — Phoenix Theatre Ensemble</li>
+          <li class="bio-credential"><strong>Soho Mentorship 2026</strong> — Soho House × Creative Futures Collective</li>
+          <li class="bio-credential"><strong>Petri Projects Cohort 2025</strong> — The TEAM)</li>
+          <li class="bio-credential"><strong>Member</strong> — Stage Directors & Choreographers Society</li>
+          <li class="bio-credential"><strong>Member</strong> — Dramatists Guild</li>
+          <li class="bio-credential"><strong>Graduate</strong> — UCB Improv</li>
+          <li class="bio-credential"><strong>BA Theatre (Directing)</strong> — Fordham University '22</li>
+        </ul>
+        <p style="font-family:var(--font-ui);font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;">
+          Work supported by <span style="color:var(--white);">NYSCA</span> · <span style="color:var(--white);">LMCC</span> · <span style="color:var(--white);">ART/NY</span> · <span style="color:var(--white);">Fractured Atlas</span>
+        </p>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+          <a href="mailto:leo@firebird.nyc" class="btn btn--primary">Book a Meeting</a>
+          <a href="leo-lion-cv-2026.pdf" class="btn btn--ghost" target="_blank" rel="noopener">Download CV</a>
+          <a href="directing.html" class="btn btn--ghost">See My Work →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT & FOLLOW -->
+<section id="contact" class="section contact-section" aria-labelledby="contact-heading">
+  <div class="container">
+    <span class="label">Let's Talk!</span>
+    <h2 class="section-title" id="contact-heading" style="margin-bottom:1rem;">CONTACT &amp; FOLLOW</h2>
+    <div class="contact-ctas">
+      <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
+      <a href="https://instagram.com/whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.tiktok.com/@whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">TikTok</a>
+    </div>
+
+    <div style="margin-top:3rem;">
+      <p class="label label--muted">Stay in the Loop</p>
+      <p class="contact-desc" style="margin-bottom:1.5rem;">New work, tour dates, game sessions, and more.</p>
+      <form class="newsletter-form" aria-label="Newsletter signup" action="https://formspree.io/f/mkjwkzjr" method="POST">
+        <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address" />
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none" />
+        <button type="submit">Subscribe</button>
+      </form>
+      <p class="newsletter-note">No spam, ever. Unsubscribe anytime.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="index.html" class="footer-logo">LEO LION</a>
+        <p class="footer-tagline">Director · Performer · Educator · Game Artist · Brooklyn, NY</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="directing.html">Directing</a>
+        <a href="playwriting.html">Playwriting</a>
+        <a href="workshops.html">Workshops</a>
+        <a href="updates.html">Updates</a>
+        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
+        <a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">Download CV</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Leo Lion. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/@whosleolion" target="_blank" rel="noopener">TikTok</a>
+        <a href="mailto:leo@firebird.nyc">Email</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
