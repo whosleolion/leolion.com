@@ -63,6 +63,10 @@
       font-family: var(--font-ui); font-size: 0.7rem; font-weight: 500;
       letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
     }
+    /* Desktop already shows "LEO LION" in the nav logo — redundant in the hero here */
+    @media (min-width: 901px) {
+      .bio-hero__name { display: none; }
+    }
     .bio-hero__title {
       font-family: 'Etna', var(--font-display);
       font-weight: 700;
@@ -212,7 +216,7 @@
     .portfolio-card:hover .portfolio-card__img { transform: scale(1.03); filter: grayscale(0); }
     .portfolio-card__body { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
     .portfolio-card__title { font-family: 'Etna', var(--font-display); font-size: clamp(1.4rem, 2vw, 1.8rem); line-height: 0.95; color: var(--white); }
-    .portfolio-card__title .sub { font-size: 0.55em; font-weight: 400; text-transform: none; color: var(--muted); }
+    .portfolio-card__subtitle { display: block; font-family: var(--font-ui); font-size: 0.78rem; font-style: italic; color: var(--muted); }
     .portfolio-card__desc { font-size: 0.82rem; color: var(--muted); line-height: 1.55; flex: 1; }
     .link-underline {
       align-self: flex-start; font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600;
@@ -388,25 +392,28 @@
     <div class="subsection">
       <div class="portfolio-grid">
         <div class="portfolio-card" data-fade>
-          <img class="portfolio-card__img" src="images/project-iwnh.png" alt="" loading="lazy" />
+          <img class="portfolio-card__img" src="images/cards/spyshow.png" alt="" loading="lazy" />
           <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">I WAS NEVER HERE <span class="sub">(there is no spy show)</span></h3>
+            <h3 class="portfolio-card__title">I WAS NEVER HERE</h3>
+            <span class="portfolio-card__subtitle">(there is no spy show)</span>
             <p class="portfolio-card__desc">This sleeper agent is on a mission to save the world. Only one problem: he has no idea what the mission is. A 5-Star Edinburgh Fringe World Premiere.</p>
             <a href="https://spy.show/#dates" target="_blank" rel="noopener" class="link-underline">See Tour Dates &rarr;</a>
           </div>
         </div>
         <div class="portfolio-card" data-fade style="--delay:0.08s">
-          <img class="portfolio-card__img" src="images/liars-night/hero.png" alt="" loading="lazy" />
+          <img class="portfolio-card__img" src="images/cards/liarsnight.png" alt="" loading="lazy" />
           <div class="portfolio-card__body">
             <h3 class="portfolio-card__title">LIAR'S NIGHT</h3>
+            <span class="portfolio-card__subtitle">(an immersive murder mystery)</span>
             <p class="portfolio-card__desc"><em>In thirteen minutes, the clock will strike midnight. Can you find the killer at this carnival before time runs out?</em> A multidimensional night of social deduction.</p>
             <a href="liars-night.html" class="link-underline">Learn More &rarr;</a>
           </div>
         </div>
         <div class="portfolio-card" data-fade style="--delay:0.16s">
-          <img class="portfolio-card__img" src="images/hero-hm.png" alt="" loading="lazy" />
+          <img class="portfolio-card__img" src="images/cards/helpme.png" alt="" loading="lazy" />
           <div class="portfolio-card__body">
             <h3 class="portfolio-card__title">HELP ME!!!!</h3>
+            <span class="portfolio-card__subtitle">(an interactive mime séance)</span>
             <p class="portfolio-card__desc"><em>Thank goodness you're here! A dead mime needs help!</em> An interactive séance where audiences solve puzzles, play charades, and pierce the veil between life and death. 5-Star Premiere at Edinburgh Fringe 2025, toured to 10+ US stages &amp; festivals.</p>
             <a href="helpme/" class="link-underline">Learn More &rarr;</a>
           </div>
