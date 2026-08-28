@@ -172,16 +172,71 @@
       .show-featured__body { padding: 2rem; }
     }
 
-    /* ---- PRESS: editorial pull-quotes, not testimonial-widget stars ---- */
-    .press-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; margin-top: 2rem; }
-    .press-quote { padding-left: 1.25rem; border-left: 2px solid var(--accent); }
-    .press-quote__mark {
-      display: block; font-family: 'Etna', var(--font-display); font-size: 3rem;
-      line-height: 0.8; color: var(--accent); margin-bottom: 0.4rem;
+    /* ---- PRESS: photo backdrop with a vertically-sliding quote feature ---- */
+    .praise-feature {
+      position: relative;
+      display: grid;
+      min-height: 480px;
+      margin-top: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
     }
-    .press-quote__text { font-size: 1rem; line-height: 1.65; color: var(--white); font-style: italic; margin-bottom: 1rem; }
-    .press-quote__source { font-family: var(--font-ui); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-style: normal; }
-    @media (max-width: 900px) { .press-grid { grid-template-columns: 1fr; gap: 2rem; } }
+    .praise-feature__bg {
+      grid-area: 1 / 1;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 30%;
+    }
+    .praise-feature__overlay {
+      grid-area: 1 / 1;
+      background: linear-gradient(to right, rgba(8,8,8,0.94) 0%, rgba(8,8,8,0.75) 38%, rgba(8,8,8,0.15) 62%, rgba(8,8,8,0) 78%);
+    }
+    .praise-feature__slot {
+      grid-area: 1 / 1;
+      align-self: center; justify-self: start;
+      width: min(420px, 46%);
+      margin-left: clamp(1.5rem, 4vw, 3rem);
+      z-index: 2;
+    }
+    .praise-slider {
+      background: rgba(8,8,8,0.55);
+      border: 1px solid rgba(240,237,230,0.14);
+      border-radius: 3px;
+      padding: 1.75rem 1.75rem 1.35rem;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .praise-slider__viewport { height: 230px; overflow: hidden; }
+    .praise-track { display: flex; flex-direction: column; transition: transform 0.6s var(--ease-out-expo); }
+    .praise-slide { flex: 0 0 230px; height: 230px; display: flex; flex-direction: column; justify-content: center; gap: 0.6rem; }
+    .praise-slide__stars { font-size: 0.85rem; letter-spacing: 0.15em; }
+    .praise-slide__quote { font-size: 1rem; line-height: 1.6; color: var(--white); font-style: italic; }
+    .praise-slide__source { font-family: var(--font-ui); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-style: normal; }
+    .praise-slide__link {
+      align-self: flex-start; font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--white);
+      border-bottom: 1px solid rgba(240,237,230,0.28); padding-bottom: 0.1rem; margin-top: 0.2rem;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .praise-slide__link:hover { color: var(--accent); border-color: var(--accent); }
+    .praise-dots { display: flex; gap: 0.4rem; margin-top: 1.1rem; }
+    .praise-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: rgba(240,237,230,0.3);
+      border: none; padding: 0; cursor: pointer; transition: background 0.2s;
+    }
+    .praise-dot.is-active { background: var(--accent); }
+
+    @media (max-width: 900px) {
+      .praise-feature { min-height: 0; grid-template-rows: 200px auto; }
+      .praise-feature__bg { grid-row: 1; height: 200px; }
+      .praise-feature__overlay {
+        grid-row: 1;
+        background: linear-gradient(to top, rgba(8,8,8,0.95) 0%, rgba(8,8,8,0.3) 55%, rgba(8,8,8,0) 100%);
+      }
+      .praise-feature__slot { grid-row: 2; width: 100%; margin-left: 0; align-self: stretch; justify-self: stretch; }
+      .praise-slider { border-radius: 0; border-left: none; border-right: none; border-bottom: none; }
+      .praise-slider__viewport, .praise-slide { height: 260px; flex-basis: 260px; }
+    }
 
     /* ---- ABOUT: compact band, not a full standalone destination ---- */
     #about.section { padding: clamp(2.75rem, 5vw, 3.5rem) 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -426,6 +481,7 @@
           <a href="directing.html" class="btn btn--ghost">Directing &rarr;</a>
           <a href="playwriting.html" class="btn btn--ghost">Playwriting &rarr;</a>
           <a href="workshops.html" class="btn btn--ghost">Workshops &rarr;</a>
+          <a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener" class="btn btn--ghost">My CV &rarr;</a>
         </div>
       </div>
     </div>
@@ -433,28 +489,65 @@
 </section>
 
 <!-- PRESS & PRAISE -->
-<!-- TODO: placeholder quotes below — swap in real press/praise copy before this goes live -->
 <section id="praise" class="section" aria-labelledby="praise-heading">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title section-title--etna" id="praise-heading">Press</h2>
     </div>
-    <div class="press-grid">
-      <blockquote class="press-quote" data-fade>
-        <span class="press-quote__mark" aria-hidden="true">&ldquo;</span>
-        <p class="press-quote__text">[Placeholder — drop in a real pull-quote here.]</p>
-        <cite class="press-quote__source">Placeholder Publication</cite>
-      </blockquote>
-      <blockquote class="press-quote" data-fade style="--delay:0.1s">
-        <span class="press-quote__mark" aria-hidden="true">&ldquo;</span>
-        <p class="press-quote__text">[Placeholder — drop in a real pull-quote here.]</p>
-        <cite class="press-quote__source">Placeholder Publication</cite>
-      </blockquote>
-      <blockquote class="press-quote" data-fade style="--delay:0.2s">
-        <span class="press-quote__mark" aria-hidden="true">&ldquo;</span>
-        <p class="press-quote__text">[Placeholder — drop in a real pull-quote here.]</p>
-        <cite class="press-quote__source">Placeholder Publication</cite>
-      </blockquote>
+
+    <div class="praise-feature">
+      <img class="praise-feature__bg" src="images/press-bg.png" alt="" loading="lazy" />
+      <div class="praise-feature__overlay" aria-hidden="true"></div>
+      <div class="praise-feature__slot">
+        <div class="praise-slider">
+          <div class="praise-slider__viewport">
+            <div class="praise-track" id="praiseTrack">
+
+              <article class="praise-slide">
+                <span class="praise-slide__stars" aria-label="4 out of 5 stars">⭐⭐⭐⭐</span>
+                <p class="praise-slide__quote">&ldquo;A captivating performer.&rdquo;</p>
+                <cite class="praise-slide__source">The Scotsman</cite>
+                <a href="https://www.scotsman.com/arts-and-culture/edinburgh-festivals/theatre-and-stage/fringe-theatre-reviews-the-librarians-a-very-serious-comedy-i-was-never-here-8921119?r=9889" target="_blank" rel="noopener" class="praise-slide__link">Read Full Review &rarr;</a>
+              </article>
+
+              <article class="praise-slide">
+                <span class="praise-slide__stars" aria-label="4 out of 5 stars">⭐⭐⭐⭐</span>
+                <p class="praise-slide__quote">&ldquo;Lion has mastered this niche.&rdquo;</p>
+                <cite class="praise-slide__source">British Theatre Guide</cite>
+                <a href="https://www.britishtheatreguide.info/reviews/i-was-never-her-the-space-nid-25826" target="_blank" rel="noopener" class="praise-slide__link">Read Full Review &rarr;</a>
+              </article>
+
+              <article class="praise-slide">
+                <span class="praise-slide__stars" aria-label="4 out of 5 stars">⭐⭐⭐⭐</span>
+                <p class="praise-slide__quote">&ldquo;A triumph.&rdquo;</p>
+                <cite class="praise-slide__source">Corr Blimey</cite>
+                <a href="https://corrblimey.uk/2026/08/14/edinburgh-festival-fringe-2026-review-i-was-never-here-there-is-no-spy-show-studio-at-thespace-niddry-st/" target="_blank" rel="noopener" class="praise-slide__link">Read Full Review &rarr;</a>
+              </article>
+
+              <article class="praise-slide">
+                <span class="praise-slide__stars" aria-label="4 out of 5 stars">⭐⭐⭐⭐</span>
+                <p class="praise-slide__quote">&ldquo;An endlessly charismatic performer&hellip; Lion has firmly cemented his position as one of my favourite acts of the Fringe.&rdquo;</p>
+                <cite class="praise-slide__source">Binge Fringe</cite>
+                <a href="https://www.bingefringe.com/2026/08/11/review-i-was-never-here-leo-lion-edfringe-2026-%E2%98%85%E2%98%85%E2%98%85%E2%98%85/" target="_blank" rel="noopener" class="praise-slide__link">Read Full Review &rarr;</a>
+              </article>
+
+              <article class="praise-slide">
+                <p class="praise-slide__quote">&ldquo;Clever and feel-good to the max.&rdquo;</p>
+                <cite class="praise-slide__source">The Student</cite>
+                <a href="https://thestudentnews.co.uk/2026/08/08/fringe-2026-i-was-never-here/" target="_blank" rel="noopener" class="praise-slide__link">Read Full Review &rarr;</a>
+              </article>
+
+            </div>
+          </div>
+          <div class="praise-dots" id="praiseDots" role="tablist" aria-label="Press quotes">
+            <button class="praise-dot is-active" aria-label="Show quote 1" data-index="0" type="button"></button>
+            <button class="praise-dot" aria-label="Show quote 2" data-index="1" type="button"></button>
+            <button class="praise-dot" aria-label="Show quote 3" data-index="2" type="button"></button>
+            <button class="praise-dot" aria-label="Show quote 4" data-index="3" type="button"></button>
+            <button class="praise-dot" aria-label="Show quote 5" data-index="4" type="button"></button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -512,5 +605,52 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script>
+(function () {
+  var viewport = document.querySelector('.praise-slider__viewport');
+  var track = document.getElementById('praiseTrack');
+  var dots = document.querySelectorAll('#praiseDots .praise-dot');
+  if (!viewport || !track || !dots.length) return;
+
+  var index = 0;
+  var total = track.children.length;
+  var timer = null;
+
+  function render() {
+    var h = viewport.getBoundingClientRect().height;
+    track.style.transform = 'translateY(-' + (index * h) + 'px)';
+    dots.forEach(function (dot, i) {
+      dot.classList.toggle('is-active', i === index);
+    });
+  }
+  function go(i) {
+    index = (i + total) % total;
+    render();
+  }
+  function start() {
+    timer = setInterval(function () { go(index + 1); }, 5500);
+  }
+  function stop() {
+    clearInterval(timer);
+  }
+  function restart() {
+    stop();
+    start();
+  }
+
+  dots.forEach(function (dot, i) {
+    dot.addEventListener('click', function () {
+      go(i);
+      restart();
+    });
+  });
+  viewport.closest('.praise-slider').addEventListener('mouseenter', stop);
+  viewport.closest('.praise-slider').addEventListener('mouseleave', start);
+  window.addEventListener('resize', render);
+
+  render();
+  start();
+})();
+</script>
 </body>
 </html>
