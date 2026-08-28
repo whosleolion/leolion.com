@@ -90,11 +90,7 @@
       display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem;
     }
     .bio-hero__cta-row .bio-hero__cta:nth-child(2) { margin-left: 1.25rem; }
-    .bio-hero__cta-row .bio-hero__cta:nth-child(3) {
-      margin-left: 2.5rem; color: var(--accent); border-color: var(--accent);
-      font-weight: 700;
-    }
-    .bio-hero__cta-row .bio-hero__cta:nth-child(3):hover { color: var(--accent2); border-color: var(--accent2); }
+    .bio-hero__cta-row .bio-hero__cta:nth-child(3) { margin-left: 2.5rem; }
     .bio-hero__image-side {
       flex: 0 0 52%;
       position: relative; overflow: hidden;
@@ -215,7 +211,8 @@
     .portfolio-card__img { width: 100%; height: 190px; object-fit: cover; object-position: center top; filter: grayscale(15%); transition: transform 0.5s var(--ease-out-expo), filter 0.3s; }
     .portfolio-card:hover .portfolio-card__img { transform: scale(1.03); filter: grayscale(0); }
     .portfolio-card__body { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
-    .portfolio-card__title { font-family: var(--font-display); font-size: clamp(1.4rem, 2vw, 1.8rem); line-height: 0.95; color: var(--white); }
+    .portfolio-card__title { font-family: 'Etna', var(--font-display); font-size: clamp(1.4rem, 2vw, 1.8rem); line-height: 0.95; color: var(--white); }
+    .portfolio-card__title .sub { font-size: 0.55em; font-weight: 400; text-transform: none; color: var(--muted); }
     .portfolio-card__desc { font-size: 0.82rem; color: var(--muted); line-height: 1.55; flex: 1; }
     .link-underline {
       align-self: flex-start; font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600;
@@ -235,10 +232,26 @@
       letter-spacing: 0.005em;
     }
 
+    /* No eyebrow above these headings anymore — the shared .section padding
+       was sized to also fit that label, so trim just the top here. */
+    #projects, #praise, #contact { padding-top: clamp(2.25rem, 4.5vw, 3.5rem); }
+
+    .contact-section .section-title { margin-bottom: 1.75rem; }
+    .contact-heading-mid {
+      font-family: 'Etna', var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      line-height: 1.05;
+      letter-spacing: 0.005em;
+      color: var(--white);
+    }
+
     @media (max-width: 900px) {
       .portfolio-grid { grid-template-columns: 1fr; }
       #projects .section-header, #praise .section-header { display: block; text-align: center; }
       #contact-heading { text-align: center; }
+      .portfolio-links__row { flex-direction: column; }
+      .portfolio-links__row .btn { width: 100%; text-align: center; }
 
       /* Mobile nav: full-screen takeover instead of the cramped top strip */
       .nav-links {
@@ -349,7 +362,7 @@
 <section id="about" class="section" aria-label="About Leo Lion">
   <div class="container">
     <p class="about-band__text">
-      I'm a director, performer, and game designer — founder of <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">The Firebird Project</a> and associate artistic director at <a href="https://phoenixtheatreensemble.org" target="_blank" rel="noopener">Phoenix Theatre Ensemble</a>. I make original immersive and interactive experiences: the kind of shows that make you say <em>"you had to be there."</em>
+      I'm a director, performer, and game designer — founder of <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">The Firebird Project</a>. I make original immersive and interactive experiences: the kind of shows that make you say <em>"you had to be there."</em>
     </p>
     <div class="about-band__credentials">
       <span class="about-chip">Soho Mentorship 2026</span>
@@ -377,9 +390,8 @@
         <div class="portfolio-card" data-fade>
           <img class="portfolio-card__img" src="images/project-iwnh.png" alt="" loading="lazy" />
           <div class="portfolio-card__body">
-            <span class="show-card__status">Edinburgh Fringe 2026</span>
-            <h3 class="portfolio-card__title">I WAS NEVER HERE</h3>
-            <p class="portfolio-card__desc">This sleeper agent is on a high-stakes mission. Your objective? Help him remember what the hell it is.</p>
+            <h3 class="portfolio-card__title">I WAS NEVER HERE <span class="sub">(there is no spy show)</span></h3>
+            <p class="portfolio-card__desc">This sleeper agent is on a mission to save the world. Only one problem: he has no idea what the mission is. A 5-Star Edinburgh Fringe World Premiere.</p>
             <a href="https://spy.show/#dates" target="_blank" rel="noopener" class="link-underline">See Tour Dates &rarr;</a>
           </div>
         </div>
@@ -387,7 +399,7 @@
           <img class="portfolio-card__img" src="images/liars-night/hero.png" alt="" loading="lazy" />
           <div class="portfolio-card__body">
             <h3 class="portfolio-card__title">LIAR'S NIGHT</h3>
-            <p class="portfolio-card__desc">A multidimensional night of social deduction, set at a carnival at the end of the world.</p>
+            <p class="portfolio-card__desc"><em>In thirteen minutes, the clock will strike midnight. Can you find the killer at this carnival before time runs out?</em> A multidimensional night of social deduction.</p>
             <a href="liars-night.html" class="link-underline">Learn More &rarr;</a>
           </div>
         </div>
@@ -395,7 +407,7 @@
           <img class="portfolio-card__img" src="images/hero-hm.png" alt="" loading="lazy" />
           <div class="portfolio-card__body">
             <h3 class="portfolio-card__title">HELP ME!!!!</h3>
-            <p class="portfolio-card__desc"><em>Thank goodness you're here! A dead mime needs help!</em> An interactive séance where audiences solve puzzles, play charades, and pierce the veil between life and death.</p>
+            <p class="portfolio-card__desc"><em>Thank goodness you're here! A dead mime needs help!</em> An interactive séance where audiences solve puzzles, play charades, and pierce the veil between life and death. 5-Star Premiere at Edinburgh Fringe 2025, toured to 10+ US stages &amp; festivals.</p>
             <a href="helpme/" class="link-underline">Learn More &rarr;</a>
           </div>
         </div>
@@ -443,7 +455,7 @@
 <!-- CONTACT & FOLLOW -->
 <section id="contact" class="section contact-section" aria-labelledby="contact-heading">
   <div class="container">
-    <h2 class="section-title section-title--etna" id="contact-heading" style="margin-bottom:1rem;">Contact Me</h2>
+    <h2 class="section-title section-title--etna contact-heading-mid" id="contact-heading">Contact Me</h2>
     <div class="contact-ctas">
       <a href="mailto:leo@firebird.nyc" class="btn btn--primary">leo@firebird.nyc</a>
       <a href="https://instagram.com/whosleolion" class="btn btn--ghost" target="_blank" rel="noopener">Instagram</a>
@@ -451,7 +463,7 @@
     </div>
 
     <div style="margin-top:3rem;">
-      <p class="label label--muted">Stay in the Loop</p>
+      <h3 class="contact-heading-mid" style="margin:0 0 0.75rem;">Stay In The Loop</h3>
       <p class="contact-desc" style="margin-bottom:1.5rem;">New work, tour dates, game sessions, and more.</p>
       <form class="newsletter-form" aria-label="Newsletter signup" action="https://formspree.io/f/mkjwkzjr" method="POST">
         <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address" />
