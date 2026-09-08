@@ -991,7 +991,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
     left: 0; right: 0;
     height: calc(100svh - var(--nav-h));
     z-index: 99;
-    background: var(--black);
+    background: var(--black) url('../images/nav-pattern.svg') center / cover no-repeat;
     flex-direction: column;
     justify-content: center;
     align-items: center;

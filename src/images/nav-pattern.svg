@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+  <!-- Eclectic 80s-Memphis scatter: triangles, circles, squares, kept out of the
+       centered nav-text column, very low opacity so it's felt more than seen. -->
+
+  <!-- top -->
+  <circle cx="56" cy="64" r="30" fill="#ffd600" fill-opacity="0.09"/>
+  <polygon points="316,26 384,30 352,86" fill="#f0ede6" fill-opacity="0.06"/>
+  <rect x="168" y="14" width="24" height="24" fill="#ff3c00" fill-opacity="0.08" transform="rotate(18 180 26)"/>
+  <circle cx="338" cy="126" r="19" fill="none" stroke="#a09e96" stroke-opacity="0.14" stroke-width="2"/>
+  <circle cx="112" cy="150" r="5" fill="#f0ede6" fill-opacity="0.18"/>
+  <circle cx="246" cy="86" r="3.5" fill="#f0ede6" fill-opacity="0.2"/>
+
+  <!-- left edge -->
+  <circle cx="16" cy="300" r="9" fill="#ffd600" fill-opacity="0.12"/>
+  <polygon points="6,410 34,420 10,448" fill="#f0ede6" fill-opacity="0.05"/>
+  <rect x="8" y="516" width="17" height="17" fill="none" stroke="#f0ede6" stroke-opacity="0.1" stroke-width="1.5" transform="rotate(10 16 524)"/>
+
+  <!-- right edge -->
+  <circle cx="384" cy="246" r="13" fill="#a09e96" fill-opacity="0.1"/>
+  <polygon points="368,388 396,394 378,424" fill="none" stroke="#ff3c00" stroke-opacity="0.12" stroke-width="1.5"/>
+  <rect x="372" y="512" width="18" height="18" fill="#ff3c00" fill-opacity="0.06" transform="rotate(-12 381 521)"/>
+
+  <!-- bottom -->
+  <circle cx="86" cy="742" r="46" fill="none" stroke="#ffd600" stroke-opacity="0.08" stroke-width="2"/>
+  <polygon points="278,748 336,754 298,796" fill="#f0ede6" fill-opacity="0.05"/>
+  <rect x="176" y="768" width="20" height="20" fill="#a09e96" fill-opacity="0.09" transform="rotate(20 186 778)"/>
+  <circle cx="58" cy="618" r="5" fill="#ff3c00" fill-opacity="0.16"/>
+  <circle cx="332" cy="652" r="3.5" fill="#f0ede6" fill-opacity="0.18"/>
+</svg>
