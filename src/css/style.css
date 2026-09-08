@@ -1007,6 +1007,10 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
     transform: translateY(0);
     pointer-events: all;
   }
+  .site-nav.menu-open {
+    background: var(--black);
+    border-bottom: none;
+  }
   .nav-links a {
     font-family: 'Etna', var(--font-display);
     font-size: clamp(1.6rem, 8vw, 2.2rem);
