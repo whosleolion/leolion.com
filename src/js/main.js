@@ -16,6 +16,7 @@
     toggle.addEventListener('click', () => {
       const open = toggle.classList.toggle('open');
       links.classList.toggle('open', open);
+      nav.classList.toggle('menu-open', open);
       toggle.setAttribute('aria-expanded', open);
       document.body.style.overflow = open ? 'hidden' : '';
     });
@@ -23,6 +24,7 @@
       a.addEventListener('click', () => {
         toggle.classList.remove('open');
         links.classList.remove('open');
+        nav.classList.remove('menu-open');
         toggle.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
       })
