@@ -4,5 +4,6 @@ type: character
 tags: [mentioned]
 status: Deceased
 aliases: [Horace Ashwood, Rory Ashwood, Rachel Ashwood]
+author: thomas
 ---
 [[Sprynger]]'s childhood sweetheart and wife. Killed by [[Old Nickolas]], along with her family (Horace, Rory and Rachel Ashwood).

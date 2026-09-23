@@ -59,6 +59,7 @@ Markdown supports headings, **bold**, *italic*, ~~strike~~, ==highlight==, neste
 
 - `[[Entry Title]]`, `[[slug]]`, `[[alias]]`, `[[Title|shown text]]` are wikilinks. A link to something that doesn't exist yet shows as dashed "unwritten" text, so you can link first and write later.
 - `![[picture.png]]` embeds an image from `images/`.
+- `::: leo` … `:::` wraps one person's account. Several people can write about the same thing (e.g. the GM's recap and a player's notes on the same session), and each block is labeled with its author. Authors live in `world.json` under `"authors": { "leo": { "name": "Leo", "role": "GM", "color": "#ff5a36" } }`. For a whole entry by one person, use `author: leo` in the frontmatter instead. Every author gets a page at `#/by/<id>`.
 - Callouts work like Obsidian's: `> [!rumor] Heard at the bar` (also note, tip, warning, danger, quote, question).
 
 The "Mentioned in" (backlinks) and "On the map" sections build themselves.

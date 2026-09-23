@@ -163,7 +163,9 @@
     "session-14",
     "session-15",
     "session-16",
-    "session-17"
+    "session-17",
+    "spellwash",
+    "underton"
   ],
   "types": {
     "district": {
@@ -202,5 +204,17 @@
   ],
   "newestFirst": [
     "session"
-  ]
+  ],
+  "authors": {
+    "leo": {
+      "name": "Leo",
+      "role": "GM",
+      "color": "#ff5a36"
+    },
+    "thomas": {
+      "name": "Thomas",
+      "role": "plays Finnean",
+      "color": "#7fb8ff"
+    }
+  }
 }

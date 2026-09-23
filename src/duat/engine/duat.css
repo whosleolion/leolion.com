@@ -378,3 +378,16 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
   .label-pins .pin.tier-2 .pin-label { font-size: 0.66rem; }
 }
 .map-tools button { background: var(--bg); }
+
+/* authorship */
+.byline { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+.byline a {
+  font-size: 0.8rem; text-decoration: none; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); color: var(--c);
+}
+.byline a:hover { background: color-mix(in srgb, var(--c) 15%, transparent); }
+.account { margin: 0 0 1.6em; padding: 4px 0 2px 18px; border-left: 3px solid var(--c); }
+.account > :last-child { margin-bottom: 0; }
+.account-by { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
+.prose .account-by a, .account-by a { font: 600 0.75rem/1 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--c); text-decoration: none; }
+.account-by span { font-size: 0.8rem; color: var(--muted); }
