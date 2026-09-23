@@ -2,7 +2,7 @@
 title: Goldtusks
 type: faction
 aliases: [Gold Tusks, orcish mafia, orc mob]
-author: thomas
+author: leo
 ---
 The orc mob. Godfather: [[Tiberius Goldtusk]]. Second-in-command: [[Julius Goldtusk]]. Fixer: [[Lucius Morningstar]].
 

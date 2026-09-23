@@ -2,6 +2,6 @@
 title: Hammock
 type: location
 where: "[[Underborough]]"
-author: thomas
+author: leo
 ---
 The Weavers' hostel, managed by [[Ipswitch Weaver]].

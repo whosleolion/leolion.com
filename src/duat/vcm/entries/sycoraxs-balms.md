@@ -2,6 +2,6 @@
 title: Sycorax's Balms
 type: location
 where: "[[Dogwall]]"
-author: thomas
+author: leo
 ---
 [[Sycorax]]'s shop.

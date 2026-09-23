@@ -1,6 +1,6 @@
 ---
 title: Nanny's Association
 type: faction
-author: thomas
+author: leo
 ---
 [[Elizabeth Swift]] is a member.

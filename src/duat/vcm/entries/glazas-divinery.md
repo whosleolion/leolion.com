@@ -2,6 +2,6 @@
 title: Glaza's Divinery
 type: location
 where: "[[Underborough]]"
-author: thomas
+author: leo
 ---
 [[Glaza Morgorian]]'s place.

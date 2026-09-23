@@ -3,6 +3,7 @@ title: The Smogs
 type: district
 area: Edge of Town
 summary: The industrial sprawl south of the river, on the low floodplain. Smoke drifts southwest.
+author: leo
 ---
 The Ore & Coal Road comes in from the southwest, and barges run along its northern riverbank. [[Industry Bend]] sits at its northeast corner.
 

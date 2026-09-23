@@ -2,6 +2,11 @@
 title: Queen Agnes Vistal
 type: character
 tags: [mentioned]
-author: thomas
 ---
+::: leo
 The Queen of [[Hygard]].
+:::
+
+::: thomas
+The Queen of Hygard
+:::

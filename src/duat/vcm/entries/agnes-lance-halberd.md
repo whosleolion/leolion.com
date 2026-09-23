@@ -2,6 +2,11 @@
 title: Agnes & Lance Halberd
 type: character
 tags: [mentioned]
-author: thomas
 ---
+::: leo
 [[Sprynger]]'s disapproving aunt, and her perfect son.
+:::
+
+::: thomas
+Sprynger’s disapproving aunt and her perfect son
+:::

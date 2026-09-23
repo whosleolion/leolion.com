@@ -3,6 +3,7 @@ title: The Spoils
 type: district
 area: Old Town
 summary: On the north bank of the river, below the castle hill.
+author: leo
 ---
 The trunk road crosses the river here over [[Vale Bridge]] to [[Dogwall]]'s north gate.
 
