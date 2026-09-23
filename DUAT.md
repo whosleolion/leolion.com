@@ -84,6 +84,28 @@ The Vista City map is a drawn vector (`images/vista-city.svg`) laid out in the s
 
 To link straight to a pin, use `#/e/vista-city?pin=sample-location`.
 
+## Shared editing
+
+Every entry has a ✎ Edit button. A person picks their name (from `world.json` `authors`), enters the shared passkey, and writes **their own** notes on that entry. Their text shows up as "Name's notes", and other people's notes are never touched. Saving an empty box removes their notes. They stay signed in on that device ("Not Neha?" switches person).
+
+Config lives in `world.json`:
+
+```json
+"edit": { "endpoint": "", "keyHash": "<sha256 of the passkey>" }
+```
+
+The live `.md` files are never rewritten. Edits are stored separately and layered on top when the page loads. Where they're stored:
+
+- **`endpoint` empty:** preview mode. Edits save in that browser only, which is useful for trying it out.
+- **`endpoint` set:** shared. Edits go to a small Google Apps Script (`duat-backend/Code.gs`) that keeps them in a Google Sheet in the GM's Drive. To set it up (about 2 minutes):
+  1. Go to script.google.com, create a New project, and paste in `duat-backend/Code.gs`.
+  2. Click Deploy → New deployment → Web app. Set *Execute as: Me* and *Who has access: Anyone*, then Deploy. Authorize it when asked.
+  3. Copy the web app URL (it ends in `/exec`) into `world.json` `edit.endpoint`.
+
+  The sheet ("Duat edits") appears in Drive after the first save. You can read or fix edits there directly. To fold edits permanently into the `.md` files, copy them over and delete the sheet rows.
+
+To change the passkey, put its SHA-256 hash in both `world.json` and `Code.gs`. The passkey is a shared door key, not real security: anyone who has it can write as anyone. Only give it to the table.
+
 ## Heads-up
 
 Everything under `src/` is public once deployed. Don't put GM secrets in a player-facing catalog. `hidden: true` only removes an entry from lists and search.

@@ -2,7 +2,6 @@
 title: Sycorax
 type: character
 tags: [seen]
-aliases: [Sigurax]
 place: "[[Sycorax's Balms]]"
 author: thomas
 ---

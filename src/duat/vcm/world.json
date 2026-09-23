@@ -17,12 +17,14 @@
     "faction",
     "deity",
     "item",
+    "nation",
     "region",
     "note"
   ],
   "entries": [
     "home",
     "vista-city",
+    "kainos",
     "the-bustle",
     "gladwhark",
     "the-smogs",
@@ -44,7 +46,6 @@
     "felt",
     "finnean",
     "sprynger",
-    "stryker",
     "orson-dive",
     "pious-reverent-henchman",
     "alamir-koldovich",
@@ -165,7 +166,14 @@
     "session-16",
     "session-17",
     "spellwash",
-    "underton"
+    "underton",
+    "castle-bridge",
+    "pike-bridge",
+    "garland-bridge",
+    "kiorascan-federation",
+    "alahil",
+    "rsd",
+    "fire-islands"
   ],
   "types": {
     "district": {
@@ -197,6 +205,11 @@
       "label": "Sessions",
       "one": "Session",
       "color": "#9fb4ff"
+    },
+    "nation": {
+      "label": "Nations",
+      "one": "Nation",
+      "color": "#c9a8ff"
     }
   },
   "mapMajorTypes": [
@@ -215,6 +228,30 @@
       "name": "Thomas",
       "role": "plays Finnean",
       "color": "#7fb8ff"
+    },
+    "neha": {
+      "name": "Neha",
+      "role": "plays Cassandra",
+      "color": "#ff8ad8"
+    },
+    "zack": {
+      "name": "Zack",
+      "role": "plays Rosie",
+      "color": "#7ddc8a"
+    },
+    "noah": {
+      "name": "Noah",
+      "role": "plays Felt",
+      "color": "#ffd166"
+    },
+    "nuh": {
+      "name": "Nuh",
+      "role": "plays Sprynger",
+      "color": "#c792ff"
     }
+  },
+  "edit": {
+    "endpoint": "",
+    "keyHash": "183059fb170ae10f1e90f6f1893223ba7874398c4f3f88315825e99ff8ade9d9"
   }
 }

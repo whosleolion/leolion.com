@@ -2,7 +2,6 @@
 title: Finnean
 type: pc
 home: "[[Pinnsmouth]]"
-aliases: [Finnian]
 tags: [party]
 ---
 ::: leo

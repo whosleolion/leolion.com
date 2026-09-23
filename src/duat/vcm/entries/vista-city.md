@@ -15,10 +15,15 @@ summary: The whole city. Tap a district's name for the short version; drag, pinc
 | Dotted cream | Hill contours |
 | Striped | [[Dogwall]] wall |
 | Yellow square | Gate |
+| Stone deck | Bridge |
 
 Smoke from [[The Smogs]] drifts southwest. The sea breeze blows in from the east over the [[Docks & Warehouses|docks]].
 
 ```pins
+61.9, 53.9 | [[Vale Bridge]]
+55.0, 50.0 | [[Castle Bridge]]
+46.4, 42.1 | [[Pike Bridge]]
+35.5, 51.2 | [[Garland Bridge]]
 37.3, 35.9 | [[The Bustle]]
 20.0, 48.7 | [[Gladwhark]]
 32.6, 62.7 | [[The Smogs]]
@@ -32,7 +37,7 @@ Smoke from [[The Smogs]] drifts southwest. The sea breeze blows in from the east
 66.3, 70.3 | [[Dogwall]]
 77.1, 18.8 | [[Sylvan Quarter]]
 86.6, 58.1 | [[Docks & Warehouses]]
-43.9, 42.5 | [[Locks, Weir & Toll]]
+38.4, 43.1 | [[Locks, Weir & Toll]]
 53.9, 63.0 | [[Siege Cistern]]
 66.8, 39.2 | [[Castle Ramp]]
 44.4, 30.1 | The Cliff | The steep edge of [[The Bustle]], over the river.
