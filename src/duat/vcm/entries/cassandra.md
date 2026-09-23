@@ -4,12 +4,10 @@ type: pc
 family: "[[Lady Agatha Vale]], [[Lord Algernon Vale]]"
 homes: "[[Vale House]], [[Vale Penthouse]]"
 tags: [party]
+author: leo
 ---
-::: leo
 An elven socialite with a magical secret. When the crew met, she was being held captive in the cooler at [[Dive's Bistro]], with [[Olf]], a bumbling homunculus foisted upon her by her parents. Played by Neha.
-:::
 
-::: thomas
 Daughter of [[Lady Agatha Vale]] and [[Lord Algernon Vale]]. Her homunculus is [[Olf]], and her best friend is [[Miranda Steward]].
 
 - Was held captive in the freezer at [[Dive's Bistro]] with Olf when the crew first met.
@@ -18,4 +16,3 @@ Daughter of [[Lady Agatha Vale]] and [[Lord Algernon Vale]]. Her homunculus is [
 - [[Sir Corbin Pryde]] told the crew that Morningstar wanted her for her blood.
 - Her childhood nanny was [[Mrs. Candlebaum]].
 - Probably made (identified) after the prison raid, along with [[Sprynger]].
-:::

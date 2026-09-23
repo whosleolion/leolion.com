@@ -1,7 +1,7 @@
 ---
 title: Hand of Death
 type: faction
-author: thomas
+author: leo
 ---
 Used to be part of the [[Sanctorum Institute]] and was excommunicated. Could still be around?
 

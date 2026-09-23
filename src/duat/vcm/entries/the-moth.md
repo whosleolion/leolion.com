@@ -2,6 +2,6 @@
 title: The Moth
 type: character
 tags: [seen]
-author: thomas
+author: leo
 ---
 Freed in the prison raid.

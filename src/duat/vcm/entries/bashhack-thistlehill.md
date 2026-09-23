@@ -2,6 +2,11 @@
 title: Bashhack Thistlehill
 type: character
 tags: [mentioned]
-author: thomas
 ---
+::: leo
 [[Finnean]]'s childhood hero, a halfling wizard.
+:::
+
+::: thomas
+Finnean’s childhood hero, a halfling wizard
+:::

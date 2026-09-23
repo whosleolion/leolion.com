@@ -5,7 +5,5 @@ date: Dec 1, 2025
 order: 3
 ---
 ::: thomas
-The group goes further down into the sewers and takes the train into the [[Underborough|underdark]]. The train requires special gravity boots, and the group fights off two [[Amber Hand]] thieves ([[Olga Sidorov]]) before arriving in the underdark.
-
-A flashback scene from [[Cassandra]]'s perspective: the lizard medicine lady [[Sycorax]] putting a [[Dianopod Crab|dianopod crab]] under her skin (we later remove it). A mystery villain is in the scene: human, blue eyes, well dressed. [[Orson Dive]] was working for him.
+The group goes further down into the sewers and takes the train into the [[Underborough|underdark]]. The train requires special gravity boots and the group fights off two [[Amber Hand|Amber hand]] thieves ([[Olga Sidorov]]) before arriving in the underdark. We get a flashback scene from [[Cassandra|Cassandra’s]] perspective of lizard medicine lady [[Sycorax]] putting [[Dianopod Crab|dianopod crab]] under her skin (we later remove it). Mystery villain in scene, human, blue eyes. Well dressed. [[Orson Dive]] was working for him.
 :::

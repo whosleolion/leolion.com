@@ -3,6 +3,7 @@ title: The Bustle
 type: district
 area: Downtown
 summary: The big district north of the river, west of the castle hill.
+author: leo
 ---
 The Northwest Road runs through it. On its east side, the cliff drops down to the river at [[Industry Bend]].
 

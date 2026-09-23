@@ -2,6 +2,11 @@
 title: Sir Dorian Halberd
 type: character
 tags: [mentioned]
-author: thomas
 ---
+::: leo
 [[Sprynger]]'s guardian, an old widower knight.
+:::
+
+::: thomas
+Sprynger’s guardian, an old widower knight
+:::

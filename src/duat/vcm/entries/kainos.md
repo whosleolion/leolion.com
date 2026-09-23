@@ -4,8 +4,8 @@ type: map
 image: kainos.svg
 pins: labels
 major: [nation, map]
-author: leo
 summary: The known world. Vista City sits on the north coast of Hygard. Tap it to open the city map.
+author: leo
 ---
 ## Map key
 

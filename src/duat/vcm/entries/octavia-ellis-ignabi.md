@@ -2,6 +2,11 @@
 title: Octavia Ellis-Ignabi
 type: character
 tags: [seen]
-author: thomas
 ---
+::: leo
 [[Julius Goldtusk]]'s girlfriend, a fire-genasi socialite.
+:::
+
+::: thomas
+Julius’s girlfriend, a fire-genasi socialite
+:::

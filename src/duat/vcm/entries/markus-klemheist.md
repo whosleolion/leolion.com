@@ -2,6 +2,11 @@
 title: Markus Klemheist
 type: character
 tags: [seen]
-author: thomas
 ---
+::: leo
 Engineer at [[The Colosseum]], and [[Dissector]]'s creator.
+:::
+
+::: thomas
+engineer at The Colloseum, Dissector’s creator
+:::

@@ -4,6 +4,7 @@ type: map
 image: vista-city.svg
 pins: labels
 summary: The whole city. Tap a district's name for the short version; drag, pinch or scroll to get around.
+author: leo
 ---
 ## Map key
 

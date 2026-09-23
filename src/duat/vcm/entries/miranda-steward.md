@@ -2,6 +2,11 @@
 title: Miranda Steward
 type: character
 tags: [seen]
-author: thomas
 ---
+::: leo
 Receptionist at the [[Civic Center]] in the [[Sylvan Quarter]], and [[Cassandra]]'s best friend.
+:::
+
+::: thomas
+receptionist at the Sylvan Quarter Civic Center, Cassandra’s best friend
+:::
