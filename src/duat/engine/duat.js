@@ -21,7 +21,7 @@
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
-  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author']);
+  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author', 'major']);
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
@@ -458,6 +458,7 @@
     const side = (e.image ? `<figure class="portrait"><img src="${esc(asset(e.image))}" alt="${esc(e.title)}"></figure>` : '') + infobox(e);
     page(`<article class="wrap entry" style="--c:${t.color}">
       <header class="entry-head">
+        ${editButton(e)}
         <p class="kicker"><a href="#/t/${encodeURIComponent(e.type)}">${esc(t.one)}</a></p>
         <h1>${esc(e.title)}</h1>
         ${e.aliases.length ? `<p class="aka">aka ${e.aliases.map(a => `<span>${esc(a)}</span>`).join(', ')}</p>` : ''}
@@ -482,7 +483,7 @@
     const labelMode = norm(m.fm.pins) === 'labels';
     // Label tiers keep a zoomed-out map readable: 1 = major (world.json mapMajorTypes,
     // default every linked pin), 2 = other linked pins, 3 = plain pins. Tiers 2/3 reveal as you zoom.
-    const major = S.world.mapMajorTypes;
+    const major = m.fm.major ? toArray(m.fm.major).map(norm) : S.world.mapMajorTypes; // per map, else world default
     const tierOf = p => !p.target ? 3 : !p.entry || (major && !major.includes(p.entry.type)) ? 2 : 1;
     page(`<section class="map-view" style="--c:${mapColor}">
       <div class="map-stage${labelMode ? ' label-pins' : ''}" tabindex="0" aria-label="${esc(m.title)}. Drag to pan; pinch, scroll or double-tap to zoom.">
@@ -502,6 +503,7 @@
         <a class="map-more" href="#about-map">About this map ↓</a>
       </div>
       <div class="wrap map-below" id="about-map">
+        ${editButton(m)}
         ${m.fm.summary ? `<p class="lede">${inline(m.summary)}</p>` : ''}
         <div class="prose">${md(m.body)}</div>
         ${m.pins.length ? `<section class="related"><h2>On this map</h2><div class="chips">${m.pins.map((p, i) =>
@@ -706,6 +708,139 @@
     };
   }
 
+  /* ---------- editing ----------
+     Anyone listed in world.json "authors" can sign in (name + shared passkey) and write
+     their own ::: account block on any entry. Edits are stored by world.json edit.endpoint
+     (a small Google Apps Script, see duat-backend/) and layered over the .md files at load.
+     With no endpoint configured, edits are kept in this browser only (a local preview). */
+  const worldId = () => slugify(S.world.id || S.world.title || 'world');
+  const editCfg = () => S.world.edit || {};
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+    set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const localKey = () => `duat:${worldId()}:edits`;
+  const sessionKey = () => `duat:${worldId()}:session`;
+
+  async function loadEdits() {
+    if (!S.world.edit) return [];
+    const ep = editCfg().endpoint;
+    if (!ep) return store.get(localKey()) || [];
+    try {
+      const r = await fetch(`${ep}?world=${encodeURIComponent(worldId())}`, { cache: 'no-cache' });
+      const j = await r.json();
+      return j.ok ? j.edits : [];
+    } catch (err) {
+      console.warn('Duat: couldn’t load shared edits', err);
+      return [];
+    }
+  }
+  const blockRe = id => new RegExp(`^:::\\s*${id}\\s*\\n[\\s\\S]*?^:::\\s*$`, 'm');
+  function ownText(e, id) {
+    const m = e.body.match(new RegExp(`^:::\\s*${id}\\s*\\n([\\s\\S]*?)^:::\\s*$`, 'm'));
+    if (m) return m[1].trim();
+    // whole-entry attribution (author: id, no blocks) — that text is theirs to edit
+    if (toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body)) return e.body.trim();
+    return '';
+  }
+  function applyEdit({ slug, author, text }) {
+    const e = S.entries.find(x => x.slug === slug);
+    if (!e || !author) return;
+    const id = norm(author), body = String(text || '').trim();
+    const whole = toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body);
+    if (whole) e.body = body;
+    else if (blockRe(id).test(e.body)) e.body = e.body.replace(blockRe(id), body ? `::: ${id}\n${body}\n:::` : '');
+    else if (body) e.body = `${e.body.trim()}\n\n::: ${id}\n${body}\n:::`;
+    e.body = e.body.replace(/\n{3,}/g, '\n\n').trim();
+    if (!e.fm.summary) e.summary = autoSummary(e.body);
+    const inBody = [...e.body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => norm(m[1]));
+    e.authors = [...new Set([...(whole && !body ? [] : toArray(e.fm.author).map(norm)), ...inBody])];
+  }
+  const editButton = e => S.world.edit ? `<button type="button" class="edit-btn" data-edit="${esc(e.slug)}" aria-label="Edit ${esc(e.title)}">✎ Edit</button>` : '';
+
+  async function sha256(t) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  function wireEditing() {
+    if (!S.world.edit) return;
+    const dlg = document.createElement('dialog');
+    dlg.className = 'editor';
+    document.body.append(dlg);
+    document.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-edit]');
+      if (!b) return;
+      const e = S.entries.find(x => x.slug === b.dataset.edit);
+      if (e) openEditor(dlg, e);
+    });
+  }
+  function openEditor(dlg, e) {
+    const sess = store.get(sessionKey());
+    const authors = Object.entries(S.world.authors || {});
+    if (!sess) {
+      dlg.innerHTML = `<form method="dialog" class="ed-form">
+        <p class="kicker">Sign in to edit</p><h2>${esc(e.title)}</h2>
+        <label>Who are you?<select name="author" required><option value="">Choose…</option>${authors.map(([id, a]) =>
+          `<option value="${esc(id)}">${esc(a.name)}${a.role ? ` (${esc(a.role)})` : ''}</option>`).join('')}</select></label>
+        <label>Passkey<input name="key" type="password" autocomplete="current-password" required></label>
+        <p class="ed-err" hidden></p>
+        <div class="ed-actions"><button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Continue</button></div>
+      </form>`;
+      const f = $('form', dlg);
+      f.addEventListener('submit', async ev => {
+        if (ev.submitter && ev.submitter.value === 'cancel') return;
+        ev.preventDefault();
+        const author = f.author.value, key = f.key.value;
+        if (editCfg().keyHash && await sha256(key) !== editCfg().keyHash) {
+          const err = $('.ed-err', f); err.textContent = 'That passkey isn’t right.'; err.hidden = false; return;
+        }
+        store.set(sessionKey(), { author, key });
+        openEditor(dlg, e);
+      });
+    } else {
+      const a = authorOf(sess.author);
+      const local = !editCfg().endpoint;
+      dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
+        <p class="kicker">${esc(a.name)}’s notes on</p><h2>${esc(e.title)}</h2>
+        <textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(a.name)} know about ${esc(e.title)}?">${esc(ownText(e, a.id))}</textarea>
+        <p class="ed-help">Markdown works. Link things with <code>[[Name]]</code>. Your text shows as “${esc(a.name)}’s notes”; other people’s notes aren’t touched. Save it empty to remove yours.</p>
+        ${local ? '<p class="ed-warn">Preview mode: saves stay in this browser until the shared save service is connected.</p>' : ''}
+        <p class="ed-err" hidden></p>
+        <div class="ed-actions"><button type="button" class="ed-switch">Not ${esc(a.name)}?</button><span></span>
+          <button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Save</button></div>
+      </form>`;
+      const f = $('form', dlg);
+      $('.ed-switch', f).addEventListener('click', () => { store.set(sessionKey(), null); openEditor(dlg, e); });
+      f.addEventListener('submit', async ev => {
+        if (ev.submitter && ev.submitter.value === 'cancel') return;
+        ev.preventDefault();
+        const btn = $('.primary', f), err = $('.ed-err', f);
+        btn.disabled = true; btn.textContent = 'Saving…';
+        const edit = { slug: e.slug, author: a.id, text: f.text.value.trim() };
+        try {
+          if (local) {
+            const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
+            store.set(localKey(), [...all, { ...edit, updated: new Date().toISOString() }]);
+          } else {
+            const r = await fetch(editCfg().endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ ...edit, world: worldId(), key: sess.key }) });
+            const j = await r.json();
+            if (!j.ok) {
+              if (/passkey/i.test(j.error || '')) store.set(sessionKey(), null);
+              throw new Error(j.error || 'Save failed');
+            }
+          }
+          location.reload();
+        } catch (x) {
+          err.textContent = `Couldn’t save: ${x.message}. Your text is still here.`; err.hidden = false;
+          btn.disabled = false; btn.textContent = 'Save';
+        }
+      });
+    }
+    if (!dlg.open) dlg.showModal();
+    setTimeout(() => { const t = $('textarea, select', dlg); if (t) t.focus(); }, 30);
+  }
+
   /* ---------- router ---------- */
   function route() {
     if (S.cleanup) { S.cleanup(); S.cleanup = null; }
@@ -751,10 +886,12 @@
         }
       }));
       S.entries = loaded.filter(Boolean);
+      (await loadEdits()).forEach(applyEdit);
       index();
       const present = [...new Set(S.entries.map(e => e.type))];
       S.typeOrder = [...new Set([...(w.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
       renderChrome(root);
+      wireEditing();
       window.addEventListener('hashchange', route);
       route();
     } catch (err) {

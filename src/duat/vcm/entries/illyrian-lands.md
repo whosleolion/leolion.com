@@ -1,6 +1,11 @@
 ---
 title: Illyrian Lands
-type: region
-author: thomas
+type: nation
 ---
+::: leo
+On the [[Kainos]] map: the green northern coast, including [[Aster Valley]], [[Razorwalk]] and Corvola.
+:::
+
+::: thomas
 Home of [[Aster Valley]] and [[Razorwalk]].
+:::

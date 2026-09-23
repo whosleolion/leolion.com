@@ -17,5 +17,5 @@ Daughter of [[Lady Agatha Vale]] and [[Lord Algernon Vale]]. Her homunculus is [
 - [[Sir Waldo Cy|Waldo]] tried to capture her. She met [[Lucius Morningstar]] while disguised as Waldo Cy.
 - [[Sir Corbin Pryde]] told the crew that Morningstar wanted her for her blood.
 - Her childhood nanny was [[Mrs. Candlebaum]].
-- Probably made (identified) after the prison raid, along with [[Stryker]].
+- Probably made (identified) after the prison raid, along with [[Sprynger]].
 :::
