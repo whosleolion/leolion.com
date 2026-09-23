@@ -4,6 +4,7 @@ type: session
 date: Apr 13, 2026
 order: 13
 ---
+::: thomas
 Flashback scenes. [[Finnean]] is inspired to become a wizard when one ([[Bashhack Thistlehill]]) comes to the village. [[Rosie]] has a heartfelt moment with Rosie's father ([[Jed St. Rose]]). [[Cassandra]]'s nanny ([[Mrs. Candlebaum]]) gets fired when she gets a little too close. [[Felt]] meets [[Rug Shagley|Rug]], [[Carpet Kelly|Carpet]] and [[Grandma Cotton]].
 
 The group learns a lot at the library:
@@ -15,3 +16,4 @@ The group learns a lot at the library:
 - [[John Foxwood]] (not Foxworthy): maybe a demon, not a fey. Has to do with messages, travelers and crossroads. Known to be a broker for extraplanar communications. Has a presence in the north.
 
 The group spots [[Carpet Kelly|Carpet]], who seems to be working for the city as a paladin.
+:::

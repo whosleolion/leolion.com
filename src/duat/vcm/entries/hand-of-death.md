@@ -1,6 +1,7 @@
 ---
 title: Hand of Death
 type: faction
+author: thomas
 ---
 Used to be part of the [[Sanctorum Institute]] and was excommunicated. Could still be around?
 

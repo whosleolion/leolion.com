@@ -5,6 +5,7 @@ home: "[[Ridgelands]]"
 family: "[[Sir Corbin Pryde]] (uncle), [[Sir Dorian Halberd]] (guardian)"
 stays: "[[Glad Nightcap]], [[The Crown Hotel]]"
 tags: [party]
+author: thomas
 ---
 Met on the ship out of the city, where Sprynger got bitten by a vampire. The crew took Sprynger to [[Sycorax]] for healing.
 

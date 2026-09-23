@@ -21,7 +21,7 @@
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
-  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins']);
+  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author']);
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
@@ -78,7 +78,7 @@
 
   /* ---------- markdown (the subset we need, plus [[wikilinks]] and callouts) ---------- */
   function isBlockStart(l) {
-    return /^\s*(#{1,6}\s|```|~~~|>)/.test(l) || ITEM_RE.test(l) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(l) || /^\s*\|/.test(l);
+    return /^\s*(#{1,6}\s|```|~~~|>)|^:::/.test(l) || ITEM_RE.test(l) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(l) || /^\s*\|/.test(l);
   }
   function blocks(lines) {
     let out = '', i = 0, m;
@@ -86,6 +86,15 @@
       const line = lines[i];
       if (!line.trim()) { i++; continue; }
 
+      if ((m = line.match(/^:::\s*([\w-]+)\s*$/))) {
+        // ::: author … ::: — one person's account, attributed (see world.json "authors")
+        const buf = []; i++;
+        while (i < lines.length && !/^:::\s*$/.test(lines[i])) buf.push(lines[i++]);
+        i++;
+        const a = authorOf(m[1]);
+        out += `<section class="account" style="--c:${a.color}"><header class="account-by"><a href="#/by/${esc(a.id)}">${esc(a.name)}’s notes</a>${a.role ? `<span>${esc(a.role)}</span>` : ''}</header>${blocks(buf)}</section>`;
+        continue;
+      }
       if ((m = line.match(/^\s*(```|~~~)/))) {
         const buf = []; i++;
         while (i < lines.length && !lines[i].trim().startsWith(m[1])) buf.push(lines[i++]);
@@ -193,6 +202,11 @@
       .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2').replace(/\[\[([^\]]*)\]\]/g, (_, t) => t.split('#')[0])
       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_~=`]+/g, '').replace(/\s+/g, ' ').trim();
   }
+  function authorOf(id) {
+    id = norm(id);
+    const a = (S.world.authors || {})[id] || {};
+    return { id, name: a.name || cap(id), role: a.role || '', color: a.color || 'var(--accent)' };
+  }
   const md = text => blocks(String(text ?? '').replace(/\r\n?/g, '\n').split('\n'));
 
   /* ---------- entries ---------- */
@@ -207,7 +221,7 @@
     return { x: +m[1], y: +m[2], target, label: label || null, note: m[4] ? restorePipes(m[4]) : '' };
   }
   function autoSummary(body) {
-    for (const block of body.split(/\n\s*\n/)) {
+    for (const block of body.replace(/^:::.*$/gm, '').split(/\n\s*\n/)) {
       const t = block.trim();
       if (!t || /^(#|```|~~~|>|\||!\[|[-*+]\s|\d+[.)]\s|---)/.test(t)) continue;
       const p = plain(t);
@@ -237,6 +251,7 @@
       summary: fm.summary ? String(fm.summary) : autoSummary(body),
       order: fm.order != null && !isNaN(+fm.order) ? +fm.order : null,
       hidden: fm.hidden === true,
+      authors: [...new Set([...toArray(fm.author), ...[...body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => m[1])].map(norm))],
       backlinks: [], onMaps: [],
     };
   }
@@ -393,6 +408,16 @@
     </div>`, title, t ? 't/' + t : '');
   }
 
+  function viewAuthor(id) {
+    const a = authorOf(id);
+    const list = listed().filter(e => e.authors.includes(id)).sort((x, y) => S.typeOrder.indexOf(x.type) - S.typeOrder.indexOf(y.type) || sorter(x.type)(x, y));
+    page(`<div class="wrap">
+      <header class="list-head" style="--c:${a.color}"><p class="kicker">Notes by</p><h1>${esc(a.name)}</h1>
+        <p class="muted">${a.role ? esc(a.role) + ' · ' : ''}${list.length} ${list.length === 1 ? 'entry' : 'entries'}</p></header>
+      ${list.length ? grid(list) : '<p class="muted">Nothing yet.</p>'}
+    </div>`, a.name + '’s notes', '');
+  }
+
   function viewSearch(q) {
     const hits = search(q);
     page(`<div class="wrap">
@@ -421,6 +446,13 @@
         `<a class="chip" href="${href(b)}" style="--c:${typeOf(b.type).color}"><span class="chip-type">${esc(typeOf(b.type).one)}</span>${esc(b.title)}</a>`).join('')}</div></section>` : '');
   }
 
+  function byline(e) {
+    if (!e.authors.length) return '';
+    const inBody = new Set([...e.body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => norm(m[1])));
+    return `<p class="byline">${e.authors.map(id => { const a = authorOf(id);
+      return `<a href="#/by/${esc(a.id)}" style="--c:${a.color}">${inBody.has(id) ? '' : 'From '}${esc(a.name)}’s notes</a>`; }).join('')}</p>`;
+  }
+
   function viewEntry(e) {
     const t = typeOf(e.type);
     const side = (e.image ? `<figure class="portrait"><img src="${esc(asset(e.image))}" alt="${esc(e.title)}"></figure>` : '') + infobox(e);
@@ -429,13 +461,14 @@
         <p class="kicker"><a href="#/t/${encodeURIComponent(e.type)}">${esc(t.one)}</a></p>
         <h1>${esc(e.title)}</h1>
         ${e.aliases.length ? `<p class="aka">aka ${e.aliases.map(a => `<span>${esc(a)}</span>`).join(', ')}</p>` : ''}
+        ${byline(e)}
         ${e.tags.length ? `<p class="tags">${e.tags.map(x => `<a href="#/tag/${encodeURIComponent(x)}">#${esc(x)}</a>`).join('')}</p>` : ''}
       </header>
       <div class="entry-grid${side ? '' : ' no-side'}">
         ${side ? `<aside class="entry-side">${side}</aside>` : ''}
         <div class="entry-main">
           ${e.fm.summary ? `<p class="lede">${inline(e.summary)}</p>` : ''}
-          <div class="prose">${md(e.body)}</div>
+          <div class="prose">${e.body.trim() ? md(e.body) : '<p class="muted">No notes for this one yet.</p>'}</div>
           ${related(e)}
         </div>
       </div>
@@ -678,7 +711,7 @@
     if (S.cleanup) { S.cleanup(); S.cleanup = null; }
     closeSearch(false);
     const raw = location.hash.replace(/^#\/?/, '');
-    if (raw && !raw.startsWith('e/') && !raw.startsWith('t/') && !raw.startsWith('s/') && !raw.startsWith('tag/') && document.getElementById(raw)) return; // in-page anchor
+    if (raw && !/^(e|t|s|tag|by)\//.test(raw) && document.getElementById(raw)) return; // in-page anchor
     const [path, query] = raw.split('?');
     const params = new URLSearchParams(query || '');
     const [kind, ...rest] = path.split('/');
@@ -690,6 +723,7 @@
       else viewEntry(e);
     } else if (kind === 't') viewType(norm(arg));
     else if (kind === 'tag') viewType(null, arg);
+    else if (kind === 'by') viewAuthor(norm(arg));
     else if (kind === 's') viewSearch(arg);
     else viewHome();
     window.scrollTo(0, 0);
