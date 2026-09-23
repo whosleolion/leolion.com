@@ -21,7 +21,7 @@
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
-  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden']);
+  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins']);
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
@@ -262,6 +262,7 @@
     }
   }
   const listed = () => S.entries.filter(e => !e.hidden);
+  const sorter = t => (S.world.newestFirst || []).includes(t) ? (a, b) => byTitle(b, a) : byTitle;
 
   /* ---------- search ---------- */
   function search(q) {
@@ -363,7 +364,7 @@
   function viewHome() {
     const w = S.world, home = resolve(w.home);
     const sections = S.typeOrder.map(t => {
-      const list = listed().filter(e => e.type === t).sort(byTitle);
+      const list = listed().filter(e => e.type === t).sort(sorter(t));
       if (!list.length) return '';
       const shown = t === 'map' ? list : list.slice(0, 6);
       return `<section class="home-sec" style="--c:${typeOf(t).color}">
@@ -382,7 +383,7 @@
   }
 
   function viewType(t, tag) {
-    const list = listed().filter(e => (t ? e.type === t : true) && (tag ? e.tags.some(x => norm(x) === norm(tag)) : true)).sort(byTitle);
+    const list = listed().filter(e => (t ? e.type === t : true) && (tag ? e.tags.some(x => norm(x) === norm(tag)) : true)).sort(t ? sorter(t) : byTitle);
     const title = tag ? `#${tag}` : typeOf(t).label;
     page(`<div class="wrap">
       <header class="list-head" style="--c:${t ? typeOf(t).color : 'var(--accent)'}">
@@ -444,8 +445,14 @@
   /* ---------- explorable map ---------- */
   function viewMap(m, focus) {
     const mapColor = typeOf('map').color;
+    // pins: labels = the pin *is* its label (map-style name plates, no dot).
+    const labelMode = norm(m.fm.pins) === 'labels';
+    // Label tiers keep a zoomed-out map readable: 1 = major (world.json mapMajorTypes,
+    // default every linked pin), 2 = other linked pins, 3 = plain pins. Tiers 2/3 reveal as you zoom.
+    const major = S.world.mapMajorTypes;
+    const tierOf = p => !p.target ? 3 : !p.entry || (major && !major.includes(p.entry.type)) ? 2 : 1;
     page(`<section class="map-view" style="--c:${mapColor}">
-      <div class="map-stage" tabindex="0" aria-label="${esc(m.title)}. Drag to pan; pinch, scroll or double-tap to zoom.">
+      <div class="map-stage${labelMode ? ' label-pins' : ''}" tabindex="0" aria-label="${esc(m.title)}. Drag to pan; pinch, scroll or double-tap to zoom.">
         <img class="map-img" alt="${esc(m.title)}" draggable="false">
         <div class="map-pins"></div>
         <div class="map-hud">
@@ -478,7 +485,7 @@
     const pins = m.pins.map((p, i) => {
       const el = document.createElement('button');
       el.type = 'button';
-      el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.entry ? '' : ' pin-plain');
+      el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.entry ? '' : ' pin-plain') + ' tier-' + tierOf(p);
       el.dataset.i = i;
       el.style.setProperty('--c', p.entry ? typeOf(p.entry.type).color : 'var(--text)');
       el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${esc(p.label)}</span>`;
@@ -500,10 +507,18 @@
     function draw() {
       raf = 0;
       img.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+      stage.classList.toggle('show-t2', W * s >= 1100);
+      stage.classList.toggle('show-t3', W * s >= 1600);
       for (const p of [...pins, ...ghosts]) p.el.style.transform = `translate(${tx + p.x / 100 * W * s}px,${ty + p.y / 100 * H * s}px)`;
     }
     const paint = () => { if (!raf) raf = requestAnimationFrame(draw); };
     function fit() { const { w, h } = size(); limits(); s = fitS; tx = (w - W * s) / 2; ty = (h - H * s) / 2; paint(); }
+    // Opening view: whole map, except portrait screens fill the height (pan sideways) instead of a thin strip.
+    function initial() {
+      fit();
+      const { w, h } = size();
+      if (h > w) { s = Math.min(maxS(), h / H); tx = (w - W * s) / 2; ty = (h - H * s) / 2; paint(); }
+    }
     function zoomAt(cx, cy, f) {
       limits();
       const ns = Math.min(maxS(), Math.max(fitS * 0.8, s * f));
@@ -633,14 +648,14 @@
     });
     $('.map-more', main).addEventListener('click', e => { e.preventDefault(); $('#about-map').scrollIntoView({ behavior: 'smooth' }); });
 
-    const ro = new ResizeObserver(() => { if (!ready) return; if (touched) { clamp(); paint(); } else fit(); });
+    const ro = new ResizeObserver(() => { if (!ready) return; if (touched) { clamp(); paint(); } else initial(); });
     ro.observe(stage);
 
     img.addEventListener('load', () => {
       W = img.naturalWidth || 1000; H = img.naturalHeight || 1000;
       img.style.width = W + 'px'; img.style.height = H + 'px';
       ready = true;
-      fit();
+      initial();
       if (focus != null) {
         const i = pins.findIndex(p => (p.entry && p.entry.slug === focus) || String(pins.indexOf(p)) === focus);
         if (i >= 0) focusPin(i);

@@ -26,6 +26,8 @@ src/duat/vcm/
   "theme": { "accent": "#ff5a36" },    // overrides any CSS token: bg, panel, text, muted, accent, font-display…
   "types": { "gang": { "label": "Gangs", "one": "Gang", "color": "#e66" } },   // optional: add/rename types
   "typeOrder": ["map", "character", "location", "faction", "item", "session", "note"],
+  "newestFirst": ["session"],          // types listed newest-first
+  "mapMajorTypes": ["district"],       // pins always labeled; other pins' labels appear as you zoom in
   "entries": ["home", "vista-city", "sample-character"]
 }
 ```
@@ -73,9 +75,11 @@ A map is an entry with `type: map` and an `image:`. Pins go in a `pins` block an
 ```
 ````
 
+Add `pins: labels` to a map's frontmatter to make each pin a name plate (the label itself is the tap target) instead of a dot + label. Labels come in tiers so the zoomed-out view stays readable: pins for `mapMajorTypes` entries always show; other linked pins appear once you zoom in a bit, and plain pins (roads, terrain) after that.
+
 Coordinates are percentages of the image (x from the left, y from the top). To get them, open the map with `?edit` before the `#`, e.g. `https://leolion.com/duat/vcm/?edit#/e/vista-city`, and tap the spot. That copies the `x, y | ` prefix for you.
 
-Any image works, so a "map" can also be an infomap: a relationship web, an org chart, or a district diagram.
+The Vista City map is a drawn vector (`images/vista-city.svg`) laid out in the same coordinate space as the reference map, so pin coordinates carry over. Any image works, so a "map" can also be an infomap: a relationship web, an org chart, or a district diagram.
 
 To link straight to a pin, use `#/e/vista-city?pin=sample-location`.
 
