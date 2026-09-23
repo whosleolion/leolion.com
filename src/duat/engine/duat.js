@@ -1,0 +1,718 @@
+/* =========================================================
+   DUAT — lightweight campaign catalog engine
+   ---------------------------------------------------------
+   A campaign is a folder containing:
+     index.html      shell that loads this script
+     world.json      title, theme, and the list of entries
+     entries/*.md    one Markdown file per entry (frontmatter + body)
+     images/         portraits, maps, etc.
+   No build step: edit a .md file, list it in world.json, push.
+   ========================================================= */
+(() => {
+  'use strict';
+
+  const DEFAULT_TYPES = {
+    map:       { label: 'Maps',       one: 'Map',       color: '#6fb3ff' },
+    character: { label: 'Characters', one: 'Character', color: '#ff8a5c' },
+    location:  { label: 'Locations',  one: 'Location',  color: '#7ddc8a' },
+    faction:   { label: 'Factions',   one: 'Faction',   color: '#c792ff' },
+    item:      { label: 'Items',      one: 'Item',      color: '#ffd166' },
+    session:   { label: 'Sessions',   one: 'Session',   color: '#8fd3d6' },
+    note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
+  };
+  // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
+  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden']);
+  const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
+  const WL_RE = /\[\[([^\]]+)\]\]/g;
+
+  const S = { world: null, entries: [], lookup: new Map(), types: {}, typeOrder: [], edit: false, cleanup: null };
+
+  /* ---------- small helpers ---------- */
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const norm = s => String(s ?? '').trim().toLowerCase();
+  const slugify = s => norm(s).replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const protectPipes = s => s.replace(/\[\[[^\]]*\]\]/g, m => m.replace(/\|/g, '\u0001'));
+  const restorePipes = s => s.replace(/\u0001/g, '|');
+  const toArray = v => Array.isArray(v) ? v : (v === '' || v == null || typeof v === 'boolean') ? [] : String(v).split(',').map(x => x.trim()).filter(Boolean);
+  const safeUrl = u => /^\s*(javascript|vbscript|data):/i.test(u) ? '#' : u;
+  const asset = u => /^(https?:)?\/\//.test(u) || u.startsWith('/') || u.includes('/') ? safeUrl(u) : 'images/' + u;
+  const href = e => '#/e/' + e.slug.split('/').map(encodeURIComponent).join('/');
+  const typeOf = t => S.types[t] || (S.types[t] = { label: cap(t) + 's', one: cap(t), color: '#a4abb8' });
+  const byTitle = (a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || a.title.localeCompare(b.title, undefined, { numeric: true });
+
+  /* ---------- frontmatter ---------- */
+  function scalar(v) {
+    v = v.trim();
+    if (/^(['"]).*\1$/.test(v)) return v.slice(1, -1);
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+    return v;
+  }
+  function parseFrontmatter(text) {
+    text = text.replace(/\r\n?/g, '\n');
+    const fm = {};
+    if (!text.startsWith('---\n')) return { fm, body: text };
+    const end = text.indexOf('\n---', 3);
+    if (end === -1) return { fm, body: text };
+    const after = text.indexOf('\n', end + 1);
+    const body = after === -1 ? '' : text.slice(after + 1);
+    let key = null;
+    for (const line of text.slice(4, end).split('\n')) {
+      if (!line.trim() || /^\s*#/.test(line)) continue;
+      const li = line.match(/^\s*-\s+(.*)$/);
+      if (li && key) {
+        if (!Array.isArray(fm[key])) fm[key] = [];
+        fm[key].push(scalar(li[1]));
+        continue;
+      }
+      const m = line.match(/^(\w[\w -]*?)\s*:(?:\s+(.*)|$)/);
+      if (!m) continue;
+      key = m[1].toLowerCase();
+      const v = (m[2] || '').trim();
+      fm[key] = /^\[(?!\[)[\s\S]*\]$/.test(v) ? v.slice(1, -1).split(',').map(scalar).filter(x => x !== '') : scalar(v);
+    }
+    return { fm, body };
+  }
+
+  /* ---------- markdown (the subset we need, plus [[wikilinks]] and callouts) ---------- */
+  function isBlockStart(l) {
+    return /^\s*(#{1,6}\s|```|~~~|>)/.test(l) || ITEM_RE.test(l) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(l) || /^\s*\|/.test(l);
+  }
+  function blocks(lines) {
+    let out = '', i = 0, m;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (!line.trim()) { i++; continue; }
+
+      if ((m = line.match(/^\s*(```|~~~)/))) {
+        const buf = []; i++;
+        while (i < lines.length && !lines[i].trim().startsWith(m[1])) buf.push(lines[i++]);
+        i++;
+        out += `<pre><code>${esc(buf.join('\n'))}</code></pre>`;
+        continue;
+      }
+      if ((m = line.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/))) {
+        const lvl = Math.min(6, m[1].length + 1); // the entry title owns <h1>
+        out += `<h${lvl} id="${slugify(m[2])}">${inline(m[2])}</h${lvl}>`;
+        i++; continue;
+      }
+      if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { out += '<hr>'; i++; continue; }
+
+      if (/^\s*>/.test(line)) {
+        const buf = [];
+        while (i < lines.length && /^\s*>/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/, ''));
+        const c = buf[0].match(/^\[!(\w+)\][-+]?\s*(.*)$/);
+        if (c) {
+          const kind = c[1].toLowerCase();
+          out += `<aside class="callout callout-${esc(kind)}"><div class="callout-title">${inline(c[2] || cap(kind))}</div>${blocks(buf.slice(1))}</aside>`;
+        } else {
+          out += `<blockquote>${blocks(buf)}</blockquote>`;
+        }
+        continue;
+      }
+      if (/^\s*\|.*\|\s*$/.test(line) && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1] || '')) {
+        const row = l => protectPipes(l.trim()).replace(/^\||\|$/g, '').split('|').map(c => restorePipes(c.trim()));
+        const head = row(line); i += 2;
+        const rows = [];
+        while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(row(lines[i++]));
+        out += `<div class="table-wrap"><table><thead><tr>${head.map(h => `<th>${inline(h)}</th>`).join('')}</tr></thead><tbody>${
+          rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+        continue;
+      }
+      if (ITEM_RE.test(line)) {
+        const buf = [];
+        while (i < lines.length && (ITEM_RE.test(lines[i]) || (buf.length && /^\s{2,}\S/.test(lines[i])))) buf.push(lines[i++]);
+        out += list(buf);
+        continue;
+      }
+      const buf = [lines[i++].trim()];
+      while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i])) buf.push(lines[i++].trim());
+      out += `<p>${buf.map(inline).join('<br>')}</p>`;
+    }
+    return out;
+  }
+  function list(lines) {
+    const indent = l => l.match(/^\s*/)[0].replace(/\t/g, '  ').length;
+    const base = indent(lines[0]);
+    const tag = /^\s*\d/.test(lines[0]) ? 'ol' : 'ul';
+    const items = [];
+    for (const l of lines) {
+      const m = l.match(/^\s*(?:[-*+]|\d+[.)])\s+(.*)$/);
+      if (m && indent(l) <= base) items.push({ text: m[1], sub: [] });
+      else if (items.length) items[items.length - 1].sub.push(l);
+    }
+    return `<${tag}>${items.map(it => {
+      const task = it.text.match(/^\[([ xX])\]\s+(.*)$/);
+      let html = task ? `<input type="checkbox" disabled${task[1] !== ' ' ? ' checked' : ''}> ${inline(task[2])}` : inline(it.text);
+      const first = it.sub.findIndex(s => ITEM_RE.test(s));
+      const cont = first === -1 ? it.sub : it.sub.slice(0, first);
+      if (cont.length) html += ' ' + inline(cont.map(s => s.trim()).join(' '));
+      if (first !== -1) html += list(it.sub.slice(first));
+      return `<li${task ? ' class="task"' : ''}>${html}</li>`;
+    }).join('')}</${tag}>`;
+  }
+  function inline(s) {
+    const stash = [];
+    const keep = html => `\u0000${stash.push(html) - 1}\u0000`;
+    s = String(s ?? '')
+      .replace(/`([^`]+)`/g, (_, c) => keep(`<code>${esc(c)}</code>`))
+      .replace(/!\[\[([^\]]+)\]\]/g, (_, t) => keep(embed(t)))
+      .replace(WL_RE, (_, t) => keep(wikilink(t)))
+      .replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g, (_, alt, src) => keep(`<img src="${esc(asset(src))}" alt="${esc(alt)}" loading="lazy">`))
+      .replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g, (_, txt, url) => keep(
+        /^https?:/.test(url)
+          ? `<a href="${esc(url)}" target="_blank" rel="noopener">${inline(txt)}</a>`
+          : `<a href="${esc(safeUrl(url))}">${inline(txt)}</a>`));
+    s = esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.+?)__/g, '<strong>$1</strong>')
+      .replace(/(^|[^*\w])\*(?![\s*])(.+?)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/(^|[^\w])_(?![\s_])(.+?)_(?!\w)/g, '$1<em>$2</em>')
+      .replace(/~~(.+?)~~/g, '<del>$1</del>')
+      .replace(/==(.+?)==/g, '<mark>$1</mark>');
+    return s.replace(/\u0000(\d+)\u0000/g, (_, n) => stash[n]);
+  }
+  function wikilink(raw) {
+    const [target, label] = raw.split('|').map(x => x.trim());
+    const e = resolve(target);
+    const text = esc(label || (e ? e.title : target.split('#')[0]));
+    return e
+      ? `<a class="wl" href="${href(e)}" style="--c:${typeOf(e.type).color}" data-type="${esc(e.type)}">${text}</a>`
+      : `<span class="wl wl-missing" title="No entry yet">${text}</span>`;
+  }
+  function embed(raw) {
+    const [target, alt] = raw.split('|').map(x => x.trim());
+    if (/\.(png|jpe?g|gif|webp|svg|avif)$/i.test(target)) return `<img src="${esc(asset(target))}" alt="${esc(alt || '')}" loading="lazy">`;
+    return wikilink(raw);
+  }
+  function plain(s) {
+    return String(s ?? '')
+      .replace(/!\[\[[^\]]*\]\]/g, '').replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2').replace(/\[\[([^\]]*)\]\]/g, (_, t) => t.split('#')[0])
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_~=`]+/g, '').replace(/\s+/g, ' ').trim();
+  }
+  const md = text => blocks(String(text ?? '').replace(/\r\n?/g, '\n').split('\n'));
+
+  /* ---------- entries ---------- */
+  function parsePin(line) {
+    const l = protectPipes(line.trim());
+    if (!l || l.startsWith('//') || l.startsWith('#')) return null;
+    const m = l.match(/^(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\|\s*([^|]+?)\s*(?:\|\s*(.*))?$/);
+    if (!m) return null;
+    const t = restorePipes(m[3]);
+    const wl = t.match(/^\[\[(.+)\]\]$/);
+    const [target, label] = wl ? wl[1].split('|').map(x => x.trim()) : [null, t];
+    return { x: +m[1], y: +m[2], target, label: label || null, note: m[4] ? restorePipes(m[4]) : '' };
+  }
+  function autoSummary(body) {
+    for (const block of body.split(/\n\s*\n/)) {
+      const t = block.trim();
+      if (!t || /^(#|```|~~~|>|\||!\[|[-*+]\s|\d+[.)]\s|---)/.test(t)) continue;
+      const p = plain(t);
+      return p.length > 180 ? p.slice(0, 180).replace(/\s+\S*$/, '') + '…' : p;
+    }
+    return '';
+  }
+  function parseEntry(slug, text) {
+    let { fm, body } = parseFrontmatter(text);
+    const pins = [];
+    body = body.replace(/^```pins[^\n]*\n([\s\S]*?)^```[ \t]*$/gm, (_, block) => {
+      block.split('\n').forEach(l => { const p = parsePin(l); if (p) pins.push(p); });
+      return '';
+    });
+    let title = fm.title;
+    if (!title) {
+      const h = body.match(/^\s*#\s+(.+)$/m);
+      if (h && !body.slice(0, h.index).trim()) { title = h[1].trim(); body = body.slice(h.index + h[0].length); }
+    }
+    return {
+      slug, fm, body, pins,
+      title: String(title || cap(slug.split('/').pop().replace(/[-_]+/g, ' '))),
+      type: norm(fm.type || 'note'),
+      aliases: toArray(fm.aliases ?? fm.alias),
+      tags: toArray(fm.tags).map(t => String(t).replace(/^#/, '')),
+      image: fm.image ? String(fm.image) : '',
+      summary: fm.summary ? String(fm.summary) : autoSummary(body),
+      order: fm.order != null && !isNaN(+fm.order) ? +fm.order : null,
+      hidden: fm.hidden === true,
+      backlinks: [], onMaps: [],
+    };
+  }
+  function resolve(target) {
+    if (!target) return null;
+    const t = target.split('#')[0];
+    return S.lookup.get(norm(t)) || S.lookup.get(slugify(t)) || null;
+  }
+  function index() {
+    const add = (k, e) => { if (k && !S.lookup.has(k)) S.lookup.set(k, e); };
+    S.entries.forEach(e => add(norm(e.slug), e));
+    S.entries.forEach(e => [e.title, ...e.aliases].forEach(n => { add(norm(n), e); add(slugify(n), e); }));
+    for (const e of S.entries) {
+      const src = [e.body, ...Object.values(e.fm).flat().filter(v => typeof v === 'string')].join('\n');
+      const out = new Set([...src.matchAll(WL_RE)].map(m => resolve(m[1].split('|')[0])).filter(x => x && x !== e));
+      out.forEach(t => t.backlinks.push(e));
+      for (const p of e.pins) {
+        p.entry = resolve(p.target);
+        p.label = p.label || (p.entry ? p.entry.title : p.target) || '?';
+        if (p.entry && p.entry !== e) p.entry.onMaps.push({ map: e, pin: p });
+      }
+      e.hay = norm([e.title, ...e.aliases, ...e.tags, e.summary, plain(e.body), ...e.pins.map(p => p.label + ' ' + p.note)].join(' '));
+    }
+  }
+  const listed = () => S.entries.filter(e => !e.hidden);
+
+  /* ---------- search ---------- */
+  function search(q) {
+    q = norm(q);
+    if (!q) return [];
+    const words = q.split(/\s+/);
+    return listed().map(e => {
+      const t = norm(e.title);
+      let s = t === q ? 100 : t.startsWith(q) ? 60 : t.includes(q) ? 40 : 0;
+      if (e.aliases.some(a => norm(a).includes(q))) s += 30;
+      if (e.tags.some(x => norm(x) === q)) s += 20;
+      if (words.every(w => e.hay.includes(w))) s += 10;
+      return { e, s };
+    }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || byTitle(a.e, b.e)).map(r => r.e);
+  }
+
+  /* ---------- chrome ---------- */
+  function renderChrome(root) {
+    const w = S.world;
+    root.innerHTML = `
+      <div class="chrome">
+        <header class="topbar">
+          <a class="brand" href="#/"><span class="brand-short">${esc(w.short || w.title)}</span><span class="brand-full">${esc(w.title)}</span></a>
+          <div class="search" role="search">
+            <input type="search" placeholder="Search" aria-label="Search the catalog" autocomplete="off" spellcheck="false">
+            <kbd class="search-key" aria-hidden="true">/</kbd>
+            <div class="search-results" role="listbox" hidden></div>
+          </div>
+        </header>
+        <nav class="typenav" aria-label="Browse by type"></nav>
+      </div>
+      <main id="main" tabindex="-1"></main>
+      <footer class="foot"><span>${esc(w.title)}</span><span class="foot-duat">catalogued in Duat</span></footer>`;
+    const counts = {};
+    listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
+    $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + S.typeOrder.filter(t => counts[t]).map(t =>
+      `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('');
+    wireSearch();
+    const measure = () => document.documentElement.style.setProperty('--chrome-h', $('.chrome').offsetHeight + 'px');
+    measure();
+    new ResizeObserver(measure).observe($('.chrome'));
+  }
+  function wireSearch() {
+    const input = $('.search input'), box = $('.search-results');
+    let hits = [], cur = 0;
+    const draw = () => {
+      box.innerHTML = hits.length
+        ? hits.slice(0, 8).map((e, i) => `<a href="${href(e)}" role="option" class="${i === cur ? 'is-cur' : ''}" style="--c:${typeOf(e.type).color}">
+            <span class="sr-type">${esc(typeOf(e.type).one)}</span><span class="sr-title">${esc(e.title)}</span></a>`).join('')
+          + (hits.length > 8 ? `<a href="#/s/${encodeURIComponent(input.value)}" class="sr-more">All ${hits.length} results →</a>` : '')
+        : `<div class="sr-empty">Nothing matches “${esc(input.value)}”</div>`;
+      box.hidden = !input.value.trim();
+    };
+    input.addEventListener('input', () => { hits = search(input.value); cur = 0; draw(); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const n = Math.min(hits.length, 8);
+        if (n) { cur = (cur + (e.key === 'ArrowDown' ? 1 : n - 1)) % n; draw(); }
+      } else if (e.key === 'Enter') {
+        if (hits[cur]) location.hash = href(hits[cur]).slice(1);
+        else if (input.value.trim()) location.hash = '/s/' + encodeURIComponent(input.value.trim());
+        closeSearch(true);
+      } else if (e.key === 'Escape') closeSearch(true);
+    });
+    input.addEventListener('focus', () => { if (input.value.trim()) box.hidden = false; });
+    box.addEventListener('click', () => closeSearch(true));
+    document.addEventListener('click', e => { if (!e.target.closest('.search')) box.hidden = true; });
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) { e.preventDefault(); input.focus(); input.select(); }
+    });
+  }
+  function closeSearch(clear) {
+    const input = $('.search input');
+    if (!input) return;
+    $('.search-results').hidden = true;
+    if (clear) { input.value = ''; input.blur(); }
+  }
+
+  /* ---------- views ---------- */
+  function card(e) {
+    const t = typeOf(e.type);
+    return `<a class="card${e.type === 'map' ? ' card-map' : ''}" href="${href(e)}" style="--c:${t.color}">
+      ${e.image ? `<span class="card-img"><img src="${esc(asset(e.image))}" alt="" loading="lazy"></span>` : ''}
+      <span class="card-body">
+        <span class="kicker">${esc(t.one)}</span>
+        <span class="card-title">${esc(e.title)}</span>
+        ${e.summary ? `<span class="card-sum">${esc(plain(e.summary))}</span>` : ''}
+      </span></a>`;
+  }
+  const grid = list => `<div class="grid">${list.map(card).join('')}</div>`;
+  const setNav = key => document.querySelectorAll('.typenav a').forEach(a => a.classList.toggle('is-on', a.dataset.nav === key));
+  function page(html, title, nav) {
+    $('#main').innerHTML = html;
+    document.title = (title ? title + ' · ' : '') + (S.world.title || 'Duat');
+    setNav(nav);
+  }
+
+  function viewHome() {
+    const w = S.world, home = resolve(w.home);
+    const sections = S.typeOrder.map(t => {
+      const list = listed().filter(e => e.type === t).sort(byTitle);
+      if (!list.length) return '';
+      const shown = t === 'map' ? list : list.slice(0, 6);
+      return `<section class="home-sec" style="--c:${typeOf(t).color}">
+        <h2><a href="#/t/${encodeURIComponent(t)}">${esc(typeOf(t).label)}</a>${list.length > shown.length ? `<a class="more" href="#/t/${encodeURIComponent(t)}">all ${list.length} →</a>` : ''}</h2>
+        ${grid(shown)}</section>`;
+    }).join('');
+    page(`<div class="wrap home">
+      <header class="hero">
+        ${w.kicker ? `<p class="kicker">${esc(w.kicker)}</p>` : ''}
+        <h1>${esc(w.title)}</h1>
+        ${w.subtitle ? `<p class="hero-sub">${inline(w.subtitle)}</p>` : ''}
+      </header>
+      ${home ? `<div class="prose home-intro">${md(home.body)}</div>` : ''}
+      ${sections}
+    </div>`, '', 'home');
+  }
+
+  function viewType(t, tag) {
+    const list = listed().filter(e => (t ? e.type === t : true) && (tag ? e.tags.some(x => norm(x) === norm(tag)) : true)).sort(byTitle);
+    const title = tag ? `#${tag}` : typeOf(t).label;
+    page(`<div class="wrap">
+      <header class="list-head" style="--c:${t ? typeOf(t).color : 'var(--accent)'}">
+        <p class="kicker">${tag ? 'Tag' : 'Browse'}</p><h1>${esc(title)}</h1><p class="muted">${list.length} ${list.length === 1 ? 'entry' : 'entries'}</p>
+      </header>
+      ${list.length ? grid(list) : '<p class="muted">Nothing here yet.</p>'}
+    </div>`, title, t ? 't/' + t : '');
+  }
+
+  function viewSearch(q) {
+    const hits = search(q);
+    page(`<div class="wrap">
+      <header class="list-head"><p class="kicker">Search</p><h1>“${esc(q)}”</h1><p class="muted">${hits.length} result${hits.length === 1 ? '' : 's'}</p></header>
+      ${hits.length ? grid(hits) : '<p class="muted">No matches. Try a shorter word, or a nickname.</p>'}
+    </div>`, 'Search', '');
+  }
+
+  function viewMissing(slug) {
+    page(`<div class="wrap"><header class="list-head"><p class="kicker">Not found</p><h1>${esc(slug)}</h1>
+      <p class="muted">There’s no entry by that name (yet). <a href="#/">Back home</a>.</p></header></div>`, 'Not found', '');
+  }
+
+  function infobox(e) {
+    const rows = Object.entries(e.fm).filter(([k, v]) => !RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length));
+    if (!rows.length) return '';
+    const val = v => Array.isArray(v) ? v.map(x => inline(String(x))).join(', ') : v === true ? 'Yes' : v === false ? 'No' : inline(String(v));
+    return `<dl class="facts">${rows.map(([k, v]) => `<div><dt>${esc(cap(k.replace(/[-_]+/g, ' ')))}</dt><dd>${val(v)}</dd></div>`).join('')}</dl>`;
+  }
+  function related(e) {
+    const back = e.backlinks.filter(b => !b.hidden).sort(byTitle);
+    const maps = e.onMaps.map(({ map, pin }) => `<a class="chip" href="${href(map)}?pin=${encodeURIComponent(e.slug)}" style="--c:${typeOf('map').color}">
+      ◉ ${esc(map.title)}${pin.label !== e.title ? ` — ${esc(pin.label)}` : ''}</a>`).join('');
+    return (maps ? `<section class="related"><h2>On the map</h2><div class="chips">${maps}</div></section>` : '')
+      + (back.length ? `<section class="related"><h2>Mentioned in</h2><div class="chips">${back.map(b =>
+        `<a class="chip" href="${href(b)}" style="--c:${typeOf(b.type).color}"><span class="chip-type">${esc(typeOf(b.type).one)}</span>${esc(b.title)}</a>`).join('')}</div></section>` : '');
+  }
+
+  function viewEntry(e) {
+    const t = typeOf(e.type);
+    const side = (e.image ? `<figure class="portrait"><img src="${esc(asset(e.image))}" alt="${esc(e.title)}"></figure>` : '') + infobox(e);
+    page(`<article class="wrap entry" style="--c:${t.color}">
+      <header class="entry-head">
+        <p class="kicker"><a href="#/t/${encodeURIComponent(e.type)}">${esc(t.one)}</a></p>
+        <h1>${esc(e.title)}</h1>
+        ${e.aliases.length ? `<p class="aka">aka ${e.aliases.map(a => `<span>${esc(a)}</span>`).join(', ')}</p>` : ''}
+        ${e.tags.length ? `<p class="tags">${e.tags.map(x => `<a href="#/tag/${encodeURIComponent(x)}">#${esc(x)}</a>`).join('')}</p>` : ''}
+      </header>
+      <div class="entry-grid${side ? '' : ' no-side'}">
+        ${side ? `<aside class="entry-side">${side}</aside>` : ''}
+        <div class="entry-main">
+          ${e.fm.summary ? `<p class="lede">${inline(e.summary)}</p>` : ''}
+          <div class="prose">${md(e.body)}</div>
+          ${related(e)}
+        </div>
+      </div>
+    </article>`, e.title, 't/' + e.type);
+  }
+
+  /* ---------- explorable map ---------- */
+  function viewMap(m, focus) {
+    const mapColor = typeOf('map').color;
+    page(`<section class="map-view" style="--c:${mapColor}">
+      <div class="map-stage" tabindex="0" aria-label="${esc(m.title)}. Drag to pan; pinch, scroll or double-tap to zoom.">
+        <img class="map-img" alt="${esc(m.title)}" draggable="false">
+        <div class="map-pins"></div>
+        <div class="map-hud">
+          <div class="map-title"><span class="kicker">Map</span><h1>${esc(m.title)}</h1></div>
+          <div class="map-tools">
+            <button type="button" data-act="in" aria-label="Zoom in">+</button>
+            <button type="button" data-act="out" aria-label="Zoom out">−</button>
+            <button type="button" data-act="fit" aria-label="Show whole map">⤢</button>
+            <button type="button" data-act="labels" aria-pressed="true" aria-label="Show labels">Aa</button>
+          </div>
+        </div>
+        <div class="map-card" hidden></div>
+        ${S.edit ? '<div class="map-toast">Edit mode — tap the map to copy pin coordinates</div>' : ''}
+        <a class="map-more" href="#about-map">About this map ↓</a>
+      </div>
+      <div class="wrap map-below" id="about-map">
+        ${m.fm.summary ? `<p class="lede">${inline(m.summary)}</p>` : ''}
+        <div class="prose">${md(m.body)}</div>
+        ${m.pins.length ? `<section class="related"><h2>On this map</h2><div class="chips">${m.pins.map((p, i) =>
+          `<button type="button" class="chip" data-pin="${i}" style="--c:${p.entry ? typeOf(p.entry.type).color : 'var(--muted)'}">${esc(p.label)}</button>`).join('')}</div></section>` : ''}
+        ${related(m)}
+      </div>
+    </section>`, m.title, 't/map');
+
+    const main = $('#main');
+    const stage = $('.map-stage', main), img = $('.map-img', main), layer = $('.map-pins', main), cardEl = $('.map-card', main);
+    let W = 1000, H = 1000, s = 1, tx = 0, ty = 0, fitS = 1, raf = 0, sel = -1, touched = false, ready = false;
+    const ghosts = [];
+
+    const pins = m.pins.map((p, i) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.entry ? '' : ' pin-plain');
+      el.dataset.i = i;
+      el.style.setProperty('--c', p.entry ? typeOf(p.entry.type).color : 'var(--text)');
+      el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${esc(p.label)}</span>`;
+      el.setAttribute('aria-label', p.label);
+      layer.append(el);
+      return { ...p, el };
+    });
+
+    const size = () => ({ w: stage.clientWidth, h: stage.clientHeight });
+    const maxS = () => Math.max(fitS * 8, 3);
+    function limits() { const { w, h } = size(); fitS = Math.min(w / W, h / H) || 1; }
+    function clamp() {
+      const { w, h } = size();
+      limits();
+      s = Math.min(maxS(), Math.max(fitS * 0.8, s));
+      tx = Math.min(w / 2, Math.max(w / 2 - W * s, tx));
+      ty = Math.min(h / 2, Math.max(h / 2 - H * s, ty));
+    }
+    function draw() {
+      raf = 0;
+      img.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+      for (const p of [...pins, ...ghosts]) p.el.style.transform = `translate(${tx + p.x / 100 * W * s}px,${ty + p.y / 100 * H * s}px)`;
+    }
+    const paint = () => { if (!raf) raf = requestAnimationFrame(draw); };
+    function fit() { const { w, h } = size(); limits(); s = fitS; tx = (w - W * s) / 2; ty = (h - H * s) / 2; paint(); }
+    function zoomAt(cx, cy, f) {
+      limits();
+      const ns = Math.min(maxS(), Math.max(fitS * 0.8, s * f));
+      tx = cx - (cx - tx) * ns / s; ty = cy - (cy - ty) * ns / s; s = ns;
+      touched = true; clamp(); paint();
+    }
+    function focusPin(i) {
+      const p = pins[i];
+      if (!p) return;
+      const { w, h } = size();
+      limits();
+      s = Math.max(s, Math.min(maxS(), fitS * 2.5));
+      tx = w / 2 - p.x / 100 * W * s;
+      ty = h * 0.4 - p.y / 100 * H * s;
+      touched = true; clamp(); paint(); select(i);
+    }
+    function select(i) {
+      sel = i;
+      pins.forEach((p, j) => p.el.classList.toggle('is-sel', j === i));
+      if (i < 0) { cardEl.hidden = true; return; }
+      const p = pins[i], e = p.entry;
+      const t = e ? typeOf(e.type) : null;
+      cardEl.style.setProperty('--c', t ? t.color : 'var(--muted)');
+      cardEl.innerHTML = `<button type="button" class="mc-close" aria-label="Close">×</button>
+        ${e && e.image && e.type !== 'map' ? `<img class="mc-img" src="${esc(asset(e.image))}" alt="">` : ''}
+        <div class="mc-body">
+          <p class="kicker">${t ? esc(t.one) : p.target ? 'Unwritten' : 'Place'}</p>
+          <h2>${esc(p.label)}</h2>
+          ${e && e.summary ? `<p>${inline(e.summary)}</p>` : ''}
+          ${p.note ? `<p class="mc-note">${inline(p.note)}</p>` : ''}
+          ${e ? `<a class="mc-open" href="${href(e)}">Open ${e.type === 'map' ? 'map' : 'entry'} →</a>` : ''}
+        </div>`;
+      cardEl.hidden = false;
+    }
+    function editTap(r) {
+      const x = (r.x - tx) / s / W * 100, y = (r.y - ty) / s / H * 100;
+      if (x < 0 || y < 0 || x > 100 || y > 100) return;
+      const line = `${x.toFixed(1)}, ${y.toFixed(1)} | `;
+      const el = document.createElement('span');
+      el.className = 'pin pin-ghost';
+      el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${x.toFixed(1)}, ${y.toFixed(1)}</span>`;
+      layer.append(el);
+      ghosts.push({ x, y, el });
+      paint();
+      const toast = $('.map-toast', stage);
+      toast.innerHTML = `<code>${esc(line)}</code> copied — paste into the <code>pins</code> block`;
+      if (navigator.clipboard) navigator.clipboard.writeText(line).catch(() => { toast.innerHTML = `<code>${esc(line)}</code>`; });
+    }
+
+    // pointer: one finger/mouse pans, two fingers pinch-zoom
+    const pts = new Map();
+    let moved = false, sx = 0, sy = 0, lastTap = 0, lx = 0, ly = 0;
+    const rel = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const onDown = e => {
+      if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.map-hud, .map-card, .map-more')) return;
+      pts.set(e.pointerId, rel(e));
+      if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else moved = true;
+      stage.classList.add('is-dragging');
+    };
+    const onMove = e => {
+      if (!pts.has(e.pointerId)) return;
+      const prev = pts.get(e.pointerId), cur = rel(e);
+      pts.set(e.pointerId, cur);
+      if (pts.size === 1) {
+        tx += cur.x - prev.x; ty += cur.y - prev.y;
+        if (Math.hypot(e.clientX - sx, e.clientY - sy) > 6) { moved = true; touched = true; }
+        clamp(); paint();
+      } else {
+        const o = [...pts].find(([id]) => id !== e.pointerId)[1];
+        const d0 = Math.hypot(prev.x - o.x, prev.y - o.y), d1 = Math.hypot(cur.x - o.x, cur.y - o.y);
+        tx += (cur.x - prev.x) / 2; ty += (cur.y - prev.y) / 2;
+        if (d0 > 0) zoomAt((cur.x + o.x) / 2, (cur.y + o.y) / 2, d1 / d0); else { clamp(); paint(); }
+      }
+    };
+    const onUp = e => {
+      if (!pts.delete(e.pointerId)) return;
+      if (!pts.size) stage.classList.remove('is-dragging');
+    };
+    stage.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+
+    stage.addEventListener('click', e => {
+      if (e.target.closest('.map-more')) return;
+      if (e.target.closest('.mc-close')) { select(-1); return; }
+      if (e.target.closest('.map-card')) return;
+      const tool = e.target.closest('[data-act]');
+      if (tool) {
+        const { w, h } = size(), act = tool.dataset.act;
+        if (act === 'in') zoomAt(w / 2, h / 2, 1.6);
+        if (act === 'out') zoomAt(w / 2, h / 2, 1 / 1.6);
+        if (act === 'fit') { touched = false; fit(); }
+        if (act === 'labels') tool.setAttribute('aria-pressed', String(!stage.classList.toggle('no-labels')));
+        return;
+      }
+      if (e.target.closest('.map-hud')) return;
+      if (moved && e.detail !== 0) { moved = false; return; }
+      const pin = e.target.closest('.pin[data-i]');
+      if (pin) { select(+pin.dataset.i === sel ? -1 : +pin.dataset.i); return; }
+      const r = rel(e), now = performance.now();
+      if (now - lastTap < 320 && Math.hypot(r.x - lx, r.y - ly) < 30) { lastTap = 0; zoomAt(r.x, r.y, 2); return; }
+      lastTap = now; lx = r.x; ly = r.y;
+      select(-1);
+      if (S.edit) editTap(r);
+    });
+    stage.addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = rel(e), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      zoomAt(r.x, r.y, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015)));
+    }, { passive: false });
+    stage.addEventListener('keydown', e => {
+      if (e.target !== stage) return;
+      const { w, h } = size(), step = 60;
+      const k = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }[e.key];
+      if (k) { e.preventDefault(); tx += k[0]; ty += k[1]; clamp(); paint(); }
+      else if (e.key === '+' || e.key === '=') zoomAt(w / 2, h / 2, 1.4);
+      else if (e.key === '-') zoomAt(w / 2, h / 2, 1 / 1.4);
+      else if (e.key === '0') fit();
+      else if (e.key === 'Escape') select(-1);
+    });
+    $('.map-below', main).addEventListener('click', e => {
+      const b = e.target.closest('[data-pin]');
+      if (!b) return;
+      stage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      focusPin(+b.dataset.pin);
+    });
+    $('.map-more', main).addEventListener('click', e => { e.preventDefault(); $('#about-map').scrollIntoView({ behavior: 'smooth' }); });
+
+    const ro = new ResizeObserver(() => { if (!ready) return; if (touched) { clamp(); paint(); } else fit(); });
+    ro.observe(stage);
+
+    img.addEventListener('load', () => {
+      W = img.naturalWidth || 1000; H = img.naturalHeight || 1000;
+      img.style.width = W + 'px'; img.style.height = H + 'px';
+      ready = true;
+      fit();
+      if (focus != null) {
+        const i = pins.findIndex(p => (p.entry && p.entry.slug === focus) || String(pins.indexOf(p)) === focus);
+        if (i >= 0) focusPin(i);
+      }
+      stage.classList.add('is-ready');
+    });
+    img.addEventListener('error', () => { stage.insertAdjacentHTML('beforeend', `<p class="map-error">Couldn’t load map image <code>${esc(m.image)}</code></p>`); });
+    img.src = asset(m.image);
+
+    S.cleanup = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      ro.disconnect();
+    };
+  }
+
+  /* ---------- router ---------- */
+  function route() {
+    if (S.cleanup) { S.cleanup(); S.cleanup = null; }
+    closeSearch(false);
+    const raw = location.hash.replace(/^#\/?/, '');
+    if (raw && !raw.startsWith('e/') && !raw.startsWith('t/') && !raw.startsWith('s/') && !raw.startsWith('tag/') && document.getElementById(raw)) return; // in-page anchor
+    const [path, query] = raw.split('?');
+    const params = new URLSearchParams(query || '');
+    const [kind, ...rest] = path.split('/');
+    const arg = rest.map(decodeURIComponent).join('/');
+    if (kind === 'e') {
+      const e = resolve(arg);
+      if (!e) viewMissing(arg);
+      else if (e.type === 'map' && e.image) viewMap(e, params.get('pin'));
+      else viewEntry(e);
+    } else if (kind === 't') viewType(norm(arg));
+    else if (kind === 'tag') viewType(null, arg);
+    else if (kind === 's') viewSearch(arg);
+    else viewHome();
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- boot ---------- */
+  async function boot() {
+    const root = document.getElementById('duat');
+    S.edit = new URLSearchParams(location.search).has('edit');
+    try {
+      const res = await fetch(root.dataset.world || 'world.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`world.json → HTTP ${res.status}`);
+      const w = S.world = await res.json();
+      S.types = { ...DEFAULT_TYPES };
+      for (const [k, v] of Object.entries(w.types || {})) S.types[k] = { ...(S.types[k] || typeOf(k)), ...v };
+      if (w.theme) for (const [k, v] of Object.entries(w.theme)) document.documentElement.style.setProperty('--' + k, v);
+      const loaded = await Promise.all((w.entries || []).map(async slug => {
+        try {
+          const r = await fetch(`entries/${slug}.md`, { cache: 'no-cache' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return parseEntry(slug, await r.text());
+        } catch (err) {
+          console.warn(`Duat: couldn’t load entries/${slug}.md`, err);
+          return null;
+        }
+      }));
+      S.entries = loaded.filter(Boolean);
+      index();
+      const present = [...new Set(S.entries.map(e => e.type))];
+      S.typeOrder = [...new Set([...(w.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
+      renderChrome(root);
+      window.addEventListener('hashchange', route);
+      route();
+    } catch (err) {
+      console.error(err);
+      root.innerHTML = `<div class="wrap boot-error"><h1>Couldn’t open this world</h1><p>${esc(err.message)}</p>
+        <p class="muted">If you opened the file directly from disk, serve the folder instead (e.g. <code>python3 -m http.server</code> in <code>src/</code>).</p></div>`;
+    }
+  }
+  boot();
+})();
