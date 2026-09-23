@@ -339,3 +339,42 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .map-below { padding-top: 28px; }
 
 .boot-error { padding-top: 20vh; }
+
+/* label tiers: minor labels appear as you zoom in (the pin stays tappable as a small dot) */
+.map-stage:not(.show-t2) .pin.tier-2:not(.is-sel):not(:hover) .pin-label,
+.map-stage:not(.show-t3) .pin.tier-3:not(.is-sel):not(:hover) .pin-label { display: none; }
+
+/* pins: labels. The name plate is the pin, centered on its point. */
+.label-pins .pin { display: block; }
+.label-pins .pin::before { display: none; }
+.label-pins .pin-dot { display: none; }
+.label-pins .pin-label {
+  position: absolute; left: 0; top: 0; margin: 0; transform: translate(-50%, -50%);
+  padding: 4px 11px 3px;
+  font: 700 0.86rem/1.2 var(--font-display); letter-spacing: 0.02em; color: #f4ecd8;
+  background: #14110f; border: 1px solid #000; border-bottom: 3px solid var(--c); border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); text-shadow: none;
+}
+.label-pins .pin.tier-2 .pin-label { font-size: 0.74rem; padding: 3px 8px 2px; }
+.label-pins .pin-plain .pin-label {
+  background: none; border: 0; box-shadow: none; padding: 0;
+  font: 700 0.68rem/1.1 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; color: #fff8e6;
+  text-shadow: 0 0 3px #000, 0 0 2px #000, 0 1px 1px #000;
+}
+.label-pins .pin-missing .pin-label { border-bottom-style: dashed; color: var(--muted); }
+.label-pins .pin:hover .pin-label, .label-pins .pin:focus-visible .pin-label { outline: 2px solid var(--c); outline-offset: 1px; }
+.label-pins .pin.is-sel .pin-label { background: var(--c); color: #14110f; border-color: var(--c); text-shadow: none; }
+/* hidden tiers in label mode: a small marker keeps them discoverable */
+.label-pins:not(.show-t2) .pin.tier-2:not(.is-sel):not(:hover) .pin-dot,
+.label-pins:not(.show-t3) .pin.tier-3:not(.is-sel):not(:hover) .pin-dot {
+  display: block; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; background: #14110f; border: 2px solid var(--c); box-shadow: none;
+}
+.label-pins .pin.tier-3 { --c: #f4ecd8; }
+.no-labels.label-pins .pin:not(.is-sel):not(:hover) .pin-label { display: none; }
+.no-labels.label-pins .pin:not(.is-sel):not(:hover) .pin-dot { display: block; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; background: #14110f; border: 2px solid var(--c); }
+.map-hud { z-index: 3; }
+@media (max-width: 600px) {
+  .label-pins .pin-label { font-size: 0.74rem; padding: 3px 8px 2px; }
+  .label-pins .pin.tier-2 .pin-label { font-size: 0.66rem; }
+}
+.map-tools button { background: var(--bg); }

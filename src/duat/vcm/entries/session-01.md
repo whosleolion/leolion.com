@@ -1,10 +1,7 @@
 ---
 title: Session 1
 type: session
-date: 2026-09-21
+date: Nov 10, 2025
 order: 1
 ---
-Placeholder recap. The crew met [[Sample Character]] at [[Sample Location]] and got a job offer from [[Sample Faction]].
-
-- **Loot:** one suspicious briefcase (unopened)
-- **Open threads:** who hired the fixer? What's in [[Unwritten Place]]?
+The crew meets at a mob deal at [[Dive's Bistro]]. [[Cassandra]] was captive in the freezer with [[Olf]]. A dwarven wizard called [[Alamir Koldovich]] hires [[Rosie]] for security so he can sell [[Necromantic Scrolls|necromantic spell scrolls]] to the orcish mafia. [[Pious & Reverent Henchman|Pious and Reverent Henchman]], twin brothers, have hired [[Felt]] to swap out the payment. [[Finnean]] is working as a waiter to pay off a gambling debt to [[Orson Dive]], who is overseeing the deal. The deal goes sideways and a bomb explodes. The group escapes through the sewer and fights a skeleton named VI.
