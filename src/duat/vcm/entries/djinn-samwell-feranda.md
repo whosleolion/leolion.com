@@ -5,7 +5,7 @@ tags: [seen]
 aliases: [Samwell Feranda, Samwell]
 ---
 ::: leo
-Janitor on the underdark rail / at the [[Museum of Material Cultures|museum]]. Reminds you of someone. Met during the escape through the gala.
+Met during the escape through the gala.
 :::
 
 ::: thomas

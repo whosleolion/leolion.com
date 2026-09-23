@@ -5,7 +5,7 @@ tags: [mentioned]
 status: Deceased
 ---
 ::: leo
-[[Rosie]]'s father, a Ridgeland ranger. Paid tribute to the [[Ranger Saints]].
+Paid tribute to the [[Ranger Saints]].
 :::
 
 ::: thomas

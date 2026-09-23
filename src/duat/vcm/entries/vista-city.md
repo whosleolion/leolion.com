@@ -1,11 +1,21 @@
 ---
 title: Vista City
 type: map
-image: vista-city.svg
+image: vista-city.webp
+overlay: vista-city-overlay.svg
 pins: labels
 summary: The whole city. Tap a district's name for the short version; drag, pinch or scroll to get around.
 author: leo
 ---
+> “Historians say the Hygarian Kings rid the world of every last dragon’s hoard. Clearly they’ve never seen Vista City.”
+> — Ambassador Cysero Bright
+
+Vista City is the beating heart of the global Hygardian Empire – a treasure trove of history, industry, crime, and every kind of pleasure and pain imaginable. The City has grown over the last few centuries into a bustling metropolis surrounding Hygardian capital citadel, constructed off of the Telosian channel in the Third Regal Age by Queen Clarita Vistal. Today, Visa City is home to a number of the nation's oldest prime institutions, including [[Oldcastle|Oldcastle Palace]], Highdawn Cathedral, Parliament Hall, and the [[Museum of Material Cultures|Royal Museum of Material Cultures]]. Hygard's most eminent figures reside here, including heads of state and industry as well as numerous public figures.
+
+## Boroughs
+
+The city is broken up into a number boroughs of varying sizes, populations, and civic functions. Growing out from Oldcastle Palace and the adjoining [[Beholder Park|Beholder Gardens]], this sprawling metropolis is a hub of commerce, industry, politics, religion, entertainment, and a number of residential sectors.
+
 ## Map key
 
 | Line | Meaning |

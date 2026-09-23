@@ -253,5 +253,12 @@
   "edit": {
     "endpoint": "",
     "keyHash": "183059fb170ae10f1e90f6f1893223ba7874398c4f3f88315825e99ff8ade9d9"
-  }
+  },
+  "navTypes": [
+    "map",
+    "pc",
+    "session",
+    "character",
+    "faction"
+  ]
 }

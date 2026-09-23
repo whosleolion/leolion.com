@@ -5,7 +5,7 @@ tags: [seen]
 faction: "[[Goldtusks]]"
 ---
 ::: leo
-Son of the [[Goldtusks]] godfather, [[Tiberius Goldtusk]], and his second-in-command. Dating [[Octavia Ellis-Ignabi]].
+Dating [[Octavia Ellis-Ignabi]].
 :::
 
 ::: thomas

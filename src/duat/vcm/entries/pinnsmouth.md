@@ -1,12 +1,16 @@
 ---
 title: Pinnsmouth
 type: nation
-aliases: [Republic of Pinnsmouth]
+aliases: [Republic of Pinnsmouth, Free Republic of Pinnsmouth]
 ---
 ::: leo
+**Free Republic of Pinnsmouth.** Capital: Gnoc Gnoc (formerly Gnoclan). Native to: Gnomes, Pixies.
+
+Declared Independence from Hygard a few years ago, following only a six-month revolutionary war.
+
 Shown on the [[Kainos]] map as the Republic of Pinnsmouth, west of [[Hygard]].
 
-North of Hygard proper, in halfling country. [[Finnean]] is from here. The crew is heading here to lie low.
+The crew is heading here to lie low.
 :::
 
 ::: thomas

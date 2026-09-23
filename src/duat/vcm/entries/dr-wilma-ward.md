@@ -5,7 +5,7 @@ tags: [seen]
 aliases: [Wilma Ward]
 ---
 ::: leo
-Gnomish consulting detective and warlock of [[Shae Krendala]]. Met at the [[Silver Spindle Smoking Lounge|Silver Spindle]]. Lives with [[Dr. Anita Goring]].
+Met at the [[Silver Spindle Smoking Lounge|Silver Spindle]]. Lives with [[Dr. Anita Goring]].
 :::
 
 ::: thomas
