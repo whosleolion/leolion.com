@@ -5,7 +5,7 @@ tags: [seen]
 aliases: [Agatha Vale]
 ---
 ::: leo
-[[Cassandra]]'s mother. Co-Chair of the Civic Infrastructure Commission. From [[Aster Valley]].
+From [[Aster Valley]].
 :::
 
 ::: thomas

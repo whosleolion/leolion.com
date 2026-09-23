@@ -5,7 +5,7 @@ tags: [mentioned]
 status: Imprisoned
 ---
 ::: leo
-A sheepfolk wizard from the [[Underborough]], and [[Felt]]'s guardian. In prison at [[Eaglehead Prison|Eagle Head]].
+In prison at [[Eaglehead Prison|Eagle Head]].
 :::
 
 ::: thomas

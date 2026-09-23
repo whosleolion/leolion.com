@@ -1,9 +1,12 @@
 ---
 title: Shae Krendala
 type: deity
+aliases: [Keeper of Lost Things]
 ---
 ::: leo
-An archfey of lost things, and a common cult deity worldwide. Its symbol is a four-leaf clover. Worshipped by elves. [[Dr. Wilma Ward]] is its warlock.
+Shae Krendala, Keeper of Lost Things.
+
+Its symbol is a four-leaf clover. Worshipped by elves. [[Dr. Wilma Ward]] is its warlock.
 :::
 
 ::: thomas

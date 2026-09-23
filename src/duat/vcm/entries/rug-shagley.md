@@ -5,7 +5,7 @@ tags: [seen]
 aliases: [Rug]
 ---
 ::: leo
-[[Felt]]'s firbolg cousin, from the [[Underborough]]. Freed in the prison raid.
+Freed in the prison raid.
 :::
 
 ::: thomas

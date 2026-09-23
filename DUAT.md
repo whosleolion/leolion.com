@@ -26,6 +26,7 @@ src/duat/vcm/
   "theme": { "accent": "#ff5a36" },    // overrides any CSS token: bg, panel, text, muted, accent, font-display…
   "types": { "gang": { "label": "Gangs", "one": "Gang", "color": "#e66" } },   // optional: add/rename types
   "typeOrder": ["map", "character", "location", "faction", "item", "session", "note"],
+  "navTypes": ["map", "pc", "session", "character", "faction"],  // types in the top bar and on the home page; the rest are found via maps, links and search
   "newestFirst": ["session"],          // types listed newest-first
   "mapMajorTypes": ["district"],       // pins always labeled; other pins' labels appear as you zoom in
   "entries": ["home", "vista-city", "sample-character"]
@@ -80,11 +81,13 @@ Add `pins: labels` to a map's frontmatter to make each pin a name plate (the lab
 
 Coordinates are percentages of the image (x from the left, y from the top). To get them, open the map with `?edit` before the `#`, e.g. `https://leolion.com/duat/vcm/?edit#/e/vista-city`, and tap the spot. That copies the `x, y | ` prefix for you.
 
-The Vista City map is a drawn vector (`images/vista-city.svg`) laid out in the same coordinate space as the reference map, so pin coordinates carry over. Any image works, so a "map" can also be an infomap: a relationship web, an org chart, or a district diagram.
+A map can also take an `overlay:` image: a transparent drawing (roads, walls, bridges…) stacked on top of the base art in the same pixel space, so it pans and zooms with it. Vista City uses Leo's painted map (`images/vista-city.webp`) with `images/vista-city-overlay.svg` on top. Any image works, so a "map" can also be an infomap: a relationship web, an org chart, or a district diagram.
 
 To link straight to a pin, use `#/e/vista-city?pin=sample-location`.
 
 ## Shared editing
+
+**＋ New** (top bar) adds a page: give it a name, pick a category, and write your notes. It's saved like any other edit and becomes a normal page that others can add their notes to. In the editor, tap **🔗 Link** or type `[[` to pick another page to link to.
 
 Every entry has a ✎ Edit button. A person picks their name (from `world.json` `authors`), enters the shared passkey, and writes **their own** notes on that entry. Their text shows up as "Name's notes", and other people's notes are never touched. Saving an empty box removes their notes. They stay signed in on that device ("Not Neha?" switches person).
 

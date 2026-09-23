@@ -5,7 +5,7 @@ tags: [seen]
 place: "[[Glaza's Divinery]]"
 ---
 ::: leo
-An advanced professional seer from the [[Underborough]], species unknown. [[Rosie]] consulted her while searching for [[Alamir Koldovich]].
+[[Rosie]] consulted her while searching for [[Alamir Koldovich]].
 :::
 
 ::: thomas

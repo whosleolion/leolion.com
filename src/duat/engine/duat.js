@@ -21,7 +21,7 @@
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
-  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author', 'major']);
+  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author', 'major', 'overlay']);
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
@@ -277,6 +277,8 @@
     }
   }
   const listed = () => S.entries.filter(e => !e.hidden);
+  // world.json "navTypes": the types that get a nav chip and a home section; everything else is reached via maps, links or search
+  const navTypes = () => S.world.navTypes || S.typeOrder;
   const sorter = t => (S.world.newestFirst || []).includes(t) ? (a, b) => byTitle(b, a) : byTitle;
 
   /* ---------- search ---------- */
@@ -306,14 +308,15 @@
             <kbd class="search-key" aria-hidden="true">/</kbd>
             <div class="search-results" role="listbox" hidden></div>
           </div>
+          ${w.edit ? '<button type="button" class="new-btn" data-new aria-label="Add a new page">＋ New</button>' : ''}
         </header>
         <nav class="typenav" aria-label="Browse by type"></nav>
       </div>
       <main id="main" tabindex="-1"></main>
-      <footer class="foot"><span>${esc(w.title)}</span><span class="foot-duat">catalogued in Duat</span></footer>`;
+      <footer class="foot"><span>${esc(w.title)}</span><button type="button" class="foot-duat">catalogued in Duat</button></footer>`;
     const counts = {};
     listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
-    $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + S.typeOrder.filter(t => counts[t]).map(t =>
+    $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
       `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('');
     wireSearch();
     const measure = () => document.documentElement.style.setProperty('--chrome-h', $('.chrome').offsetHeight + 'px');
@@ -378,7 +381,7 @@
 
   function viewHome() {
     const w = S.world, home = resolve(w.home);
-    const sections = S.typeOrder.map(t => {
+    const sections = navTypes().map(t => {
       const list = listed().filter(e => e.type === t).sort(sorter(t));
       if (!list.length) return '';
       const shown = t === 'map' ? list : list.slice(0, 6);
@@ -488,6 +491,7 @@
     page(`<section class="map-view" style="--c:${mapColor}">
       <div class="map-stage${labelMode ? ' label-pins' : ''}" tabindex="0" aria-label="${esc(m.title)}. Drag to pan; pinch, scroll or double-tap to zoom.">
         <img class="map-img" alt="${esc(m.title)}" draggable="false">
+        ${m.fm.overlay ? '<img class="map-img map-overlay" alt="" draggable="false">' : ''}
         <div class="map-pins"></div>
         <div class="map-hud">
           <div class="map-title"><span class="kicker">Map</span><h1>${esc(m.title)}</h1></div>
@@ -513,7 +517,7 @@
     </section>`, m.title, 't/map');
 
     const main = $('#main');
-    const stage = $('.map-stage', main), img = $('.map-img', main), layer = $('.map-pins', main), cardEl = $('.map-card', main);
+    const stage = $('.map-stage', main), img = $('.map-img', main), over = $('.map-overlay', main), layer = $('.map-pins', main), cardEl = $('.map-card', main);
     let W = 1000, H = 1000, s = 1, tx = 0, ty = 0, fitS = 1, raf = 0, sel = -1, touched = false, ready = false;
     const ghosts = [];
 
@@ -542,6 +546,7 @@
     function draw() {
       raf = 0;
       img.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+      if (over) over.style.transform = img.style.transform;
       stage.classList.toggle('show-t2', W * s >= 1100);
       stage.classList.toggle('show-t3', W * s >= 1600);
       for (const p of [...pins, ...ghosts]) p.el.style.transform = `translate(${tx + p.x / 100 * W * s}px,${ty + p.y / 100 * H * s}px)`;
@@ -689,6 +694,8 @@
     img.addEventListener('load', () => {
       W = img.naturalWidth || 1000; H = img.naturalHeight || 1000;
       img.style.width = W + 'px'; img.style.height = H + 'px';
+      // overlay: a transparent drawing (roads, walls, …) in the same pixel space as the image
+      if (over) { over.style.width = W + 'px'; over.style.height = H + 'px'; over.src = asset(String(m.fm.overlay)); }
       ready = true;
       initial();
       if (focus != null) {
@@ -743,10 +750,12 @@
     if (toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body)) return e.body.trim();
     return '';
   }
+  const NEW_RE = /^---\n([\s\S]*?)\n---\n?/;   // a saved edit that starts with a header creates a new page
   function applyEdit({ slug, author, text }) {
     const e = S.entries.find(x => x.slug === slug);
     if (!e || !author) return;
-    const id = norm(author), body = String(text || '').trim();
+    const id = norm(author);
+    const body = String(text || '').replace(NEW_RE, '').trim();
     const whole = toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body);
     if (whole) e.body = body;
     else if (blockRe(id).test(e.body)) e.body = e.body.replace(blockRe(id), body ? `::: ${id}\n${body}\n:::` : '');
@@ -755,6 +764,21 @@
     if (!e.fm.summary) e.summary = autoSummary(e.body);
     const inBody = [...e.body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => norm(m[1]));
     e.authors = [...new Set([...(whole && !body ? [] : toArray(e.fm.author).map(norm)), ...inBody])];
+  }
+  function createFrom({ slug, author, text }) {
+    const m = String(text || '').match(NEW_RE);
+    if (!m || !author) return;
+    if (S.entries.some(x => x.slug === slug)) return applyEdit({ slug, author, text }); // already a real .md page
+    const id = norm(author);
+    const e = parseEntry(slug, `---\n${m[1]}\nauthor: ${id}\n---\n${text.slice(m[0].length)}`);
+    e.newHeader = `---\n${m[1]}\n---`;
+    e.createdBy = id;
+    S.entries.push(e);
+  }
+  function applyEdits(edits) {
+    const isNew = x => NEW_RE.test(String(x.text || ''));
+    edits.filter(isNew).forEach(createFrom);
+    edits.filter(x => !isNew(x)).forEach(applyEdit);
   }
   const editButton = e => S.world.edit ? `<button type="button" class="edit-btn" data-edit="${esc(e.slug)}" aria-label="Edit ${esc(e.title)}">✎ Edit</button>` : '';
 
@@ -768,77 +792,177 @@
     dlg.className = 'editor';
     document.body.append(dlg);
     document.addEventListener('click', ev => {
+      if (ev.target.closest('[data-new]')) return withSession(dlg, 'Sign in to add a page', () => openCreator(dlg));
       const b = ev.target.closest('[data-edit]');
-      if (!b) return;
-      const e = S.entries.find(x => x.slug === b.dataset.edit);
-      if (e) openEditor(dlg, e);
+      const e = b && S.entries.find(x => x.slug === b.dataset.edit);
+      if (e) withSession(dlg, 'Sign in to edit', () => openEditor(dlg, e), e.title);
     });
   }
-  function openEditor(dlg, e) {
-    const sess = store.get(sessionKey());
-    const authors = Object.entries(S.world.authors || {});
-    if (!sess) {
-      dlg.innerHTML = `<form method="dialog" class="ed-form">
-        <p class="kicker">Sign in to edit</p><h2>${esc(e.title)}</h2>
-        <label>Who are you?<select name="author" required><option value="">Choose…</option>${authors.map(([id, a]) =>
-          `<option value="${esc(id)}">${esc(a.name)}${a.role ? ` (${esc(a.role)})` : ''}</option>`).join('')}</select></label>
-        <label>Passkey<input name="key" type="password" autocomplete="current-password" required></label>
-        <p class="ed-err" hidden></p>
-        <div class="ed-actions"><button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Continue</button></div>
-      </form>`;
-      const f = $('form', dlg);
-      f.addEventListener('submit', async ev => {
-        if (ev.submitter && ev.submitter.value === 'cancel') return;
-        ev.preventDefault();
-        const author = f.author.value, key = f.key.value;
-        if (editCfg().keyHash && await sha256(key) !== editCfg().keyHash) {
-          const err = $('.ed-err', f); err.textContent = 'That passkey isn’t right.'; err.hidden = false; return;
-        }
-        store.set(sessionKey(), { author, key });
-        openEditor(dlg, e);
-      });
-    } else {
-      const a = authorOf(sess.author);
-      const local = !editCfg().endpoint;
-      dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
-        <p class="kicker">${esc(a.name)}’s notes on</p><h2>${esc(e.title)}</h2>
-        <textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(a.name)} know about ${esc(e.title)}?">${esc(ownText(e, a.id))}</textarea>
-        <p class="ed-help">Markdown works. Link things with <code>[[Name]]</code>. Your text shows as “${esc(a.name)}’s notes”; other people’s notes aren’t touched. Save it empty to remove yours.</p>
-        ${local ? '<p class="ed-warn">Preview mode: saves stay in this browser until the shared save service is connected.</p>' : ''}
-        <p class="ed-err" hidden></p>
-        <div class="ed-actions"><button type="button" class="ed-switch">Not ${esc(a.name)}?</button><span></span>
-          <button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Save</button></div>
-      </form>`;
-      const f = $('form', dlg);
-      $('.ed-switch', f).addEventListener('click', () => { store.set(sessionKey(), null); openEditor(dlg, e); });
-      f.addEventListener('submit', async ev => {
-        if (ev.submitter && ev.submitter.value === 'cancel') return;
-        ev.preventDefault();
-        const btn = $('.primary', f), err = $('.ed-err', f);
-        btn.disabled = true; btn.textContent = 'Saving…';
-        const edit = { slug: e.slug, author: a.id, text: f.text.value.trim() };
-        try {
-          if (local) {
-            const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
-            store.set(localKey(), [...all, { ...edit, updated: new Date().toISOString() }]);
-          } else {
-            const r = await fetch(editCfg().endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ ...edit, world: worldId(), key: sess.key }) });
-            const j = await r.json();
-            if (!j.ok) {
-              if (/passkey/i.test(j.error || '')) store.set(sessionKey(), null);
-              throw new Error(j.error || 'Save failed');
-            }
-          }
-          location.reload();
-        } catch (x) {
-          err.textContent = `Couldn’t save: ${x.message}. Your text is still here.`; err.hidden = false;
-          btn.disabled = false; btn.textContent = 'Save';
-        }
-      });
-    }
+  function show(dlg) {
     if (!dlg.open) dlg.showModal();
-    setTimeout(() => { const t = $('textarea, select', dlg); if (t) t.focus(); }, 30);
+    setTimeout(() => { const t = $('input[name=title], textarea, select', dlg); if (t) t.focus(); }, 30);
+  }
+  function withSession(dlg, kicker, next, title = '') {
+    if (store.get(sessionKey())) return next();
+    const authors = Object.entries(S.world.authors || {});
+    dlg.innerHTML = `<form method="dialog" class="ed-form">
+      <p class="kicker">${esc(kicker)}</p>${title ? `<h2>${esc(title)}</h2>` : ''}
+      <label>Who are you?<select name="author" required><option value="">Choose…</option>${authors.map(([id, a]) =>
+        `<option value="${esc(id)}">${esc(a.name)}${a.role ? ` (${esc(a.role)})` : ''}</option>`).join('')}</select></label>
+      <label>Passkey<input name="key" type="password" autocomplete="current-password" required></label>
+      <p class="ed-err" hidden></p>
+      <div class="ed-actions"><button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Continue</button></div>
+    </form>`;
+    const f = $('form', dlg);
+    f.addEventListener('submit', async ev => {
+      if (ev.submitter && ev.submitter.value === 'cancel') return;
+      ev.preventDefault();
+      if (editCfg().keyHash && await sha256(f.key.value) !== editCfg().keyHash) {
+        const err = $('.ed-err', f); err.textContent = 'That passkey isn’t right.'; err.hidden = false; return;
+      }
+      store.set(sessionKey(), { author: f.author.value, key: f.key.value });
+      next();
+    });
+    show(dlg);
+  }
+  const helpText = a => `Markdown works. Tap <b>🔗 Link</b> or type <code>[[</code> to link another page. Your text shows as “${esc(a.name)}’s notes”.`;
+  const linkBar = '<div class="ed-bar"><button type="button" class="ed-link">🔗 Link</button></div><div class="ed-links" role="listbox" hidden></div>';
+  async function persist(edit, sess) {
+    if (!editCfg().endpoint) {
+      const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
+      store.set(localKey(), [...all, { ...edit, updated: new Date().toISOString() }]);
+      return;
+    }
+    const r = await fetch(editCfg().endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ ...edit, world: worldId(), key: sess.key }) });
+    const j = await r.json();
+    if (!j.ok) {
+      if (/passkey/i.test(j.error || '')) store.set(sessionKey(), null);
+      throw new Error(j.error || 'Save failed');
+    }
+  }
+  function wireForm(dlg, f, sess, onSave, again) {
+    attachLinker($('textarea', f), $('.ed-links', f), $('.ed-link', f));
+    const sw = $('.ed-switch', f);
+    if (sw) sw.addEventListener('click', () => { store.set(sessionKey(), null); again(); });
+    f.addEventListener('submit', async ev => {
+      if (ev.submitter && ev.submitter.value === 'cancel') return;
+      ev.preventDefault();
+      const btn = $('.primary', f), err = $('.ed-err', f), label = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try { await onSave(); }
+      catch (x) {
+        err.textContent = `Couldn’t save: ${x.message}. Your text is still here.`; err.hidden = false;
+        btn.disabled = false; btn.textContent = label;
+      }
+    });
+  }
+  const footer = (a, action) => `${!editCfg().endpoint ? '<p class="ed-warn">Preview mode: saves stay in this browser until the shared save service is connected.</p>' : ''}
+    <p class="ed-err" hidden></p>
+    <div class="ed-actions"><button type="button" class="ed-switch">Not ${esc(a.name)}?</button><span></span>
+      <button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">${action}</button></div>`;
+
+  function openEditor(dlg, e) {
+    const sess = store.get(sessionKey()), a = authorOf(sess.author);
+    dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
+      <p class="kicker">${esc(a.name)}’s notes on</p><h2>${esc(e.title)}</h2>
+      ${linkBar}
+      <textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(a.name)} know about ${esc(e.title)}?">${esc(ownText(e, a.id))}</textarea>
+      <p class="ed-help">${helpText(a)} Other people’s notes aren’t touched. Save it empty to remove yours.</p>
+      ${footer(a, 'Save')}
+    </form>`;
+    const f = $('form', dlg);
+    wireForm(dlg, f, sess, async () => {
+      const body = f.text.value.trim();
+      const text = e.newHeader && e.createdBy === a.id ? `${e.newHeader}\n${body}` : body; // keep a new page's header
+      await persist({ slug: e.slug, author: a.id, text }, sess);
+      location.reload();
+    }, () => withSession(dlg, 'Sign in to edit', () => openEditor(dlg, e), e.title));
+    show(dlg);
+  }
+  function openCreator(dlg) {
+    const sess = store.get(sessionKey()), a = authorOf(sess.author);
+    const types = S.typeOrder.filter(t => t !== 'map');
+    dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
+      <p class="kicker">New page</p><h2>Add to the catalog</h2>
+      <label>Name<input name="title" required maxlength="80" autocomplete="off" placeholder="e.g. Madame Vex"></label>
+      <label>Category<select name="type" required><option value="">Choose…</option>${types.map(t =>
+        `<option value="${esc(t)}">${esc(typeOf(t).one)}</option>`).join('')}</select></label>
+      <label for="ed-new-text">${esc(a.name)}’s notes</label>
+      ${linkBar}
+      <textarea id="ed-new-text" name="text" rows="9" spellcheck="true" required placeholder="What do you know about it?"></textarea>
+      <p class="ed-help">${helpText(a)}</p>
+      ${footer(a, 'Create page')}
+    </form>`;
+    const f = $('form', dlg);
+    wireForm(dlg, f, sess, async () => {
+      const title = f.title.value.trim().replace(/\s+/g, ' '), slug = slugify(title);
+      const clash = resolve(title) || S.entries.find(x => x.slug === slug);
+      if (!slug) throw new Error('that name needs some letters');
+      if (clash) throw new Error(`“${clash.title}” already has a page. Open it and use ✎ Edit`);
+      const header = `---\ntitle: "${title.replace(/"/g, '’')}"\ntype: ${f.type.value}\n---`;
+      await persist({ slug, author: a.id, text: `${header}\n${f.text.value.trim()}` }, sess);
+      location.hash = '#/e/' + slug;
+      location.reload();
+    }, () => withSession(dlg, 'Sign in to add a page', () => openCreator(dlg)));
+    show(dlg);
+  }
+
+  /* [[ link helper: type [[ (or tap 🔗 Link) and pick a page; the list filters as you type. */
+  function attachLinker(ta, box, btn) {
+    let hits = [], cur = 0, q = null;
+    const query = () => {
+      const m = ta.value.slice(0, ta.selectionStart).match(/\[\[([^\]\[\n|]*)$/);
+      return m ? m[1] : null;
+    };
+    const close = () => { box.hidden = true; q = null; };
+    const draw = () => {
+      q = query();
+      if (q === null) return close();
+      hits = (q.trim() ? search(q) : listed().slice().sort(byTitle)).slice(0, 7);
+      const extra = q.trim() && !hits.some(e => norm(e.title) === norm(q)) ? [{ title: q.trim(), fresh: true }] : [];
+      hits = [...hits, ...extra];
+      cur = Math.min(cur, Math.max(hits.length - 1, 0));
+      box.innerHTML = hits.map((e, i) => `<button type="button" role="option" data-i="${i}" class="${i === cur ? 'is-cur' : ''}"${e.fresh ? '' : ` style="--c:${typeOf(e.type).color}"`}>
+        <span class="sr-type">${e.fresh ? 'New link' : esc(typeOf(e.type).one)}</span><span>${esc(e.title)}</span></button>`).join('')
+        || '<p class="muted">Type a name…</p>';
+      box.hidden = false;
+    };
+    const pick = i => {
+      const e = hits[i]; if (!e) return;
+      const pos = ta.selectionStart, before = ta.value.slice(0, pos).replace(/\[\[([^\]\[\n|]*)$/, `[[${e.title}]]`);
+      let after = ta.value.slice(pos);
+      if (after.startsWith(']]')) after = after.slice(2);
+      ta.value = before + after;
+      ta.focus(); ta.setSelectionRange(before.length, before.length);
+      close();
+    };
+    ta.addEventListener('input', () => { cur = 0; draw(); });
+    ta.addEventListener('click', draw);
+    ta.addEventListener('keydown', ev => {
+      if (box.hidden) return;
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); cur = (cur + (ev.key === 'ArrowDown' ? 1 : hits.length - 1)) % hits.length; draw(); }
+      else if (ev.key === 'Enter' || ev.key === 'Tab') { if (hits.length) { ev.preventDefault(); pick(cur); } }
+      else if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); close(); }
+    });
+    box.addEventListener('pointerdown', ev => ev.preventDefault()); // keep the textarea focused
+    box.addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if (b) pick(+b.dataset.i); });
+    btn.addEventListener('click', () => {
+      const p = ta.selectionStart ?? ta.value.length;
+      ta.value = ta.value.slice(0, p) + '[[' + ta.value.slice(ta.selectionEnd ?? p);
+      ta.focus(); ta.setSelectionRange(p + 2, p + 2); cur = 0; draw();
+    });
+  }
+
+  /* about Duat */
+  function wireAbout() {
+    const b = $('.foot-duat'); if (!b) return;
+    const d = document.createElement('dialog');
+    d.className = 'about-duat';
+    d.innerHTML = `<form method="dialog"><p><b>Duat</b> is a WIP lightweight game-world cataloging system by Junction (Jamon Lancaster and Katherine-May Willendorf). Thank you for testing our system!</p><button class="primary">Close</button></form>`;
+    document.body.append(d);
+    b.addEventListener('click', () => d.showModal());
+    d.addEventListener('click', ev => { if (ev.target === d) d.close(); });
   }
 
   /* ---------- router ---------- */
@@ -886,12 +1010,13 @@
         }
       }));
       S.entries = loaded.filter(Boolean);
-      (await loadEdits()).forEach(applyEdit);
+      applyEdits(await loadEdits());
       index();
       const present = [...new Set(S.entries.map(e => e.type))];
       S.typeOrder = [...new Set([...(w.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
       renderChrome(root);
       wireEditing();
+      wireAbout();
       window.addEventListener('hashchange', route);
       route();
     } catch (err) {
