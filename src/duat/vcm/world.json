@@ -1,0 +1,17 @@
+{
+  "title": "Vista City Mondays",
+  "short": "VCM",
+  "kicker": "Player quickref",
+  "subtitle": "Everything the crew knows so far.",
+  "home": "home",
+  "theme": { "accent": "#ff5a36" },
+  "typeOrder": ["map", "character", "location", "faction", "item", "session", "note"],
+  "entries": [
+    "home",
+    "vista-city",
+    "sample-character",
+    "sample-location",
+    "sample-faction",
+    "session-01"
+  ]
+}

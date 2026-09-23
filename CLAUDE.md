@@ -54,3 +54,6 @@ Website-Redesign/
 
 ## Deploy
 Neocities site `leolioncom` (leolion.com). Pushing to `master` runs `.github/workflows/deploy-neocities.yml`, which uploads every file under `src/` to the site root (only `src/` — nothing else in this repo is deployed). Auth is the `NEOCITIES_API_KEY_LEOLIONCOM` repo secret. `netlify.toml` is a leftover from an earlier hosting plan and is not active.
+
+## Duat (campaign catalogs)
+`src/duat/` is Duat, a static no-build campaign-catalog engine (wiki/Obsidian-style entries, explorable pin maps). Engine: `src/duat/engine/duat.{js,css}`. Campaigns: `src/duat/<id>/` with `world.json` + `entries/*.md` + `images/`. Pilot: Vista City Mondays at `src/duat/vcm/` (leolion.com/duat/vcm), noindexed and unlinked from the main site, so keep it covert. The authoring format is documented in `DUAT.md`. New entries must be added to the `entries` list in `world.json`.
