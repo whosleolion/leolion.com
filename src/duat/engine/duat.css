@@ -630,7 +630,9 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .ch-node.is-sel rect, .ch-frame.is-sel rect { stroke: var(--accent); stroke-width: 3; }
 .ch-node.is-text.is-sel .ch-text-hit { stroke: var(--accent) !important; stroke-width: 2; stroke-dasharray: 4 4; }
 .ch-edge.is-sel .ch-line { stroke: var(--accent); stroke-width: 2.6; }
-.pin-editing .ch-edge, .pin-editing .ch-frame { cursor: pointer; }
+.pin-editing .ch-edge { cursor: pointer; }
+.pin-editing .ch-node, .pin-editing .ch-frame { cursor: move; }
+.pin-editing.is-dragging .ch-node, .pin-editing.is-dragging .ch-frame { cursor: grabbing; }
 .chart-bar { max-width: min(calc(100% - 24px), 760px); }
 .ch-modes { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .ch-modes [aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }

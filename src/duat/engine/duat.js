@@ -954,7 +954,7 @@
           <span class="ch-modes" role="group" aria-label="Tap on empty space adds">
             <button type="button" data-mode="node" aria-pressed="true">＋ Box</button><button type="button" data-mode="text" aria-pressed="false">＋ Text</button>
             <button type="button" data-mode="frame" aria-pressed="false">＋ Frame</button><button type="button" data-mode="connect" aria-pressed="false">↗ Connect</button></span>
-          <span class="ch-hint">Tap empty space to add. Tap anything to change it.</span>
+          <span class="ch-hint">Drag boxes to move them. Tap empty space to add, tap anything to change it.</span>
           <button type="button" data-cb="text">Edit as text</button>
           <button type="button" data-cb="cancel">Cancel</button><button type="button" data-cb="save" class="primary">Save chart</button></div>
         <a class="map-more" href="#about-map">About this chart ↓</a>
@@ -1010,20 +1010,43 @@
     const closeCard = () => { cardEl.hidden = true; if (sel) { sel = ''; render(); } };
 
     // pointer: one finger/mouse pans, two fingers pinch-zoom (same feel as maps)
-    const pts = new Map(); let moved = false, sx = 0, sy = 0, lastTap = 0, lx = 0, ly = 0;
+    const pts = new Map(); let moved = false, sx = 0, sy = 0, lastTap = 0, lx = 0, ly = 0, drag = null;
+    // after something moves, grow/shrink the chart's bounds without the view jumping
+    const rebound = () => { const nb = chartBounds(c); tx += (nb.x - B.x) * s; ty += (nb.y - B.y) * s; B = nb; clamp(); paint(); };
     const onDown = e => {
       if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.map-hud, .map-card, .map-more, .chart-bar')) return;
-      pts.set(e.pointerId, rel(e)); if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else moved = true;
+      pts.set(e.pointerId, rel(e)); if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else { moved = true; drag = null; }
+      // editing: pressing on a box or frame drags it (a frame carries what's inside it)
+      const nEl = e.target.closest('[data-node]'), fEl = !nEl && e.target.closest('[data-frame]');
+      if (editing && pts.size === 1 && !moving && mode !== 'connect' && (nEl || fEl)) {
+        const at = toChart(rel(e));
+        if (nEl) drag = { at, items: [c.nodes[+nEl.dataset.node]] };
+        else { const fr = c.frames[+fEl.dataset.frame], inside = (x, y) => x >= fr.x && x <= fr.x + fr.w && y >= fr.y && y <= fr.y + fr.h;
+          drag = { at, items: [fr, ...c.frames.filter(o => o !== fr && inside(o.x, o.y) && inside(o.x + o.w, o.y + o.h)), ...c.nodes.filter(n => inside(n.x, n.y))] }; }
+        drag.orig = drag.items.map(it => ({ x: it.x, y: it.y }));
+      }
     };
+    let dragRaf = 0;
     const onMove = e => {
       if (!pts.has(e.pointerId)) return;
       const prev = pts.get(e.pointerId), cur = rel(e); pts.set(e.pointerId, cur);
+      if (drag && pts.size === 1) {
+        if (!moved && Math.hypot(e.clientX - sx, e.clientY - sy) <= 4) return;
+        moved = true; stage.classList.add('is-dragging');
+        const at = toChart(cur), dx = at.x - drag.at.x, dy = at.y - drag.at.y;
+        drag.items.forEach((it, k) => { it.x = Math.round(drag.orig[k].x + dx); it.y = Math.round(drag.orig[k].y + dy); });
+        if (!dragRaf) dragRaf = requestAnimationFrame(() => { dragRaf = 0; render(); });
+        return;
+      }
       if (pts.size === 1) { tx += cur.x - prev.x; ty += cur.y - prev.y; if (Math.hypot(e.clientX - sx, e.clientY - sy) > 6) { moved = true; touched = true; } clamp(); paint(); }
       else { const o = [...pts].find(([id]) => id !== e.pointerId)[1];
         const d0 = Math.hypot(prev.x - o.x, prev.y - o.y), d1 = Math.hypot(cur.x - o.x, cur.y - o.y);
         tx += (cur.x - prev.x) / 2; ty += (cur.y - prev.y) / 2; if (d0 > 0) zoomAt((cur.x + o.x) / 2, (cur.y + o.y) / 2, d1 / d0); }
     };
-    const onUp = e => { pts.delete(e.pointerId); };
+    const onUp = e => {
+      pts.delete(e.pointerId);
+      if (drag) { const was = drag; drag = null; stage.classList.remove('is-dragging'); if (moved && was) rebound(); }
+    };
     stage.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('pointercancel', onUp);
     stage.addEventListener('wheel', e => { e.preventDefault(); const r = rel(e), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(r.x, r.y, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015))); }, { passive: false });
@@ -1054,7 +1077,7 @@
       // editing
       if (moving) { const it = moving.kind === 'node' ? c.nodes[moving.i] : c.frames[moving.i];
         if (moving.kind === 'node') { it.x = at.x; it.y = at.y; } else { it.x = at.x; it.y = at.y; }
-        moving = null; hint.textContent = 'Tap empty space to add. Tap anything to change it.'; return render(); }
+        moving = null; hint.textContent = 'Drag boxes to move them. Tap empty space to add, tap anything to change it.'; render(); return rebound(); }
       if (mode === 'connect') {
         const hit = nodeEl ? c.nodes[+nodeEl.dataset.node].id : frameEl ? c.frames[+frameEl.dataset.frame].id : null;
         if (!hit) return;
@@ -1141,7 +1164,7 @@
     bar.addEventListener('click', async ev => {
       const m = ev.target.closest('[data-mode]');
       if (m) { mode = m.dataset.mode; connectFrom = null; bar.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === m)));
-        hint.textContent = mode === 'connect' ? 'Tap the box the arrow starts from.' : 'Tap empty space to add. Tap anything to change it.'; return; }
+        hint.textContent = mode === 'connect' ? 'Tap the box the arrow starts from.' : 'Drag boxes to move them. Tap empty space to add, tap anything to change it.'; return; }
       const b = ev.target.closest('[data-cb]'); if (!b) return;
       if (b.dataset.cb === 'cancel') return route();
       if (b.dataset.cb === 'text') {
