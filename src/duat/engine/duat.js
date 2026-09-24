@@ -25,7 +25,7 @@
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
-  const S = { world: null, entries: [], lookup: new Map(), types: {}, typeOrder: [], edit: false, cleanup: null };
+  const S = { world: null, entries: [], lookup: new Map(), types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
 
   /* ---------- small helpers ---------- */
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -36,8 +36,8 @@
   const protectPipes = s => s.replace(/\[\[[^\]]*\]\]/g, m => m.replace(/\|/g, '\u0001'));
   const restorePipes = s => s.replace(/\u0001/g, '|');
   const toArray = v => Array.isArray(v) ? v : (v === '' || v == null || typeof v === 'boolean') ? [] : String(v).split(',').map(x => x.trim()).filter(Boolean);
-  const safeUrl = u => /^\s*(javascript|vbscript|data):/i.test(u) ? '#' : u;
-  const asset = u => /^(https?:)?\/\//.test(u) || u.startsWith('/') || u.includes('/') ? safeUrl(u) : 'images/' + u;
+  const safeUrl = u => /^\s*data:image\/(png|jpe?g|webp|gif);base64,/i.test(u) ? u : /^\s*(javascript|vbscript|data):/i.test(u) ? '#' : u;
+  const asset = u => /^(https?:)?\/\//.test(u) || /^data:/i.test(u) || u.startsWith('/') || u.includes('/') ? safeUrl(u) : 'images/' + u;
   const href = e => '#/e/' + e.slug.split('/').map(encodeURIComponent).join('/');
   const typeOf = t => S.types[t] || (S.types[t] = { label: cap(t) + 's', one: cap(t), color: '#a4abb8' });
   const byTitle = (a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || a.title.localeCompare(b.title, undefined, { numeric: true });
@@ -218,7 +218,7 @@
     const t = restorePipes(m[3]);
     const wl = t.match(/^\[\[(.+)\]\]$/);
     const [target, label] = wl ? wl[1].split('|').map(x => x.trim()) : [null, t];
-    return { x: +m[1], y: +m[2], target, label: label || null, note: m[4] ? restorePipes(m[4]) : '' };
+    return { x: +m[1], y: +m[2], target, label: label || null, rawLabel: wl ? (label || '') : t.trim(), note: m[4] ? restorePipes(m[4]) : '' };
   }
   function autoSummary(body) {
     for (const block of body.replace(/^:::.*$/gm, '').split(/\n\s*\n/)) {
@@ -313,7 +313,7 @@
         <nav class="typenav" aria-label="Browse by type"></nav>
       </div>
       <main id="main" tabindex="-1"></main>
-      <footer class="foot"><span>${esc(w.title)}</span><button type="button" class="foot-duat">catalogued in Duat</button></footer>`;
+      <footer class="foot"><span>${esc(w.title)}</span><span class="foot-right"><span class="foot-gm"></span><button type="button" class="foot-duat">catalogued in Duat</button></span></footer>`;
     const counts = {};
     listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
@@ -395,7 +395,7 @@
         <h1>${esc(w.title)}</h1>
         ${w.subtitle ? `<p class="hero-sub">${inline(w.subtitle)}</p>` : ''}
       </header>
-      ${home ? `<div class="prose home-intro">${md(home.body)}</div>` : ''}
+      ${home ? `<div class="home-intro-wrap">${editButton(home)}<div class="prose home-intro">${md(home.body)}</div></div>` : ''}
       ${sections}
     </div>`, '', 'home');
   }
@@ -500,10 +500,12 @@
             <button type="button" data-act="out" aria-label="Zoom out">−</button>
             <button type="button" data-act="fit" aria-label="Show whole map">⤢</button>
             <button type="button" data-act="labels" aria-pressed="true" aria-label="Show labels">Aa</button>
+            ${S.world.edit ? '<button type="button" data-act="pins" aria-label="Add or move pins">📍</button>' : ''}
           </div>
         </div>
         <div class="map-card" hidden></div>
-        ${S.edit ? '<div class="map-toast">Edit mode — tap the map to copy pin coordinates</div>' : ''}
+        <div class="pin-bar" hidden><span>Tap the map to add a pin. Tap a pin to change it.</span>
+          <button type="button" data-pinbar="cancel">Cancel</button><button type="button" data-pinbar="save" class="primary">Save pins</button></div>
         <a class="map-more" href="#about-map">About this map ↓</a>
       </div>
       <div class="wrap map-below" id="about-map">
@@ -519,19 +521,24 @@
     const main = $('#main');
     const stage = $('.map-stage', main), img = $('.map-img', main), over = $('.map-overlay', main), layer = $('.map-pins', main), cardEl = $('.map-card', main);
     let W = 1000, H = 1000, s = 1, tx = 0, ty = 0, fitS = 1, raf = 0, sel = -1, touched = false, ready = false;
-    const ghosts = [];
+    let pins = [], pinMode = false, work = null, moving = -1;
 
-    const pins = m.pins.map((p, i) => {
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.entry ? '' : ' pin-plain') + ' tier-' + tierOf(p);
-      el.dataset.i = i;
-      el.style.setProperty('--c', p.entry ? typeOf(p.entry.type).color : 'var(--text)');
-      el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${esc(p.label)}</span>`;
-      el.setAttribute('aria-label', p.label);
-      layer.append(el);
-      return { ...p, el };
-    });
+    function buildPins(list) {
+      layer.innerHTML = '';
+      pins = list.map((p, i) => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.entry ? '' : ' pin-plain') + ' tier-' + tierOf(p) + (i === moving ? ' is-moving' : '');
+        el.dataset.i = i;
+        el.style.setProperty('--c', p.entry ? typeOf(p.entry.type).color : 'var(--text)');
+        el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${esc(p.label)}</span>`;
+        el.setAttribute('aria-label', p.label);
+        layer.append(el);
+        return { ...p, el };
+      });
+      if (ready) paint();
+    }
+    buildPins(m.pins);
 
     const size = () => ({ w: stage.clientWidth, h: stage.clientHeight });
     const maxS = () => Math.max(fitS * 8, 3);
@@ -549,7 +556,7 @@
       if (over) over.style.transform = img.style.transform;
       stage.classList.toggle('show-t2', W * s >= 1100);
       stage.classList.toggle('show-t3', W * s >= 1600);
-      for (const p of [...pins, ...ghosts]) p.el.style.transform = `translate(${tx + p.x / 100 * W * s}px,${ty + p.y / 100 * H * s}px)`;
+      for (const p of pins) p.el.style.transform = `translate(${tx + p.x / 100 * W * s}px,${ty + p.y / 100 * H * s}px)`;
     }
     const paint = () => { if (!raf) raf = requestAnimationFrame(draw); };
     function fit() { const { w, h } = size(); limits(); s = fitS; tx = (w - W * s) / 2; ty = (h - H * s) / 2; paint(); }
@@ -593,27 +600,78 @@
         </div>`;
       cardEl.hidden = false;
     }
-    function editTap(r) {
-      const x = (r.x - tx) / s / W * 100, y = (r.y - ty) / s / H * 100;
-      if (x < 0 || y < 0 || x > 100 || y > 100) return;
-      const line = `${x.toFixed(1)}, ${y.toFixed(1)} | `;
-      const el = document.createElement('span');
-      el.className = 'pin pin-ghost';
-      el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${x.toFixed(1)}, ${y.toFixed(1)}</span>`;
-      layer.append(el);
-      ghosts.push({ x, y, el });
-      paint();
-      const toast = $('.map-toast', stage);
-      toast.innerHTML = `<code>${esc(line)}</code> copied — paste into the <code>pins</code> block`;
-      if (navigator.clipboard) navigator.clipboard.writeText(line).catch(() => { toast.innerHTML = `<code>${esc(line)}</code>`; });
+    /* pin editor: tap empty map to add, tap a pin to change/move/remove, then Save pins */
+    const pinBar = $('.pin-bar', stage);
+    const livePin = p => {
+      const entry = resolve(p.target);
+      return { ...p, entry, label: p.rawLabel || (entry ? entry.title : p.target) || '?' };
+    };
+    function startPins() {
+      if (S.dlg && S.dlg.open) S.dlg.close();
+      pinMode = true; moving = -1;
+      work = m.pins.map(p => ({ x: p.x, y: p.y, target: p.target, rawLabel: p.rawLabel || '', note: p.note || '' }));
+      stage.classList.add('pin-editing', 'show-t2', 'show-t3');
+      stage.classList.remove('no-labels');
+      pinBar.hidden = false; select(-1);
+      buildPins(work.map(livePin));
     }
+    function pinForm(i, pos) {
+      const p = i >= 0 ? work[i] : { x: pos.x, y: pos.y, target: null, rawLabel: '', note: '' };
+      let target = p.target;
+      pins.forEach((q, j) => q.el.classList.toggle('is-sel', j === i));
+      cardEl.style.setProperty('--c', 'var(--accent)');
+      cardEl.innerHTML = `<button type="button" class="mc-close" aria-label="Close">×</button>
+        <form class="mc-body pin-form">
+          <p class="kicker">${i >= 0 ? 'Change pin' : 'New pin'}</p>
+          <label>Page or place<span class="ed-field"><input name="name" autocomplete="off" required value="${esc(target || p.rawLabel)}" placeholder="Start typing a page name…"><span class="ed-links" role="listbox" hidden></span></span></label>
+          <p class="pin-linked muted">${target ? `Links to <b>${esc(target)}</b>` : 'Not linked to a page (just a label)'}</p>
+          <label class="pin-show"${target ? '' : ' hidden'}>Label on the map (optional)<input name="label" autocomplete="off" value="${esc(target ? p.rawLabel : '')}" placeholder="Defaults to the page name"></label>
+          <label>Note (optional)<input name="note" autocomplete="off" value="${esc(p.note)}"></label>
+          <div class="ed-actions">${i >= 0 ? '<button type="button" data-pf="remove">Remove</button><button type="button" data-pf="move">Move</button>' : ''}<span></span>
+            <button type="submit" class="primary">${i >= 0 ? 'Done' : 'Add pin'}</button></div>
+        </form>`;
+      cardEl.hidden = false;
+      const f = $('form', cardEl), inp = f.name, linked = $('.pin-linked', f), show = $('.pin-show', f);
+      attachPicker(inp, $('.ed-links', f), e => {
+        target = e.title; inp.value = e.title;
+        linked.innerHTML = `Links to <b>${esc(e.title)}</b>`; show.hidden = false;
+      });
+      inp.addEventListener('input', () => {
+        if (target && norm(inp.value) !== norm(target)) { target = null; linked.textContent = 'Not linked to a page (just a label)'; show.hidden = true; }
+      });
+      f.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-pf]'); if (!b) return;
+        if (b.dataset.pf === 'remove') { work.splice(i, 1); cardEl.hidden = true; buildPins(work.map(livePin)); }
+        if (b.dataset.pf === 'move') { moving = i; cardEl.hidden = true; pinBar.querySelector('span').textContent = 'Tap the new spot for this pin.'; buildPins(work.map(livePin)); }
+      });
+      f.addEventListener('submit', ev => {
+        ev.preventDefault();
+        const name = inp.value.trim(); if (!name) return;
+        const hit = !target && S.entries.find(x => norm(x.title) === norm(name)); // typed a page's exact name without picking it
+        if (hit) target = hit.title;
+        const out = { x: p.x, y: p.y, target: target || null, rawLabel: (target ? f.label.value : name).trim().replace(/\|/g, '/'), note: f.note.value.trim().replace(/\|/g, '/') };
+        if (i >= 0) work[i] = out; else work.push(out);
+        cardEl.hidden = true; buildPins(work.map(livePin));
+      });
+      setTimeout(() => inp.focus(), 30);
+    }
+    const pinLine = p => `${p.x.toFixed(1)}, ${p.y.toFixed(1)} | ${p.target ? `[[${p.target}${p.rawLabel ? '|' + p.rawLabel : ''}]]` : p.rawLabel}${p.note ? ' | ' + p.note : ''}`;
+    pinBar.addEventListener('click', async ev => {
+      const b = ev.target.closest('[data-pinbar]'); if (!b) return;
+      if (b.dataset.pinbar === 'cancel') return route();
+      b.disabled = true; b.textContent = 'Saving…';
+      try {
+        await persist({ slug: m.slug, author: '@pins', text: work.map(pinLine).join('\n') }, store.get(sessionKey()));
+        location.reload();
+      } catch (x) { b.disabled = false; b.textContent = 'Save pins'; pinBar.querySelector('span').textContent = `Couldn’t save: ${x.message}`; }
+    });
 
     // pointer: one finger/mouse pans, two fingers pinch-zoom
     const pts = new Map();
     let moved = false, sx = 0, sy = 0, lastTap = 0, lx = 0, ly = 0;
     const rel = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     const onDown = e => {
-      if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.map-hud, .map-card, .map-more')) return;
+      if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.map-hud, .map-card, .map-more, .pin-bar')) return;
       pts.set(e.pointerId, rel(e));
       if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else moved = true;
       stage.classList.add('is-dragging');
@@ -643,7 +701,7 @@
     window.addEventListener('pointercancel', onUp);
 
     stage.addEventListener('click', e => {
-      if (e.target.closest('.map-more')) return;
+      if (e.target.closest('.map-more, .pin-bar')) return;
       if (e.target.closest('.mc-close')) { select(-1); return; }
       if (e.target.closest('.map-card')) return;
       const tool = e.target.closest('[data-act]');
@@ -653,17 +711,28 @@
         if (act === 'out') zoomAt(w / 2, h / 2, 1 / 1.6);
         if (act === 'fit') { touched = false; fit(); }
         if (act === 'labels') tool.setAttribute('aria-pressed', String(!stage.classList.toggle('no-labels')));
+        if (act === 'pins' && !pinMode) withSession(S.dlg, 'Sign in to edit pins', startPins, m.title);
         return;
       }
       if (e.target.closest('.map-hud')) return;
       if (moved && e.detail !== 0) { moved = false; return; }
       const pin = e.target.closest('.pin[data-i]');
+      const r = rel(e), at = { x: +((r.x - tx) / s / W * 100).toFixed(1), y: +((r.y - ty) / s / H * 100).toFixed(1) };
+      if (pinMode) {
+        if (moving >= 0) {
+          if (at.x >= 0 && at.y >= 0 && at.x <= 100 && at.y <= 100) { work[moving].x = at.x; work[moving].y = at.y; }
+          moving = -1; pinBar.querySelector('span').textContent = 'Tap the map to add a pin. Tap a pin to change it.';
+          buildPins(work.map(livePin)); return;
+        }
+        if (pin) return pinForm(+pin.dataset.i);
+        if (at.x >= 0 && at.y >= 0 && at.x <= 100 && at.y <= 100) pinForm(-1, at);
+        return;
+      }
       if (pin) { select(+pin.dataset.i === sel ? -1 : +pin.dataset.i); return; }
-      const r = rel(e), now = performance.now();
+      const now = performance.now();
       if (now - lastTap < 320 && Math.hypot(r.x - lx, r.y - ly) < 30) { lastTap = 0; zoomAt(r.x, r.y, 2); return; }
       lastTap = now; lx = r.x; ly = r.y;
       select(-1);
-      if (S.edit) editTap(r);
     });
     stage.addEventListener('wheel', e => {
       e.preventDefault();
@@ -716,10 +785,14 @@
   }
 
   /* ---------- editing ----------
-     Anyone listed in world.json "authors" can sign in (name + shared passkey) and write
-     their own ::: account block on any entry. Edits are stored by world.json edit.endpoint
-     (a small Google Apps Script, see duat-backend/) and layered over the .md files at load.
-     With no endpoint configured, edits are kept in this browser only (a local preview). */
+     Everything in the catalog can be entered from the page itself. Edits are rows kept by
+     world.json edit.endpoint (a small Google Apps Script, see duat-backend/) and layered over
+     the .md files at load:
+       <author id>  that person's notes on a page (a header on first save = a new page)
+       @meta        the page's details: name, category, nicknames, tags, info rows, image…
+       @pins        a map's full pin list
+     With no endpoint configured, edits are kept in this browser only (a local preview).
+     A GM passkey (edit.gmHash) unlocks editing anyone's notes, hiding, merging and deleting. */
   const worldId = () => slugify(S.world.id || S.world.title || 'world');
   const editCfg = () => S.world.edit || {};
   const store = {
@@ -728,6 +801,8 @@
   };
   const localKey = () => `duat:${worldId()}:edits`;
   const sessionKey = () => `duat:${worldId()}:session`;
+  const session = () => store.get(sessionKey());
+  const isGM = () => !!(session() || {}).gm;
 
   async function loadEdits() {
     if (!S.world.edit) return [];
@@ -743,42 +818,100 @@
     }
   }
   const blockRe = id => new RegExp(`^:::\\s*${id}\\s*\\n[\\s\\S]*?^:::\\s*$`, 'm');
+  const isWhole = (e, id) => toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body);
   function ownText(e, id) {
     const m = e.body.match(new RegExp(`^:::\\s*${id}\\s*\\n([\\s\\S]*?)^:::\\s*$`, 'm'));
     if (m) return m[1].trim();
-    // whole-entry attribution (author: id, no blocks) — that text is theirs to edit
-    if (toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body)) return e.body.trim();
-    return '';
+    return isWhole(e, id) ? e.body.trim() : '';     // whole-entry attribution: that text is theirs
   }
-  const NEW_RE = /^---\n([\s\S]*?)\n---\n?/;   // a saved edit that starts with a header creates a new page
-  function applyEdit({ slug, author, text }) {
-    const e = S.entries.find(x => x.slug === slug);
-    if (!e || !author) return;
-    const id = norm(author);
-    const body = String(text || '').replace(NEW_RE, '').trim();
-    const whole = toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body);
-    if (whole) e.body = body;
+  const refreshAuthors = e => {
+    const inBody = [...e.body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => norm(m[1]));
+    e.authors = [...new Set([...toArray(e.fm.author).map(norm), ...inBody])];
+  };
+  function setNotes(e, id, body) {
+    body = String(body || '').trim();
+    if (isWhole(e, id)) e.body = body;
     else if (blockRe(id).test(e.body)) e.body = e.body.replace(blockRe(id), body ? `::: ${id}\n${body}\n:::` : '');
-    else if (body) e.body = `${e.body.trim()}\n\n::: ${id}\n${body}\n:::`;
+    else if (body) {
+      // someone else joins a single-author page: the existing text becomes that author's block
+      if (e.body.trim() && !/^:::/m.test(e.body) && toArray(e.fm.author).length) {
+        const owner = norm(toArray(e.fm.author)[0]);
+        e.body = `::: ${owner}\n${e.body.trim()}\n:::`;
+        e.fm.author = '';
+      }
+      e.body = `${e.body.trim()}\n\n::: ${id}\n${body}\n:::`;
+    }
     e.body = e.body.replace(/\n{3,}/g, '\n\n').trim();
     if (!e.fm.summary) e.summary = autoSummary(e.body);
-    const inBody = [...e.body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => norm(m[1]));
-    e.authors = [...new Set([...(whole && !body ? [] : toArray(e.fm.author).map(norm)), ...inBody])];
+    refreshAuthors(e);
+    e.dirty = true;
   }
+  const NEW_RE = /^---\n([\s\S]*?)\n---\n?/;   // a saved edit that starts with a header creates a new page
   function createFrom({ slug, author, text }) {
     const m = String(text || '').match(NEW_RE);
     if (!m || !author) return;
-    if (S.entries.some(x => x.slug === slug)) return applyEdit({ slug, author, text }); // already a real .md page
-    const id = norm(author);
-    const e = parseEntry(slug, `---\n${m[1]}\nauthor: ${id}\n---\n${text.slice(m[0].length)}`);
+    const id = norm(author), body = text.slice(m[0].length);
+    const have = S.entries.find(x => x.slug === slug);
+    if (have) return setNotes(have, id, body);           // it has since become a real .md page
+    const e = parseEntry(slug, `---\n${m[1]}\nauthor: ${id}\n---\n${body}`);
     e.newHeader = `---\n${m[1]}\n---`;
     e.createdBy = id;
+    e.dirty = e.isNew = true;
     S.entries.push(e);
   }
+  function applyPins(e, text) {
+    e.pins = String(text || '').split('\n').map(parsePin).filter(Boolean);
+    e.dirty = true;
+  }
+  const META_KEYS = ['title', 'type', 'aliases', 'tags', 'summary', 'image', 'order', 'hidden'];
+  function applyMeta(e, meta) {
+    if (meta.deleted) { S.entries = S.entries.filter(x => x !== e); S.deleted.push(e.slug); return; }
+    if (meta.title && meta.title !== e.title) {
+      // renamed: the old name stays a nickname so every existing [[link]] still lands here
+      meta.aliases = [...new Set([...(meta.aliases || e.aliases), e.title])];
+      e.title = meta.title;
+    }
+    if (meta.type) e.type = norm(meta.type);
+    if (meta.aliases) e.aliases = meta.aliases.filter(Boolean);
+    if (meta.tags) e.tags = meta.tags.filter(Boolean);
+    if ('summary' in meta) { e.fm.summary = meta.summary || ''; e.summary = meta.summary || autoSummary(e.body); }
+    if ('image' in meta) e.image = meta.image || '';
+    if ('order' in meta) e.order = meta.order === '' || meta.order == null || isNaN(+meta.order) ? null : +meta.order;
+    if ('hidden' in meta) e.hidden = !!meta.hidden;
+    if ('pinstyle' in meta) e.fm.pins = meta.pinstyle || '';
+    if ('major' in meta) e.fm.major = (meta.major || []).length ? meta.major : '';
+    if ('overlay' in meta) e.fm.overlay = meta.overlay || '';
+    if (meta.facts) {
+      for (const k of Object.keys(e.fm)) if (!RESERVED.has(k)) delete e.fm[k];
+      for (const [k, v] of Object.entries(meta.facts)) if (k.trim() && String(v).trim()) e.fm[norm(k)] = String(v).trim();
+    }
+    Object.assign(e.fm, { title: e.title, type: e.type, aliases: e.aliases, tags: e.tags, image: e.image, order: e.order ?? '', hidden: e.hidden });
+    e.dirty = true;
+    if (meta.mergeInto) {
+      const t = S.entries.find(x => x.slug === meta.mergeInto && x !== e);
+      if (!t) return;
+      t.aliases = [...new Set([...t.aliases, e.title, ...e.aliases])];
+      t.fm.aliases = t.aliases;
+      if (/^:::/m.test(e.body)) {
+        for (const m of e.body.matchAll(/^:::\s*([\w-]+)\s*\n([\s\S]*?)^:::\s*$/gm)) setNotes(t, norm(m[1]), [ownText(t, norm(m[1])), m[2].trim()].filter(Boolean).join('\n\n'));
+      } else if (e.body.trim()) {
+        const owner = norm(toArray(e.fm.author)[0] || 'leo');
+        setNotes(t, owner, [ownText(t, owner), e.body.trim()].filter(Boolean).join('\n\n'));
+      }
+      S.entries = S.entries.filter(x => x !== e); S.deleted.push(e.slug);
+    }
+  }
   function applyEdits(edits) {
-    const isNew = x => NEW_RE.test(String(x.text || ''));
-    edits.filter(isNew).forEach(createFrom);
-    edits.filter(x => !isNew(x)).forEach(applyEdit);
+    S.deleted = [];
+    const find = slug => S.entries.find(x => x.slug === slug);
+    const special = x => String(x.author || '').startsWith('@');
+    edits.filter(x => !special(x) && NEW_RE.test(String(x.text || ''))).forEach(createFrom);
+    edits.filter(x => !special(x) && !NEW_RE.test(String(x.text || ''))).forEach(x => { const e = find(x.slug); if (e) setNotes(e, norm(x.author), x.text); });
+    edits.filter(x => x.author === '@pins').forEach(x => { const e = find(x.slug); if (e) applyPins(e, x.text); });
+    edits.filter(x => x.author === '@meta').forEach(x => {
+      const e = find(x.slug); if (!e) return;
+      try { applyMeta(e, JSON.parse(x.text)); } catch (err) { console.warn('Duat: bad page details for', x.slug, err); }
+    });
   }
   const editButton = e => S.world.edit ? `<button type="button" class="edit-btn" data-edit="${esc(e.slug)}" aria-label="Edit ${esc(e.title)}">✎ Edit</button>` : '';
 
@@ -788,11 +921,12 @@
   }
   function wireEditing() {
     if (!S.world.edit) return;
-    const dlg = document.createElement('dialog');
+    const dlg = S.dlg = document.createElement('dialog');
     dlg.className = 'editor';
     document.body.append(dlg);
     document.addEventListener('click', ev => {
       if (ev.target.closest('[data-new]')) return withSession(dlg, 'Sign in to add a page', () => openCreator(dlg));
+      if (ev.target.closest('[data-gm]')) return openGM();
       const b = ev.target.closest('[data-edit]');
       const e = b && S.entries.find(x => x.slug === b.dataset.edit);
       if (e) withSession(dlg, 'Sign in to edit', () => openEditor(dlg, e), e.title);
@@ -800,10 +934,10 @@
   }
   function show(dlg) {
     if (!dlg.open) dlg.showModal();
-    setTimeout(() => { const t = $('input[name=title], textarea, select', dlg); if (t) t.focus(); }, 30);
+    setTimeout(() => { const t = $('[autofocus], input[name=title], textarea, select', dlg); if (t) t.focus(); }, 30);
   }
   function withSession(dlg, kicker, next, title = '') {
-    if (store.get(sessionKey())) return next();
+    if (session()) return next();
     const authors = Object.entries(S.world.authors || {});
     dlg.innerHTML = `<form method="dialog" class="ed-form">
       <p class="kicker">${esc(kicker)}</p>${title ? `<h2>${esc(title)}</h2>` : ''}
@@ -817,43 +951,64 @@
     f.addEventListener('submit', async ev => {
       if (ev.submitter && ev.submitter.value === 'cancel') return;
       ev.preventDefault();
-      if (editCfg().keyHash && await sha256(f.key.value) !== editCfg().keyHash) {
+      const h = await sha256(f.key.value), gm = !!editCfg().gmHash && h === editCfg().gmHash;
+      if (editCfg().keyHash && !gm && h !== editCfg().keyHash) {
         const err = $('.ed-err', f); err.textContent = 'That passkey isn’t right.'; err.hidden = false; return;
       }
-      store.set(sessionKey(), { author: f.author.value, key: f.key.value });
+      store.set(sessionKey(), { author: f.author.value, key: f.key.value, gm });
+      renderGMLink();
       next();
     });
     show(dlg);
   }
-  const helpText = a => `Markdown works. Tap <b>🔗 Link</b> or type <code>[[</code> to link another page. Your text shows as “${esc(a.name)}’s notes”.`;
+  const helpText = who => `Tap <b>🔗 Link</b> or type <code>[[</code> to link another page. This text shows as “${esc(who.name)}’s notes”.`;
   const linkBar = '<div class="ed-bar"><button type="button" class="ed-link">🔗 Link</button></div>';
   const field = ta => `<div class="ed-field">${ta}<div class="ed-links" role="listbox" hidden></div></div>`;
+  const formatHelp = `<details class="ed-format"><summary>Formatting help</summary><table>
+    <tr><td><code>**bold**</code> · <code>*italic*</code> · <code>==highlight==</code></td><td><b>bold</b> · <i>italic</i> · <mark>highlight</mark></td></tr>
+    <tr><td><code>## Heading</code></td><td>a section heading</td></tr>
+    <tr><td><code>- item</code> · <code>1. item</code> · <code>- [ ] to do</code></td><td>lists and checkboxes</td></tr>
+    <tr><td><code>&gt; a quote</code></td><td>a quote</td></tr>
+    <tr><td><code>&gt; [!rumor] Heard at the bar</code><br><code>&gt; the rumor itself</code></td><td>a boxed callout (also note, tip, warning, question)</td></tr>
+    <tr><td><code>| Item | Price |</code><br><code>|---|---|</code><br><code>| Coffee | 2g |</code></td><td>a table</td></tr>
+    <tr><td><code>[[Page]]</code> · <code>[[Page|shown text]]</code></td><td>links to another page</td></tr>
+  </table></details>`;
   async function persist(edit, sess) {
     if (!editCfg().endpoint) {
       const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
       store.set(localKey(), [...all, { ...edit, updated: new Date().toISOString() }]);
       return;
     }
+    const j = await post({ ...edit, world: worldId() }, sess);
+    return j;
+  }
+  async function post(body, sess) {
     const r = await fetch(editCfg().endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ ...edit, world: worldId(), key: sess.key }) });
+      body: JSON.stringify({ ...body, key: sess.key }) });
     const j = await r.json();
     if (!j.ok) {
-      if (/passkey/i.test(j.error || '')) store.set(sessionKey(), null);
+      if (/passkey/i.test(j.error || '') && !/GM/.test(j.error || '')) store.set(sessionKey(), null);
+      // an older save service doesn't know page details, pins, uploads or GM actions yet
+      if (/Unknown (author|action)|Bad world/.test(j.error || '') && (body.action || String(body.author || '').startsWith('@')))
+        throw new Error('the shared save service needs its latest update (GM: redeploy duat-backend/Code.gs as a new version)');
       throw new Error(j.error || 'Save failed');
     }
+    return j;
   }
-  function wireForm(dlg, f, sess, onSave, again) {
-    attachLinker($('textarea', f), $('.ed-links', f), $('.ed-link', f));
+  function wireForm(f, onSave, again) {
+    const ta = $('textarea[name=text]', f);
+    if (ta) attachLinker(ta, $('.ed-links', ta.parentNode), $('.ed-link', f));
     const sw = $('.ed-switch', f);
-    if (sw) sw.addEventListener('click', () => { store.set(sessionKey(), null); again(); });
+    if (sw) sw.addEventListener('click', () => { store.set(sessionKey(), null); renderGMLink(); again(); });
     f.addEventListener('submit', async ev => {
       if (ev.submitter && ev.submitter.value === 'cancel') return;
       ev.preventDefault();
-      const btn = $('.primary', f), err = $('.ed-err', f), label = btn.textContent;
+      const btn = ev.submitter && ev.submitter.classList.contains('primary') ? ev.submitter : $('.primary', f);
+      const err = $('.ed-err', f), label = btn.textContent;
       btn.disabled = true; btn.textContent = 'Saving…';
-      try { await onSave(); }
+      try { await onSave(ev.submitter); }
       catch (x) {
-        err.textContent = `Couldn’t save: ${x.message}. Your text is still here.`; err.hidden = false;
+        err.textContent = `Couldn’t save: ${x.message}.`; err.hidden = false;
         btn.disabled = false; btn.textContent = label;
       }
     });
@@ -862,46 +1017,184 @@
     <p class="ed-err" hidden></p>
     <div class="ed-actions"><button type="button" class="ed-switch">Not ${esc(a.name)}?</button><span></span>
       <button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">${action}</button></div>`;
+  const tabs = (on) => `<div class="ed-tabs" role="tablist">
+    <button type="button" role="tab" data-tab="notes" aria-selected="${on === 'notes'}">Notes</button>
+    <button type="button" role="tab" data-tab="details" aria-selected="${on === 'details'}">Page details</button></div>`;
+  function wireTabs(dlg, e) {
+    dlg.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () =>
+      b.dataset.tab === 'notes' ? openEditor(dlg, e) : openDetails(dlg, e)));
+  }
 
-  function openEditor(dlg, e) {
-    const sess = store.get(sessionKey()), a = authorOf(sess.author);
-    dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
-      <p class="kicker">${esc(a.name)}’s notes on</p><h2>${esc(e.title)}</h2>
+  function openEditor(dlg, e, as) {
+    const sess = session(), me = authorOf(sess.author), gm = isGM();
+    const who = authorOf(gm && as ? as : sess.author);
+    const people = Object.entries(S.world.authors || {});
+    dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${who.color}">
+      ${tabs('notes')}
+      <h2>${esc(e.title)}</h2>
+      ${gm ? `<label class="ed-as">Notes by<select name="as">${people.map(([id, a]) =>
+        `<option value="${esc(id)}"${id === who.id ? ' selected' : ''}>${esc(a.name)}${id === me.id ? ' (you)' : ''}</option>`).join('')}</select></label>` : `<p class="kicker">${esc(who.name)}’s notes</p>`}
       ${linkBar}
-      ${field(`<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(a.name)} know about ${esc(e.title)}?">${esc(ownText(e, a.id))}</textarea>`)}
-      <p class="ed-help">${helpText(a)} Other people’s notes aren’t touched. Save it empty to remove yours.</p>
-      ${footer(a, 'Save')}
+      ${field(`<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(who.name)} know about ${esc(e.title)}?">${esc(ownText(e, who.id))}</textarea>`)}
+      <p class="ed-help">${helpText(who)} Other people’s notes aren’t touched. Save it empty to remove these notes.</p>
+      ${formatHelp}
+      ${footer(me, 'Save')}
     </form>`;
     const f = $('form', dlg);
-    wireForm(dlg, f, sess, async () => {
+    wireTabs(dlg, e);
+    if (gm) f.as.addEventListener('change', () => openEditor(dlg, e, f.as.value));
+    wireForm(f, async () => {
       const body = f.text.value.trim();
-      const text = e.newHeader && e.createdBy === a.id ? `${e.newHeader}\n${body}` : body; // keep a new page's header
-      await persist({ slug: e.slug, author: a.id, text }, sess);
+      const text = e.newHeader && e.createdBy === who.id ? `${e.newHeader}\n${body}` : body; // keep a new page's header
+      await persist({ slug: e.slug, author: who.id, text }, sess);
       location.reload();
     }, () => withSession(dlg, 'Sign in to edit', () => openEditor(dlg, e), e.title));
     show(dlg);
   }
+
+  /* page details: everything that isn't someone's notes */
+  const factRow = (k = '', v = '') => `<div class="fact-row"><input name="fk" placeholder="Label (e.g. Status)" value="${esc(k)}" autocomplete="off">
+    <span class="ed-field"><input name="fv" placeholder="Value — [[links]] work" value="${esc(v)}" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span>
+    <button type="button" class="fact-x" aria-label="Remove row">×</button></div>`;
+  const typeOptions = cur => S.typeOrder.map(t => `<option value="${esc(t)}"${t === cur ? ' selected' : ''}>${esc(typeOf(t).one)}</option>`).join('');
+  const imageField = (url, isMap) => `<div class="ed-image">
+      <span class="ed-thumb">${url ? `<img src="${esc(asset(url))}" alt="">` : ''}</span>
+      <input type="hidden" name="image" value="${esc(url || '')}">
+      <label class="ed-upload">${url ? 'Replace' : 'Upload'} ${isMap ? 'map image' : 'picture'}<input type="file" accept="image/*" hidden></label>
+      ${url && !isMap ? '<button type="button" class="ed-noimg">Remove</button>' : ''}
+      <span class="ed-upmsg muted"></span></div>`;
+  function wireImage(f, isMap) {
+    const box = $('.ed-image', f), file = $('input[type=file]', box);
+    file.addEventListener('change', async () => {
+      const msg = $('.ed-upmsg', box), fl = file.files[0]; if (!fl) return;
+      msg.textContent = 'Uploading…';
+      try {
+        const url = await uploadImage(fl, isMap ? 3200 : 1600);
+        f.image.value = url;
+        $('.ed-thumb', box).innerHTML = `<img src="${esc(asset(url))}" alt="">`;
+        msg.textContent = 'Uploaded.';
+      } catch (x) { msg.textContent = `Upload failed: ${x.message}`; }
+    });
+    const rm = $('.ed-noimg', box);
+    if (rm) rm.addEventListener('click', () => { f.image.value = ''; $('.ed-thumb', box).innerHTML = ''; rm.remove(); });
+  }
+  function openDetails(dlg, e) {
+    const sess = session(), me = authorOf(sess.author), gm = isGM();
+    const facts = Object.entries(e.fm).filter(([k, v]) => !RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length))
+      .map(([k, v]) => [k, Array.isArray(v) ? v.join(', ') : v === true ? 'Yes' : v === false ? 'No' : String(v)]);
+    dlg.innerHTML = `<form method="dialog" class="ed-form ed-write ed-details" style="--c:${typeOf(e.type).color}">
+      ${tabs('details')}
+      <label>Name<input name="title" required maxlength="80" value="${esc(e.title)}" autocomplete="off"></label>
+      <label>Category<select name="type" required>${typeOptions(e.type)}</select></label>
+      <label>Nicknames &amp; other spellings<input name="aliases" value="${esc(e.aliases.join(', '))}" placeholder="Separate with commas" autocomplete="off"></label>
+      <label>Tags<input name="tags" value="${esc(e.tags.join(', '))}" placeholder="Separate with commas" autocomplete="off"></label>
+      <label class="ed-order"${e.type === 'session' ? '' : ' hidden'}>Session number<input name="order" inputmode="numeric" value="${esc(e.order ?? '')}"></label>
+      <fieldset class="ed-facts"><legend>Info box</legend>${facts.map(([k, v]) => factRow(cap(k), v)).join('')}
+        <button type="button" class="fact-add">+ Add row</button></fieldset>
+      <label>Short description <span class="muted">(cards and map pins; leave empty to use the start of the notes)</span>
+        <input name="summary" value="${esc(e.fm.summary || '')}" autocomplete="off"></label>
+      ${imageField(e.image, e.type === 'map')}
+      ${e.type === 'map' ? `<fieldset class="ed-mapset"><legend>Map display</legend>
+        <label class="ed-check"><input type="checkbox" name="plates"${norm(e.fm.pins) === 'labels' ? ' checked' : ''}> Pins are name plates (the label is the tap target)</label>
+        <div>Always label these categories (others appear as you zoom in):<div class="ed-checks">${S.typeOrder.map(t =>
+          `<label class="ed-check"><input type="checkbox" name="major" value="${esc(t)}"${toArray(e.fm.major).map(norm).includes(t) ? ' checked' : ''}> ${esc(typeOf(t).label)}</label>`).join('')}</div></div>
+        <div class="ed-overlay"><span>Overlay drawing (transparent image laid over the map):</span>
+          <input type="hidden" name="overlay" value="${esc(e.fm.overlay || '')}">
+          <span class="ed-ovmsg muted">${e.fm.overlay ? esc(String(e.fm.overlay).split('/').pop()) : 'none'}</span>
+          <label class="ed-upload">Upload overlay<input type="file" accept="image/*" hidden></label>
+          ${e.fm.overlay ? '<button type="button" class="ed-noover">Remove</button>' : ''}</div>
+      </fieldset>` : ''}
+      ${gm ? `<fieldset class="ed-gm"><legend>GM</legend>
+        <label class="ed-check"><input type="checkbox" name="hidden"${e.hidden ? ' checked' : ''}> Hidden from lists and search</label>
+        <label>Merge this page into…<span class="ed-field"><input name="merge" placeholder="Pick a page" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span></label>
+        <button type="submit" value="delete" class="ed-danger">Delete this page</button></fieldset>` : ''}
+      ${footer(me, 'Save details')}
+    </form>`;
+    const f = $('form', dlg);
+    wireTabs(dlg, e);
+    wireImage(f, e.type === 'map');
+    f.type.addEventListener('change', () => { $('.ed-order', f).hidden = f.type.value !== 'session'; });
+    const ov = $('.ed-overlay', f);
+    if (ov) {
+      $('input[type=file]', ov).addEventListener('change', async ev => {
+        const fl = ev.target.files[0], msg = $('.ed-ovmsg', ov); if (!fl) return;
+        msg.textContent = 'Uploading…';
+        try { f.overlay.value = await uploadImage(fl, 3200, true); msg.textContent = 'Uploaded.'; } catch (x) { msg.textContent = `Upload failed: ${x.message}`; }
+      });
+      const rmo = $('.ed-noover', ov);
+      if (rmo) rmo.addEventListener('click', () => { f.overlay.value = ''; $('.ed-ovmsg', ov).textContent = 'none'; rmo.remove(); });
+    }
+    const facts$ = $('.ed-facts', f);
+    const wireFact = row => {
+      $('.fact-x', row).addEventListener('click', () => row.remove());
+      attachLinker($('input[name=fv]', row), $('.ed-links', row), null);
+    };
+    facts$.querySelectorAll('.fact-row').forEach(wireFact);
+    $('.fact-add', f).addEventListener('click', () => {
+      $('.fact-add', f).insertAdjacentHTML('beforebegin', factRow());
+      const row = [...facts$.querySelectorAll('.fact-row')].pop(); wireFact(row); $('input', row).focus();
+    });
+    let mergeInto = null;
+    if (gm) attachPicker(f.merge, $('.ed-gm .ed-links', f), t => { if (t !== e) { mergeInto = t; f.merge.value = t.title; } }, true);
+    wireForm(f, async sub => {
+      const list = v => v.split(',').map(x => x.trim()).filter(Boolean);
+      const title = f.title.value.trim().replace(/\s+/g, ' ');
+      const clash = resolve(title);
+      if (clash && clash !== e) throw new Error(`“${clash.title}” is already a page name or nickname`);
+      if (e.type === 'map' && !f.image.value) throw new Error('a map needs an image');
+      const meta = { title, type: f.type.value, aliases: list(f.aliases.value).filter(a => norm(a) !== norm(title)), tags: list(f.tags.value),
+        summary: f.summary.value.trim(), image: f.image.value, order: f.type.value === 'session' ? f.order.value.trim() : e.order ?? '',
+        ...(e.type === 'map' ? { pinstyle: f.plates.checked ? 'labels' : '', major: [...f.querySelectorAll('input[name=major]:checked')].map(x => x.value), overlay: f.overlay.value } : {}),
+        facts: Object.fromEntries([...facts$.querySelectorAll('.fact-row')].map(r => [$('input[name=fk]', r).value.trim(), $('input[name=fv]', r).value.trim()]).filter(([k, v]) => k && v)) };
+      if (gm) {
+        meta.hidden = f.hidden.checked;
+        if (sub && sub.value === 'delete') {
+          if (!confirm(`Delete “${e.title}” for everyone?`)) throw new Error('not deleted');
+          meta.deleted = true;
+        }
+        if (mergeInto && f.merge.value.trim()) {
+          if (!confirm(`Merge “${e.title}” into “${mergeInto.title}”? Its notes move there and its name becomes a nickname.`)) throw new Error('not merged');
+          meta.mergeInto = mergeInto.slug;
+        }
+      }
+      await persist({ slug: e.slug, author: '@meta', text: JSON.stringify(meta) }, sess);
+      if (meta.deleted || meta.mergeInto) location.hash = meta.mergeInto ? href(mergeInto) : '#/';
+      location.reload();
+    }, () => withSession(dlg, 'Sign in to edit', () => openDetails(dlg, e), e.title));
+    show(dlg);
+  }
+
   function openCreator(dlg) {
-    const sess = store.get(sessionKey()), a = authorOf(sess.author);
-    const types = S.typeOrder.filter(t => t !== 'map');
+    const sess = session(), a = authorOf(sess.author);
     dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
       <p class="kicker">New page</p><h2>Add to the catalog</h2>
       <label>Name<input name="title" required maxlength="80" autocomplete="off" placeholder="e.g. Madame Vex"></label>
-      <label>Category<select name="type" required><option value="">Choose…</option>${types.map(t =>
-        `<option value="${esc(t)}">${esc(typeOf(t).one)}</option>`).join('')}</select></label>
+      <label>Category<select name="type" required><option value="">Choose…</option>${typeOptions('')}</select></label>
+      <div class="ed-newmap" hidden>${imageField('', true)}</div>
       <label for="ed-new-text">${esc(a.name)}’s notes</label>
       ${linkBar}
-      ${field('<textarea id="ed-new-text" name="text" rows="9" spellcheck="true" required placeholder="What do you know about it?"></textarea>')}
-      <p class="ed-help">${helpText(a)}</p>
+      ${field('<textarea id="ed-new-text" name="text" rows="8" spellcheck="true" placeholder="What do you know about it?"></textarea>')}
+      <p class="ed-help">${helpText(a)} Nicknames, tags, info-box rows and a picture can be added afterwards under ✎ Edit → Page details.</p>
+      ${formatHelp}
       ${footer(a, 'Create page')}
     </form>`;
     const f = $('form', dlg);
-    wireForm(dlg, f, sess, async () => {
-      const title = f.title.value.trim().replace(/\s+/g, ' '), slug = slugify(title);
+    wireImage(f, true);
+    f.type.addEventListener('change', () => { $('.ed-newmap', f).hidden = f.type.value !== 'map'; f.text.required = f.type.value !== 'map'; });
+    f.text.required = true;
+    wireForm(f, async () => {
+      const title = f.title.value.trim().replace(/\s+/g, ' '), slug = slugify(title), type = f.type.value;
       const clash = resolve(title) || S.entries.find(x => x.slug === slug);
       if (!slug) throw new Error('that name needs some letters');
       if (clash) throw new Error(`“${clash.title}” already has a page. Open it and use ✎ Edit`);
-      const header = `---\ntitle: "${title.replace(/"/g, '’')}"\ntype: ${f.type.value}\n---`;
+      if (type === 'map' && !f.image.value) throw new Error('upload the map image first');
+      const extra = [];
+      if (type === 'map') extra.push(`image: "${f.image.value}"`, 'pins: labels');
+      if (type === 'session') {
+        const n = Math.max(0, ...S.entries.filter(x => x.type === 'session').map(x => x.order || 0)) + 1;
+        extra.push(`order: ${n}`, `date: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
+      }
+      const header = `---\ntitle: "${title.replace(/"/g, '’')}"\ntype: ${type}${extra.length ? '\n' + extra.join('\n') : ''}\n---`;
       await persist({ slug, author: a.id, text: `${header}\n${f.text.value.trim()}` }, sess);
       location.hash = '#/e/' + slug;
       location.reload();
@@ -909,11 +1202,111 @@
     show(dlg);
   }
 
+  /* image upload: shrink in the browser, then store with the save service (or inline in preview mode) */
+  async function uploadImage(file, maxSide, keepAlpha) {
+    if (!/^image\//.test(file.type)) throw new Error('that isn’t an image');
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    let url = keepAlpha ? c.toDataURL('image/png') : c.toDataURL('image/webp', 0.85);
+    if (!keepAlpha && !url.startsWith('data:image/webp')) url = c.toDataURL('image/jpeg', 0.85);
+    if (!editCfg().endpoint) return url;
+    const [, mime, data] = url.match(/^data:([^;]+);base64,(.*)$/);
+    const j = await post({ action: 'upload', world: worldId(), name: `${slugify(file.name.replace(/\.\w+$/, '')) || 'image'}.${mime.split('/')[1]}`, mime, data }, session());
+    return j.url;
+  }
+
+  /* GM tools: export edits back into .md files, then clear the shared sheet */
+  function renderGMLink() {
+    const slot = $('.foot-gm'); if (!slot) return;
+    slot.innerHTML = isGM() ? '<button type="button" class="foot-link" data-gm>GM tools</button>' : '';
+  }
+  function openGM() {
+    const dlg = S.dlg, changed = S.entries.filter(e => e.dirty);
+    dlg.innerHTML = `<form method="dialog" class="ed-form">
+      <p class="kicker">GM tools</p><h2>Fold edits into the files</h2>
+      <p>${changed.length} page${changed.length === 1 ? '' : 's'} changed on the site${S.deleted.length ? `, ${S.deleted.length} deleted or merged` : ''}. Export them, apply the file with <code>duat-backend/apply_export.py</code>, deploy, then clear the shared edits so the files are the single source again.</p>
+      <div class="ed-actions ed-stack">
+        <button type="button" data-g="export" class="primary">1. Download export</button>
+        <button type="button" data-g="clear" class="ed-danger" disabled>2. Clear shared edits</button></div>
+      <p class="ed-err" hidden></p>
+      <div class="ed-actions"><button type="button" data-g="out">Sign out</button><span></span><button value="cancel">Close</button></div>
+    </form>`;
+    const f = $('form', dlg), err = $('.ed-err', f);
+    f.addEventListener('click', async ev => {
+      const b = ev.target.closest('[data-g]'); if (!b) return;
+      if (b.dataset.g === 'out') { store.set(sessionKey(), null); renderGMLink(); dlg.close(); }
+      if (b.dataset.g === 'export') {
+        const out = { world: worldId(), exported: new Date().toISOString(), entries: Object.fromEntries(changed.map(e => [e.slug, toMarkdown(e)])), deleted: S.deleted };
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+        a.download = `duat-export-${worldId()}-${out.exported.slice(0, 10)}.json`; a.click();
+        $('[data-g=clear]', f).disabled = false;
+      }
+      if (b.dataset.g === 'clear') {
+        if (!confirm('Clear every shared edit for this world? Only do this after the export has been applied and deployed.')) return;
+        try {
+          if (editCfg().endpoint) await post({ action: 'clear', world: worldId() }, session()); else store.set(localKey(), null);
+          location.reload();
+        } catch (x) { err.textContent = x.message; err.hidden = false; }
+      }
+    });
+    show(dlg);
+  }
+  const fmVal = v => {
+    if (Array.isArray(v)) return `[${v.map(x => String(x).replace(/,/g, '，')).join(', ')}]`;
+    if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+    v = String(v);
+    return /^[\s"'[{>|#&*!%@`-]|:\s|\[\[|,/.test(v) ? `"${v.replace(/"/g, '’')}"` : v;
+  };
+  function toMarkdown(e) {
+    const fm = { title: e.title, type: e.type };
+    if (e.aliases.length) fm.aliases = e.aliases;
+    if (e.tags.length) fm.tags = e.tags;
+    if (e.fm.summary) fm.summary = e.fm.summary;
+    if (e.image) fm.image = e.image;
+    if (e.order != null) fm.order = e.order;
+    if (e.hidden) fm.hidden = true;
+    if (e.fm.author && !/^:::/m.test(e.body)) fm.author = toArray(e.fm.author).join(', ');
+    for (const k of ['pins', 'overlay', 'major']) if (e.fm[k]) fm[k] = e.fm[k];
+    for (const [k, v] of Object.entries(e.fm)) if (!RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length)) fm[k] = v;
+    const pins = e.pins.length ? `\n\n\`\`\`pins\n${e.pins.map(p => `${p.x}, ${p.y} | ${p.target ? `[[${p.target}${p.rawLabel ? '|' + p.rawLabel : ''}]]` : p.rawLabel}${p.note ? ' | ' + p.note : ''}`).join('\n')}\n\`\`\`` : '';
+    return `---\n${Object.entries(fm).map(([k, v]) => `${k}: ${fmVal(v)}`).join('\n')}\n---\n${e.body.trim()}${pins}\n`;
+  }
+
+  /* pick-a-page box for single-line inputs (pins, merge) */
+  function attachPicker(input, box, onPick, withHidden) {
+    let hits = [], cur = 0;
+    const close = () => { box.hidden = true; };
+    const draw = () => {
+      const q = input.value.trim();
+      if (!q) return close();
+      hits = nameMatches(q, withHidden).slice(0, 6); cur = Math.min(cur, Math.max(hits.length - 1, 0));
+      if (!hits.length) return close();
+      box.innerHTML = hits.map((e, i) => `<button type="button" role="option" data-i="${i}" class="${i === cur ? 'is-cur' : ''}" style="--c:${typeOf(e.type).color}">
+        <span class="sr-type">${esc(typeOf(e.type).one)}</span><span>${esc(e.title)}</span></button>`).join('');
+      box.hidden = false; box.style.top = (input.offsetTop + input.offsetHeight + 4) + 'px';
+    };
+    const pick = i => { if (hits[i]) { onPick(hits[i]); close(); } };
+    input.addEventListener('input', () => { cur = 0; draw(); });
+    input.addEventListener('blur', () => setTimeout(close, 150));
+    input.addEventListener('keydown', ev => {
+      if (box.hidden) return;
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); cur = (cur + (ev.key === 'ArrowDown' ? 1 : hits.length - 1)) % hits.length; draw(); }
+      else if (ev.key === 'Enter') { ev.preventDefault(); pick(cur); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); close(); }
+    });
+    box.addEventListener('pointerdown', ev => ev.preventDefault());
+    box.addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if (b) pick(+b.dataset.i); });
+  }
+
   /* [[ link helper: type [[ (or tap 🔗 Link) and pick a page. The list floats under the line
      being typed (nothing on the page moves) and matches page names and aliases only. */
-  function nameMatches(q) {
+  function nameMatches(q, withHidden) {
     q = norm(q);
-    const all = S.entries.filter(e => !e.hidden);
+    const all = S.entries.filter(e => withHidden || !e.hidden);
     if (!q) return all.slice().sort(byTitle);
     const score = e => Math.max(...[e.title, ...e.aliases].map(n => {
       n = norm(n);
@@ -942,6 +1335,7 @@
     };
     const close = () => { box.hidden = true; };
     const place = () => {
+      if (ta.tagName === 'INPUT') { box.style.top = (ta.offsetTop + ta.offsetHeight + 4) + 'px'; return; }
       const y = caretTop(ta), h = box.offsetHeight, room = ta.clientHeight;
       box.style.top = (y + 6 + h <= room + 40 || y < h + 12 ? y + 6 : y - h - 28) + 'px';
     };
@@ -982,7 +1376,7 @@
     });
     box.addEventListener('pointerdown', ev => ev.preventDefault()); // keep the keyboard up while choosing
     box.addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if (b) pick(+b.dataset.i); });
-    btn.addEventListener('click', () => {
+    if (btn) btn.addEventListener('click', () => {
       const p = ta.selectionStart ?? ta.value.length;
       ta.value = ta.value.slice(0, p) + '[[' + ta.value.slice(ta.selectionEnd ?? p);
       ta.focus(); ta.setSelectionRange(p + 2, p + 2); cur = 0; draw();
@@ -1026,7 +1420,6 @@
   /* ---------- boot ---------- */
   async function boot() {
     const root = document.getElementById('duat');
-    S.edit = new URLSearchParams(location.search).has('edit');
     try {
       const res = await fetch(root.dataset.world || 'world.json', { cache: 'no-cache' });
       if (!res.ok) throw new Error(`world.json → HTTP ${res.status}`);
@@ -1051,6 +1444,7 @@
       S.typeOrder = [...new Set([...(w.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
       renderChrome(root);
       wireEditing();
+      renderGMLink();
       wireAbout();
       window.addEventListener('hashchange', route);
       route();

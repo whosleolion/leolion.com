@@ -469,3 +469,71 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .about-duat::backdrop { background: rgba(0, 0, 0, 0.6); }
 .about-duat p { margin: 0 0 16px; line-height: 1.55; }
 .about-duat button { padding: 8px 16px; border: 0; border-radius: 8px; background: var(--accent); color: #111; font-weight: 700; cursor: pointer; }
+
+/* ---------- editing v2: tabs, page details, GM, pins ---------- */
+.home-intro-wrap { position: relative; }
+.home-intro-wrap .edit-btn { top: -6px; }
+.home-intro-wrap .prose { padding-right: 90px; }
+.foot-right { display: inline-flex; gap: 16px; align-items: baseline; }
+.foot-link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ed-tabs { display: flex; gap: 4px; margin: -4px 0 4px; border-bottom: 1px solid var(--line); }
+.ed-tabs button {
+  padding: 8px 14px; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  color: var(--muted); font-size: 0.92rem; font-weight: 600; cursor: pointer;
+}
+.ed-tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--c, var(--accent)); }
+.ed-as { flex-direction: row !important; align-items: center; gap: 10px !important; }
+.ed-as select { width: auto; }
+.ed-details { max-height: calc(100svh - 40px); overflow-y: auto; }
+.ed-form fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+.ed-form legend { padding: 0 6px; font-size: 0.8rem; color: var(--muted); }
+.fact-row { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) 32px; gap: 6px; align-items: center; }
+.fact-row .ed-field { display: block; }
+.fact-x { height: 36px; background: none; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+.fact-add, .ed-noimg { align-self: flex-start; padding: 6px 12px; background: var(--panel); border: 1px dashed var(--line); border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+.ed-image { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ed-thumb img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); display: block; }
+.ed-upload { flex-direction: row !important; padding: 7px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--text) !important; cursor: pointer; }
+.ed-upmsg { font-size: 0.82rem; }
+.ed-check { flex-direction: row !important; align-items: center; gap: 8px !important; color: var(--text) !important; }
+.ed-check input { width: auto; }
+.ed-gm { border-color: color-mix(in srgb, #ff7a7a 40%, var(--line)) !important; }
+.ed-danger { align-self: flex-start; padding: 8px 14px; border-radius: 8px; border: 1px solid #ff7a7a; background: none; color: #ff7a7a; cursor: pointer; font-weight: 600; }
+.ed-danger:disabled { opacity: 0.4; cursor: default; }
+.ed-stack { flex-direction: column; align-items: stretch; }
+.ed-stack button { width: 100%; }
+.ed-format { font-size: 0.85rem; color: var(--muted); }
+.ed-format summary { cursor: pointer; }
+.ed-format table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+.ed-format td { padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+.ed-format td:first-child { width: 58%; }
+/* pin editing on maps */
+.pin-bar {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 6;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
+  width: max-content; max-width: calc(100% - 24px); padding: 8px 10px 8px 14px;
+  background: var(--panel-2); border: 1px solid var(--accent); border-radius: 12px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  font-size: 0.85rem;
+}
+.pin-bar[hidden] { display: none; }
+.pin-bar button { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-size: 0.85rem; }
+.pin-bar .primary { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.pin-editing { cursor: crosshair; }
+.pin-editing ~ .map-more, .pin-editing .map-more { display: none; }
+.pin.is-moving .pin-label, .pin.is-moving .pin-dot { outline: 2px dashed var(--accent); outline-offset: 3px; }
+.pin-form { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.pin-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+.pin-form label[hidden] { display: none; }
+.pin-form input { width: 100%; padding: 8px 10px; font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.pin-form .ed-field { position: relative; display: block; }
+.pin-form .ed-actions button { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-size: 0.85rem; }
+.pin-form .ed-actions .primary { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.pin-linked { margin: 0; font-size: 0.8rem; }
+.map-card:has(.pin-form) { max-height: 75%; }
+.ed-checks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; }
+.ed-overlay { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+.ed-noover { padding: 6px 12px; background: var(--panel); border: 1px dashed var(--line); border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+.ed-mapset > div { font-size: 0.85rem; color: var(--muted); }
+.map-card:not([hidden]) ~ .pin-bar { display: none; }
+.pin-editing .map-card { top: 12px; bottom: auto; z-index: 7; }
+@media (min-width: 700px) { .pin-editing .map-card { top: 12px; right: 64px; } }
