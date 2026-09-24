@@ -536,6 +536,7 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .ed-mapset > div { font-size: 0.85rem; color: var(--muted); }
 .map-card:not([hidden]) ~ .pin-bar { display: none; }
 .pin-editing .map-card { top: 12px; bottom: auto; z-index: 7; }
+.pin-editing .map-card:has(.pin-form) { max-height: calc(100% - 24px); overflow: auto; }
 @media (min-width: 700px) { .pin-editing .map-card { top: 12px; right: 64px; } }
 
 /* GM settings */
@@ -699,3 +700,36 @@ a.wl-missing:hover { color: var(--text); border-bottom-color: var(--muted); }
   padding: 18px 18px 40vh; font: 18px/1.65 var(--font-ui); caret-color: var(--c, var(--accent));
 }
 .editor.is-focus .ed-main textarea:focus { border: 0; }
+
+/* ghost pins on the map: a plate with a dashed edge, for pages nobody has written yet */
+.label-pins .pin-missing .pin-label {
+  color: #d8cfbd; font-style: italic; background: rgba(20, 17, 15, 0.72);
+  border: 1px dashed rgba(244, 236, 216, 0.5); border-bottom: 2px dashed rgba(244, 236, 216, 0.7);
+}
+
+/* pin form: future page or just a label? */
+.pin-linked { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pin-linked[hidden], .pin-kind[hidden], .pin-show[hidden] { display: none; }
+.pk-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex: none; }
+.pin-kind { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; }
+.pk-q { padding: 0; margin-bottom: 2px; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+.pk-opt {
+  display: grid !important; grid-template-columns: 1fr; gap: 8px !important; padding: 10px 12px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text) !important;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pk-opt:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); box-shadow: 0 0 0 1px var(--accent) inset; }
+.pk-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.pk-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pk-txt { display: flex; flex-direction: column; gap: 2px; font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.pk-txt b { font-size: 0.9rem; color: var(--text); }
+.pk-prev {
+  justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 4px 11px 3px; border-radius: 4px; background: #3b4a2e; /* a scrap of map behind the preview */
+  box-shadow: 0 0 0 4px #3b4a2e;
+}
+.pk-ghost { font: italic 700 0.84rem/1.2 var(--font-display); color: #d8cfbd; background: rgba(20, 17, 15, 0.85); border: 1px dashed rgba(244, 236, 216, 0.5); border-bottom: 2px dashed rgba(244, 236, 216, 0.7); }
+.pk-label { font: 700 0.68rem/1.4 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; color: #fff8e6; text-shadow: 0 0 3px #000, 0 1px 1px #000; }
+.pin-kind { flex-direction: row; flex-wrap: wrap; } .pin-kind .pk-q { flex-basis: 100%; } .pk-opt { flex: 1 1 0; min-width: 0; padding: 10px; }
+.pk-opt[hidden] { display: none !important; }
+.pk-page { font: 700 0.84rem/1.2 var(--font-display); color: #f4ecd8; background: #14110f; border: 1px solid #000; border-bottom: 3px solid var(--c, var(--accent)); }

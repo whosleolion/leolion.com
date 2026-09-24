@@ -116,7 +116,7 @@ Everything in the catalog can be entered from the page itself; the files are jus
 - **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, the category's fields, nicknames and other spellings, tags, other info rows (label + value, markup), a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
 - **The home page** (kicker, tagline and welcome text): the ✎ Edit beside the title (GM only).
 - **✎ on a chart**: add boxes, text, frames and arrows (see Charts).
-- **📍 on a map**: tap the map to add a pin (pick a page, or type a plain label), tap a pin to change, move or remove it, then **Save pins**.
+- **📍 on a map**: tap the map to add a pin, tap a pin to change, move or remove it, then **Save pins**. Pick a page from the list to link it. If the name you type has no page, the pin form asks what it should be: a **Future page** (a ghost: shows dashed on the map, and anyone can tap it and write the page later) or **Just a label** (a plain name like a road). It remembers your last choice, and picks Future page when the name is already mentioned somewhere. A nickname of an existing page offers **Link to** that page instead.
 - **GM, on any map:** tap a pin and its card shows **Remove pin** (asks first) and **Edit pins**.
 
 **Signing in** is the name chip in the top bar ("Sign in"): pick your name and enter the passkey. You stay signed in on that device; the chip then shows your name, and its menu has GM tools (for the GM) and Sign out. Tapping ✎ Edit while signed out asks you to sign in first.

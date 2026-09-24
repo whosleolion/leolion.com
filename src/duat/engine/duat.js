@@ -586,7 +586,7 @@
       pins = list.map((p, i) => {
         const el = document.createElement('button');
         el.type = 'button';
-        el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.entry ? '' : ' pin-plain') + ' tier-' + tierOf(p) + (i === moving ? ' is-moving' : '');
+        el.className = 'pin' + (p.target && !p.entry ? ' pin-missing' : '') + (p.target ? '' : ' pin-plain') + ' tier-' + tierOf(p) + (i === moving ? ' is-moving' : '');
         el.dataset.i = i;
         el.style.setProperty('--c', p.entry ? typeOf(p.entry.type).color : 'var(--text)');
         el.innerHTML = `<span class="pin-dot"></span><span class="pin-label">${esc(p.label)}</span>`;
@@ -688,30 +688,60 @@
       pinBar.hidden = false; select(-1);
       buildPins(work.map(livePin));
     }
+    // A typed name with no page asks what the pin should be: a future (ghost) page, or just a label.
+    const PINKIND_KEY = 'duat:pin-kind';
     function pinForm(i, pos) {
       const p = i >= 0 ? work[i] : { x: pos.x, y: pos.y, target: null, rawLabel: '', note: '' };
-      let target = p.target;
+      let target = p.target && resolve(p.target) ? p.target : null;          // a real page
+      let kind = p.target && !target ? 'ghost' : i >= 0 ? 'label' : null;     // for names with no page
+      let chosen = i >= 0;                                                      // the person picked a kind (or it's an existing pin)
       pins.forEach((q, j) => q.el.classList.toggle('is-sel', j === i));
       cardEl.style.setProperty('--c', 'var(--accent)');
       cardEl.innerHTML = `<button type="button" class="mc-close" aria-label="Close">×</button>
         <form class="mc-body pin-form">
           <p class="kicker">${i >= 0 ? 'Change pin' : 'New pin'}</p>
-          <label>Page or place<span class="ed-field"><input name="name" autocomplete="off" required value="${esc(target || p.rawLabel)}" placeholder="Start typing a page name…"><span class="ed-links" role="listbox" hidden></span></span></label>
-          <p class="pin-linked muted">${target ? `Links to <b>${esc(target)}</b>` : 'Not linked to a page (just a label)'}</p>
-          <label class="pin-show"${target ? '' : ' hidden'}>Label on the map (optional)<input name="label" autocomplete="off" value="${esc(target ? p.rawLabel : '')}" placeholder="Defaults to the page name"></label>
+          <label>Name<span class="ed-field"><input name="name" autocomplete="off" required value="${esc(p.target || p.rawLabel)}" placeholder="A page, or any place name…"><span class="ed-links" role="listbox" hidden></span></span></label>
+          <p class="pin-linked" hidden></p>
+          <fieldset class="pin-kind" hidden>
+            <legend class="pk-q"></legend>
+            <label class="pk-opt pk-opt-ghost"><input type="radio" name="kind" value="ghost"><span class="pk-prev pk-ghost"></span>
+              <span class="pk-txt"><b>Future page</b><span>Unwritten for now. Anyone can write it later.</span></span></label>
+            <label class="pk-opt pk-opt-link" hidden><input type="radio" name="kind" value="link"><span class="pk-prev pk-page"></span>
+              <span class="pk-txt"><b></b><span>Opens that page.</span></span></label>
+            <label class="pk-opt"><input type="radio" name="kind" value="label"><span class="pk-prev pk-label"></span>
+              <span class="pk-txt"><b>Just a label</b><span>A name on the map, like a road.</span></span></label>
+          </fieldset>
+          <label class="pin-show" hidden>Label on the map (optional)<input name="label" autocomplete="off" value="${esc(p.target ? p.rawLabel : '')}" placeholder="Defaults to the name"></label>
           <label>Note (optional)<input name="note" autocomplete="off" value="${esc(p.note)}"></label>
           <div class="ed-actions">${i >= 0 ? '<button type="button" data-pf="remove">Remove</button><button type="button" data-pf="move">Move</button>' : ''}<span></span>
             <button type="submit" class="primary">${i >= 0 ? 'Done' : 'Add pin'}</button></div>
         </form>`;
       cardEl.hidden = false;
-      const f = $('form', cardEl), inp = f.name, linked = $('.pin-linked', f), show = $('.pin-show', f);
-      attachPicker(inp, $('.ed-links', f), e => {
-        target = e.title; inp.value = e.title;
-        linked.innerHTML = `Links to <b>${esc(e.title)}</b>`; show.hidden = false;
-      });
-      inp.addEventListener('input', () => {
-        if (target && norm(inp.value) !== norm(target)) { target = null; linked.textContent = 'Not linked to a page (just a label)'; show.hidden = true; }
-      });
+      const f = $('form', cardEl), inp = f.name, linked = $('.pin-linked', f), show = $('.pin-show', f), box = $('.pin-kind', f);
+      const exact = name => S.entries.find(x => norm(x.title) === norm(name));   // nicknames stay labels unless picked
+      function update() {
+        const name = inp.value.trim(), page = target ? resolve(target) : exact(name);
+        linked.hidden = !page;
+        if (page) linked.innerHTML = `<span class="pk-dot" style="--c:${typeOf(page.type).color}"></span>Links to <b>${esc(page.title)}</b> <span class="muted">${esc(typeOf(page.type).one)}</span>`;
+        box.hidden = !!page || !name;
+        if (!page && name) {
+          // a nickname of a real page: offer that page instead of a future one
+          const nick = resolve(name), g = !nick && ghost(name), n = g ? g.backlinks.length + g.onMaps.length : 0;
+          $('.pk-opt-ghost', f).hidden = !!nick; $('.pk-opt-link', f).hidden = !nick;
+          if (nick) { $('.pk-opt-link b', f).textContent = `Link to ${nick.title}`; $('.pk-opt-link', f).style.setProperty('--c', typeOf(nick.type).color); }
+          if (!chosen || (nick ? kind === 'ghost' : kind === 'link')) kind = nick ? 'label' : g ? 'ghost' : store.get(PINKIND_KEY) || 'ghost';
+          $('.pk-q', f).innerHTML = nick ? `“${esc(name)}” is a nickname for <b>${esc(nick.title)}</b>. Make this pin…`
+            : g ? `“${esc(name)}” has no page yet, but it’s already mentioned in ${n} place${n === 1 ? '' : 's'}. Make this pin…`
+            : `There’s no page called “${esc(name)}”. Make this pin…`;
+          f.querySelectorAll('.pk-prev').forEach(x => { x.textContent = f.label.value.trim() || name; });
+          f.querySelectorAll('input[name=kind]').forEach(r => { r.checked = r.value === kind; });
+        }
+        show.hidden = !(page || (name && kind !== 'label'));
+      }
+      attachPicker(inp, $('.ed-links', f), e => { target = e.title; inp.value = e.title; update(); });
+      inp.addEventListener('input', () => { if (target && norm(inp.value) !== norm(target)) target = null; update(); });
+      f.label.addEventListener('input', update);
+      box.addEventListener('change', ev => { if (ev.target.name === 'kind') { kind = ev.target.value; chosen = true; if (kind !== 'link') store.set(PINKIND_KEY, kind); update(); } });
       f.addEventListener('click', ev => {
         const b = ev.target.closest('[data-pf]'); if (!b) return;
         if (b.dataset.pf === 'remove') { work.splice(i, 1); cardEl.hidden = true; buildPins(work.map(livePin)); }
@@ -720,12 +750,15 @@
       f.addEventListener('submit', ev => {
         ev.preventDefault();
         const name = inp.value.trim(); if (!name) return;
-        const hit = !target && S.entries.find(x => norm(x.title) === norm(name)); // typed a page's exact name without picking it
-        if (hit) target = hit.title;
-        const out = { x: p.x, y: p.y, target: target || null, rawLabel: (target ? f.label.value : name).trim().replace(/\|/g, '/'), note: f.note.value.trim().replace(/\|/g, '/') };
+        const page = target ? resolve(target) : exact(name);
+        const nick = !page && kind === 'link' && resolve(name);
+        const tgt = page ? page.title : nick ? nick.title : kind === 'ghost' ? name : null;
+        const clean = v => v.trim().replace(/\|/g, '/');
+        const out = { x: p.x, y: p.y, target: tgt, rawLabel: clean(nick ? f.label.value || name : tgt ? f.label.value : name), note: clean(f.note.value) };
         if (i >= 0) work[i] = out; else work.push(out);
         cardEl.hidden = true; buildPins(work.map(livePin));
       });
+      update();
       setTimeout(() => inp.focus(), 30);
     }
     const pinLine = p => `${p.x.toFixed(1)}, ${p.y.toFixed(1)} | ${p.target ? `[[${p.target}${p.rawLabel ? '|' + p.rawLabel : ''}]]` : p.rawLabel}${p.note ? ' | ' + p.note : ''}`;
