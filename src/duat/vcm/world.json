@@ -305,5 +305,6 @@
     "character",
     "faction"
   ],
-  "foldBackUrl": "https://github.com/whosleolion/leolion.com/actions/workflows/fold-back.yml"
+  "foldBackUrl": "https://github.com/whosleolion/leolion.com/actions/workflows/fold-back.yml",
+  "homeRecent": false
 }
