@@ -22,7 +22,7 @@ const t = (name, ok, detail = '') => { if (!ok) failed++; console.log(ok ? 'PASS
 
 async function open(browser, { svc, delay = 0, hang = false, device = { viewport: { width: 1280, height: 900 } } } = {}) {
   const ctx = await browser.newContext({ ...device, serviceWorkers: 'block' });
-  await ctx.route('**/duat/vcm/world.json', async r => { const res = await r.fetch(); const j = await res.json(); j.edit = { endpoint: EP }; r.fulfill({ response: res, json: j }); });
+  await ctx.route('**/duat/vcm/world.json', async r => { try { const res = await r.fetch(); const j = await res.json(); j.edit = { endpoint: EP }; j.homeRecent = true; await r.fulfill({ response: res, json: j }); } catch {} });
   await ctx.route(EP + '**', async r => {
     if (hang) return;                                     // never answers
     if (delay) await new Promise(res => setTimeout(res, delay));
@@ -157,6 +157,25 @@ async function signIn(page, who, key) {
     t('no script errors (at the table)', !page.errors.length, page.errors.join('; '));
     await ctx.close(); }
 
+  // ---- dragging map pins ----
+  { const { ctx, page } = await open(browser, { svc });
+    await page.goto(base() + '#/e/vista-city'); await page.waitForSelector('.map-stage.is-ready');
+    await signIn(page, 'leo', GM); await page.click('[data-act=pins]'); await page.waitForSelector('.pin-editing');
+    const label = page.locator('.pin', { hasText: 'Dogwall' }).locator('.pin-label');
+    const bb = await label.boundingBox();
+    await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down();
+    await page.mouse.move(bb.x + bb.width / 2 + 40, bb.y + bb.height / 2 + 30, { steps: 6 }); await page.mouse.move(bb.x + bb.width / 2 + 80, bb.y + bb.height / 2 + 60, { steps: 6 }); await page.mouse.up();
+    await page.waitForTimeout(150);
+    t('dragging a pin doesn’t open its form', !(await page.isVisible('.pin-form')));
+    const bb2 = await label.boundingBox();
+    t('the pin follows the drag', Math.abs(bb2.x - bb.x - 80) < 6 && Math.abs(bb2.y - bb.y - 60) < 6, JSON.stringify([bb2.x - bb.x, bb2.y - bb.y]));
+    await label.click(); t('tapping a pin still opens its form', await page.isVisible('.pin-form'));
+    await page.click('.map-card .mc-close');
+    await Promise.all([page.waitForNavigation(), page.click('[data-pinbar=save]')]); await page.waitForSelector('.map-stage.is-ready');
+    const row = svc.get({ world: wid }).edits.find(x => x.slug === 'vista-city' && x.author === '@pins');
+    t('saved with the new spot', row && !/^66\.3, 70\.3 \| \[\[Dogwall\]\]/m.test(row.text) && /\[\[Dogwall\]\]/.test(row.text), row && row.text.split('\n').find(l => /Dogwall/.test(l)));
+    await ctx.close(); }
+
   // ---- polish: typo help, chart keyboard ----
   { const { ctx, page } = await open(browser, { svc });
     await page.goto(base()); await page.waitForSelector('.card');
@@ -181,6 +200,11 @@ async function signIn(page, who, key) {
     fs.rmSync(tmp, { recursive: true });
     await ctx.close(); }
 
+  { const c2 = await browser.newContext({ serviceWorkers: 'block' }); const p2 = await c2.newPage();
+    await c2.route(EP + '**', r => r.fulfill({ json: svc.get({ world: wid }) }));
+    await p2.goto(base()); await p2.waitForSelector('.card');
+    t('world.json "homeRecent": false hides the home strip', !(await p2.$('.recent')));
+    await c2.close(); }
   t('settings rows never carry passkey hashes', !svc.get({ world: wid }).edits.some(x => /keyHash|gmHash/.test(x.text)));
   await browser.close(); server.close();
   console.log(failed ? `\n${failed} failed` : '\nall passed');

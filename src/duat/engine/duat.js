@@ -497,6 +497,7 @@
   const changeLine = c => { const who = c.who && authorOf(c.who).name;
     return `${esc(c.what)}${who && !c.what.includes(who) ? ` · ${esc(who)}` : ''} · ${esc(ago(c.updated))}`; };
   function recentStrip() {
+    if (S.world.homeRecent === false) return '';     // world.json "homeRecent": false hides the strip (the #/recent page stays)
     const list = recentChanges().slice(0, 6);
     if (!list.length) return '';
     const fresh = list.filter(c => isNew(c.updated)).length;
@@ -674,7 +675,7 @@
           </div>
         </div>
         <div class="map-card" hidden></div>
-        <div class="pin-bar" hidden><span>Tap the map to add a pin. Tap a pin to change it.</span>
+        <div class="pin-bar" hidden><span>Tap the map to add a pin. Drag a pin to move it; tap it to change it.</span>
           <button type="button" data-pinbar="cancel">Cancel</button><button type="button" data-pinbar="save" class="primary">Save pins</button></div>
         <a class="map-more" href="#about-map">About this map ↓</a>
       </div>
@@ -888,16 +889,27 @@
     const pts = new Map();
     let moved = false, sx = 0, sy = 0, lastTap = 0, lx = 0, ly = 0;
     const rel = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    let pinDrag = -1;   // editing pins: the pin being dragged
     const onDown = e => {
       if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.map-hud, .map-card, .map-more, .pin-bar')) return;
       pts.set(e.pointerId, rel(e));
-      if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else moved = true;
+      if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else { moved = true; pinDrag = -1; }
+      const pinEl = pinMode && moving < 0 && pts.size === 1 && e.target.closest('.pin[data-i]');
+      pinDrag = pinEl ? +pinEl.dataset.i : -1;
       stage.classList.add('is-dragging');
     };
     const onMove = e => {
       if (!pts.has(e.pointerId)) return;
       const prev = pts.get(e.pointerId), cur = rel(e);
       pts.set(e.pointerId, cur);
+      if (pinDrag >= 0 && pts.size === 1) {
+        if (!moved && Math.hypot(e.clientX - sx, e.clientY - sy) <= 4) return;
+        moved = true;
+        const x = Math.min(100, Math.max(0, +((cur.x - tx) / s / W * 100).toFixed(1))), y = Math.min(100, Math.max(0, +((cur.y - ty) / s / H * 100).toFixed(1)));
+        work[pinDrag].x = x; work[pinDrag].y = y;
+        if (pins[pinDrag]) { pins[pinDrag].x = x; pins[pinDrag].y = y; pins[pinDrag].el.classList.add('is-moving'); }
+        paint(); return;
+      }
       if (pts.size === 1) {
         tx += cur.x - prev.x; ty += cur.y - prev.y;
         if (Math.hypot(e.clientX - sx, e.clientY - sy) > 6) { moved = true; touched = true; }
@@ -911,6 +923,8 @@
     };
     const onUp = e => {
       if (!pts.delete(e.pointerId)) return;
+      if (pinDrag >= 0 && pins[pinDrag]) pins[pinDrag].el.classList.remove('is-moving');
+      pinDrag = -1;
       if (!pts.size) stage.classList.remove('is-dragging');
     };
     stage.addEventListener('pointerdown', onDown);
@@ -939,7 +953,7 @@
       if (pinMode) {
         if (moving >= 0) {
           if (at.x >= 0 && at.y >= 0 && at.x <= 100 && at.y <= 100) { work[moving].x = at.x; work[moving].y = at.y; }
-          moving = -1; pinBar.querySelector('span').textContent = 'Tap the map to add a pin. Tap a pin to change it.';
+          moving = -1; pinBar.querySelector('span').textContent = 'Tap the map to add a pin. Drag a pin to move it; tap it to change it.';
           buildPins(work.map(livePin)); return;
         }
         if (pin) return pinForm(+pin.dataset.i);

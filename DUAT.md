@@ -111,7 +111,7 @@ You rarely type any of this: ✎ on the chart opens the editor. Pick **＋ Box**
 
 ## Reading at the table
 
-- **Recently updated** on the home page lists the latest site edits (who, what, when), with a dot on anything changed since your last visit on this device; **all changes →** opens the full list. Each page says "Updated 2 days ago by Neha".
+- **Recently updated** on the home page lists the latest site edits (who, what, when), with a dot on anything changed since your last visit on this device; **all changes →** opens the full list (`#/recent`). `"homeRecent": false` in `world.json` hides the home strip; the `#/recent` page still works. Each page says "Updated 2 days ago by Neha".
 - Pages in a numbered category (sessions) get **← Previous / Next →** links and an **In this session** list of the pages they link to.
 - **Offline copy.** The site keeps the last copy of the catalog (and its shared edits) on the device, so it opens with bad signal or none. Deploys bundle each campaign's entries into one `bundle.json` (made by `duat-backend/bundle.py` in the deploy workflow; local previews read the files directly).
 - **Needs attention** (GM tools, or `#/attention`): unwritten pages with how often they're mentioned and a **Write it** button, empty pages, and pages nothing links to.
@@ -125,7 +125,7 @@ Everything in the catalog can be entered from the page itself; the files are jus
 - **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, the category's fields, nicknames and other spellings, tags, other info rows (label + value, markup), a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
 - **The home page** (kicker, tagline and welcome text): the ✎ Edit beside the title (GM only).
 - **✎ on a chart**: add boxes, text, frames and arrows (see Charts).
-- **📍 on a map**: tap the map to add a pin, tap a pin to change, move or remove it, then **Save pins**. Pick a page from the list to link it. If the name you type has no page, the pin form asks what it should be: a **Future page** (a ghost: shows dashed on the map, and anyone can tap it and write the page later) or **Just a label** (a plain name like a road). It remembers your last choice, and picks Future page when the name is already mentioned somewhere. A nickname of an existing page offers **Link to** that page instead.
+- **📍 on a map**: tap the map to add a pin, drag a pin to move it, tap a pin to change or remove it, then **Save pins**. Pick a page from the list to link it. If the name you type has no page, the pin form asks what it should be: a **Future page** (a ghost: shows dashed on the map, and anyone can tap it and write the page later) or **Just a label** (a plain name like a road). It remembers your last choice, and picks Future page when the name is already mentioned somewhere. A nickname of an existing page offers **Link to** that page instead.
 - **GM, on any map:** tap a pin and its card shows **Remove pin** (asks first) and **Edit pins**.
 
 **Signing in** is the name chip in the top bar ("Sign in"): pick your name and enter the passkey. You stay signed in on that device; the chip then shows your name, and its menu has GM tools (for the GM) and Sign out. Tapping ✎ Edit while signed out asks you to sign in first.

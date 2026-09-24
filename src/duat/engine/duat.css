@@ -792,3 +792,4 @@ a.wl-missing:hover { color: var(--text); border-bottom-color: var(--muted); }
 .ch-node:focus { outline: none; }
 .ch-node:focus-visible rect { stroke: var(--accent); stroke-width: 3; }
 .sr-empty a { color: var(--accent); }
+.pin-editing .pin { cursor: move; touch-action: none; }
