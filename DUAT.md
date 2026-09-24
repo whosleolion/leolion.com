@@ -42,7 +42,7 @@ src/duat/vcm/
 ```markdown
 ---
 title: Marla Voss
-type: character            # map | character | location | faction | item | session | note | anything else
+type: character            # map | chart | character | location | faction | item | session | note | anything else
 aliases: [The Widow, Marla]
 tags: [npc, docks]
 image: marla.jpg           # bare filename = images/marla.jpg
@@ -85,6 +85,28 @@ A map can also take an `overlay:` image: a transparent drawing (roads, walls, br
 
 To link straight to a pin, use `#/e/vista-city?pin=sample-location`.
 
+## Charts
+
+A chart is a flowchart or relationship web: boxes, arrows and frames, drawn by Duat and pannable/zoomable like a map. It's an entry with `type: chart` and a `chart` block anywhere in the body:
+
+````markdown
+```chart
+frame deal @ 590,262 800x160 dashed : the deal
+node goldtusk @ 775,145 170x60 pink : [[Tiberius Goldtusk|Goldtusk]] / Head of Orc Mafia
+node felt @ 775,485 gold : [[Felt]] / Gnome Rogue
+node note @ 900,300 text : for 500gp
+edge felt -> deal : employed for suitcase deal
+edge goldtusk -- felt dashed bend 60 : possible connection?
+```
+````
+
+- `node <id> @ x,y [WxH] [style] : Line one / line two`: a box centred on x,y (default 120x60). Styles: pink, gold, green, blue, grey, or `text` for words with no box. The first `[[link]]` makes the box tappable: its card shows that page's summary and opens it.
+- `frame <id> @ x,y WxH [dashed|colour] : Label`: a group outline (x,y = top-left). Arrows can point at a frame's id.
+- `edge <from> <arrow> <to> [dashed] [bend N] : Label`: `->`, `<-`, `<->`, or `--` (no heads). `bend` curves it (negative bends the other way). ` / ` breaks a label onto a new line.
+- Lines starting with `#` are comments.
+
+You rarely type any of this: ✎ on the chart opens the editor. Pick **＋ Box**, **＋ Text** or **＋ Frame** and tap empty space to add one; **↗ Connect** then tap two boxes to draw an arrow; tap anything to change its text, look, size or curve, **Move** it, or **Remove** it; **Edit as text** shows the block above. **Save chart** stores it for everyone. Links in a chart count as mentions, so linked pages list the chart under "Mentioned in". Example: Thomas's Connections Map (`entries/connections-map.md`).
+
 ## Shared editing
 
 Everything in the catalog can be entered from the page itself; the files are just the starting point.
@@ -93,6 +115,7 @@ Everything in the catalog can be entered from the page itself; the files are jus
 - **✎ Edit → Notes**: write your own notes on any page in plain markup. They show as "Name's notes", and other people's notes are never touched. Typing `[[` pops up a list of matching pages; **? Markup** opens a cheat sheet (links, bold, headings, lists, quotes, callouts, tables).
 - **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, the category's fields, nicknames and other spellings, tags, other info rows (label + value, markup), a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
 - **The home page** (kicker, tagline and welcome text): the ✎ Edit beside the title (GM only).
+- **✎ on a chart**: add boxes, text, frames and arrows (see Charts).
 - **📍 on a map**: tap the map to add a pin (pick a page, or type a plain label), tap a pin to change, move or remove it, then **Save pins**.
 - **GM, on any map:** tap a pin and its card shows **Remove pin** (asks first) and **Edit pins**.
 

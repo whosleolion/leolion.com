@@ -9,6 +9,7 @@
   },
   "typeOrder": [
     "map",
+    "chart",
     "pc",
     "session",
     "character",
@@ -173,7 +174,8 @@
     "kiorascan-federation",
     "alahil",
     "rsd",
-    "fire-islands"
+    "fire-islands",
+    "connections-map"
   ],
   "types": {
     "district": {
@@ -308,6 +310,7 @@
   },
   "navTypes": [
     "map",
+    "chart",
     "pc",
     "session",
     "character",

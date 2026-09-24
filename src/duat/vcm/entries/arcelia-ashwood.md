@@ -1,7 +1,6 @@
 ---
 title: Arcelia Ashwood
 type: character
-tags: [mentioned]
 status: Deceased
 aliases: [Horace Ashwood, Rory Ashwood, Rachel Ashwood]
 author: leo

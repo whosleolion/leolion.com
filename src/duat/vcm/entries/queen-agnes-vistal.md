@@ -1,7 +1,6 @@
 ---
 title: Queen Agnes Vistal
 type: character
-tags: [mentioned]
 aliases: [Queen Agnes I]
 author: leo
 ---
