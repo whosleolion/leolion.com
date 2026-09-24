@@ -123,7 +123,7 @@ Everything in the catalog can be entered from the page itself; the files are jus
 
 **The GM's writing is the page.** The person whose role is "GM" (or `world.json` `"gm": "leo"`) writes the page's own text: it shows without any name label. Everyone else's notes appear as labeled blocks ("Thomas's notes"), with chips under the title.
 
-**GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, show or hide the "On the map" and "Mentioned in" sections, merge into another page (notes move over, the name becomes a nickname), and delete. **GM tools** is in the name chip's menu.
+**GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, show or hide the "On the map" and "Mentioned in" sections, merge into another page (notes move over, the name becomes a nickname), and delete. Any page can be deleted, maps and charts included, whatever state its details are in. If other pages link to it, it becomes a ghost (unwritten) page, and writing it again starts a fresh page: nothing saved before the delete comes back. **GM tools** is in the name chip's menu.
 
 **Campaign settings (GM tools).** Title, short name, accent color; the people who can sign in (name, role, color); categories (plural/singular names, color, order, their **fields**, and whether each is in the top bar, listed newest-first, or always labeled on maps); and new passkeys.
 
