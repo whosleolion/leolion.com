@@ -1,19 +1,23 @@
 /**
- * Duat shared-edits service (Google Apps Script web app), v2.
+ * Duat shared-edits service (Google Apps Script web app), v3.
  *
  * Keeps every edit made on the site in a Google Sheet it creates on first use, and
  * stores uploaded images in a "Duat uploads" Drive folder. Setup: see DUAT.md, "Shared editing".
  *
  * Rows are (world, slug, author, text, updated). author is a person's id for their notes,
- * "@meta" for a page's details (JSON), or "@pins" for a map's pin list.
+ * "@meta" for a page's details (JSON), "@pins" for a map's pin list, or "@world" for the
+ * campaign's settings (title, people, categories…; GM only). Campaigns started from the site
+ * exist only here.
  *
- * Only SHA-256 hashes of the passkeys live here (same as world.json edit.keyHash / edit.gmHash).
- * The GM passkey unlocks hiding, deleting and merging pages, and clearing the sheet.
+ * Only SHA-256 hashes of the passkeys live here. The constants below are the starting
+ * passkeys; the GM can change them from the site (stored in Script Properties).
+ * The GM passkey unlocks campaign settings, hiding/deleting/merging pages, and clearing edits.
  */
+const VERSION = 3;
 const KEY_HASH = '183059fb170ae10f1e90f6f1893223ba7874398c4f3f88315825e99ff8ade9d9';
 const GM_HASH = 'aba3e589d1981ebb6c651bff9f612981c38e43c501ec8fc51627dcc2317154e1';
 const AUTHORS = ['leo', 'thomas', 'neha', 'zack', 'noah', 'nuh'];
-const SPECIAL = ['@meta', '@pins'];
+const SPECIAL = ['@meta', '@pins', '@world'];
 const GM_FIELDS = ['hidden', 'deleted', 'mergeInto'];
 const MAX_TEXT = 40000;
 const MAX_UPLOAD = 8 * 1024 * 1024;
@@ -56,19 +60,35 @@ function doGet(e) {
   return json_({ ok: true, edits: rows.map(r => ({ slug: r[1], author: r[2], text: r[3], updated: r[4] })) });
 }
 
+function keys_() {
+  const props = PropertiesService.getScriptProperties();
+  return { player: props.getProperty('KEY_HASH') || KEY_HASH, gm: props.getProperty('GM_HASH') || GM_HASH };
+}
+
+// people allowed to write in a campaign: the starting list plus whoever its settings name
+function authors_(world) {
+  const row = sheet_().getDataRange().getValues().find(r => r[0] === world && r[2] === '@world');
+  let extra = [];
+  if (row) { try { extra = Object.keys(JSON.parse(row[3]).authors || {}); } catch (err) {} }
+  return AUTHORS.concat(extra);
+}
+
 function doPost(e) {
   let req;
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Bad request' }); }
-  const h = hash_(String(req.key || ''));
-  const gm = h === GM_HASH;
-  if (!gm && h !== KEY_HASH) return json_({ ok: false, error: 'Wrong passkey' });
+  const h = hash_(String(req.key || '')), k = keys_();
+  const gm = h === k.gm;
+  if (!gm && h !== k.player) return json_({ ok: false, error: 'Wrong passkey' });
   if (!SLUG.test(String(req.world || ''))) return json_({ ok: false, error: 'Bad world' });
   const action = req.action || 'save';
+  if (action === 'version') return json_({ ok: true, version: VERSION, gm: gm });
   if (action === 'upload') return upload_(req);
   if (action === 'clear') return clear_(req, gm);
+  if (action === 'setkeys') return setkeys_(req, gm);
   if (action !== 'save') return json_({ ok: false, error: 'Unknown action' });
 
-  if (AUTHORS.indexOf(req.author) === -1 && SPECIAL.indexOf(req.author) === -1) return json_({ ok: false, error: 'Unknown author' });
+  if (SPECIAL.indexOf(req.author) === -1 && authors_(req.world).indexOf(req.author) === -1) return json_({ ok: false, error: 'Unknown author' });
+  if (req.author === '@world' && !gm) return json_({ ok: false, error: 'Campaign settings need the GM passkey' });
   if (!SLUG.test(String(req.slug || ''))) return json_({ ok: false, error: 'Bad entry' });
   let text = String(req.text || '').slice(0, MAX_TEXT);
 
@@ -115,9 +135,20 @@ function clear_(req, gm) {
   try {
     const sh = sheet_();
     const vals = sh.getDataRange().getValues();
-    for (let r = vals.length - 1; r >= 1; r--) if (vals[r][0] === req.world) sh.deleteRow(r + 1);
+    // clears page edits; the campaign's settings row stays
+    for (let r = vals.length - 1; r >= 1; r--) if (vals[r][0] === req.world && vals[r][2] !== '@world') sh.deleteRow(r + 1);
   } finally {
     lock.releaseLock();
   }
+  return json_({ ok: true });
+}
+
+function setkeys_(req, gm) {
+  if (!gm) return json_({ ok: false, error: 'That needs the GM passkey' });
+  const hex = /^[0-9a-f]{64}$/;
+  if (!hex.test(String(req.keyHash || '')) || !hex.test(String(req.gmHash || ''))) return json_({ ok: false, error: 'Bad passkey hash' });
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty('KEY_HASH', req.keyHash);
+  props.setProperty('GM_HASH', req.gmHash);
   return json_({ ok: true });
 }

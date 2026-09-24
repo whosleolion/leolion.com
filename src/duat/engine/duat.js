@@ -793,7 +793,7 @@
        @pins        a map's full pin list
      With no endpoint configured, edits are kept in this browser only (a local preview).
      A GM passkey (edit.gmHash) unlocks editing anyone's notes, hiding, merging and deleting. */
-  const worldId = () => slugify(S.world.id || S.world.title || 'world');
+  const worldId = () => S.worldId;   // fixed at boot, so renaming the campaign never detaches its edits
   const editCfg = () => S.world.edit || {};
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
@@ -951,10 +951,14 @@
     f.addEventListener('submit', async ev => {
       if (ev.submitter && ev.submitter.value === 'cancel') return;
       ev.preventDefault();
-      const h = await sha256(f.key.value), gm = !!editCfg().gmHash && h === editCfg().gmHash;
-      if (editCfg().keyHash && !gm && h !== editCfg().keyHash) {
-        const err = $('.ed-err', f); err.textContent = 'That passkey isn’t right.'; err.hidden = false; return;
+      const err = $('.ed-err', f), h = await sha256(f.key.value);
+      let gm = !!editCfg().gmHash && h === editCfg().gmHash, ok = gm || !editCfg().keyHash || h === editCfg().keyHash;
+      if (editCfg().endpoint) {
+        // the save service is the judge (passkeys can be changed from the site)
+        try { const j = await post({ action: 'version', world: worldId() }, { key: f.key.value }); ok = true; gm = !!j.gm; }
+        catch (x) { if (/passkey/i.test(x.message)) ok = false; else if (!/latest update/.test(x.message)) { err.textContent = `Couldn’t reach the save service: ${x.message}`; err.hidden = false; return; } }
       }
+      if (!ok) { err.textContent = 'That passkey isn’t right.'; err.hidden = false; return; }
       store.set(sessionKey(), { author: f.author.value, key: f.key.value, gm });
       renderGMLink();
       next();
@@ -1226,18 +1230,27 @@
   function openGM() {
     const dlg = S.dlg, changed = S.entries.filter(e => e.dirty);
     dlg.innerHTML = `<form method="dialog" class="ed-form">
-      <p class="kicker">GM tools</p><h2>Fold edits into the files</h2>
-      <p>${changed.length} page${changed.length === 1 ? '' : 's'} changed on the site${S.deleted.length ? `, ${S.deleted.length} deleted or merged` : ''}. Export them, apply the file with <code>duat-backend/apply_export.py</code>, deploy, then clear the shared edits so the files are the single source again.</p>
+      <p class="kicker">GM tools</p><h2>${esc(S.world.title)}</h2>
+      <p class="ed-svc muted">${editCfg().endpoint ? 'Checking the save service…' : 'Preview mode: no shared save service connected.'}</p>
       <div class="ed-actions ed-stack">
-        <button type="button" data-g="export" class="primary">1. Download export</button>
-        <button type="button" data-g="clear" class="ed-danger" disabled>2. Clear shared edits</button></div>
+        <button type="button" data-g="settings" class="primary">Campaign settings</button>
+        <button type="button" data-g="newworld">Start a new campaign</button></div>
+      <fieldset><legend>Fold site edits into the files</legend>
+        <p class="muted">${changed.length} page${changed.length === 1 ? '' : 's'} changed on the site${S.deleted.length ? `, ${S.deleted.length} deleted or merged` : ''}. Optional: site edits work fine where they are. To make the files the master copy again: export, apply with <code>duat-backend/apply_export.py</code>, deploy, then clear.</p>
+        <div class="ed-actions ed-stack"><button type="button" data-g="export">1. Download export</button>
+        <button type="button" data-g="clear" class="ed-danger" disabled>2. Clear shared edits</button></div></fieldset>
       <p class="ed-err" hidden></p>
       <div class="ed-actions"><button type="button" data-g="out">Sign out</button><span></span><button value="cancel">Close</button></div>
     </form>`;
     const f = $('form', dlg), err = $('.ed-err', f);
+    if (editCfg().endpoint) post({ action: 'version', world: worldId() }, session())
+      .then(j => { $('.ed-svc', f).textContent = `Save service connected (version ${j.version}).`; })
+      .catch(x => { $('.ed-svc', f).textContent = /latest update/.test(x.message) ? 'The save service is an older version: redeploy duat-backend/Code.gs as a new version.' : `Save service problem: ${x.message}`; });
     f.addEventListener('click', async ev => {
       const b = ev.target.closest('[data-g]'); if (!b) return;
       if (b.dataset.g === 'out') { store.set(sessionKey(), null); renderGMLink(); dlg.close(); }
+      if (b.dataset.g === 'settings') openSettings();
+      if (b.dataset.g === 'newworld') openNewCampaign();
       if (b.dataset.g === 'export') {
         const out = { world: worldId(), exported: new Date().toISOString(), entries: Object.fromEntries(changed.map(e => [e.slug, toMarkdown(e)])), deleted: S.deleted };
         const a = document.createElement('a');
@@ -1246,13 +1259,138 @@
         $('[data-g=clear]', f).disabled = false;
       }
       if (b.dataset.g === 'clear') {
-        if (!confirm('Clear every shared edit for this world? Only do this after the export has been applied and deployed.')) return;
+        if (!confirm('Clear every shared page edit for this campaign? Only do this after the export has been applied and deployed. Campaign settings are kept.')) return;
         try {
-          if (editCfg().endpoint) await post({ action: 'clear', world: worldId() }, session()); else store.set(localKey(), null);
+          if (editCfg().endpoint) await post({ action: 'clear', world: worldId() }, session());
+          else store.set(localKey(), (store.get(localKey()) || []).filter(x => x.author === '@world'));
           location.reload();
         } catch (x) { err.textContent = x.message; err.hidden = false; }
       }
     });
+    show(dlg);
+  }
+
+  /* campaign settings: everything that used to live only in world.json */
+  const personRow = (id = '', a = {}) => `<div class="set-row set-person" data-id="${esc(id)}">
+    <input name="pname" placeholder="Name" value="${esc(a.name || '')}" required autocomplete="off">
+    <input name="prole" placeholder="Role (e.g. plays Rosie)" value="${esc(a.role || '')}" autocomplete="off">
+    <input name="pcolor" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(a.color || '') ? a.color : '#9fb4ff')}" aria-label="Color">
+    <button type="button" class="fact-x" data-x aria-label="Remove">×</button></div>`;
+  const catRow = (id, t, w, used) => `<div class="set-row set-cat" data-id="${esc(id)}">
+    <div class="set-cat-main"><input name="clabel" placeholder="Plural (e.g. Gangs)" value="${esc(t.label || '')}" required autocomplete="off">
+      <input name="cone" placeholder="Singular (e.g. Gang)" value="${esc(t.one || '')}" required autocomplete="off">
+      <input name="ccolor" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(t.color || '') ? t.color : '#a4abb8')}" aria-label="Color">
+      <span class="set-move"><button type="button" data-up aria-label="Move up">↑</button><button type="button" data-down aria-label="Move down">↓</button></span>
+      <button type="button" class="fact-x" data-x aria-label="Remove"${used ? ' disabled title="Has pages"' : ''}>×</button></div>
+    <div class="set-cat-opts">
+      <label class="ed-check"><input type="checkbox" name="cnav"${(w.navTypes || []).includes(id) ? ' checked' : ''}> In top bar</label>
+      <label class="ed-check"><input type="checkbox" name="cnew"${(w.newestFirst || []).includes(id) ? ' checked' : ''}> Newest first</label>
+      <label class="ed-check"><input type="checkbox" name="cmajor"${(w.mapMajorTypes || []).includes(id) ? ' checked' : ''}> Always labeled on maps</label></div></div>`;
+  function openSettings() {
+    const dlg = S.dlg, w = S.world;
+    const used = new Set(S.entries.map(e => e.type));
+    dlg.innerHTML = `<form method="dialog" class="ed-form ed-details">
+      <p class="kicker">GM tools</p><h2>Campaign settings</h2>
+      <label>Title<input name="title" required value="${esc(w.title || '')}" autocomplete="off"></label>
+      <label>Short name <span class="muted">(shown on phones)</span><input name="short" value="${esc(w.short || '')}" autocomplete="off"></label>
+      <label>Kicker <span class="muted">(small line above the title)</span><input name="kicker" value="${esc(w.kicker || '')}" autocomplete="off"></label>
+      <label>Tagline<input name="subtitle" value="${esc(w.subtitle || '')}" autocomplete="off"></label>
+      <label class="ed-check">Accent color <input name="accent" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test((w.theme || {}).accent || '') ? w.theme.accent : '#ff5a36')}"></label>
+      <fieldset class="set-people"><legend>People who can sign in</legend>
+        ${Object.entries(w.authors || {}).map(([id, a]) => personRow(id, a)).join('')}
+        <button type="button" class="fact-add" data-addp>+ Add person</button></fieldset>
+      <fieldset class="set-cats"><legend>Categories</legend>
+        ${S.typeOrder.map(id => catRow(id, typeOf(id), w, used.has(id))).join('')}
+        <button type="button" class="fact-add" data-addc>+ Add category</button></fieldset>
+      <fieldset><legend>Passkeys</legend>
+        <p class="muted">Leave blank to keep the current ones. Everyone signed in will need the new passkey.</p>
+        <label>New player passkey<input name="pk" type="password" autocomplete="new-password"></label>
+        <label>New GM passkey<input name="gk" type="password" autocomplete="new-password"></label></fieldset>
+      <p class="ed-err" hidden></p>
+      <div class="ed-actions"><button type="button" data-back>← GM tools</button><span></span><button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Save settings</button></div>
+    </form>`;
+    const f = $('form', dlg);
+    const wire = root => {
+      root.querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', () => b.closest('.set-row').remove()));
+      root.querySelectorAll('[data-up]').forEach(b => b.addEventListener('click', () => { const r = b.closest('.set-row'); if (r.previousElementSibling && r.previousElementSibling.classList.contains('set-row')) r.parentNode.insertBefore(r, r.previousElementSibling); }));
+      root.querySelectorAll('[data-down]').forEach(b => b.addEventListener('click', () => { const r = b.closest('.set-row'), n = r.nextElementSibling; if (n && n.classList.contains('set-row')) r.parentNode.insertBefore(n, r); }));
+    };
+    wire(f);
+    $('[data-addp]', f).addEventListener('click', ev => { ev.target.insertAdjacentHTML('beforebegin', personRow()); wire(ev.target.previousElementSibling); ev.target.previousElementSibling.querySelector('input').focus(); });
+    $('[data-addc]', f).addEventListener('click', ev => { ev.target.insertAdjacentHTML('beforebegin', catRow('', {}, w, false)); wire(ev.target.previousElementSibling); ev.target.previousElementSibling.querySelector('input').focus(); });
+    $('[data-back]', f).addEventListener('click', openGM);
+    wireForm(f, async () => {
+      const authors = {};
+      for (const r of f.querySelectorAll('.set-person')) {
+        const name = $('[name=pname]', r).value.trim(); if (!name) continue;
+        let id = r.dataset.id || slugify(name).split('-')[0] || 'person';
+        if (!r.dataset.id) { const base = id; let n = 2; while (authors[id] || (w.authors || {})[id]) id = base + n++; }
+        authors[id] = { name, role: $('[name=prole]', r).value.trim(), color: $('[name=pcolor]', r).value };
+      }
+      if (!authors[session().author]) throw new Error('you can’t remove yourself from the people list');
+      const types = {}, typeOrder = [], navTypes = [], newestFirst = [], mapMajorTypes = [];
+      for (const r of f.querySelectorAll('.set-cat')) {
+        const label = $('[name=clabel]', r).value.trim(), one = $('[name=cone]', r).value.trim(); if (!label || !one) continue;
+        const id = r.dataset.id || slugify(one);
+        if (!id || types[id]) throw new Error(`the category “${one}” is listed twice`);
+        types[id] = { label, one, color: $('[name=ccolor]', r).value }; typeOrder.push(id);
+        if ($('[name=cnav]', r).checked) navTypes.push(id);
+        if ($('[name=cnew]', r).checked) newestFirst.push(id);
+        if ($('[name=cmajor]', r).checked) mapMajorTypes.push(id);
+      }
+      const missing = [...used].filter(t => !types[t]);
+      if (missing.length) throw new Error(`pages still use ${missing.map(t => typeOf(t).one).join(', ')}; keep that category`);
+      const st = { title: f.title.value.trim(), short: f.short.value.trim(), kicker: f.kicker.value.trim(), subtitle: f.subtitle.value.trim(),
+        theme: { ...(w.theme || {}), accent: f.accent.value }, authors, types, typeOrder, navTypes, newestFirst, mapMajorTypes, home: w.home || 'home',
+        keyHash: f.pk.value ? await sha256(f.pk.value) : editCfg().keyHash, gmHash: f.gk.value ? await sha256(f.gk.value) : editCfg().gmHash };
+      const sess = session();
+      await persist({ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) }, sess);
+      if ((f.pk.value || f.gk.value) && editCfg().endpoint) await post({ action: 'setkeys', world: worldId(), keyHash: st.keyHash, gmHash: st.gmHash }, sess);
+      if (f.gk.value) store.set(sessionKey(), { ...sess, key: f.gk.value });
+      location.reload();
+    }, openSettings);
+    show(dlg);
+  }
+
+  /* new campaign: lives entirely in the save service, at /duat/play/?w=<id> */
+  function openNewCampaign() {
+    const dlg = S.dlg, me = session();
+    dlg.innerHTML = `<form method="dialog" class="ed-form">
+      <p class="kicker">GM tools</p><h2>Start a new campaign</h2>
+      <label>Campaign name<input name="title" required maxlength="60" autocomplete="off" placeholder="e.g. Liar's Night"></label>
+      <label>Link name <span class="muted">(letters, numbers, dashes)</span><input name="id" required pattern="[a-z0-9][a-z0-9-]*" autocomplete="off"></label>
+      <label>Welcome text for the home page<textarea name="intro" rows="4" placeholder="What players see first."></textarea></label>
+      <p class="muted">It starts with this campaign’s categories and just you as a player; add people under Campaign settings once it’s open.</p>
+      <p class="ed-err" hidden></p>
+      <div class="ed-actions"><button type="button" data-back>← GM tools</button><span></span><button value="ok" class="primary">Create campaign</button></div>
+    </form>`;
+    const f = $('form', dlg);
+    f.title.addEventListener('input', () => { f.id.value = slugify(f.title.value); });
+    $('[data-back]', f).addEventListener('click', openGM);
+    wireForm(f, async () => {
+      const id = slugify(f.id.value), title = f.title.value.trim();
+      if (!id) throw new Error('the link name needs letters');
+      if (id === worldId()) throw new Error('that’s this campaign');
+      const w = S.world, a = authorOf(me.author);
+      const st = { title, short: title.split(/\s+/).map(x => x[0]).join('').toUpperCase().slice(0, 4), kicker: 'Player quickref', subtitle: '',
+        theme: { ...(w.theme || {}) }, authors: { [a.id]: { name: a.name, role: a.role || 'GM', color: a.color } },
+        types: Object.fromEntries(S.typeOrder.map(t => [t, { ...typeOf(t) }])), typeOrder: S.typeOrder,
+        navTypes: w.navTypes || S.typeOrder, newestFirst: w.newestFirst || [], mapMajorTypes: w.mapMajorTypes || [], home: 'home',
+        keyHash: editCfg().keyHash, gmHash: editCfg().gmHash };
+      const intro = f.intro.value.trim() || `Welcome to ${title}.`;
+      const rows = [{ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) },
+        { slug: 'home', author: a.id, text: `---\ntitle: Welcome\ntype: note\nhidden: true\n---\n${intro}` }];
+      if (editCfg().endpoint) {
+        const r = await fetch(`${editCfg().endpoint}?world=${encodeURIComponent(id)}`, { cache: 'no-cache' }).then(x => x.json());
+        if (r.ok && r.edits.length) throw new Error(`there’s already a campaign at “${id}”`);
+        for (const row of rows) await post({ ...row, world: id }, me);
+      } else {
+        if ((store.get(`duat:${id}:edits`) || []).length) throw new Error(`there’s already a campaign at “${id}”`);
+        store.set(`duat:${id}:edits`, rows.map(x => ({ ...x, updated: new Date().toISOString() })));
+      }
+      store.set(`duat:${id}:session`, me);
+      location.href = `/duat/play/?w=${encodeURIComponent(id)}`;
+    }, openNewCampaign);
     show(dlg);
   }
   const fmVal = v => {
@@ -1418,15 +1556,39 @@
   }
 
   /* ---------- boot ---------- */
+  const SETTINGS_SLUG = 'duat-settings';
+  const SETTING_KEYS = ['title', 'short', 'kicker', 'subtitle', 'theme', 'authors', 'types', 'typeOrder', 'navTypes', 'newestFirst', 'mapMajorTypes', 'home'];
+  function applySettings(row) {
+    if (!row) return false;
+    let st; try { st = JSON.parse(row.text); } catch { return false; }
+    for (const k of SETTING_KEYS) if (st[k] !== undefined) S.world[k] = st[k];
+    S.world.edit = { ...(S.world.edit || {}), ...(st.keyHash ? { keyHash: st.keyHash } : {}), ...(st.gmHash ? { gmHash: st.gmHash } : {}) };
+    return true;
+  }
   async function boot() {
     const root = document.getElementById('duat');
     try {
-      const res = await fetch(root.dataset.world || 'world.json', { cache: 'no-cache' });
-      if (!res.ok) throw new Error(`world.json → HTTP ${res.status}`);
-      const w = S.world = await res.json();
+      let w;
+      if (root.dataset.play !== undefined) {
+        // a campaign that lives entirely in the save service: /duat/play/?w=<id>
+        const id = slugify(new URLSearchParams(location.search).get('w') || '');
+        if (!id) throw new Error('No campaign chosen. Links look like /duat/play/?w=my-campaign');
+        w = { id, title: id, entries: [], siteOnly: true,
+          edit: { endpoint: root.dataset.endpoint || '', keyHash: root.dataset.keyHash || '', gmHash: root.dataset.gmHash || '' } };
+      } else {
+        const res = await fetch(root.dataset.world || 'world.json', { cache: 'no-cache' });
+        if (!res.ok) throw new Error(`world.json → HTTP ${res.status}`);
+        w = await res.json();
+      }
+      S.world = w;
+      S.worldId = slugify(w.id || w.title || 'world');
+      const edits = await loadEdits();
+      const found = applySettings(edits.find(x => x.author === '@world'));
+      if (w.siteOnly && !found) throw new Error(`There’s no campaign called “${S.worldId}” yet. A GM can start one from GM tools.`);
+      document.title = S.world.title || 'Duat';
       S.types = { ...DEFAULT_TYPES };
-      for (const [k, v] of Object.entries(w.types || {})) S.types[k] = { ...(S.types[k] || typeOf(k)), ...v };
-      if (w.theme) for (const [k, v] of Object.entries(w.theme)) document.documentElement.style.setProperty('--' + k, v);
+      for (const [k, v] of Object.entries(S.world.types || {})) S.types[k] = { ...(S.types[k] || typeOf(k)), ...v };
+      if (S.world.theme) for (const [k, v] of Object.entries(S.world.theme)) document.documentElement.style.setProperty('--' + k, v);
       const loaded = await Promise.all((w.entries || []).map(async slug => {
         try {
           const r = await fetch(`entries/${slug}.md`, { cache: 'no-cache' });
@@ -1438,10 +1600,10 @@
         }
       }));
       S.entries = loaded.filter(Boolean);
-      applyEdits(await loadEdits());
+      applyEdits(edits.filter(x => x.author !== '@world'));
       index();
       const present = [...new Set(S.entries.map(e => e.type))];
-      S.typeOrder = [...new Set([...(w.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
+      S.typeOrder = [...new Set([...(S.world.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
       renderChrome(root);
       wireEditing();
       renderGMLink();
@@ -1451,7 +1613,7 @@
     } catch (err) {
       console.error(err);
       root.innerHTML = `<div class="wrap boot-error"><h1>Couldn’t open this world</h1><p>${esc(err.message)}</p>
-        <p class="muted">If you opened the file directly from disk, serve the folder instead (e.g. <code>python3 -m http.server</code> in <code>src/</code>).</p></div>`;
+        ${root.dataset.play !== undefined ? '' : '<p class="muted">If you opened the file directly from disk, serve the folder instead (e.g. <code>python3 -m http.server</code> in <code>src/</code>).</p>'}</div>`;
     }
   }
   boot();

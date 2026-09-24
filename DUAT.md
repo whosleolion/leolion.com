@@ -99,6 +99,10 @@ People sign in by picking their name (from `world.json` `authors`) and entering 
 
 **GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, merge into another page (notes move over, the name becomes a nickname), and delete. The footer then shows **GM tools**.
 
+**Campaign settings (GM tools).** Title, short name, kicker, tagline, accent color; the people who can sign in (name, role, color); categories (plural/singular names, color, order, and whether each is in the top bar, listed newest-first, or always labeled on maps); and new passkeys. Saved as the campaign's settings row, which overrides `world.json` at load. Renaming the campaign is safe: edits are keyed to its fixed id.
+
+**New campaigns (GM tools → Start a new campaign).** Give it a name and a welcome text. It lives entirely in the save service and opens at `/duat/play/?w=<link-name>`, starting with the current campaign's categories and just you as a player. Everything else, including maps, is added from the site.
+
 **Folding edits back into the files.** Site edits are rows in the "Duat edits" sheet, layered over the `.md` files when a page loads. To make the files the single source again: GM tools → **Download export**, then run
 
 ```
@@ -121,9 +125,11 @@ Config lives in `world.json`:
 
   **Updating the script later:** paste the new code, then Deploy → Manage deployments → ✎ → Version: *New version* → Deploy. That keeps the same URL.
 
-To change a passkey, put its SHA-256 hash in both `world.json` and `Code.gs`. Passkeys are shared door keys, not real security: anyone with the player passkey can write as anyone, and the GM passkey can delete. Only give them out accordingly.
+Passkeys are changed from Campaign settings; the save service stores them (as hashes) and every campaign uses the same pair. The hashes in `Code.gs` and `world.json` are only the starting values. Passkeys are shared door keys, not real security: anyone with the player passkey can write as anyone, and the GM passkey can delete. Only give them out accordingly.
 
-What stays file-only on purpose: `world.json` settings (the list of people, categories, top bar, theme) and the engine itself.
+**Updating the save service** when `Code.gs` changes: paste the new code, then Deploy → Manage deployments → ✎ → Version: *New version* → Deploy (same URL). GM tools shows which version is running.
+
+The only thing that still needs the files is the engine itself (`src/duat/engine/`), plus the optional step of folding site edits into `.md` files.
 
 ## Heads-up
 
