@@ -28,7 +28,7 @@
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
-  const S = { world: null, entries: [], lookup: new Map(), types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
+  const S = { world: null, entries: [], lookup: new Map(), ghosts: new Map(), types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
 
   /* ---------- small helpers ---------- */
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -199,7 +199,8 @@
     const text = esc(label || (e ? e.title : target.split('#')[0]));
     return e
       ? `<a class="wl" href="${href(e)}" style="--c:${typeOf(e.type).color}" data-type="${esc(e.type)}">${text}</a>`
-      : `<span class="wl wl-missing" title="No entry yet">${text}</span>`;
+      : slugify(target.split('#')[0]) ? `<a class="wl wl-missing" href="#/e/${encodeURIComponent(slugify(target.split('#')[0]))}" title="Not written yet">${text}</a>`
+      : `<span class="wl wl-missing">${text}</span>`;
   }
   function embed(raw) {
     const [target, alt] = raw.split('|').map(x => x.trim());
@@ -278,16 +279,32 @@
     const t = target.split('#')[0];
     return S.lookup.get(norm(t)) || S.lookup.get(slugify(t)) || null;
   }
+  // A ghost is a name that's linked ([[Name]]) or pinned but has no page yet. It gets a
+  // placeholder page listing where it's mentioned, with a button to write it.
+  function ghostOf(target, from) {
+    const name = String(target || '').split('#')[0].trim(), slug = slugify(name);
+    if (!slug) return null;
+    let g = S.ghosts.get(slug);
+    if (!g) S.ghosts.set(slug, g = { ghost: true, slug, title: name, type: '', fm: {}, aliases: [], tags: [], backlinks: [], onMaps: [] });
+    else if (name !== name.toLowerCase() && g.title === g.title.toLowerCase()) g.title = name;   // prefer a capitalized spelling
+    if (from && !g.backlinks.includes(from)) g.backlinks.push(from);
+    return g;
+  }
+  const ghost = target => S.ghosts.get(slugify(String(target || '').split('#')[0])) || null;
   function index() {
+    S.ghosts = new Map();
     const add = (k, e) => { if (k && !S.lookup.has(k)) S.lookup.set(k, e); };
     S.entries.forEach(e => add(norm(e.slug), e));
     S.entries.forEach(e => [e.title, ...e.aliases].forEach(n => { add(norm(n), e); add(slugify(n), e); }));
     for (const e of S.entries) {
       const src = [e.body, e.chartText, ...Object.values(e.fm).flat().filter(v => typeof v === 'string')].join('\n');
-      const out = new Set([...src.matchAll(WL_RE)].map(m => resolve(m[1].split('|')[0])).filter(x => x && x !== e));
+      const targets = [...src.matchAll(WL_RE)].map(m => m[1].split('|')[0]).filter(t => !/\.(png|jpe?g|gif|webp|svg|avif)$/i.test(t));
+      const out = new Set(targets.map(resolve).filter(x => x && x !== e));
       out.forEach(t => t.backlinks.push(e));
+      targets.filter(t => !resolve(t)).forEach(t => ghostOf(t, e));
       for (const p of e.pins) {
         p.entry = resolve(p.target);
+        if (p.target && !p.entry) { const g = ghostOf(p.target); if (g) { p.ghost = g; g.onMaps.push({ map: e, pin: p }); } }
         p.label = p.label || (p.entry ? p.entry.title : p.target) || '?';
         if (p.entry && p.entry !== e) p.entry.onMaps.push({ map: e, pin: p });
       }
@@ -311,7 +328,8 @@
       if (e.tags.some(x => norm(x) === q)) s += 20;
       if (words.every(w => e.hay.includes(w))) s += 10;
       return { e, s };
-    }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || byTitle(a.e, b.e)).map(r => r.e);
+    }).filter(r => r.s > 0).sort((a, b) => b.s - a.s || byTitle(a.e, b.e)).map(r => r.e)
+      .concat([...S.ghosts.values()].filter(g => words.every(w => norm(g.title).includes(w))).sort(byTitle));
   }
 
   /* ---------- chrome ---------- */
@@ -346,8 +364,8 @@
     let hits = [], cur = 0;
     const draw = () => {
       box.innerHTML = hits.length
-        ? hits.slice(0, 8).map((e, i) => `<a href="${href(e)}" role="option" class="${i === cur ? 'is-cur' : ''}" style="--c:${typeOf(e.type).color}">
-            <span class="sr-type">${esc(typeOf(e.type).one)}</span><span class="sr-title">${esc(e.title)}</span></a>`).join('')
+        ? hits.slice(0, 8).map((e, i) => `<a href="${href(e)}" role="option" class="${i === cur ? 'is-cur' : ''}${e.ghost ? ' sr-ghost' : ''}" style="--c:${e.ghost ? 'var(--muted)' : typeOf(e.type).color}">
+            <span class="sr-type">${e.ghost ? 'Unwritten' : esc(typeOf(e.type).one)}</span><span class="sr-title">${esc(e.title)}</span></a>`).join('')
           + (hits.length > 8 ? `<a href="#/s/${encodeURIComponent(input.value)}" class="sr-more">All ${hits.length} results →</a>` : '')
         : `<div class="sr-empty">Nothing matches “${esc(input.value)}”</div>`;
       box.hidden = !input.value.trim();
@@ -380,6 +398,9 @@
 
   /* ---------- views ---------- */
   function card(e) {
+    if (e.ghost) return `<a class="card card-ghost" href="${href(e)}" style="--c:var(--line)"><span class="card-body">
+      <span class="kicker">Unwritten</span><span class="card-title">${esc(e.title)}</span>
+      <span class="card-sum">Mentioned in ${e.backlinks.length + e.onMaps.length} place${e.backlinks.length + e.onMaps.length === 1 ? '' : 's'}. No page yet.</span></span></a>`;
     const t = typeOf(e.type);
     return `<a class="card${e.type === 'map' ? ' card-map' : ''}" href="${href(e)}" style="--c:${t.color}">
       ${e.image ? `<span class="card-img"><img src="${esc(asset(e.image))}" alt="" loading="lazy"></span>` : ''}
@@ -448,6 +469,20 @@
   }
 
   function viewMissing(slug) {
+    const g = ghost(slug);
+    if (g) return page(`<article class="wrap entry entry-ghost" style="--c:var(--muted)">
+      <header class="entry-head">
+        <p class="kicker">Unwritten</p>
+        <h1>${esc(g.title)}</h1>
+      </header>
+      <div class="entry-grid no-side"><div class="entry-main">
+        <div class="ghost-box">
+          <p>Nobody has written this page yet. It’s here because ${g.backlinks.length ? 'other pages link to it' : 'it’s pinned on a map'}${g.backlinks.length && g.onMaps.length ? ' and it’s pinned on a map' : ''}.</p>
+          ${S.world.edit ? `<button type="button" class="primary" data-new data-title="${esc(g.title)}">＋ Write this page</button>` : ''}
+        </div>
+        ${related(g)}
+      </div></div>
+    </article>`, g.title, '');
     page(`<div class="wrap"><header class="list-head"><p class="kicker">Not found</p><h1>${esc(slug)}</h1>
       <p class="muted">There’s no entry by that name (yet). <a href="#/">Back home</a>.</p></header></div>`, 'Not found', '');
   }
@@ -621,7 +656,7 @@
           <h2>${esc(p.label)}</h2>
           ${e && e.summary ? `<p>${inline(e.summary)}</p>` : ''}
           ${p.note ? `<p class="mc-note">${inline(p.note)}</p>` : ''}
-          ${e ? `<a class="mc-open" href="${href(e)}">Open ${e.type === 'map' ? 'map' : 'entry'} →</a>` : ''}
+          ${e ? `<a class="mc-open" href="${href(e)}">Open ${e.type === 'map' ? 'map' : 'entry'} →</a>` : p.ghost ? `<a class="mc-open" href="${href(p.ghost)}">Unwritten page →</a>` : ''}
           ${isGM() ? '<div class="mc-gm"><button type="button" data-mc="remove">Remove pin</button><button type="button" data-mc="edit">Edit pins</button></div>' : ''}
         </div>`;
       cardEl.hidden = false;
@@ -806,7 +841,7 @@
       ready = true;
       initial();
       if (focus != null) {
-        const i = pins.findIndex(p => (p.entry && p.entry.slug === focus) || String(pins.indexOf(p)) === focus);
+        const i = pins.findIndex(p => ((p.entry || p.ghost) && (p.entry || p.ghost).slug === focus) || String(pins.indexOf(p)) === focus);
         if (i >= 0) focusPin(i);
       }
       stage.classList.add('is-ready');
@@ -850,6 +885,7 @@
   };
   const chartText = c => [...c.frames.map(chartLine.frame), ...c.nodes.map(chartLine.node), ...c.edges.map(chartLine.edge)].join('\n');
   const chartLines = t => String(t || '').split(/\s+\/\s+/);
+  const firstGhost = t => { const m = String(t || '').match(/\[\[([^\]|]+)/); return m && !resolve(m[1]) ? ghost(m[1]) : null; };
   const firstLink = t => { const m = String(t || '').match(/\[\[([^\]|]+)/); return m ? resolve(m[1]) : null; };
   function chartSVG(c, opts = {}) {
     const box = id => { const n = c.nodes.find(x => x.id === id); if (n) return { cx: n.x, cy: n.y, hw: n.w / 2, hh: n.h / 2 };
@@ -968,7 +1004,7 @@
         <p class="kicker">${e ? esc(typeOf(e.type).one) : 'On this chart'}</p><h2>${inline(lines[0])}</h2>
         ${lines.slice(1).map(l => `<p>${inline(l)}</p>`).join('')}
         ${e && e.summary ? `<p class="mc-note">${inline(e.summary)}</p>` : ''}
-        ${e ? `<a class="mc-open" href="${href(e)}">Open page →</a>` : ''}</div>`;
+        ${e ? `<a class="mc-open" href="${href(e)}">Open page →</a>` : firstGhost(n.text) ? `<a class="mc-open" href="${href(firstGhost(n.text))}">Unwritten page →</a>` : ''}</div>`;
       cardEl.hidden = false;
     }
     const closeCard = () => { cardEl.hidden = true; if (sel) { sel = ''; render(); } };
@@ -1278,7 +1314,8 @@
       if (del) { const f = del.closest('form'); f.dataset.del = '1'; f.requestSubmit($('.primary', f)); }
     });
     document.addEventListener('click', ev => {
-      if (ev.target.closest('[data-new]')) return withSession(dlg, 'Sign in to add a page', () => openCreator(dlg));
+      const nb = ev.target.closest('[data-new]');
+      if (nb) return withSession(dlg, 'Sign in to add a page', () => openCreator(dlg, nb.dataset.title));
       if (ev.target.closest('[data-who]')) return toggleWho();
       if (ev.target.closest('[data-wm=out]')) { store.set(sessionKey(), null); return renderGMLink(); }
       if (ev.target.closest('[data-gm]')) { closeWho(); return openGM(); }
@@ -1634,11 +1671,11 @@
     out.near = out.near.slice(0, 8);
     return out;
   }
-  function openCreator(dlg) {
+  function openCreator(dlg, preset) {
     const sess = session(), a = authorOf(sess.author);
     dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
       <p class="kicker">New page</p><h2>Add to the catalog</h2>
-      <label>Name<input name="title" required maxlength="80" autocomplete="off" placeholder="e.g. Madame Vex"></label>
+      <label>Name<input name="title" required maxlength="80" autocomplete="off" placeholder="e.g. Madame Vex" value="${esc(preset || '')}"></label>
       <div class="ed-similar" hidden></div>
       <label>Category<select name="type" required><option value="">Choose…</option>${typeOptions('')}</select></label>
       <div class="ed-newmap" hidden>${imageField('', true)}</div>
@@ -1688,8 +1725,9 @@
       await persist({ slug, author: a.id, text: `${header}\n${f.text.value.trim()}` }, sess);
       location.hash = '#/e/' + slug;
       location.reload();
-    }, () => withSession(dlg, 'Sign in to add a page', () => openCreator(dlg)));
+    }, () => withSession(dlg, 'Sign in to add a page', () => openCreator(dlg, f.title.value)));
     show(dlg);
+    if (preset) { f.title.dispatchEvent(new Event('input')); setTimeout(() => f.type.focus(), 40); }
   }
 
   /* image upload: shrink in the browser, then store with the save service (or inline in preview mode) */
