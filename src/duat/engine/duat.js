@@ -948,6 +948,11 @@
     const dlg = S.dlg = document.createElement('dialog');
     dlg.className = 'editor';
     document.body.append(dlg);
+    dlg.addEventListener('click', ev => {
+      if (ev.target.closest('[data-cancel]')) return dlg.close();
+      const del = ev.target.closest('[data-delete]');
+      if (del) { const f = del.closest('form'); f.dataset.del = '1'; f.requestSubmit($('.primary', f)); }
+    });
     document.addEventListener('click', ev => {
       if (ev.target.closest('[data-new]')) return withSession(dlg, 'Sign in to add a page', () => openCreator(dlg));
       if (ev.target.closest('[data-who]')) return toggleWho();
@@ -974,11 +979,10 @@
         `<option value="${esc(id)}">${esc(a.name)}${a.role ? ` (${esc(a.role)})` : ''}</option>`).join('')}</select></label>
       <label>Passkey<input name="key" type="password" autocomplete="current-password" required></label>
       <p class="ed-err" hidden></p>
-      <div class="ed-actions"><button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Continue</button></div>
+      <div class="ed-actions"><button type="button" data-cancel>Cancel</button><button value="ok" class="primary">Continue</button></div>
     </form>`;
     const f = $('form', dlg);
     f.addEventListener('submit', async ev => {
-      if (ev.submitter && ev.submitter.value === 'cancel') return;
       ev.preventDefault();
       const err = $('.ed-err', f), h = await sha256(f.key.value);
       let gm = !!editCfg().gmHash && h === editCfg().gmHash, ok = gm || !editCfg().keyHash || h === editCfg().keyHash;
@@ -1045,7 +1049,6 @@
     const sw = $('.ed-switch', f);
     if (sw) sw.addEventListener('click', () => { store.set(sessionKey(), null); renderGMLink(); again(); });
     f.addEventListener('submit', async ev => {
-      if (ev.submitter && ev.submitter.value === 'cancel') return;
       ev.preventDefault();
       const btn = ev.submitter && ev.submitter.classList.contains('primary') ? ev.submitter : $('.primary', f);
       const err = $('.ed-err', f), label = btn.textContent;
@@ -1060,7 +1063,7 @@
   const footer = (a, action) => `${!editCfg().endpoint ? '<p class="ed-warn">Preview mode: saves stay in this browser until the shared save service is connected.</p>' : ''}
     <p class="ed-err" hidden></p>
     <div class="ed-actions"><span></span>
-      <button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">${action}</button></div>`;
+      <button type="button" data-cancel>Cancel</button><button value="ok" class="primary">${action}</button></div>`;
   const tabs = (on) => `<div class="ed-tabs" role="tablist">
     <button type="button" role="tab" data-tab="notes" aria-selected="${on === 'notes'}">Notes</button>
     <button type="button" role="tab" data-tab="details" aria-selected="${on === 'details'}">Page details</button></div>`;
@@ -1074,7 +1077,7 @@
     if (e.slug === homeSlug()) {
       if (gm) return openHome(dlg, e);
       dlg.innerHTML = `<form method="dialog" class="ed-form"><p class="kicker">Home page</p><p>Only the GM can change the home page.</p>
-        <div class="ed-actions"><span></span><button value="cancel" class="primary">OK</button></div></form>`;
+        <div class="ed-actions"><span></span><button type="button" data-cancel class="primary">OK</button></div></form>`;
       return show(dlg);
     }
     const who = authorOf(gm && as ? as : sess.author);
@@ -1213,7 +1216,7 @@
         <label class="ed-check"><input type="checkbox" name="showmap"${e.fm.showmap === false ? '' : ' checked'}> Show “On the map”</label>
         <label class="ed-check"><input type="checkbox" name="showmentions"${e.fm.showmentions === false ? '' : ' checked'}> Show “Mentioned in”</label>
         <label>Merge this page into…<span class="ed-field"><input name="merge" placeholder="Pick a page" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span></label>
-        <button type="submit" value="delete" class="ed-danger">Delete this page</button></fieldset>` : ''}
+        <button type="button" data-delete class="ed-danger">Delete this page</button></fieldset>` : ''}
       ${footer(me, 'Save details')}
     </form>`;
     const f = $('form', dlg);
@@ -1257,7 +1260,8 @@
       if (gm) {
         meta.hidden = f.hidden.checked;
         meta.showmap = f.showmap.checked; meta.showmentions = f.showmentions.checked;
-        if (sub && sub.value === 'delete') {
+        if (f.dataset.del === '1') {
+          f.dataset.del = '';
           if (!confirm(`Delete “${e.title}” for everyone?`)) throw new Error('not deleted');
           meta.deleted = true;
         }
@@ -1414,7 +1418,7 @@
         <div class="ed-actions ed-stack"><button type="button" data-g="export">1. Download export</button>
         <button type="button" data-g="clear" class="ed-danger" disabled>2. Clear shared edits</button></div></fieldset>
       <p class="ed-err" hidden></p>
-      <div class="ed-actions"><button type="button" data-g="out">Sign out</button><span></span><button value="cancel">Close</button></div>
+      <div class="ed-actions"><button type="button" data-g="out">Sign out</button><span></span><button type="button" data-cancel>Close</button></div>
     </form>`;
     const f = $('form', dlg), err = $('.ed-err', f);
     if (editCfg().endpoint) post({ action: 'version', world: worldId() }, session())
@@ -1485,7 +1489,7 @@
         <label>New player passkey<input name="pk" type="password" autocomplete="new-password"></label>
         <label>New GM passkey<input name="gk" type="password" autocomplete="new-password"></label></fieldset>
       <p class="ed-err" hidden></p>
-      <div class="ed-actions"><button type="button" data-back>← GM tools</button><span></span><button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">Save settings</button></div>
+      <div class="ed-actions"><button type="button" data-back>← GM tools</button><span></span><button type="button" data-cancel>Cancel</button><button value="ok" class="primary">Save settings</button></div>
     </form>`;
     const f = $('form', dlg);
     const wire = root => {
