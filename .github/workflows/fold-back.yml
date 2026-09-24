@@ -1,0 +1,44 @@
+name: Fold site edits into files
+
+# Duat: turns a campaign's site edits into its .md files and world.json, and opens a pull request.
+# After merging it (which deploys), clear the shared edits from GM tools.
+on:
+  workflow_dispatch:
+    inputs:
+      campaign:
+        description: Campaign folder under src/duat
+        default: vcm
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1
+          npx playwright install --with-deps chromium
+      - name: Fold edits into the files
+        run: node duat-backend/fold-back.js "${{ inputs.campaign }}"
+      - name: Open a pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then echo "Nothing to fold: the files already match the site."; exit 0; fi
+          branch="fold-back/${{ inputs.campaign }}-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A src/duat
+          git commit -m "Fold ${{ inputs.campaign }} site edits into files"
+          git push origin "$branch"
+          gh pr create --base master --head "$branch" --title "Fold ${{ inputs.campaign }} site edits into files" \
+            --body "Site edits for **${{ inputs.campaign }}** written into its files. After merging, wait for the deploy, then use GM tools → Clear shared edits."

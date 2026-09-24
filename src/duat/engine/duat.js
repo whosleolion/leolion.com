@@ -28,7 +28,7 @@
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
-  const S = { world: null, entries: [], lookup: new Map(), ghosts: new Map(), stamps: new Map(), edits: [], sync: 'ok', raw: null, types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
+  const S = { world: null, entries: [], lookup: new Map(), ghosts: new Map(), stamps: new Map(), edits: [], sync: 'booting', raw: null, types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
 
   /* ---------- small helpers ---------- */
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -347,6 +347,31 @@
       .concat([...S.ghosts.values()].filter(g => words.every(w => norm(g.title).includes(w))).sort(byTitle));
   }
 
+  // typo help: page names within a couple of letters of what was typed
+  function lev(a, b) {
+    if (Math.abs(a.length - b.length) > 3) return 9;
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  function didYouMean(q) {
+    q = norm(q); if (q.length < 3) return [];
+    const scored = [];
+    for (const e of listed()) {
+      const names = [e.title, ...e.aliases].map(norm);
+      const words = names.flatMap(n => [n, ...n.split(/\s+/)]);
+      const d = Math.min(...words.map(w => lev(q, w)));
+      if (d <= Math.max(1, Math.floor(q.length / 4))) scored.push([d, e]);
+    }
+    return scored.sort((a, b) => a[0] - b[0] || byTitle(a[1], b[1])).slice(0, 4).map(x => x[1]);
+  }
+  const suggest = q => { const s = didYouMean(q);
+    return s.length ? `Did you mean ${s.map(e => `<a href="${href(e)}">${esc(e.title)}</a>`).join(', ')}?` : ''; };
+
   /* ---------- chrome ---------- */
   function renderChrome(root) {
     const w = S.world;
@@ -396,7 +421,7 @@
         ? hits.slice(0, 8).map((e, i) => `<a href="${href(e)}" role="option" class="${i === cur ? 'is-cur' : ''}${e.ghost ? ' sr-ghost' : ''}" style="--c:${e.ghost ? 'var(--muted)' : typeOf(e.type).color}">
             <span class="sr-type">${e.ghost ? 'Unwritten' : esc(typeOf(e.type).one)}</span><span class="sr-title">${esc(e.title)}</span></a>`).join('')
           + (hits.length > 8 ? `<a href="#/s/${encodeURIComponent(input.value)}" class="sr-more">All ${hits.length} results →</a>` : '')
-        : `<div class="sr-empty">Nothing matches “${esc(input.value)}”</div>`;
+        : `<div class="sr-empty">Nothing matches “${esc(input.value)}”. ${suggest(input.value)}</div>`;
       box.hidden = !input.value.trim();
     };
     input.addEventListener('input', () => { hits = search(input.value); cur = 0; draw(); });
@@ -526,7 +551,7 @@
     const hits = search(q);
     page(`<div class="wrap">
       <header class="list-head"><p class="kicker">Search</p><h1>“${esc(q)}”</h1><p class="muted">${hits.length} result${hits.length === 1 ? '' : 's'}</p></header>
-      ${hits.length ? grid(hits) : '<p class="muted">No matches. Try a shorter word, or a nickname.</p>'}
+      ${hits.length ? grid(hits) : `<p class="muted">No matches. ${suggest(q) || 'Try a shorter word, or a nickname.'}</p>`}
     </div>`, 'Search', '');
   }
 
@@ -1039,7 +1064,7 @@
     });
     c.nodes.forEach((n, i) => {
       const fill = CHART_STYLES[n.style], link = firstLink(n.text);
-      out += `<g class="ch-node${fill ? '' : ' is-text'}${link ? ' is-linked' : ''}${opts.sel === 'node:' + i ? ' is-sel' : ''}" data-node="${i}">
+      out += `<g class="ch-node${fill ? '' : ' is-text'}${link ? ' is-linked' : ''}${opts.sel === 'node:' + i ? ' is-sel' : ''}" data-node="${i}"${fill ? ` tabindex="0" role="button" aria-label="${esc(chartLines(n.text).map(plain).join(', '))}"` : ''}>
         ${fill ? `<rect x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="8" style="fill:${fill}"/>` : `<rect class="ch-text-hit" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}"/>`}
         ${txt(chartLines(n.text), n.x, n.y + 5, 'ch-node-label')}</g>`;
     });
@@ -1170,6 +1195,13 @@
     stage.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('pointercancel', onUp);
     stage.addEventListener('wheel', e => { e.preventDefault(); const r = rel(e), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(r.x, r.y, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015))); }, { passive: false });
+    // keyboard: Tab through the boxes, Enter opens one (or its form while editing)
+    stage.addEventListener('keydown', ev => {
+      const n = ev.target.closest && ev.target.closest('[data-node]');
+      if (!n || !(ev.key === 'Enter' || ev.key === ' ')) return;
+      ev.preventDefault(); const i = +n.dataset.node;
+      if (editing) nodeForm(i); else { focusNode(i); requestAnimationFrame(() => { const el = root.querySelector(`[data-node="${i}"]`); if (el) el.focus(); }); }
+    });
 
     stage.addEventListener('click', e => {
       if (e.target.closest('.map-more, .chart-bar')) return;
@@ -2076,6 +2108,14 @@
     m.style.top = (r.bottom + 6) + 'px'; m.style.right = Math.max(8, innerWidth - r.right) + 'px';
     document.body.append(m);
   }
+  // site edits as files: every changed page as Markdown, what was deleted, and the campaign settings
+  function exportData() {
+    const settings = S.edits.find(x => x.author === '@world');
+    return { world: worldId(), exported: new Date().toISOString(), entries: Object.fromEntries(S.entries.filter(e => e.dirty).map(e => [e.slug, toMarkdown(e)])),
+      deleted: S.deleted, settings: settings ? currentSettings() : null };
+  }
+  // for the fold-back action (duat-backend/fold-back.js)
+  window.Duat = { ready: () => S.sync, export: () => exportData() };
   function openGM() {
     const dlg = S.dlg, changed = S.entries.filter(e => e.dirty);
     dlg.innerHTML = `<form method="dialog" class="ed-form">
@@ -2088,9 +2128,10 @@
       ${S.deletedPages.length ? `<fieldset><legend>Deleted pages</legend><ul class="gm-deleted">${S.deletedPages.map(d =>
         `<li><span>${esc(d.title)}</span><button type="button" data-undel="${esc(d.slug)}">Restore</button></li>`).join('')}</ul></fieldset>` : ''}
       <fieldset><legend>Fold site edits into the files</legend>
-        <p class="muted">${changed.length} page${changed.length === 1 ? '' : 's'} changed on the site${S.deleted.length ? `, ${S.deleted.length} deleted or merged` : ''}. Optional: site edits work fine where they are. To make the files the master copy again: export, apply with <code>duat-backend/apply_export.py</code>, deploy, then clear.</p>
-        <div class="ed-actions ed-stack"><button type="button" data-g="export">1. Download export</button>
-        <button type="button" data-g="clear" class="ed-danger" disabled>2. Clear shared edits</button></div></fieldset>
+        <p class="muted">${changed.length} page${changed.length === 1 ? '' : 's'} changed on the site${S.deleted.length ? `, ${S.deleted.length} deleted or merged` : ''}. Optional: site edits work fine where they are.
+        ${S.world.foldBackUrl ? `To make the files the master copy again: run <a href="${esc(S.world.foldBackUrl)}" target="_blank" rel="noopener">the fold-back action</a> (Run workflow), merge the pull request it opens, wait for the deploy, then clear.` : 'To make the files the master copy again: export, apply with <code>duat-backend/apply_export.py</code>, deploy, then clear.'}</p>
+        <div class="ed-actions ed-stack"><button type="button" data-g="export">${S.world.foldBackUrl ? 'Download export (by hand)' : '1. Download export'}</button>
+        <button type="button" data-g="clear" class="ed-danger"${S.world.foldBackUrl ? '' : ' disabled'}>${S.world.foldBackUrl ? 'Clear shared edits (after the deploy)' : '2. Clear shared edits'}</button></div></fieldset>
       <p class="ed-err" hidden></p>
       <div class="ed-actions"><button type="button" data-g="out">Sign out</button><span></span><button type="button" data-cancel>Close</button></div>
     </form>`;
@@ -2109,7 +2150,7 @@
       if (b.dataset.g === 'settings') openSettings();
       if (b.dataset.g === 'newworld') openNewCampaign();
       if (b.dataset.g === 'export') {
-        const out = { world: worldId(), exported: new Date().toISOString(), entries: Object.fromEntries(changed.map(e => [e.slug, toMarkdown(e)])), deleted: S.deleted };
+        const out = exportData();
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
         a.download = `duat-export-${worldId()}-${out.exported.slice(0, 10)}.json`; a.click();
@@ -2231,6 +2272,10 @@
       <label>Link name <span class="muted">(letters, numbers, dashes)</span><input name="id" required pattern="[a-z0-9][a-z0-9-]*" autocomplete="off"></label>
       <label>Welcome text for the home page<textarea name="intro" rows="4" placeholder="What players see first."></textarea></label>
       <p class="muted">It starts with this campaign’s categories and just you as a player; add people under Campaign settings once it’s open.</p>
+      <fieldset><legend>Its own passkeys (recommended for a different group)</legend>
+        <label>Player passkey<input name="pk" type="password" autocomplete="new-password"></label>
+        <label>GM passkey<input name="gk" type="password" autocomplete="new-password"></label>
+        <p class="muted">Leave both empty to use the same passkeys as this campaign.</p></fieldset>
       <p class="ed-err" hidden></p>
       <div class="ed-actions"><button type="button" data-back>← GM tools</button><span></span><button value="ok" class="primary">Create campaign</button></div>
     </form>`;
@@ -2247,6 +2292,9 @@
         types: Object.fromEntries(S.typeOrder.map(t => [t, { ...typeOf(t) }])), typeOrder: S.typeOrder,
         navTypes: w.navTypes || S.typeOrder, newestFirst: w.newestFirst || [], mapMajorTypes: w.mapMajorTypes || [], home: 'home',
         ...(editCfg().endpoint ? {} : { keyHash: editCfg().keyHash, gmHash: editCfg().gmHash }) };
+      if (!!f.pk.value !== !!f.gk.value) throw new Error('set both passkeys, or neither');
+      const hashes = f.pk.value ? { keyHash: await sha256(f.pk.value), gmHash: await sha256(f.gk.value) } : null;
+      if (hashes && !editCfg().endpoint) Object.assign(st, hashes);
       const intro = f.intro.value.trim() || `Welcome to ${title}.`;
       const rows = [{ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) },
         { slug: 'home', author: a.id, text: `---\ntitle: Welcome\ntype: note\nhidden: true\n---\n${intro}` }];
@@ -2254,11 +2302,12 @@
         const r = await fetch(`${editCfg().endpoint}?world=${encodeURIComponent(id)}`, { cache: 'no-cache' }).then(x => x.json());
         if (r.ok && r.edits.length) throw new Error(`there’s already a campaign at “${id}”`);
         for (const row of rows) await post({ ...row, world: id }, me);
+        if (hashes) await post({ action: 'setkeys', world: id, scope: 'world', ...hashes }, me);
       } else {
         if ((store.get(`duat:${id}:edits`) || []).length) throw new Error(`there’s already a campaign at “${id}”`);
         store.set(`duat:${id}:edits`, rows.map(x => ({ ...x, updated: new Date().toISOString() })));
       }
-      store.set(`duat:${id}:session`, me);
+      store.set(`duat:${id}:session`, hashes ? { ...me, key: f.gk.value, gm: true } : me);
       location.href = `/duat/play/?w=${encodeURIComponent(id)}`;
     }, openNewCampaign);
     show(dlg);
