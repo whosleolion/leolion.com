@@ -58,7 +58,7 @@ Body in Markdown.
 
 Markdown supports headings, **bold**, *italic*, ~~strike~~, ==highlight==, nested lists, `- [ ]` checkboxes, tables, quotes, images, code, and:
 
-- `[[Entry Title]]`, `[[slug]]`, `[[alias]]`, `[[Title|shown text]]` are wikilinks. A link to something that doesn't exist yet shows as dashed "unwritten" text, so you can link first and write later.
+- `[[Entry Title]]`, `[[slug]]`, `[[alias]]`, `[[Title|shown text]]` are wikilinks. A link to something that doesn't exist yet shows as dashed "unwritten" text, so you can link first and write later. Tapping it opens a ghost page: the name, where it's mentioned (and pinned), and **＋ Write this page**, which opens ＋ New with the name filled in. Once written, every link to it goes live. Ghosts also turn up in search, marked Unwritten.
 - `![[picture.png]]` embeds an image from `images/`.
 - `::: leo` … `:::` wraps one person's account. Several people can write about the same thing (e.g. the GM's recap and a player's notes on the same session), and each block is labeled with its author. Authors live in `world.json` under `"authors": { "leo": { "name": "Leo", "role": "GM", "color": "#ff5a36" } }`. For a whole entry by one person, use `author: leo` in the frontmatter instead. Every author gets a page at `#/by/<id>`.
 - Callouts work like Obsidian's: `> [!rumor] Heard at the bar` (also note, tip, warning, danger, quote, question).

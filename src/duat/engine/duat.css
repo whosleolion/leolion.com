@@ -644,3 +644,15 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
   .chart-bar button { padding: 5px 9px; font-size: 0.78rem; }
   .ch-hint { font-size: 0.74rem; }
 }
+
+/* ghost entries: linked or pinned names with no page yet */
+a.wl-missing { cursor: pointer; }
+a.wl-missing:hover { color: var(--text); border-bottom-color: var(--muted); }
+.card-ghost { background: transparent; border-style: dashed; }
+.card-ghost .card-body { border-top-style: dashed; }
+.card-ghost .card-title { color: var(--muted); }
+.sr-ghost .sr-title { color: var(--muted); }
+.entry-ghost h1 { color: var(--muted); }
+.ghost-box { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 18px; border: 1.5px dashed var(--line); border-radius: 12px; }
+.ghost-box p { margin: 0; flex: 1 1 260px; color: var(--muted); }
+.ghost-box .primary { padding: 9px 16px; border-radius: 10px; border: 0; background: var(--accent); color: #111; font: 700 0.95rem var(--font-ui); cursor: pointer; }
