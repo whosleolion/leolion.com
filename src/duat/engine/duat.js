@@ -28,7 +28,7 @@
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
-  const S = { world: null, entries: [], lookup: new Map(), ghosts: new Map(), types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
+  const S = { world: null, entries: [], lookup: new Map(), ghosts: new Map(), stamps: new Map(), edits: [], sync: 'ok', raw: null, types: {}, typeOrder: [], cleanup: null, deleted: [], dlg: null };
 
   /* ---------- small helpers ---------- */
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -350,14 +350,28 @@
       </div>
       <main id="main" tabindex="-1"></main>
       <footer class="foot"><span>${esc(w.title)}</span><span class="foot-right"><button type="button" class="foot-duat">catalogued in Duat</button></span></footer>`;
-    const counts = {};
-    listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
-    $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
-      `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('');
+    renderNav();
     wireSearch();
     const measure = () => document.documentElement.style.setProperty('--chrome-h', $('.chrome').offsetHeight + 'px');
     measure();
     new ResizeObserver(measure).observe($('.chrome'));
+  }
+  function renderNav() {
+    const counts = {}, w = S.world;
+    listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
+    $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
+      `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('');
+    $('.brand-short').textContent = w.short || w.title; $('.brand-full').textContent = w.title;
+    $('.foot > span').textContent = w.title;
+  }
+  // a small status chip while shared edits load, or when they couldn't
+  function renderSync() {
+    let chip = $('.sync-chip');
+    if (!chip) { chip = document.createElement('div'); chip.className = 'sync-chip'; chip.setAttribute('role', 'status'); document.body.append(chip); }
+    chip.hidden = S.sync === 'ok';
+    chip.className = 'sync-chip is-' + S.sync;
+    chip.innerHTML = S.sync === 'loading' ? '<span class="sync-dot"></span>Loading shared edits…'
+      : S.sync === 'failed' ? `Showing the saved files: shared edits couldn’t load. Editing is paused. <button type="button" onclick="location.reload()">Try again</button>` : '';
   }
   function wireSearch() {
     const input = $('.search input'), box = $('.search-results');
@@ -1238,22 +1252,33 @@
   };
   const localKey = () => `duat:${worldId()}:edits`;
   const sessionKey = () => `duat:${worldId()}:session`;
-  const session = () => store.get(sessionKey());
+  const session = () => {
+    const s = store.get(sessionKey());
+    // a session that picked the GM's name without the GM passkey (older sites allowed it) is dropped
+    if (s && !s.gm && S.world && norm(s.author) === ownerId()) { store.set(sessionKey(), null); return null; }
+    return s;
+  };
   const isGM = () => !!(session() || {}).gm;
 
+  // resolves {ok, edits} or {ok:false, error}; gives up after 15 s so a slow Google never blanks the catalog
   async function loadEdits() {
-    if (!S.world.edit) return [];
+    if (!S.world.edit) return { ok: true, edits: [] };
     const ep = editCfg().endpoint;
-    if (!ep) return store.get(localKey()) || [];
+    if (!ep) return { ok: true, edits: store.get(localKey()) || [] };
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
     try {
-      const r = await fetch(`${ep}?world=${encodeURIComponent(worldId())}`, { cache: 'no-cache' });
+      const r = await fetch(`${ep}?world=${encodeURIComponent(worldId())}`, { cache: 'no-cache', signal: ctl.signal });
       const j = await r.json();
-      return j.ok ? j.edits : [];
+      if (!j.ok) throw new Error(j.error || 'the save service said no');
+      S.svcVersion = j.version || 3;
+      return { ok: true, edits: j.edits };
     } catch (err) {
       console.warn('Duat: couldn’t load shared edits', err);
-      return [];
-    }
+      return { ok: false, error: err.name === 'AbortError' ? 'the save service took too long' : err.message };
+    } finally { clearTimeout(timer); }
   }
+  // editing waits until shared edits are in, so nobody saves over text they haven't seen
+  const canEdit = () => !editCfg().endpoint || S.sync === 'ok';
   const blockRe = id => new RegExp(`^:::\\s*${id}\\s*\\n[\\s\\S]*?^:::\\s*$`, 'm');
   const isWhole = (e, id) => e.slug === homeSlug() || (!/^:::/m.test(e.body) &&
     (toArray(e.fm.author).map(norm).includes(id) || (id === ownerId() && !toArray(e.fm.author).length)));   // unowned page text is the GM's
@@ -1304,7 +1329,7 @@
   }
   const META_KEYS = ['title', 'type', 'aliases', 'tags', 'summary', 'image', 'order', 'hidden'];
   function applyMeta(e, meta) {
-    if (meta.deleted) { S.entries = S.entries.filter(x => x !== e); S.deleted.push(e.slug); return; }
+    if (meta.deleted) { S.entries = S.entries.filter(x => x !== e); S.deleted.push(e.slug); S.deletedPages.push({ slug: e.slug, title: e.title }); return; }
     if (meta.title && meta.title !== e.title) {
       // renamed: the old name stays a nickname so every existing [[link]] still lands here
       meta.aliases = [...new Set([...(meta.aliases || e.aliases), e.title])];
@@ -1342,7 +1367,7 @@
     }
   }
   function applyEdits(edits) {
-    S.deleted = [];
+    S.deleted = []; S.deletedPages = [];
     // a page deleted and later written again (＋ New / Write this page) starts fresh:
     // everything saved for it up to the delete is dropped, the delete included
     const delAt = {};
@@ -1404,6 +1429,12 @@
       const t = $('[autofocus], input[name=title], textarea, select', dlg); if (t) t.focus(); }, 30);
   }
   function withSession(dlg, kicker, next, title = '') {
+    if (!canEdit()) {
+      dlg.innerHTML = `<form method="dialog" class="ed-form"><p class="kicker">Editing is paused</p><h2>Shared edits haven’t loaded</h2>
+        <p>${S.sync === 'loading' ? 'They’re still on their way from the save service.' : `The save service couldn’t be reached (${esc(S.syncError || 'no answer')}).`} Editing waits until they’re in, so nobody saves over newer text they haven’t seen.</p>
+        <div class="ed-actions"><span></span><button type="button" data-cancel>Close</button><button type="button" class="primary" onclick="location.reload()">Try again</button></div></form>`;
+      return show(dlg);
+    }
     if (session()) return next();
     const authors = Object.entries(S.world.authors || {});
     dlg.innerHTML = `<form method="dialog" class="ed-form">
@@ -1418,13 +1449,14 @@
     f.addEventListener('submit', async ev => {
       ev.preventDefault();
       const err = $('.ed-err', f), h = await sha256(f.key.value);
-      let gm = !!editCfg().gmHash && h === editCfg().gmHash, ok = gm || !editCfg().keyHash || h === editCfg().keyHash;
+      let gm = !!editCfg().gmHash && h === editCfg().gmHash, ok = gm || !editCfg().keyHash || h === editCfg().keyHash, gmIds = [ownerId()];
       if (editCfg().endpoint) {
         // the save service is the judge (passkeys can be changed from the site)
-        try { const j = await post({ action: 'version', world: worldId() }, { key: f.key.value }); ok = true; gm = !!j.gm; }
+        try { const j = await post({ action: 'version', world: worldId() }, { key: f.key.value }); ok = true; gm = !!j.gm; if (j.gmAuthors) gmIds = [...gmIds, ...j.gmAuthors.map(norm)]; }
         catch (x) { if (/passkey/i.test(x.message)) ok = false; else if (!/latest update/.test(x.message)) { err.textContent = `Couldn’t reach the save service: ${x.message}`; err.hidden = false; return; } }
       }
       if (!ok) { err.textContent = 'That passkey isn’t right.'; err.hidden = false; return; }
+      if (!gm && gmIds.includes(norm(f.author.value))) { err.textContent = `${authorOf(f.author.value).name} is the GM: signing in as the GM needs the GM passkey.`; err.hidden = false; return; }
       store.set(sessionKey(), { author: f.author.value, key: f.key.value, gm });
       renderGMLink();
       next();
@@ -1455,19 +1487,79 @@
     const b = $('.ed-full-btn', dlg);
     if (b) { b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Exit full screen' : '⤢ Full screen'; b.title = on ? 'Exit full screen' : ''; }
   }
-  async function persist(edit, sess) {
+  const stampKey = (slug, author) => slug + '\n' + author;
+  async function persist(edit, sess, force) {
+    const key = stampKey(edit.slug, edit.author), stamp = new Date().toISOString();
     if (!editCfg().endpoint) {
-      const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
-      store.set(localKey(), [...all, { ...edit, updated: new Date().toISOString() }]);
-      return;
+      const rows = store.get(localKey()) || [], old = rows.find(x => x.slug === edit.slug && x.author === edit.author);
+      if (old && !force && (S.stamps.get(key) || '') !== (old.updated || '')) {
+        const pick = await askConflict(edit, { text: old.text, updated: old.updated });
+        if (pick === 'mine') return persist(edit, sess, true);
+        if (pick === 'theirs') location.reload();
+        throw new Error('not saved yet');
+      }
+      if (old) store.set(historyKey(), [...(store.get(historyKey()) || []), { ...old, replaced: stamp, by: sess && sess.author }].slice(-400));
+      store.set(localKey(), [...rows.filter(x => x !== old && !(x.slug === edit.slug && x.author === edit.author)), { ...edit, updated: stamp }]);
+      S.stamps.set(key, stamp);
+      return { ok: true, updated: stamp };
     }
-    const j = await post({ ...edit, world: worldId() }, sess);
-    return j;
+    try {
+      const j = await post({ ...edit, world: worldId(), base: S.stamps.get(key) || '', by: sess && sess.author, ...(force ? { force: true } : {}) }, sess);
+      if (j.updated) S.stamps.set(key, j.updated);
+      return j;
+    } catch (x) {
+      if (!x.conflict) throw x;
+      const pick = await askConflict(edit, x.conflict);
+      if (pick === 'mine') return persist(edit, sess, true);
+      if (pick === 'theirs') location.reload();
+      throw new Error('not saved yet: your text is still here');
+    }
+  }
+  const historyKey = () => `duat:${worldId()}:history`;
+  // what a saved row is, in words
+  function rowLabel(slug, author) {
+    const e = S.entries.find(x => x.slug === slug);
+    if (author === '@meta') return 'Page details';
+    if (author === '@pins') return e && e.type === 'chart' ? 'Chart drawing' : 'Map pins';
+    if (author === '@world') return 'Campaign settings';
+    return norm(author) === ownerId() ? 'Page text' : `${authorOf(author).name}’s notes`;
+  }
+  const ago = iso => {
+    const t = Date.parse(iso); if (!t) return '';
+    const m = Math.round((Date.now() - t) / 60000);
+    return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : m < 43200 ? `${Math.round(m / 1440)} days ago`
+      : new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  // someone saved the same thing while this person was editing: show both and let them choose
+  function askConflict(edit, theirs) {
+    let cd = $('dialog.conflict');
+    if (!cd) { cd = document.createElement('dialog'); cd.className = 'editor conflict'; document.body.append(cd); }
+    const text = !String(edit.author).startsWith('@');
+    cd.innerHTML = `<form method="dialog" class="ed-form">
+      <p class="kicker">Saved by someone else meanwhile</p>
+      <h2>${esc(rowLabel(edit.slug, edit.author))}${S.entries.find(x => x.slug === edit.slug) ? ` · ${esc(S.entries.find(x => x.slug === edit.slug).title)}` : ''}</h2>
+      <p class="muted">Someone saved this ${theirs.updated ? ago(theirs.updated) : ''} after you opened it. Saving yours would replace theirs (their version stays in the page history).</p>
+      ${text ? `<div class="cf-both"><label>Their version<textarea readonly rows="8">${esc(theirs.text)}</textarea></label>
+        <label>Yours<textarea readonly rows="8">${esc(edit.text)}</textarea></label></div>` : ''}
+      <div class="ed-actions ed-wrap">${text ? '<button type="button" data-cf="copy">Copy mine</button>' : ''}<span></span>
+        <button type="button" data-cf="back">Keep editing</button><button type="button" data-cf="theirs">Use theirs</button>
+        <button type="button" data-cf="mine" class="primary">Save mine</button></div></form>`;
+    return new Promise(res => {
+      cd.onclick = ev => {
+        const b = ev.target.closest('[data-cf]'); if (!b) return;
+        if (b.dataset.cf === 'copy') { navigator.clipboard && navigator.clipboard.writeText(edit.text); b.textContent = 'Copied'; return; }
+        if (b.dataset.cf === 'theirs' && text && !confirm('Discard your version? (Copy it first if you want to keep any of it.)')) return;
+        cd.close(); res(b.dataset.cf === 'back' ? null : b.dataset.cf);
+      };
+      cd.oncancel = () => res(null);
+      cd.showModal();
+    });
   }
   async function post(body, sess) {
     const r = await fetch(editCfg().endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ ...body, key: sess.key }) });
     const j = await r.json();
+    if (!j.ok && j.conflict) { const e = new Error(j.error); e.conflict = j.current || { text: '', updated: '' }; throw e; }
     if (!j.ok) {
       if (/passkey/i.test(j.error || '') && !/GM/.test(j.error || '')) store.set(sessionKey(), null);
       // an older save service doesn't know page details, pins, uploads or GM actions yet
@@ -1512,10 +1604,57 @@
       <button type="button" data-cancel>Cancel</button><button value="ok" class="primary">${action}</button></div>`;
   const tabs = (on) => `<div class="ed-tabs" role="tablist">
     <button type="button" role="tab" data-tab="notes" aria-selected="${on === 'notes'}">Notes</button>
-    <button type="button" role="tab" data-tab="details" aria-selected="${on === 'details'}">Page details</button></div>`;
+    <button type="button" role="tab" data-tab="details" aria-selected="${on === 'details'}">Page details</button>
+    <button type="button" role="tab" data-tab="history" aria-selected="${on === 'history'}">History</button></div>`;
   function wireTabs(dlg, e) {
     dlg.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () =>
-      b.dataset.tab === 'notes' ? openEditor(dlg, e) : openDetails(dlg, e)));
+      b.dataset.tab === 'notes' ? openEditor(dlg, e) : b.dataset.tab === 'history' ? openHistory(dlg, e) : openDetails(dlg, e)));
+  }
+
+  /* page history: every earlier version of the page's text, notes, details and pins, restorable */
+  async function fetchHistory(slug) {
+    const ep = editCfg().endpoint;
+    if (!ep) return (store.get(historyKey()) || []).filter(x => x.slug === slug).reverse();
+    const j = await fetch(`${ep}?world=${encodeURIComponent(worldId())}&history=${encodeURIComponent(slug)}`, { cache: 'no-cache' }).then(r => r.json());
+    if (!j.history) throw new Error('page history needs the save service updated to version 4 (see DUAT.md)');
+    return j.history;
+  }
+  const versionText = v => {
+    if (v.author === '@meta') { try { const m = JSON.parse(v.text); return Object.entries(m).filter(([, x]) => x !== '' && !(Array.isArray(x) && !x.length))
+      .map(([k, x]) => `${k}: ${typeof x === 'object' ? JSON.stringify(x) : x}`).join('\n'); } catch { return v.text; } }
+    return String(v.text || '').replace(/^---\n[\s\S]*?\n---\n?/, '').trim() || '(empty)';
+  };
+  async function openHistory(dlg, e) {
+    const sess = session(), gm = isGM();
+    dlg.innerHTML = `<div class="ed-form ed-history" style="--c:${typeOf(e.type).color}">${tabs('history')}<h2>${esc(e.title)}</h2>
+      <p class="muted hist-status">Loading earlier versions…</p><ol class="hist-list"></ol>
+      <div class="ed-actions"><span></span><button type="button" data-cancel>Close</button></div></div>`;
+    wireTabs(dlg, e); show(dlg);
+    const list = $('.hist-list', dlg), status = $('.hist-status', dlg);
+    let versions;
+    try { versions = await fetchHistory(e.slug); } catch (x) { status.textContent = `Couldn’t load the history: ${x.message}.`; return; }
+    if (!dlg.contains(list)) return;
+    status.textContent = versions.length ? 'Every time this page’s text, notes, details or pins were replaced, the old version was kept. Restoring one saves it as the current version (the one it replaces is kept too).'
+      : 'No earlier versions yet: nothing on this page has been replaced since history started.';
+    const may = v => gm || v.author === '@pins' || (v.author === '@meta') || norm(v.author) === norm(sess.author);
+    list.innerHTML = versions.map((v, i) => `<li><div class="hist-head"><b>${esc(rowLabel(v.slug, v.author))}</b>
+        <span class="muted">from ${esc(ago(v.updated) || 'the start')} · replaced ${esc(ago(v.replaced))}${v.by && v.by !== 'cleared' ? ` by ${esc(authorOf(v.by).name)}` : v.by === 'cleared' ? ' (cleared)' : ''}</span></div>
+      <details><summary>Show this version</summary><pre>${esc(versionText(v).slice(0, 4000))}</pre></details>
+      ${may(v) && v.author !== '@world' ? `<button type="button" data-restore="${i}">Restore</button>` : ''}</li>`).join('');
+    list.addEventListener('click', async ev => {
+      const b = ev.target.closest('[data-restore]'); if (!b) return;
+      const v = versions[+b.dataset.restore];
+      if (!confirm(`Restore this version of “${rowLabel(v.slug, v.author)}”? The current one stays in the history.`)) return;
+      b.disabled = true; b.textContent = 'Restoring…';
+      try { await persist({ slug: v.slug, author: v.author, text: v.text }, sess); location.reload(); }
+      catch (x) { b.disabled = false; b.textContent = 'Restore'; status.textContent = `Couldn’t restore: ${x.message}.`; }
+    });
+  }
+  // GM tools: bring back a deleted page with the details it had before
+  async function restorePage(slug) {
+    let meta = '{}';
+    try { const prev = (await fetchHistory(slug)).find(v => v.author === '@meta' && !/"deleted"\s*:\s*true/.test(v.text)); if (prev) meta = prev.text; } catch {}
+    await persist({ slug, author: '@meta', text: meta }, session());
   }
 
   function openEditor(dlg, e, as) {
@@ -1552,7 +1691,7 @@
   function currentSettings() {
     const st = {};
     for (const k of SETTING_KEYS) if (S.world[k] !== undefined) st[k] = S.world[k];
-    return { ...st, keyHash: editCfg().keyHash, gmHash: editCfg().gmHash };
+    return editCfg().endpoint ? st : { ...st, keyHash: editCfg().keyHash, gmHash: editCfg().gmHash };
   }
   function openHome(dlg, e) {
     const w = S.world, sess = session(), me = authorOf(sess.author);
@@ -1871,6 +2010,8 @@
       <div class="ed-actions ed-stack">
         <button type="button" data-g="settings" class="primary">Campaign settings</button>
         <button type="button" data-g="newworld">Start a new campaign</button></div>
+      ${S.deletedPages.length ? `<fieldset><legend>Deleted pages</legend><ul class="gm-deleted">${S.deletedPages.map(d =>
+        `<li><span>${esc(d.title)}</span><button type="button" data-undel="${esc(d.slug)}">Restore</button></li>`).join('')}</ul></fieldset>` : ''}
       <fieldset><legend>Fold site edits into the files</legend>
         <p class="muted">${changed.length} page${changed.length === 1 ? '' : 's'} changed on the site${S.deleted.length ? `, ${S.deleted.length} deleted or merged` : ''}. Optional: site edits work fine where they are. To make the files the master copy again: export, apply with <code>duat-backend/apply_export.py</code>, deploy, then clear.</p>
         <div class="ed-actions ed-stack"><button type="button" data-g="export">1. Download export</button>
@@ -1883,6 +2024,10 @@
       .then(j => { $('.ed-svc', f).textContent = `Save service connected (version ${j.version}).`; })
       .catch(x => { $('.ed-svc', f).textContent = /latest update/.test(x.message) ? 'The save service is an older version: redeploy duat-backend/Code.gs as a new version.' : `Save service problem: ${x.message}`; });
     f.addEventListener('click', async ev => {
+      const u = ev.target.closest('[data-undel]');
+      if (u) { u.disabled = true; u.textContent = 'Restoring…';
+        try { await restorePage(u.dataset.undel); location.hash = '#/e/' + u.dataset.undel; location.reload(); }
+        catch (x) { u.disabled = false; u.textContent = 'Restore'; err.textContent = x.message; err.hidden = false; } return; }
       const b = ev.target.closest('[data-g]'); if (!b) return;
       if (b.dataset.g === 'out') { store.set(sessionKey(), null); renderGMLink(); dlg.close(); }
       if (b.dataset.g === 'settings') openSettings();
@@ -1988,11 +2133,13 @@
       const missing = [...used].filter(t => !types[t]);
       if (missing.length) throw new Error(`pages still use ${missing.map(t => typeOf(t).one).join(', ')}; keep that category`);
       const st = { title: f.title.value.trim(), short: f.short.value.trim(), kicker: w.kicker || '', subtitle: w.subtitle || '',
-        theme: { ...(w.theme || {}), accent: f.accent.value }, authors, types, typeOrder, navTypes, newestFirst, mapMajorTypes, home: w.home || 'home',
-        keyHash: f.pk.value ? await sha256(f.pk.value) : editCfg().keyHash, gmHash: f.gk.value ? await sha256(f.gk.value) : editCfg().gmHash };
+        theme: { ...(w.theme || {}), accent: f.accent.value }, authors, types, typeOrder, navTypes, newestFirst, mapMajorTypes, home: w.home || 'home' };
+      if ((f.pk.value || f.gk.value) && !(f.pk.value && f.gk.value)) throw new Error('set both new passkeys together');
+      const hashes = f.pk.value ? { keyHash: await sha256(f.pk.value), gmHash: await sha256(f.gk.value) } : {};
+      if (!editCfg().endpoint) Object.assign(st, { keyHash: editCfg().keyHash, gmHash: editCfg().gmHash }, hashes);
       const sess = session();
       await persist({ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) }, sess);
-      if ((f.pk.value || f.gk.value) && editCfg().endpoint) await post({ action: 'setkeys', world: worldId(), keyHash: st.keyHash, gmHash: st.gmHash }, sess);
+      if (f.pk.value && editCfg().endpoint) await post({ action: 'setkeys', world: worldId(), scope: 'world', ...hashes }, sess);
       if (f.gk.value) store.set(sessionKey(), { ...sess, key: f.gk.value });
       location.reload();
     }, openSettings);
@@ -2023,7 +2170,7 @@
         theme: { ...(w.theme || {}) }, authors: { [a.id]: { name: a.name, role: a.role || 'GM', color: a.color } },
         types: Object.fromEntries(S.typeOrder.map(t => [t, { ...typeOf(t) }])), typeOrder: S.typeOrder,
         navTypes: w.navTypes || S.typeOrder, newestFirst: w.newestFirst || [], mapMajorTypes: w.mapMajorTypes || [], home: 'home',
-        keyHash: editCfg().keyHash, gmHash: editCfg().gmHash };
+        ...(editCfg().endpoint ? {} : { keyHash: editCfg().keyHash, gmHash: editCfg().gmHash }) };
       const intro = f.intro.value.trim() || `Welcome to ${title}.`;
       const rows = [{ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) },
         { slug: 'home', author: a.id, text: `---\ntitle: Welcome\ntype: note\nhidden: true\n---\n${intro}` }];
@@ -2213,8 +2360,44 @@
     const before = S.world.types || {};
     for (const k of SETTING_KEYS) if (st[k] !== undefined) S.world[k] = st[k];
     for (const [id, t] of Object.entries(S.world.types || {})) if (t && !('fields' in t) && before[id] && before[id].fields) t.fields = before[id].fields;
-    S.world.edit = { ...(S.world.edit || {}), ...(st.keyHash ? { keyHash: st.keyHash } : {}), ...(st.gmHash ? { gmHash: st.gmHash } : {}) };
+    if (!(S.world.edit || {}).endpoint) S.world.edit = { ...(S.world.edit || {}), ...(st.keyHash ? { keyHash: st.keyHash } : {}), ...(st.gmHash ? { gmHash: st.gmHash } : {}) };
     return true;
+  }
+  // everything the page is built from: the files, plus the shared edits layered over them
+  function build(edits) {
+    S.world = JSON.parse(JSON.stringify(S.raw.world));
+    const found = applySettings(edits.find(x => x.author === '@world'));
+    S.types = { ...DEFAULT_TYPES };
+    for (const [k, v] of Object.entries(S.world.types || {})) S.types[k] = { ...(S.types[k] || typeOf(k)), ...v };
+    if (S.world.theme) for (const [k, v] of Object.entries(S.world.theme)) document.documentElement.style.setProperty('--' + k, v);
+    S.entries = S.raw.files.map(([slug, text]) => { try { return parseEntry(slug, text); } catch (err) { console.warn('Duat: bad entry', slug, err); return null; } }).filter(Boolean);
+    S.lookup = new Map();
+    S.edits = edits;
+    S.stamps = new Map(edits.map(x => [stampKey(x.slug, x.author), String(x.updated || '')]));
+    applyEdits(edits.filter(x => x.author !== '@world'));
+    index();
+    const present = [...new Set(S.entries.map(e => e.type))];
+    S.typeOrder = [...new Set([...(S.world.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
+    return found;
+  }
+  const wait = ms => new Promise(r => setTimeout(() => r(null), ms));
+  async function loadFiles(w) {
+    // one bundle of every entry when the deploy made one; otherwise the files one by one
+    try {
+      const r = await fetch('bundle.json', { cache: 'no-cache' });
+      if (r.ok) { const b = await r.json(); if (b && b.entries) return (w.entries || []).filter(slug => slug in b.entries).map(slug => [slug, b.entries[slug]]); }
+    } catch (err) {}
+    const loaded = await Promise.all((w.entries || []).map(async slug => {
+      try {
+        const r = await fetch(`entries/${slug}.md`, { cache: 'no-cache' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return [slug, await r.text()];
+      } catch (err) {
+        console.warn(`Duat: couldn’t load entries/${slug}.md`, err);
+        return null;
+      }
+    }));
+    return loaded.filter(Boolean);
   }
   async function boot() {
     const root = document.getElementById('duat');
@@ -2224,43 +2407,41 @@
         // a campaign that lives entirely in the save service: /duat/play/?w=<id>
         const id = slugify(new URLSearchParams(location.search).get('w') || '');
         if (!id) throw new Error('No campaign chosen. Links look like /duat/play/?w=my-campaign');
-        w = { id, title: id, entries: [], siteOnly: true,
-          edit: { endpoint: root.dataset.endpoint || '', keyHash: root.dataset.keyHash || '', gmHash: root.dataset.gmHash || '' } };
+        w = { id, title: id, entries: [], siteOnly: true, edit: { endpoint: root.dataset.endpoint || '' } };
       } else {
         const res = await fetch(root.dataset.world || 'world.json', { cache: 'no-cache' });
         if (!res.ok) throw new Error(`world.json → HTTP ${res.status}`);
         w = await res.json();
       }
-      S.world = w;
+      S.raw = { world: w, files: [] };
+      S.world = JSON.parse(JSON.stringify(w));
       S.worldId = slugify(w.id || w.title || 'world');
-      const edits = await loadEdits();
-      const found = applySettings(edits.find(x => x.author === '@world'));
+      const editsP = loadEdits(), filesP = w.siteOnly ? Promise.resolve([]) : loadFiles(w);
+      // wait a moment for shared edits; if they're slow, show the files now and add the edits when they land
+      const first = w.siteOnly ? await editsP : await Promise.race([editsP, wait(2500)]);
+      S.raw.files = await filesP;
+      if (w.siteOnly && !first.ok) throw new Error(`Couldn’t reach the save service (${first.error}). Try again in a moment.`);
+      S.sync = !first ? 'loading' : first.ok ? 'ok' : 'failed';
+      S.syncError = first && first.error;
+      const found = build(first && first.ok ? first.edits : []);
       if (w.siteOnly && !found) throw new Error(`There’s no campaign called “${S.worldId}” yet. A GM can start one from GM tools.`);
       document.title = S.world.title || 'Duat';
-      S.types = { ...DEFAULT_TYPES };
-      for (const [k, v] of Object.entries(S.world.types || {})) S.types[k] = { ...(S.types[k] || typeOf(k)), ...v };
-      if (S.world.theme) for (const [k, v] of Object.entries(S.world.theme)) document.documentElement.style.setProperty('--' + k, v);
-      const loaded = await Promise.all((w.entries || []).map(async slug => {
-        try {
-          const r = await fetch(`entries/${slug}.md`, { cache: 'no-cache' });
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return parseEntry(slug, await r.text());
-        } catch (err) {
-          console.warn(`Duat: couldn’t load entries/${slug}.md`, err);
-          return null;
-        }
-      }));
-      S.entries = loaded.filter(Boolean);
-      applyEdits(edits.filter(x => x.author !== '@world'));
-      index();
-      const present = [...new Set(S.entries.map(e => e.type))];
-      S.typeOrder = [...new Set([...(S.world.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
       renderChrome(root);
       wireEditing();
       renderGMLink();
       wireAbout();
       window.addEventListener('hashchange', route);
       route();
+      renderSync();
+      if (!first) editsP.then(res => {
+        S.sync = res.ok ? 'ok' : 'failed'; S.syncError = res.error;
+        if (res.ok) {
+          build(res.edits); renderNav(); renderGMLink();
+          // redraw what's on screen, unless someone is mid-edit
+          if (!(S.dlg && S.dlg.open) && !$('.pin-editing')) { const y = scrollY; route(); scrollTo(0, y); }
+        }
+        renderSync();
+      });
     } catch (err) {
       console.error(err);
       root.innerHTML = `<div class="wrap boot-error"><h1>Couldn’t open this world</h1><p>${esc(err.message)}</p>
