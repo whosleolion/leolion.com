@@ -1341,6 +1341,11 @@
     const dlg = S.dlg = document.createElement('dialog');
     dlg.className = 'editor';
     document.body.append(dlg);
+    // keep full-screen writing above the phone keyboard
+    const vv = window.visualViewport;
+    if (vv) { const fitVV = () => { dlg.style.setProperty('--vvh', vv.height + 'px'); dlg.style.setProperty('--vvt', vv.offsetTop + 'px'); };
+      vv.addEventListener('resize', fitVV); vv.addEventListener('scroll', fitVV); fitVV(); }
+    dlg.addEventListener('close', () => dlg.classList.remove('is-focus'));
     dlg.addEventListener('click', ev => {
       if (ev.target.closest('[data-cancel]')) return dlg.close();
       const del = ev.target.closest('[data-delete]');
@@ -1359,6 +1364,7 @@
     });
   }
   function show(dlg) {
+    setFocusMode(dlg, !!$('.ed-full-btn', dlg) && store.get(FOCUS_KEY) === true && matchMedia('(max-width: 700px)').matches);
     if (!dlg.open) dlg.showModal();
     // focus the first field, unless the person has already started typing somewhere in the dialog
     setTimeout(() => { if (dlg.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
@@ -1408,7 +1414,14 @@
       <tr><td><code>---</code></td><td>a divider line</td></tr>
     </table></div></div>`;
   const field = ta => `<div class="ed-field">${ta}<div class="ed-links" role="listbox" hidden></div></div>`;
-  const notesBox = (label, ta) => `<div class="ed-notes-head"><span>${label}</span>${guide}</div>${field(ta)}`;
+  const notesBox = (label, ta) => `<div class="ed-notes-head"><span>${label}</span><span class="ed-head-tools"><button type="button" class="ed-full-btn" aria-pressed="false">⤢ Full screen</button>${guide}</span></div>${field(ta).replace('class="ed-field"', 'class="ed-field ed-main"')}`;
+  // full-screen writing: the text box fills the screen like a notes app (remembered per device, on phones)
+  const FOCUS_KEY = 'duat:focus-writing';
+  function setFocusMode(dlg, on) {
+    dlg.classList.toggle('is-focus', on);
+    const b = $('.ed-full-btn', dlg);
+    if (b) { b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '✕ Exit full screen' : '⤢ Full screen'; }
+  }
   async function persist(edit, sess) {
     if (!editCfg().endpoint) {
       const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
@@ -1440,6 +1453,12 @@
       gb.addEventListener('click', () => { pop.hidden = !pop.hidden; gb.setAttribute('aria-expanded', String(!pop.hidden)); });
       f.addEventListener('click', ev => { if (!pop.hidden && !ev.target.closest('.ed-guide-wrap')) { pop.hidden = true; gb.setAttribute('aria-expanded', 'false'); } });
     }
+    const fb = $('.ed-full-btn', f);
+    if (fb) fb.addEventListener('click', () => {
+      const dlg = f.closest('dialog'), on = !dlg.classList.contains('is-focus');
+      setFocusMode(dlg, on); store.set(FOCUS_KEY, on || null);
+      if (ta) { ta.focus(); if (on) ta.setSelectionRange(ta.value.length, ta.value.length); }
+    });
     const sw = $('.ed-switch', f);
     if (sw) sw.addEventListener('click', () => { store.set(sessionKey(), null); renderGMLink(); again(); });
     f.addEventListener('submit', async ev => {
