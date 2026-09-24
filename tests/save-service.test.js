@@ -36,6 +36,7 @@ t('no base = older site, still saves', post({ key: P, slug: 'dogwall', author: '
 
 // history
 const hist = get({ history: 'dogwall' }).history;
+t('rows say who saved them', get().edits.find(x => x.slug === 'dogwall' && x.author === 'noah').by, 'noah');
 t('history keeps replaced versions, newest first', hist.filter(h => h.author === 'zack').map(h => h.text), ['v2', 'notes']);
 t('reads are cached and refreshed on write', [(get(), !!cache['edits:' + W]), (post({ key: P, slug: 'b', author: 'zack', text: 'z' }), !!cache['edits:' + W])], [true, false]);
 

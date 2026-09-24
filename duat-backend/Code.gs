@@ -4,7 +4,7 @@
  * Keeps every edit made on the site in a Google Sheet it creates on first use, and
  * stores uploaded images in a "Duat uploads" Drive folder. Setup: see DUAT.md, "Shared editing".
  *
- * Rows are (world, slug, author, text, updated). author is a person's id for their notes,
+ * Rows are (world, slug, author, text, updated, by). author is a person's id for their notes,
  * "@meta" for a page's details (JSON), "@pins" for a map's pin list or a chart's drawing, or
  * "@world" for the campaign's settings (title, people, categories…; GM only). Campaigns started
  * from the site exist only here.
@@ -38,8 +38,8 @@ function book_() {
   if (id) return SpreadsheetApp.openById(id);
   const ss = SpreadsheetApp.create('Duat edits');
   const sh = ss.getSheets()[0];
-  sh.getRange('A:E').setNumberFormat('@'); // keep text as text (no formulas)
-  sh.appendRow(['world', 'slug', 'author', 'text', 'updated']);
+  sh.getRange('A:F').setNumberFormat('@'); // keep text as text (no formulas)
+  sh.appendRow(['world', 'slug', 'author', 'text', 'updated', 'by']);
   props.setProperty('SHEET_ID', ss.getId());
   return ss;
 }
@@ -93,7 +93,7 @@ function cachedRows_(world) {
     if (chunks.every(c => c != null)) { try { return JSON.parse(chunks.join('')); } catch (err) {} }
   }
   const rows = sheet_().getDataRange().getValues().slice(1).filter(r => r[0] === world)
-    .map(r => ({ slug: r[1], author: r[2], text: clean_(r[2], r[3]), updated: iso_(r[4]) }));
+    .map(r => ({ slug: r[1], author: r[2], text: clean_(r[2], r[3]), updated: iso_(r[4]), by: String(r[5] || '') }));
   try {
     const s = JSON.stringify(rows), size = 90000, put = {};
     const n = Math.ceil(s.length / size) || 1;
@@ -198,12 +198,12 @@ function doPost(e) {
         text = JSON.stringify(meta);
       }
     }
-    const stamp = new Date().toISOString();
+    const stamp = new Date().toISOString(), by = String(req.by || req.author || '').slice(0, 40);
     if (i > 0) {
-      history_().appendRow([vals[i][0], vals[i][1], vals[i][2], vals[i][3], iso_(vals[i][4]), stamp, String(req.by || req.author || '')]);
-      sh.getRange(i + 1, 1, 1, 5).setValues([[req.world, req.slug, req.author, text, stamp]]);
+      history_().appendRow([vals[i][0], vals[i][1], vals[i][2], vals[i][3], iso_(vals[i][4]), stamp, by]);
+      sh.getRange(i + 1, 1, 1, 6).setValues([[req.world, req.slug, req.author, text, stamp, by]]);
     } else {
-      sh.appendRow([req.world, req.slug, req.author, text, stamp]);
+      sh.appendRow([req.world, req.slug, req.author, text, stamp, by]);
     }
     uncache_(req.world);
     return json_({ ok: true, updated: stamp });
@@ -252,8 +252,8 @@ function clear_(req, gm) {
     const keep = vals.slice(1).filter(r => !(r[0] === req.world && r[2] !== '@world'));
     if (gone.length) {
       hist.getRange(hist.getLastRow() + 1, 1, gone.length, 7).setValues(gone.map(r => [r[0], r[1], r[2], r[3], iso_(r[4]), stamp, 'cleared']));
-      sh.getRange(2, 1, vals.length - 1, 5).clearContent();
-      if (keep.length) sh.getRange(2, 1, keep.length, 5).setValues(keep.map(r => [r[0], r[1], r[2], r[3], iso_(r[4])]));
+      sh.getRange(2, 1, vals.length - 1, 6).clearContent();
+      if (keep.length) sh.getRange(2, 1, keep.length, 6).setValues(keep.map(r => [r[0], r[1], r[2], r[3], iso_(r[4]), r[5] || '']));
     }
     uncache_(req.world);
   } finally {

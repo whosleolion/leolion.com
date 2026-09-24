@@ -63,6 +63,8 @@ Markdown supports headings, **bold**, *italic*, ~~strike~~, ==highlight==, neste
 - `::: leo` … `:::` wraps one person's account. Several people can write about the same thing (e.g. the GM's recap and a player's notes on the same session), and each block is labeled with its author. Authors live in `world.json` under `"authors": { "leo": { "name": "Leo", "role": "GM", "color": "#ff5a36" } }`. For a whole entry by one person, use `author: leo` in the frontmatter instead. Every author gets a page at `#/by/<id>`.
 - Callouts work like Obsidian's: `> [!rumor] Heard at the bar` (also note, tip, warning, danger, quote, question).
 
+- `||spoiler||` hides text until it's tapped (it hides from glances, not from anyone determined: everything in the catalog is public to anyone with the link).
+
 The "Mentioned in" (backlinks) and "On the map" sections build themselves; the GM can switch either off per page (`showmentions: false`, `showmap: false`).
 
 ## Maps
@@ -106,6 +108,13 @@ edge goldtusk -- felt dashed bend 60 : possible connection?
 - Lines starting with `#` are comments.
 
 You rarely type any of this: ✎ on the chart opens the editor. Pick **＋ Box**, **＋ Text** or **＋ Frame** and tap empty space to add one; **↗ Connect** then tap two boxes to draw an arrow; **drag** a box to move it (dragging a frame brings everything inside it along); tap anything to change its text, look, size or curve, or **Remove** it; **Edit as text** shows the block above. **Save chart** stores it for everyone. Links in a chart count as mentions, so linked pages list the chart under "Mentioned in". Example: Thomas's Connections Map (`entries/connections-map.md`).
+
+## Reading at the table
+
+- **Recently updated** on the home page lists the latest site edits (who, what, when), with a dot on anything changed since your last visit on this device; **all changes →** opens the full list. Each page says "Updated 2 days ago by Neha".
+- Pages in a numbered category (sessions) get **← Previous / Next →** links and an **In this session** list of the pages they link to.
+- **Offline copy.** The site keeps the last copy of the catalog (and its shared edits) on the device, so it opens with bad signal or none. Deploys bundle each campaign's entries into one `bundle.json` (made by `duat-backend/bundle.py` in the deploy workflow; local previews read the files directly).
+- **Needs attention** (GM tools, or `#/attention`): unwritten pages with how often they're mentioned and a **Write it** button, empty pages, and pages nothing links to.
 
 ## Shared editing
 

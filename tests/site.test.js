@@ -21,7 +21,7 @@ let failed = 0;
 const t = (name, ok, detail = '') => { if (!ok) failed++; console.log(ok ? 'PASS' : 'FAIL', name, ok ? '' : detail); };
 
 async function open(browser, { svc, delay = 0, hang = false, device = { viewport: { width: 1280, height: 900 } } } = {}) {
-  const ctx = await browser.newContext(device);
+  const ctx = await browser.newContext({ ...device, serviceWorkers: 'block' });
   await ctx.route('**/duat/vcm/world.json', async r => { const res = await r.fetch(); const j = await res.json(); j.edit = { endpoint: EP }; r.fulfill({ response: res, json: j }); });
   await ctx.route(EP + '**', async r => {
     if (hang) return;                                     // never answers
@@ -128,6 +128,33 @@ async function signIn(page, who, key) {
     await Promise.all([page.waitForNavigation(), page.click('[data-undel="pennyfoot"]')]); await page.waitForSelector('.entry');
     t('GM tools restores it', (await page.textContent('h1')).includes('Pennyfoot'));
     t('no script errors', !page.errors.length, page.errors.join('; '));
+    await ctx.close(); }
+
+  // ---- at the table: recent changes, new since last visit, sessions, spoilers, needs attention ----
+  { const { ctx, page } = await open(browser, { svc });
+    await page.goto(base()); await page.waitForSelector('.card');
+    const recent = await page.$$eval('.recent-list li', li => li.map(x => x.textContent.replace(/\s+/g, ' ').trim()));
+    t('home shows recently updated pages', recent.some(r => r.includes('Olf') && r.includes('Thomas')), recent.join(' | '));
+    t('first visit marks nothing as new', !(await page.$('.recent-list li.is-new')));
+    svc.post({ world: wid, key: PLAYER, slug: 'felt', author: 'noah', text: 'Felt learned to juggle.' });
+    await page.evaluate(() => sessionStorage.clear()); await page.reload(); await page.waitForSelector('.card');
+    t('a change since the last visit is marked new', (await page.$$eval('.recent-list li.is-new', li => li.map(x => x.textContent))).some(x => x.includes('Felt')));
+    await page.goto(base() + '#/e/felt'); await page.waitForSelector('.entry');
+    t('page says when and by whom it was updated', /Updated .* by Noah/.test(await page.textContent('.updated')));
+    await page.goto(base() + '#/e/session-05'); await page.waitForSelector('.entry');
+    const pg = await page.$$eval('.pager a', a => a.map(x => x.textContent.replace(/\s+/g, ' ').trim()));
+    t('sessions link to the previous and next one', pg.some(x => /Previous.*Session 4/.test(x)) && pg.some(x => /Next.*Session 6/.test(x)), pg.join(' | '));
+    t('a session lists what it mentions', (await page.$$eval('.related h2', h => h.map(x => x.textContent))).some(x => /In this session/.test(x)));
+    await page.goto(base() + '#/recent'); await page.waitForSelector('.recent-all');
+    t('all changes page', (await page.$$eval('.recent-all li', li => li.length)) >= 2);
+    await page.goto(base() + '#/attention'); await page.waitForSelector('.attention');
+    t('needs attention lists empty pages', (await page.textContent('.attention')).includes('Session 7'));
+    svc.post({ world: wid, key: PLAYER, slug: 'olf', author: 'thomas', text: 'The ||twist|| is here.' });
+    await page.goto(base() + '#/e/olf'); await page.reload(); await page.waitForSelector('.spoiler');
+    const hidden = await page.$eval('.spoiler', e => getComputedStyle(e).color);
+    await page.click('.spoiler'); await page.waitForTimeout(400); const shown = await page.$eval('.spoiler', e => getComputedStyle(e).color);
+    t('spoilers hide until tapped', hidden !== shown && hidden === 'rgba(0, 0, 0, 0)', hidden + ' → ' + shown);
+    t('no script errors (at the table)', !page.errors.length, page.errors.join('; '));
     await ctx.close(); }
 
   t('settings rows never carry passkey hashes', !svc.get({ world: wid }).edits.some(x => /keyHash|gmHash/.test(x.text)));
