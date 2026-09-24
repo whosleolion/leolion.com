@@ -79,7 +79,7 @@ A map is an entry with `type: map` and an `image:`. Pins go in a `pins` block an
 
 Add `pins: labels` to a map's frontmatter to make each pin a name plate (the label itself is the tap target) instead of a dot + label. Labels come in tiers so the zoomed-out view stays readable: pins for `mapMajorTypes` entries always show; other linked pins appear once you zoom in a bit, and plain pins (roads, terrain) after that.
 
-Coordinates are percentages of the image (x from the left, y from the top). To get them, open the map with `?edit` before the `#`, e.g. `https://leolion.com/duat/vcm/?edit#/e/vista-city`, and tap the spot. That copies the `x, y | ` prefix for you.
+Coordinates are percentages of the image (x from the left, y from the top). You rarely need to type them: the 📍 button on a map places pins by tapping (see Shared editing).
 
 A map can also take an `overlay:` image: a transparent drawing (roads, walls, bridges…) stacked on top of the base art in the same pixel space, so it pans and zooms with it. Vista City uses Leo's painted map (`images/vista-city.webp`) with `images/vista-city-overlay.svg` on top. Any image works, so a "map" can also be an infomap: a relationship web, an org chart, or a district diagram.
 
@@ -87,27 +87,43 @@ To link straight to a pin, use `#/e/vista-city?pin=sample-location`.
 
 ## Shared editing
 
-**＋ New** (top bar) adds a page: give it a name, pick a category, and write your notes. It's saved like any other edit and becomes a normal page that others can add their notes to. In the editor, tap **🔗 Link** or type `[[` to pick another page to link to.
+Everything in the catalog can be entered from the page itself; the files are just the starting point.
 
-Every entry has a ✎ Edit button. A person picks their name (from `world.json` `authors`), enters the shared passkey, and writes **their own** notes on that entry. Their text shows up as "Name's notes", and other people's notes are never touched. Saving an empty box removes their notes. They stay signed in on that device ("Not Neha?" switches person).
+- **＋ New** (top bar) adds a page: name, category, and your notes. A map needs its image uploaded; a session gets the next session number and today's date automatically.
+- **✎ Edit → Notes**: write your own notes on any page. They show as "Name's notes", and other people's notes are never touched. Tap **🔗 Link** or type `[[` to link a page; **Formatting help** lists tables, quotes, callouts and so on.
+- **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, nicknames and other spellings, tags, info-box rows (label + value, `[[links]]` allowed), session number, a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
+- **📍 on a map**: tap the map to add a pin (pick a page, or type a plain label), tap a pin to change, move or remove it, then **Save pins**.
+- **The home intro** has its own ✎ Edit.
+
+People sign in by picking their name (from `world.json` `authors`) and entering the shared passkey, and stay signed in on that device ("Not Neha?" switches person).
+
+**GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, merge into another page (notes move over, the name becomes a nickname), and delete. The footer then shows **GM tools**.
+
+**Folding edits back into the files.** Site edits are rows in the "Duat edits" sheet, layered over the `.md` files when a page loads. To make the files the single source again: GM tools → **Download export**, then run
+
+```
+python3 duat-backend/apply_export.py duat-export-<world>-<date>.json src/duat/vcm
+```
+
+commit and deploy, and finally GM tools → **Clear shared edits**.
 
 Config lives in `world.json`:
 
 ```json
-"edit": { "endpoint": "", "keyHash": "<sha256 of the passkey>" }
+"edit": { "endpoint": "<web app URL>", "keyHash": "<sha256 of the passkey>", "gmHash": "<sha256 of the GM passkey>" }
 ```
 
-The live `.md` files are never rewritten. Edits are stored separately and layered on top when the page loads. Where they're stored:
-
-- **`endpoint` empty:** preview mode. Edits save in that browser only, which is useful for trying it out.
-- **`endpoint` set:** shared. Edits go to a small Google Apps Script (`duat-backend/Code.gs`) that keeps them in a Google Sheet in the GM's Drive. To set it up (about 2 minutes):
+- **`endpoint` empty:** preview mode. Edits (and uploaded pictures) save in that browser only.
+- **`endpoint` set:** shared. Edits go to a small Google Apps Script (`duat-backend/Code.gs`) that keeps them in a Google Sheet in the GM's Drive and stores uploaded pictures in a "Duat uploads" Drive folder. To set it up (about 2 minutes):
   1. Go to script.google.com, create a New project, and paste in `duat-backend/Code.gs`.
-  2. Click Deploy → New deployment → Web app. Set *Execute as: Me* and *Who has access: Anyone*, then Deploy. Authorize it when asked.
+  2. Click Deploy → New deployment → Web app. Set *Execute as: Me* and *Who has access: Anyone*, then Deploy. Authorize it when asked (it needs Sheets and Drive).
   3. Copy the web app URL (it ends in `/exec`) into `world.json` `edit.endpoint`.
 
-  The sheet ("Duat edits") appears in Drive after the first save. You can read or fix edits there directly. To fold edits permanently into the `.md` files, copy them over and delete the sheet rows.
+  **Updating the script later:** paste the new code, then Deploy → Manage deployments → ✎ → Version: *New version* → Deploy. That keeps the same URL.
 
-To change the passkey, put its SHA-256 hash in both `world.json` and `Code.gs`. The passkey is a shared door key, not real security: anyone who has it can write as anyone. Only give it to the table.
+To change a passkey, put its SHA-256 hash in both `world.json` and `Code.gs`. Passkeys are shared door keys, not real security: anyone with the player passkey can write as anyone, and the GM passkey can delete. Only give them out accordingly.
+
+What stays file-only on purpose: `world.json` settings (the list of people, categories, top bar, theme) and the engine itself.
 
 ## Heads-up
 

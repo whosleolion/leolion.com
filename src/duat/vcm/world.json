@@ -252,7 +252,8 @@
   },
   "edit": {
     "endpoint": "https://script.google.com/macros/s/AKfycbwulg5k_8S8opKCOBID9yfdYHT6thCbirFhsZhfMoSK2J1TUw-N63fq3Wcgf_5dCt-7cw/exec",
-    "keyHash": "183059fb170ae10f1e90f6f1893223ba7874398c4f3f88315825e99ff8ade9d9"
+    "keyHash": "183059fb170ae10f1e90f6f1893223ba7874398c4f3f88315825e99ff8ade9d9",
+    "gmHash": "aba3e589d1981ebb6c651bff9f612981c38e43c501ec8fc51627dcc2317154e1"
   },
   "navTypes": [
     "map",
