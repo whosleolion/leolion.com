@@ -193,16 +193,7 @@
       "label": "The Crew",
       "one": "Party member",
       "color": "#ff5a36",
-      "fields": [
-        {
-          "label": "Home",
-          "kind": "page"
-        },
-        {
-          "label": "Family",
-          "kind": "text"
-        }
-      ]
+      "fields": []
     },
     "character": {
       "label": "NPCs",
