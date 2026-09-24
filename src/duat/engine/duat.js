@@ -826,7 +826,8 @@
     show(dlg);
   }
   const helpText = a => `Markdown works. Tap <b>🔗 Link</b> or type <code>[[</code> to link another page. Your text shows as “${esc(a.name)}’s notes”.`;
-  const linkBar = '<div class="ed-bar"><button type="button" class="ed-link">🔗 Link</button></div><div class="ed-links" role="listbox" hidden></div>';
+  const linkBar = '<div class="ed-bar"><button type="button" class="ed-link">🔗 Link</button></div>';
+  const field = ta => `<div class="ed-field">${ta}<div class="ed-links" role="listbox" hidden></div></div>`;
   async function persist(edit, sess) {
     if (!editCfg().endpoint) {
       const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
@@ -867,7 +868,7 @@
     dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
       <p class="kicker">${esc(a.name)}’s notes on</p><h2>${esc(e.title)}</h2>
       ${linkBar}
-      <textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(a.name)} know about ${esc(e.title)}?">${esc(ownText(e, a.id))}</textarea>
+      ${field(`<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(a.name)} know about ${esc(e.title)}?">${esc(ownText(e, a.id))}</textarea>`)}
       <p class="ed-help">${helpText(a)} Other people’s notes aren’t touched. Save it empty to remove yours.</p>
       ${footer(a, 'Save')}
     </form>`;
@@ -890,7 +891,7 @@
         `<option value="${esc(t)}">${esc(typeOf(t).one)}</option>`).join('')}</select></label>
       <label for="ed-new-text">${esc(a.name)}’s notes</label>
       ${linkBar}
-      <textarea id="ed-new-text" name="text" rows="9" spellcheck="true" required placeholder="What do you know about it?"></textarea>
+      ${field('<textarea id="ed-new-text" name="text" rows="9" spellcheck="true" required placeholder="What do you know about it?"></textarea>')}
       <p class="ed-help">${helpText(a)}</p>
       ${footer(a, 'Create page')}
     </form>`;
@@ -908,25 +909,53 @@
     show(dlg);
   }
 
-  /* [[ link helper: type [[ (or tap 🔗 Link) and pick a page; the list filters as you type. */
+  /* [[ link helper: type [[ (or tap 🔗 Link) and pick a page. The list floats under the line
+     being typed (nothing on the page moves) and matches page names and aliases only. */
+  function nameMatches(q) {
+    q = norm(q);
+    const all = S.entries.filter(e => !e.hidden);
+    if (!q) return all.slice().sort(byTitle);
+    const score = e => Math.max(...[e.title, ...e.aliases].map(n => {
+      n = norm(n);
+      return n === q ? 4 : n.startsWith(q) ? 3 : n.split(/[\s\-'’&.]+/).some(w => w.startsWith(q)) ? 2 : n.includes(q) ? 1 : 0;
+    }));
+    return all.map(e => [e, score(e)]).filter(([, sc]) => sc).sort((a, b) => b[1] - a[1] || byTitle(a[0], b[0])).map(([e]) => e);
+  }
+  function caretTop(ta) {
+    // mirror the textarea to find the caret's y position (px, relative to the textarea's box)
+    const cs = getComputedStyle(ta), m = document.createElement('div');
+    for (const k of ['boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderLeftWidth',
+      'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing', 'tabSize']) m.style[k] = cs[k];
+    Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'break-word', top: '0', left: '-9999px' });
+    m.textContent = ta.value.slice(0, ta.selectionStart);
+    const mark = document.createElement('span'); mark.textContent = '​'; m.append(mark);
+    document.body.append(m);
+    const y = mark.offsetTop + mark.offsetHeight - ta.scrollTop;
+    m.remove();
+    return Math.max(0, Math.min(y, ta.clientHeight));
+  }
   function attachLinker(ta, box, btn) {
-    let hits = [], cur = 0, q = null;
+    let hits = [], cur = 0;
     const query = () => {
       const m = ta.value.slice(0, ta.selectionStart).match(/\[\[([^\]\[\n|]*)$/);
       return m ? m[1] : null;
     };
-    const close = () => { box.hidden = true; q = null; };
+    const close = () => { box.hidden = true; };
+    const place = () => {
+      const y = caretTop(ta), h = box.offsetHeight, room = ta.clientHeight;
+      box.style.top = (y + 6 + h <= room + 40 || y < h + 12 ? y + 6 : y - h - 28) + 'px';
+    };
     const draw = () => {
-      q = query();
+      const q = query();
       if (q === null) return close();
-      hits = (q.trim() ? search(q) : listed().slice().sort(byTitle)).slice(0, 7);
-      const extra = q.trim() && !hits.some(e => norm(e.title) === norm(q)) ? [{ title: q.trim(), fresh: true }] : [];
-      hits = [...hits, ...extra];
+      hits = nameMatches(q).slice(0, 6);
+      if (q.trim() && !hits.some(e => norm(e.title) === norm(q))) hits.push({ title: q.trim(), fresh: true });
       cur = Math.min(cur, Math.max(hits.length - 1, 0));
       box.innerHTML = hits.map((e, i) => `<button type="button" role="option" data-i="${i}" class="${i === cur ? 'is-cur' : ''}"${e.fresh ? '' : ` style="--c:${typeOf(e.type).color}"`}>
         <span class="sr-type">${e.fresh ? 'New link' : esc(typeOf(e.type).one)}</span><span>${esc(e.title)}</span></button>`).join('')
         || '<p class="muted">Type a name…</p>';
       box.hidden = false;
+      place();
     };
     const pick = i => {
       const e = hits[i]; if (!e) return;
@@ -939,13 +968,19 @@
     };
     ta.addEventListener('input', () => { cur = 0; draw(); });
     ta.addEventListener('click', draw);
+    ta.addEventListener('scroll', () => { if (!box.hidden) place(); });
+    ta.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== ta) close(); }, 120));
     ta.addEventListener('keydown', ev => {
       if (box.hidden) return;
       if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); cur = (cur + (ev.key === 'ArrowDown' ? 1 : hits.length - 1)) % hits.length; draw(); }
       else if (ev.key === 'Enter' || ev.key === 'Tab') { if (hits.length) { ev.preventDefault(); pick(cur); } }
       else if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); close(); }
     });
-    box.addEventListener('pointerdown', ev => ev.preventDefault()); // keep the textarea focused
+    // phone keyboards often skip keydown for Enter; catch the line break instead
+    ta.addEventListener('beforeinput', ev => {
+      if (!box.hidden && hits.length && ev.inputType === 'insertLineBreak') { ev.preventDefault(); pick(cur); }
+    });
+    box.addEventListener('pointerdown', ev => ev.preventDefault()); // keep the keyboard up while choosing
     box.addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if (b) pick(+b.dataset.i); });
     btn.addEventListener('click', () => {
       const p = ta.selectionStart ?? ta.value.length;
