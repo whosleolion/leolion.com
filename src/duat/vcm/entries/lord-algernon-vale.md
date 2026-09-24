@@ -1,7 +1,6 @@
 ---
 title: Lord Algernon Vale
 type: character
-tags: [seen]
 aliases: [Algernon Vale]
 author: leo
 ---

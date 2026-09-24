@@ -1,7 +1,6 @@
 ---
 title: Sepetiah Holmwell
 type: character
-tags: [seen]
 aliases: [Holmwells]
 author: leo
 ---

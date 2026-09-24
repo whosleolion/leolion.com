@@ -1,7 +1,6 @@
 ---
 title: Barnaby
 type: character
-tags: [seen]
 status: Deceased
 author: leo
 ---

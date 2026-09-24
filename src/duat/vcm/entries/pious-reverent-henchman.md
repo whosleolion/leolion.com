@@ -1,7 +1,6 @@
 ---
 title: Pious & Reverent Henchman
 type: character
-tags: [seen]
 status: Deceased
 faction: "[[Goldtusks]]"
 aliases: [Henchman twins, Pious Henchman, Reverent Henchman, Henchmen]

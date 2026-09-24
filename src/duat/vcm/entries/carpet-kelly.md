@@ -1,7 +1,6 @@
 ---
 title: Carpet Kelly
 type: character
-tags: [seen]
 aliases: [Carpet, Sgt. Kay Ottoman, Kay Ottoman]
 faction: "[[City Watch]]"
 author: leo

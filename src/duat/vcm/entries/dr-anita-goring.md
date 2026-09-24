@@ -1,7 +1,6 @@
 ---
 title: Dr. Anita Goring
 type: character
-tags: [seen]
 aliases: [Anita Goring]
 author: leo
 ---

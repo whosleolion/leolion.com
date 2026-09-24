@@ -1,7 +1,6 @@
 ---
 title: Dissector
 type: character
-tags: [seen]
 author: leo
 ---
 A giant soul-searching murder robot.

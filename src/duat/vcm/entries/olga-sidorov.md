@@ -1,7 +1,6 @@
 ---
 title: Olga Sidorov
 type: character
-tags: [seen]
 faction: "[[Amber Hand]]"
 author: leo
 ---

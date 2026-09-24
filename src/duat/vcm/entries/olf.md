@@ -1,7 +1,6 @@
 ---
 title: Olf
 type: character
-tags: [seen]
 author: leo
 ---
 Cassandra’s homonculus.

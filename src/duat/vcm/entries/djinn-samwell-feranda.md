@@ -1,7 +1,6 @@
 ---
 title: Djinn Samwell Feranda
 type: character
-tags: [seen]
 aliases: [Samwell Feranda, Samwell]
 author: leo
 ---

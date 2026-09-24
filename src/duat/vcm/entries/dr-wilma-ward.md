@@ -1,7 +1,6 @@
 ---
 title: Dr. Wilma Ward
 type: character
-tags: [seen]
 aliases: [Wilma Ward]
 author: leo
 ---

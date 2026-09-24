@@ -1,7 +1,6 @@
 ---
 title: Sir Corbin Pryde
 type: character
-tags: [seen]
 aliases: [Corbin Pryde, Sir Corbyn Pryde]
 home: "[[Sir Corbin Pryde's House]]"
 author: leo
