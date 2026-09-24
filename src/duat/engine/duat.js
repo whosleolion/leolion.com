@@ -1420,7 +1420,7 @@
   function setFocusMode(dlg, on) {
     dlg.classList.toggle('is-focus', on);
     const b = $('.ed-full-btn', dlg);
-    if (b) { b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '✕ Exit full screen' : '⤢ Full screen'; }
+    if (b) { b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Exit full screen' : '⤢ Full screen'; b.title = on ? 'Exit full screen' : ''; }
   }
   async function persist(edit, sess) {
     if (!editCfg().endpoint) {

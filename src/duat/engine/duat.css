@@ -665,17 +665,37 @@ a.wl-missing:hover { color: var(--text); border-bottom-color: var(--muted); }
 .ed-full-btn:hover { color: var(--text); border-color: var(--c, var(--accent)); }
 .editor.is-focus {
   width: 100vw; max-width: 100vw; height: var(--vvh, 100dvh); max-height: none;
-  margin: 0; top: var(--vvt, 0); left: 0; border: 0; border-radius: 0; box-shadow: none; overflow: hidden;
+  margin: 0; top: var(--vvt, 0); left: 0; border: 0; border-radius: 0; box-shadow: none; overflow: hidden; background: var(--bg);
 }
-.editor.is-focus .ed-form { box-sizing: border-box; height: 100%; gap: 8px; border-radius: 0; padding: 12px 16px calc(10px + env(safe-area-inset-bottom)); }
+/* one slim bar on top: Cancel · title · ? · exit · Save; the rest of the screen is the page */
+.editor.is-focus .ed-form {
+  box-sizing: border-box; height: 100%; padding: 0; gap: 0; border: 0; border-radius: 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; grid-template-rows: auto auto minmax(0, 1fr); align-items: center;
+}
 .editor.is-focus .ed-form > :not(h2, .ed-notes-head, .ed-main, .ed-actions, .ed-err) { display: none; }
+.editor.is-focus :is(.ed-notes-head, .ed-head-tools, .ed-actions) { display: contents; }
+.editor.is-focus :is(.ed-notes-head > span:first-child, .ed-actions > span) { display: none; }
+.editor.is-focus .ed-form > h2 {
+  grid-area: 1 / 2; margin: 0; padding: calc(10px + env(safe-area-inset-top)) 6px 10px; text-align: center;
+  font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.editor.is-focus [data-cancel] { grid-area: 1 / 1; margin: env(safe-area-inset-top) 0 0 10px; border: 0; background: none; color: var(--muted); padding: 8px 6px; }
+.editor.is-focus .ed-guide-wrap { grid-area: 1 / 3; margin-top: env(safe-area-inset-top); }
+.editor.is-focus .ed-full-btn { grid-area: 1 / 4; margin-top: env(safe-area-inset-top); }
+.editor.is-focus .ed-actions .primary { grid-area: 1 / 5; margin: calc(8px + env(safe-area-inset-top)) 12px 8px 6px; padding: 7px 16px; border-radius: 999px; }
+.editor.is-focus :is(.ed-guide-btn, .ed-full-btn) {
+  width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 0; background: none; color: var(--muted);
+  font-size: 0; display: inline-grid; place-items: center; cursor: pointer;
+}
+.editor.is-focus .ed-guide-btn::before { content: "?"; font: 700 17px var(--font-ui); }
+.editor.is-focus .ed-full-btn::before { content: "⤡"; font: 400 19px var(--font-ui); }
+.editor.is-focus .ed-guide { position: fixed; left: 12px; right: 12px; width: auto; top: calc(var(--vvt, 0px) + 60px + env(safe-area-inset-top)); max-height: calc(var(--vvh, 100dvh) - 76px); overflow: auto; z-index: 5; }
+.editor.is-focus .ed-form > .ed-err { grid-area: 2 / 1 / 3 / -1; padding: 6px 16px; }
 .editor.is-focus .ed-form > .ed-err[hidden] { display: none; }
-.editor.is-focus .ed-form > h2 { font-size: 1.05rem; }
-.editor.is-focus .ed-notes-head { margin: 0; }
-.editor.is-focus .ed-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.editor.is-focus .ed-main { grid-area: 3 / 1 / 4 / -1; align-self: stretch; min-height: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
 .editor.is-focus .ed-main textarea {
-  flex: 1; min-height: 0; height: auto; resize: none; border: 0; border-radius: 0; background: transparent; padding: 6px 0;
-  font: 17px/1.6 var(--font-ui);
+  flex: 1; min-height: 0; height: auto; width: min(100%, 760px); margin: 0 auto; resize: none;
+  border: 0; border-radius: 0; background: transparent; outline: none;
+  padding: 18px 18px 40vh; font: 18px/1.65 var(--font-ui); caret-color: var(--c, var(--accent));
 }
 .editor.is-focus .ed-main textarea:focus { border: 0; }
-.editor.is-focus .ed-actions { padding-top: 8px; border-top: 1px solid var(--line); }
