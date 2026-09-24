@@ -1,7 +1,6 @@
 ---
 title: Orson Dive
 type: character
-tags: [seen]
 status: Deceased
 faction: "[[Goldtusks]]"
 author: leo

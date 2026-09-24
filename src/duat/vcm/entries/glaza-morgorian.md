@@ -1,7 +1,6 @@
 ---
 title: Glaza Morgorian
 type: character
-tags: [seen]
 place: "[[Glaza's Divinery]]"
 author: leo
 ---

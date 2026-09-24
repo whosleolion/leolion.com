@@ -1,7 +1,6 @@
 ---
 title: Alamir Koldovich
 type: character
-tags: [seen]
 faction: "[[Volshebniks]]"
 aliases: [Koldovich, Alamir]
 author: leo

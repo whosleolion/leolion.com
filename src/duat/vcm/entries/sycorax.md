@@ -1,7 +1,6 @@
 ---
 title: Sycorax
 type: character
-tags: [seen]
 place: "[[Sycorax's Balms]]"
 author: leo
 ---

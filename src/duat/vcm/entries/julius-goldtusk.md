@@ -1,7 +1,6 @@
 ---
 title: Julius Goldtusk
 type: character
-tags: [seen]
 faction: "[[Goldtusks]]"
 author: leo
 ---

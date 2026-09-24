@@ -1,7 +1,6 @@
 ---
 title: Lucius Morningstar
 type: character
-tags: [seen]
 aliases: [Morningstar]
 faction: "[[Goldtusks]]"
 author: leo

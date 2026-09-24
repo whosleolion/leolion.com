@@ -1,7 +1,6 @@
 ---
 title: Lady Agatha Vale
 type: character
-tags: [seen]
 aliases: [Agatha Vale]
 author: leo
 ---

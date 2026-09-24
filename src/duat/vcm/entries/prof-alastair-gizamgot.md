@@ -1,7 +1,6 @@
 ---
 title: Prof. Alastair Gizamgot
 type: character
-tags: [seen]
 aliases: [Gizamgot, Prof. Gizamgot]
 author: leo
 ---

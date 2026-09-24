@@ -1,7 +1,6 @@
 ---
 title: Prof. Nickolas Tillerman
 type: character
-tags: [seen]
 aliases: [Prof. Nicholas Tillerman, Tillerman]
 author: leo
 ---

@@ -1,7 +1,6 @@
 ---
 title: Five
 type: character
-tags: [seen]
 aliases: [V, Johnny Five, Johnny 5, Johnny]
 author: leo
 ---

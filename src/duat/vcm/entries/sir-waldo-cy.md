@@ -1,7 +1,6 @@
 ---
 title: Sir Waldo Cy
 type: character
-tags: [seen]
 aliases: [Waldo, Waldo Cy]
 stays: "[[The Crown Hotel]]"
 author: leo
