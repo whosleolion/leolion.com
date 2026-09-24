@@ -105,7 +105,7 @@ edge goldtusk -- felt dashed bend 60 : possible connection?
 - `edge <from> <arrow> <to> [dashed] [bend N] : Label`: `->`, `<-`, `<->`, or `--` (no heads). `bend` curves it (negative bends the other way). ` / ` breaks a label onto a new line.
 - Lines starting with `#` are comments.
 
-You rarely type any of this: ✎ on the chart opens the editor. Pick **＋ Box**, **＋ Text** or **＋ Frame** and tap empty space to add one; **↗ Connect** then tap two boxes to draw an arrow; tap anything to change its text, look, size or curve, **Move** it, or **Remove** it; **Edit as text** shows the block above. **Save chart** stores it for everyone. Links in a chart count as mentions, so linked pages list the chart under "Mentioned in". Example: Thomas's Connections Map (`entries/connections-map.md`).
+You rarely type any of this: ✎ on the chart opens the editor. Pick **＋ Box**, **＋ Text** or **＋ Frame** and tap empty space to add one; **↗ Connect** then tap two boxes to draw an arrow; **drag** a box to move it (dragging a frame brings everything inside it along); tap anything to change its text, look, size or curve, or **Remove** it; **Edit as text** shows the block above. **Save chart** stores it for everyone. Links in a chart count as mentions, so linked pages list the chart under "Mentioned in". Example: Thomas's Connections Map (`entries/connections-map.md`).
 
 ## Shared editing
 
