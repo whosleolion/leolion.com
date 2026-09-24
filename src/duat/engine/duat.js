@@ -190,7 +190,8 @@
       .replace(/(^|[^*\w])\*(?![\s*])(.+?)\*(?!\*)/g, '$1<em>$2</em>')
       .replace(/(^|[^\w])_(?![\s_])(.+?)_(?!\w)/g, '$1<em>$2</em>')
       .replace(/~~(.+?)~~/g, '<del>$1</del>')
-      .replace(/==(.+?)==/g, '<mark>$1</mark>');
+      .replace(/==(.+?)==/g, '<mark>$1</mark>')
+      .replace(/\|\|(.+?)\|\|/g, '<span class="spoiler" tabindex="0" role="button" aria-label="Spoiler: tap to reveal">$1</span>');
     return s.replace(/\u0000(\d+)\u0000/g, (_, n) => stash[n]);
   }
   function wikilink(raw) {
@@ -291,6 +292,19 @@
     return g;
   }
   const ghost = target => S.ghosts.get(slugify(String(target || '').split('#')[0])) || null;
+  // the newest shared edit per page: when, by whom, what
+  function recentChanges() {
+    const by = new Map();
+    for (const x of S.edits || []) {
+      if (x.author === '@world' || !x.updated) continue;
+      const e = S.entries.find(y => y.slug === x.slug); if (!e || e.hidden) continue;
+      const who = x.by || (String(x.author).startsWith('@') ? '' : x.author);
+      const cur = by.get(e.slug);
+      if (!cur || x.updated > cur.updated) by.set(e.slug, { e, updated: x.updated, who, what: rowLabel(x.slug, x.author) });
+    }
+    return [...by.values()].sort((a, b) => (a.updated < b.updated ? 1 : -1));
+  }
+  const isNew = updated => S.lastSeen && updated && updated > S.lastSeen;
   function index() {
     S.ghosts = new Map();
     const add = (k, e) => { if (k && !S.lookup.has(k)) S.lookup.set(k, e); };
@@ -301,6 +315,7 @@
       const targets = [...src.matchAll(WL_RE)].map(m => m[1].split('|')[0]).filter(t => !/\.(png|jpe?g|gif|webp|svg|avif)$/i.test(t));
       const out = new Set(targets.map(resolve).filter(x => x && x !== e));
       out.forEach(t => t.backlinks.push(e));
+      e.out = [...out];
       targets.filter(t => !resolve(t)).forEach(t => ghostOf(t, e));
       for (const p of e.pins) {
         p.entry = resolve(p.target);
@@ -415,8 +430,8 @@
     if (e.ghost) return `<a class="card card-ghost" href="${href(e)}" style="--c:var(--line)"><span class="card-body">
       <span class="kicker">Unwritten</span><span class="card-title">${esc(e.title)}</span>
       <span class="card-sum">Mentioned in ${e.backlinks.length + e.onMaps.length} place${e.backlinks.length + e.onMaps.length === 1 ? '' : 's'}. No page yet.</span></span></a>`;
-    const t = typeOf(e.type);
-    return `<a class="card${e.type === 'map' ? ' card-map' : ''}" href="${href(e)}" style="--c:${t.color}">
+    const t = typeOf(e.type), ch = S.changed && S.changed.get(e.slug);
+    return `<a class="card${e.type === 'map' ? ' card-map' : ''}${ch && isNew(ch.updated) ? ' is-new' : ''}" href="${href(e)}" style="--c:${t.color}">
       ${e.image ? `<span class="card-img"><img src="${esc(asset(e.image))}" alt="" loading="lazy"></span>` : ''}
       <span class="card-body">
         <span class="kicker">${esc(t.one)}</span>
@@ -449,10 +464,43 @@
         ${w.subtitle ? `<p class="hero-sub">${inline(w.subtitle)}</p>` : ''}
       </header>
       ${home ? `<div class="prose home-intro">${md(home.body.replace(/^:::.*$/gm, ''))}</div>` : ''}
+      ${recentStrip()}
       ${sections}
     </div>`, '', 'home');
   }
 
+  const changeLine = c => { const who = c.who && authorOf(c.who).name;
+    return `${esc(c.what)}${who && !c.what.includes(who) ? ` · ${esc(who)}` : ''} · ${esc(ago(c.updated))}`; };
+  function recentStrip() {
+    const list = recentChanges().slice(0, 6);
+    if (!list.length) return '';
+    const fresh = list.filter(c => isNew(c.updated)).length;
+    return `<section class="home-sec recent"><h2><span>Recently updated</span>${fresh ? `<span class="new-count">${fresh} new since your last visit</span>` : ''}<a class="more" href="#/recent">all changes →</a></h2>
+      <ul class="recent-list">${list.map(c => `<li${isNew(c.updated) ? ' class="is-new"' : ''}><a href="${href(c.e)}" style="--c:${typeOf(c.e.type).color}">
+        <span class="rc-title">${esc(c.e.title)}</span><span class="rc-what">${changeLine(c)}</span></a></li>`).join('')}</ul></section>`;
+  }
+  function viewRecent() {
+    const list = recentChanges();
+    page(`<div class="wrap"><header class="list-head"><p class="kicker">Changes</p><h1>Recently updated</h1>
+      <p class="muted">${list.length ? 'Newest first. Pages changed since your last visit are marked.' : 'Nothing has been changed on the site yet.'}</p></header>
+      <ul class="recent-list recent-all">${list.map(c => `<li${isNew(c.updated) ? ' class="is-new"' : ''}><a href="${href(c.e)}" style="--c:${typeOf(c.e.type).color}">
+        <span class="rc-title">${esc(c.e.title)} <span class="muted">${esc(typeOf(c.e.type).one)}</span></span><span class="rc-what">${changeLine(c)}</span></a></li>`).join('')}</ul></div>`, 'Recently updated', '');
+  }
+  // GM: pages that need writing, linking or tidying
+  function viewAttention() {
+    const empty = listed().filter(e => !['map', 'chart'].includes(e.type) && !plain(e.body).trim() && !e.fm.summary);
+    const lonely = listed().filter(e => !e.backlinks.length && !e.onMaps.length && !navTypes().includes(e.type) && e.slug !== homeSlug());
+    const ghosts = [...S.ghosts.values()].sort((a, b) => (b.backlinks.length + b.onMaps.length) - (a.backlinks.length + a.onMaps.length));
+    const chips = list => `<div class="chips">${list.map(e => `<a class="chip" href="${href(e)}" style="--c:${typeOf(e.type).color}"><span class="chip-type">${esc(typeOf(e.type).one)}</span>${esc(e.title)}</a>`).join('')}</div>`;
+    page(`<div class="wrap attention"><header class="list-head"><p class="kicker">GM tools</p><h1>Needs attention</h1>
+      <p class="muted">Pages to write, link or tidy. Nothing here is urgent; it’s a to-do list.</p></header>
+      <section class="related"><h2>Unwritten (${ghosts.length})</h2>${ghosts.length ? `<ul class="att-list">${ghosts.map(g => `<li><a href="${href(g)}">${esc(g.title)}</a>
+        <span class="muted">mentioned in ${g.backlinks.length + g.onMaps.length} place${g.backlinks.length + g.onMaps.length === 1 ? '' : 's'}</span>
+        ${S.world.edit ? `<button type="button" data-new data-title="${esc(g.title)}">Write it</button>` : ''}</li>`).join('')}</ul>` : '<p class="muted">Every link has a page.</p>'}</section>
+      <section class="related"><h2>Empty pages (${empty.length})</h2>${empty.length ? chips(empty) : '<p class="muted">None.</p>'}</section>
+      <section class="related"><h2>Nothing links here (${lonely.length})</h2><p class="muted">Only findable through lists and search. Link them from a session or a related page, or pin them on a map.</p>${lonely.length ? chips(lonely) : ''}</section>
+    </div>`, 'Needs attention', '');
+  }
   function viewType(t, tag) {
     const list = listed().filter(e => (t ? e.type === t : true) && (tag ? e.tags.some(x => norm(x) === norm(tag)) : true)).sort(t ? sorter(t) : byTitle);
     const title = tag ? `#${tag}` : typeOf(t).label;
@@ -528,6 +576,28 @@
       return `<a href="#/by/${esc(a.id)}" style="--c:${a.color}">${esc(a.name)}’s notes</a>`; }).join('')}</p>`;
   }
 
+  function updatedLine(e) {
+    const c = S.changed && S.changed.get(e.slug);
+    return c ? `<p class="updated${isNew(c.updated) ? ' is-new' : ''}">Updated ${esc(ago(c.updated))}${c.who ? ` by ${esc(authorOf(c.who).name)}` : ''}</p>` : '';
+  }
+  // pages ordered by a number (sessions): previous / next
+  const isSequenced = t => catFields(t).some(f => f.kind === 'sort') || (S.world.newestFirst || []).includes(t);
+  function pager(e) {
+    if (!isSequenced(e.type)) return '';
+    const list = listed().filter(x => x.type === e.type).sort(byTitle), i = list.indexOf(e);
+    if (i < 0 || list.length < 2) return '';
+    const prev = list[i - 1], next = list[i + 1];
+    return `<nav class="pager" aria-label="${esc(typeOf(e.type).label)}">
+      ${prev ? `<a href="${href(prev)}" class="pg-prev"><span>← Previous</span>${esc(prev.title)}</a>` : '<span></span>'}
+      ${next ? `<a href="${href(next)}" class="pg-next"><span>Next →</span>${esc(next.title)}</a>` : '<span></span>'}</nav>`;
+  }
+  function inThis(e) {
+    if (!isSequenced(e.type) || !e.out || !e.out.length) return '';
+    const list = e.out.filter(x => !x.hidden && x.type !== e.type);
+    if (!list.length) return '';
+    return `<section class="related"><h2>In this ${esc(typeOf(e.type).one.toLowerCase())}</h2><div class="chips">${list.map(b =>
+      `<a class="chip" href="${href(b)}" style="--c:${typeOf(b.type).color}"><span class="chip-type">${esc(typeOf(b.type).one)}</span>${esc(b.title)}</a>`).join('')}</div></section>`;
+  }
   function viewEntry(e) {
     const t = typeOf(e.type);
     const side = (e.image ? `<figure class="portrait"><img src="${esc(asset(e.image))}" alt="${esc(e.title)}"></figure>` : '') + infobox(e);
@@ -538,6 +608,7 @@
         <h1>${esc(e.title)}</h1>
         ${e.aliases.length ? `<p class="aka">aka ${e.aliases.map(a => `<span>${esc(a)}</span>`).join(', ')}</p>` : ''}
         ${byline(e)}
+        ${updatedLine(e)}
         ${e.tags.length ? `<p class="tags">${e.tags.map(x => `<a href="#/tag/${encodeURIComponent(x)}">#${esc(x)}</a>`).join('')}</p>` : ''}
       </header>
       <div class="entry-grid${side ? '' : ' no-side'}">
@@ -545,7 +616,9 @@
         <div class="entry-main">
           ${e.fm.summary ? `<p class="lede">${inline(e.summary)}</p>` : ''}
           <div class="prose">${e.body.trim() ? md(e.body) : '<p class="muted">No notes for this one yet.</p>'}</div>
+          ${inThis(e)}
           ${related(e)}
+          ${pager(e)}
         </div>
       </div>
     </article>`, e.title, 't/' + e.type);
@@ -1470,6 +1543,7 @@
       <tr><td><code>[[Page name|shown text]]</code></td><td>link with different wording</td></tr>
       <tr><td><code>**bold**</code> · <code>*italic*</code></td><td><b>bold</b> · <i>italic</i></td></tr>
       <tr><td><code>==highlight==</code> · <code>~~strike~~</code></td><td><mark>highlight</mark> · <del>strike</del></td></tr>
+      <tr><td><code>||spoiler||</code></td><td>hidden until tapped</td></tr>
       <tr><td><code>## Heading</code></td><td>a section heading</td></tr>
       <tr><td><code>- item</code> · <code>1. item</code></td><td>lists (indent to nest)</td></tr>
       <tr><td><code>- [ ] to do</code></td><td>a checkbox</td></tr>
@@ -2009,7 +2083,8 @@
       <p class="ed-svc muted">${editCfg().endpoint ? 'Checking the save service…' : 'Preview mode: no shared save service connected.'}</p>
       <div class="ed-actions ed-stack">
         <button type="button" data-g="settings" class="primary">Campaign settings</button>
-        <button type="button" data-g="newworld">Start a new campaign</button></div>
+        <button type="button" data-g="newworld">Start a new campaign</button>
+        <a class="ed-linkbtn" href="#/attention" data-close-dlg>Needs attention</a></div>
       ${S.deletedPages.length ? `<fieldset><legend>Deleted pages</legend><ul class="gm-deleted">${S.deletedPages.map(d =>
         `<li><span>${esc(d.title)}</span><button type="button" data-undel="${esc(d.slug)}">Restore</button></li>`).join('')}</ul></fieldset>` : ''}
       <fieldset><legend>Fold site edits into the files</legend>
@@ -2024,6 +2099,7 @@
       .then(j => { $('.ed-svc', f).textContent = `Save service connected (version ${j.version}).`; })
       .catch(x => { $('.ed-svc', f).textContent = /latest update/.test(x.message) ? 'The save service is an older version: redeploy duat-backend/Code.gs as a new version.' : `Save service problem: ${x.message}`; });
     f.addEventListener('click', async ev => {
+      if (ev.target.closest('[data-close-dlg]')) return dlg.close();
       const u = ev.target.closest('[data-undel]');
       if (u) { u.disabled = true; u.textContent = 'Restoring…';
         try { await restorePage(u.dataset.undel); location.hash = '#/e/' + u.dataset.undel; location.reload(); }
@@ -2332,7 +2408,7 @@
     if (S.cleanup) { S.cleanup(); S.cleanup = null; }
     closeSearch(false);
     const raw = location.hash.replace(/^#\/?/, '');
-    if (raw && !/^(e|t|s|tag|by)\//.test(raw) && document.getElementById(raw)) return; // in-page anchor
+    if (raw && !/^(e|t|s|tag|by)\/|^(recent|attention)$/.test(raw) && document.getElementById(raw)) return; // in-page anchor
     const [path, query] = raw.split('?');
     const params = new URLSearchParams(query || '');
     const [kind, ...rest] = path.split('/');
@@ -2347,6 +2423,8 @@
     else if (kind === 'tag') viewType(null, arg);
     else if (kind === 'by') viewAuthor(norm(arg));
     else if (kind === 's') viewSearch(arg);
+    else if (kind === 'recent') viewRecent();
+    else if (kind === 'attention') viewAttention();
     else viewHome();
     window.scrollTo(0, 0);
   }
@@ -2376,6 +2454,7 @@
     S.stamps = new Map(edits.map(x => [stampKey(x.slug, x.author), String(x.updated || '')]));
     applyEdits(edits.filter(x => x.author !== '@world'));
     index();
+    S.changed = new Map(recentChanges().map(c => [c.e.slug, c]));
     const present = [...new Set(S.entries.map(e => e.type))];
     S.typeOrder = [...new Set([...(S.world.typeOrder || Object.keys(DEFAULT_TYPES)), ...present])];
     return found;
@@ -2383,7 +2462,8 @@
   const wait = ms => new Promise(r => setTimeout(() => r(null), ms));
   async function loadFiles(w) {
     // one bundle of every entry when the deploy made one; otherwise the files one by one
-    try {
+    const local = /^(localhost|127\.|\[::1\])/.test(location.hostname);   // local previews read the files, so edits show at once
+    if (!local) try {
       const r = await fetch('bundle.json', { cache: 'no-cache' });
       if (r.ok) { const b = await r.json(); if (b && b.entries) return (w.entries || []).filter(slug => slug in b.entries).map(slug => [slug, b.entries[slug]]); }
     } catch (err) {}
@@ -2414,6 +2494,12 @@
         w = await res.json();
       }
       S.raw = { world: w, files: [] };
+      // "new since your last visit": remembered per device; stays put for this browser session
+      try {
+        const k = `duat:${slugify(w.id || w.title || 'world')}:seen`;
+        S.lastSeen = sessionStorage.getItem(k) ?? (localStorage.getItem(k) || '');
+        sessionStorage.setItem(k, S.lastSeen); localStorage.setItem(k, new Date().toISOString());
+      } catch { S.lastSeen = ''; }
       S.world = JSON.parse(JSON.stringify(w));
       S.worldId = slugify(w.id || w.title || 'world');
       const editsP = loadEdits(), filesP = w.siteOnly ? Promise.resolve([]) : loadFiles(w);
@@ -2431,8 +2517,12 @@
       renderGMLink();
       wireAbout();
       window.addEventListener('hashchange', route);
+      document.addEventListener('click', ev => { const sp = ev.target.closest('.spoiler'); if (sp) sp.classList.add('is-shown'); });
+      document.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.classList && ev.target.classList.contains('spoiler')) ev.target.classList.add('is-shown'); });
       route();
       renderSync();
+      // offline copy for the table (not on local previews, so edits to files show at once)
+      if ('serviceWorker' in navigator && !/^(localhost|127\.|\[::1\])/.test(location.hostname)) navigator.serviceWorker.register('/duat/sw.js', { scope: '/duat/' }).catch(() => {});
       if (!first) editsP.then(res => {
         S.sync = res.ok ? 'ok' : 'failed'; S.syncError = res.error;
         if (res.ok) {

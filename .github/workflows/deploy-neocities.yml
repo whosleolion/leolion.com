@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Bundle Duat campaigns (one request per visit instead of one per page)
+        run: python3 duat-backend/bundle.py src/duat
+
       - name: Upload src/ to Neocities
         env:
           NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_LEOLIONCOM }}
