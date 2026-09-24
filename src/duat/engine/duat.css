@@ -789,3 +789,6 @@ a.wl-missing:hover { color: var(--text); border-bottom-color: var(--muted); }
 .att-list li a { font-weight: 600; }
 .att-list button { margin-left: auto; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; font-size: 0.82rem; }
 .ed-linkbtn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); text-decoration: none; font-size: 0.92rem; }
+.ch-node:focus { outline: none; }
+.ch-node:focus-visible rect { stroke: var(--accent); stroke-width: 3; }
+.sr-empty a { color: var(--accent); }

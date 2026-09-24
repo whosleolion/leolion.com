@@ -4,7 +4,8 @@
     python3 duat-backend/apply_export.py duat-export-<world>-<date>.json src/duat/vcm
 
 Writes each changed page to entries/<slug>.md, adds new pages to world.json "entries",
-and removes deleted or merged pages. Commit and deploy, then use GM tools → Clear shared edits.
+removes deleted or merged pages, and copies the campaign settings made on the site into
+world.json. Commit and deploy, then use GM tools → Clear shared edits.
 """
 import json, os, sys
 
@@ -27,6 +28,12 @@ def main(export_path, campaign_dir):
             print('removed', path)
         if slug in listed:
             listed.remove(slug)
+    settings = data.get('settings') or {}
+    for key in ('title', 'short', 'kicker', 'subtitle', 'theme', 'authors', 'types', 'typeOrder', 'navTypes', 'newestFirst', 'mapMajorTypes', 'home'):
+        if key in settings:
+            world[key] = settings[key]
+    if settings:
+        print('copied campaign settings into world.json')
     json.dump(world, open(wpath, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
     open(wpath, 'a', encoding='utf-8').write('\n')
     print('updated', wpath)

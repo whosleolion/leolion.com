@@ -157,6 +157,30 @@ async function signIn(page, who, key) {
     t('no script errors (at the table)', !page.errors.length, page.errors.join('; '));
     await ctx.close(); }
 
+  // ---- polish: typo help, chart keyboard ----
+  { const { ctx, page } = await open(browser, { svc });
+    await page.goto(base()); await page.waitForSelector('.card');
+    await page.fill('.search input', 'Koldovitch'); await page.waitForTimeout(150);
+    t('search typo suggests the right page', (await page.textContent('.search-results')).includes('Alamir Koldovich'));
+    await page.goto(base() + '#/e/connections-map'); await page.waitForSelector('.chart-stage.is-ready');
+    t('chart boxes can be reached by keyboard', (await page.$$eval('.ch-node[tabindex="0"]', n => n.length)) >= 20);
+    await page.focus('.ch-node[tabindex="0"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(200);
+    t('Enter opens a chart box', await page.isVisible('.map-card .mc-body'));
+    await ctx.close(); }
+
+  // ---- folding site edits into files ----
+  { const { ctx, page } = await open(browser, { svc });
+    await page.goto(base()); await page.waitForSelector('.card');
+    const data = await page.evaluate(() => window.Duat.export());
+    const os = require('os'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'duat-fold-'));
+    fs.cpSync(path.join(SRC, 'duat/vcm'), tmp, { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'export.json'), JSON.stringify(data));
+    require('child_process').execFileSync('python3', [path.join(__dirname, '../duat-backend/apply_export.py'), path.join(tmp, 'export.json'), tmp]);
+    const olf = fs.readFileSync(path.join(tmp, 'entries/olf.md'), 'utf8');
+    t('fold-back writes site notes into the files', olf.includes('::: thomas') && olf.includes('twist'), olf.slice(-200));
+    fs.rmSync(tmp, { recursive: true });
+    await ctx.close(); }
+
   t('settings rows never carry passkey hashes', !svc.get({ world: wid }).edits.some(x => /keyHash|gmHash/.test(x.text)));
   await browser.close(); server.close();
   console.log(failed ? `\n${failed} failed` : '\nall passed');
