@@ -4,7 +4,6 @@ type: character
 tags: [mentioned]
 status: Deceased
 aliases: [Saoirse]
+author: leo
 ---
-::: thomas
-(deceased) - Rosie’s wife and adopted daughter
-:::
+Rosie’s wife and adopted daughter.

@@ -3,11 +3,8 @@ title: Prof. Alastair Gizamgot
 type: character
 tags: [seen]
 aliases: [Gizamgot, Prof. Gizamgot]
+author: leo
 ---
-::: leo
-Bought the necromantic scrolls, and told the crew the [[Dianopod Crab|crab]] suppresses memories.
-:::
+A bribeable professor of Arcanogenesis at Sanctorum Institute.
 
-::: thomas
-a bribeable professor of Arcanogenesis at Sanctorum Institute
-:::
+Bought the necromantic scrolls, and told the crew the [[Dianopod Crab|crab]] suppresses memories.

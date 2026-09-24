@@ -3,7 +3,6 @@ title: Sepetiah Holmwell
 type: character
 tags: [seen]
 aliases: [Holmwells]
+author: leo
 ---
-::: thomas
-elderly elven arcane collector and botanist, blind, has a giant greenhouse
-:::
+Elderly elven arcane collector and botanist, blind, has a giant greenhouse.

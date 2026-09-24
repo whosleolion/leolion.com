@@ -2,7 +2,6 @@
 title: Oliver Hackey
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-a young preppy wizarding student, often reading a newspaper
-:::
+A young preppy wizarding student, often reading a newspaper.

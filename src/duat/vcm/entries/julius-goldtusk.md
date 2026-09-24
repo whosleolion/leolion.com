@@ -3,11 +3,8 @@ title: Julius Goldtusk
 type: character
 tags: [seen]
 faction: "[[Goldtusks]]"
+author: leo
 ---
-::: leo
-Dating [[Octavia Ellis-Ignabi]].
-:::
+Son and second-in-command to the Goldtusk godfather.
 
-::: thomas
-son and second-in-command to the Goldtusk godfather
-:::
+Dating [[Octavia Ellis-Ignabi]].

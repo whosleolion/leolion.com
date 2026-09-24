@@ -2,7 +2,6 @@
 title: Private Greybourne
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-prison guard enchanted by Cassandra for heist purposes
-:::
+Prison guard enchanted by Cassandra for heist purposes.

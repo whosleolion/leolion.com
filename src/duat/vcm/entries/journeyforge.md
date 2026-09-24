@@ -1,7 +1,6 @@
 ---
 title: Journeyforge
 type: region
+author: leo
 ---
-::: thomas
-capital of Tharan’dul, where Alamir is headed
-:::
+Capital of Tharan’dul, where Alamir is headed.

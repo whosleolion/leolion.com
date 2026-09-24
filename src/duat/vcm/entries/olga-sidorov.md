@@ -3,11 +3,8 @@ title: Olga Sidorov
 type: character
 tags: [seen]
 faction: "[[Amber Hand]]"
+author: leo
 ---
-::: leo
-Fought the crew on the train into the [[Underborough]].
-:::
+Squad head for the Amber Hand.
 
-::: thomas
-squad head for the Amber Hand
-:::
+Fought the crew on the train into the [[Underborough]].

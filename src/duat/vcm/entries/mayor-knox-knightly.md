@@ -2,7 +2,6 @@
 title: Mayor Knox Knightly
 type: character
 tags: [mentioned]
+author: leo
 ---
-::: thomas
-mayor of Vista City
-:::
+Mayor of Vista City.

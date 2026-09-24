@@ -2,7 +2,6 @@
 title: Ipswitch Weaver
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-manager of Hammock, the Weavers’ underdark hostel
-:::
+Manager of Hammock, the Weavers’ underdark hostel.

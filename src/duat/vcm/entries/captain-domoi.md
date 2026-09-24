@@ -2,7 +2,6 @@
 title: Captain Domoi
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-captain of the Chaika, a ship headed for Tharan’dul
-:::
+Captain of the Chaika, a ship headed for Tharan’dul.

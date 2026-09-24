@@ -2,7 +2,6 @@
 title: Miranda Steward
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-receptionist at the Sylvan Quarter Civic Center, Cassandra’s best friend
-:::
+Receptionist at the Sylvan Quarter Civic Center, Cassandra’s best friend.

@@ -2,7 +2,6 @@
 title: Leanne Quinn-Al'Bakari
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-a socialite that knows Cassandra, daughter of the train tycoon
-:::
+A socialite that knows Cassandra, daughter of the train tycoon.

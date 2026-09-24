@@ -3,7 +3,6 @@ title: Tiberius Goldtusk
 type: character
 tags: [mentioned]
 faction: "[[Goldtusks]]"
+author: leo
 ---
-::: thomas
-the orc Godfather
-:::
+The orc Godfather.

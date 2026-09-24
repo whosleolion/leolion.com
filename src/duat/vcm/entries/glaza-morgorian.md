@@ -3,11 +3,8 @@ title: Glaza Morgorian
 type: character
 tags: [seen]
 place: "[[Glaza's Divinery]]"
+author: leo
 ---
-::: leo
-[[Rosie]] consulted her while searching for [[Alamir Koldovich]].
-:::
+Underdark, advanced professional seer, species unknown.
 
-::: thomas
-underdark, advanced professional seer, species unknown
-:::
+[[Rosie]] consulted her while searching for [[Alamir Koldovich]].

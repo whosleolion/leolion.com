@@ -2,11 +2,8 @@
 title: Mrs. Candlebaum
 type: character
 tags: [mentioned]
+author: leo
 ---
-::: leo
-Fired when she got a little too close.
-:::
+Cassandra’s childhood nanny, fired.
 
-::: thomas
-Cassandra’s childhood nanny, fired
-:::
+Fired when she got a little too close.

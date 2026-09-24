@@ -3,11 +3,8 @@ title: Queen Agnes Vistal
 type: character
 tags: [mentioned]
 aliases: [Queen Agnes I]
+author: leo
 ---
-::: leo
-Queen Agnes I, of the *Vistal* line: the current head of the Hygardian Empire. The Prime Minister is Harold Sower.
-:::
+The Queen of Hygard.
 
-::: thomas
-The Queen of Hygard
-:::
+Queen Agnes I, of the *Vistal* line: the current head of the Hygardian Empire. The Prime Minister is Harold Sower.

@@ -4,9 +4,8 @@ type: character
 tags: [mentioned]
 status: Deceased
 aliases: [Horace Ashwood, Rory Ashwood, Rachel Ashwood]
+author: leo
 ---
-::: thomas
-(deceased) - Sprynger’s childhood sweetheart and wife, killed by Old Nickolas
+Sprynger’s childhood sweetheart and wife, killed by Old Nickolas.
 
 Horace Ashwood, Rory & Rachel Ashwood (deceased) - Arcelia’s family, killed by Old Nickolas
-:::
