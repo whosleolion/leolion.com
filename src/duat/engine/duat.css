@@ -537,3 +537,18 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .map-card:not([hidden]) ~ .pin-bar { display: none; }
 .pin-editing .map-card { top: 12px; bottom: auto; z-index: 7; }
 @media (min-width: 700px) { .pin-editing .map-card { top: 12px; right: 64px; } }
+
+/* GM settings */
+.ed-svc { margin: 0; font-size: 0.85rem; }
+.set-row { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.set-person { flex-direction: row; align-items: center; }
+.set-person input[name=pname] { flex: 1.1; }
+.set-person input[name=prole] { flex: 1.4; }
+.set-cat-main { display: flex; gap: 6px; align-items: center; }
+.set-cat-main input[name=clabel], .set-cat-main input[name=cone] { flex: 1; min-width: 0; }
+.set-row input[type=color] { width: 40px; height: 36px; padding: 2px; flex: none; }
+.set-cat-opts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; }
+.set-move { display: inline-flex; gap: 2px; flex: none; }
+.set-move button { width: 28px; height: 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--muted); }
+.fact-x:disabled { opacity: 0.3; cursor: default; }
+@media (max-width: 480px) { .set-person { flex-wrap: wrap; } .set-person input[name=prole] { flex-basis: 100%; order: 3; } }
