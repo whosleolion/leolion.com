@@ -619,11 +619,24 @@
           ${e && e.summary ? `<p>${inline(e.summary)}</p>` : ''}
           ${p.note ? `<p class="mc-note">${inline(p.note)}</p>` : ''}
           ${e ? `<a class="mc-open" href="${href(e)}">Open ${e.type === 'map' ? 'map' : 'entry'} →</a>` : ''}
+          ${isGM() ? '<div class="mc-gm"><button type="button" data-mc="remove">Remove pin</button><button type="button" data-mc="edit">Edit pins</button></div>' : ''}
         </div>`;
       cardEl.hidden = false;
     }
     /* pin editor: tap empty map to add, tap a pin to change/move/remove, then Save pins */
     const pinBar = $('.pin-bar', stage);
+    cardEl.addEventListener('click', async ev => {
+      const b = ev.target.closest('[data-mc]'); if (!b || pinMode) return;
+      if (b.dataset.mc === 'edit') return withSession(S.dlg, 'Sign in to edit pins', startPins, m.title);
+      const p = pins[sel]; if (!p) return;
+      if (!confirm(`Remove the “${p.label}” pin from ${m.title}?`)) return;
+      b.disabled = true; b.textContent = 'Removing…';
+      const keep = m.pins.filter((_, j) => j !== sel).map(q => ({ x: q.x, y: q.y, target: q.target, rawLabel: q.rawLabel || '', note: q.note || '' }));
+      try {
+        await persist({ slug: m.slug, author: '@pins', text: keep.map(pinLine).join('\n') }, session());
+        location.reload();
+      } catch (x) { b.disabled = false; b.textContent = 'Remove pin'; alert(`Couldn’t remove it: ${x.message}`); }
+    });
     const livePin = p => {
       const entry = resolve(p.target);
       return { ...p, entry, label: p.rawLabel || (entry ? entry.title : p.target) || '?' };
