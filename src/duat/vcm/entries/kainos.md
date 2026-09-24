@@ -1,6 +1,7 @@
 ---
 title: Kainos
 type: map
+order: 2
 image: kainos.webp
 pins: labels
 major: [nation, map]
