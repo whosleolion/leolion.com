@@ -1,7 +1,6 @@
 ---
 title: Grandma Cotton
 type: character
-tags: [mentioned]
 status: Imprisoned
 author: leo
 ---

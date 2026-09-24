@@ -21,6 +21,7 @@
     session:   { label: 'Sessions',   one: 'Session',   color: '#8fd3d6',
                  fields: [{ label: 'Session number', kind: 'sort' }, { label: 'Date', kind: 'date' }, { label: 'Players', kind: 'text' }] },
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
+    chart:     { label: 'Charts',     one: 'Chart',     color: '#f0a8d0' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
   const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author', 'major', 'overlay', 'showmap', 'showmentions']);
@@ -251,13 +252,15 @@
       block.split('\n').forEach(l => { const p = parsePin(l); if (p) pins.push(p); });
       return '';
     });
+    let chartText = '';
+    body = body.replace(/^```chart[^\n]*\n([\s\S]*?)^```[ \t]*$/gm, (_, block) => { chartText += block; return ''; });
     let title = fm.title;
     if (!title) {
       const h = body.match(/^\s*#\s+(.+)$/m);
       if (h && !body.slice(0, h.index).trim()) { title = h[1].trim(); body = body.slice(h.index + h[0].length); }
     }
     return {
-      slug, fm, body, pins,
+      slug, fm, body, pins, chartText: chartText.trim(),
       title: String(title || cap(slug.split('/').pop().replace(/[-_]+/g, ' '))),
       type: norm(fm.type || 'note'),
       aliases: toArray(fm.aliases ?? fm.alias),
@@ -280,7 +283,7 @@
     S.entries.forEach(e => add(norm(e.slug), e));
     S.entries.forEach(e => [e.title, ...e.aliases].forEach(n => { add(norm(n), e); add(slugify(n), e); }));
     for (const e of S.entries) {
-      const src = [e.body, ...Object.values(e.fm).flat().filter(v => typeof v === 'string')].join('\n');
+      const src = [e.body, e.chartText, ...Object.values(e.fm).flat().filter(v => typeof v === 'string')].join('\n');
       const out = new Set([...src.matchAll(WL_RE)].map(m => resolve(m[1].split('|')[0])).filter(x => x && x !== e));
       out.forEach(t => t.backlinks.push(e));
       for (const p of e.pins) {
@@ -288,7 +291,7 @@
         p.label = p.label || (p.entry ? p.entry.title : p.target) || '?';
         if (p.entry && p.entry !== e) p.entry.onMaps.push({ map: e, pin: p });
       }
-      e.hay = norm([e.title, ...e.aliases, ...e.tags, e.summary, plain(e.body), ...e.pins.map(p => p.label + ' ' + p.note)].join(' '));
+      e.hay = norm([e.title, ...e.aliases, ...e.tags, e.summary, plain(e.body), plain(e.chartText.replace(/^\w+ [^:]*:/gm, '')), ...e.pins.map(p => p.label + ' ' + p.note)].join(' '));
     }
   }
   const listed = () => S.entries.filter(e => !e.hidden);
@@ -819,6 +822,313 @@
     };
   }
 
+  /* ---------- charts (flowcharts / relationship maps) ----------
+     A chart page keeps its drawing in a ```chart block, one item per line:
+       node <id> @ x,y [WxH] [style] : First line / second line      (x,y = centre; [[Page]] links work)
+       frame <id> @ x,y WxH [style] : Label                          (x,y = top-left; style "dashed" or a colour)
+       edge <from> -> <to> [dashed] [bend N] : Label / more label    (-> <- <-> or -- for no arrows)
+     Styles: pink gold green blue grey text (text = no box). */
+  const CHART_STYLES = { pink: '#e8a3c7', gold: '#ffc23d', green: '#a9dc8f', blue: '#9cc6ff', grey: '#c9ccd4', text: '' };
+  function parseChart(text) {
+    const c = { nodes: [], frames: [], edges: [] };
+    for (const raw of String(text || '').split('\n')) {
+      const l = raw.trim(); let m;
+      if (!l || l.startsWith('#')) continue;
+      if ((m = l.match(/^node\s+([\w-]+)\s*@\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)(?:\s+(\d+)x(\d+))?(?:\s+([a-z]+))?\s*:\s*(.*)$/i)))
+        c.nodes.push({ id: m[1], x: +m[2], y: +m[3], w: +(m[4] || 120), h: +(m[5] || 60), style: CHART_STYLES[m[6]] !== undefined ? m[6] : 'pink', text: m[7] });
+      else if ((m = l.match(/^frame\s+([\w-]+)\s*@\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s+(\d+)x(\d+)(?:\s+([a-z]+))?(?:\s*:\s*(.*))?$/i)))
+        c.frames.push({ id: m[1], x: +m[2], y: +m[3], w: +m[4], h: +m[5], style: m[6] || 'dashed', text: m[7] || '' });
+      else if ((m = l.match(/^edge\s+([\w-]+)\s*(->|<-|<->|--)\s*([\w-]+)((?:\s+(?:dashed|bend\s+-?\d+))*)\s*(?::\s*(.*))?$/i)))
+        c.edges.push({ from: m[1], to: m[3], dir: m[2], dashed: /dashed/.test(m[4]), bend: +((m[4].match(/bend\s+(-?\d+)/) || [])[1] || 0), text: m[5] || '' });
+    }
+    return c;
+  }
+  const chartLine = {
+    node: n => `node ${n.id} @ ${Math.round(n.x)},${Math.round(n.y)}${n.w !== 120 || n.h !== 60 ? ` ${n.w}x${n.h}` : ''} ${n.style} : ${n.text}`,
+    frame: f => `frame ${f.id} @ ${Math.round(f.x)},${Math.round(f.y)} ${f.w}x${f.h} ${f.style}${f.text ? ` : ${f.text}` : ''}`,
+    edge: e => `edge ${e.from} ${e.dir} ${e.to}${e.dashed ? ' dashed' : ''}${e.bend ? ` bend ${Math.round(e.bend)}` : ''}${e.text ? ` : ${e.text}` : ''}`,
+  };
+  const chartText = c => [...c.frames.map(chartLine.frame), ...c.nodes.map(chartLine.node), ...c.edges.map(chartLine.edge)].join('\n');
+  const chartLines = t => String(t || '').split(/\s+\/\s+/);
+  const firstLink = t => { const m = String(t || '').match(/\[\[([^\]|]+)/); return m ? resolve(m[1]) : null; };
+  function chartSVG(c, opts = {}) {
+    const box = id => { const n = c.nodes.find(x => x.id === id); if (n) return { cx: n.x, cy: n.y, hw: n.w / 2, hh: n.h / 2 };
+      const f = c.frames.find(x => x.id === id); return f ? { cx: f.x + f.w / 2, cy: f.y + f.h / 2, hw: f.w / 2, hh: f.h / 2 } : null; };
+    const edgeOf = (b, tx, ty) => {   // where a ray from the box centre toward (tx,ty) leaves the box
+      const dx = tx - b.cx, dy = ty - b.cy; if (!dx && !dy) return { x: b.cx, y: b.cy };
+      const k = Math.min(Math.abs(dx) ? b.hw / Math.abs(dx) : Infinity, Math.abs(dy) ? b.hh / Math.abs(dy) : Infinity);
+      return { x: b.cx + dx * k, y: b.cy + dy * k };
+    };
+    const txt = (lines, x, y, cls) => `<text class="${cls}" x="${x}" y="${y - (lines.length - 1) * 8}">${lines.map((l, i) =>
+      `<tspan x="${x}" dy="${i ? 16 : 0}">${esc(plain(l))}</tspan>`).join('')}</text>`;
+    let out = '';
+    c.frames.forEach((f, i) => {
+      const fill = CHART_STYLES[f.style];
+      out += `<g class="ch-frame${fill ? ' is-filled' : ''}${opts.sel === 'frame:' + i ? ' is-sel' : ''}" data-frame="${i}">
+        <rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" rx="${fill ? 10 : 2}"${fill ? ` style="fill:${fill}"` : ''}/>
+        ${f.text ? `<text class="ch-frame-label" x="${f.x + 12}" y="${f.y + 20}">${esc(plain(f.text))}</text>` : ''}</g>`;
+    });
+    c.edges.forEach((e, i) => {
+      const a = box(e.from), b = box(e.to); if (!a || !b) return;
+      const mx = (a.cx + b.cx) / 2, my = (a.cy + b.cy) / 2, len = Math.hypot(b.cx - a.cx, b.cy - a.cy) || 1;
+      const ax = mx - (b.cy - a.cy) / len * e.bend, ay = my + (b.cx - a.cx) / len * e.bend;   // aim point between the centres
+      const p0 = edgeOf(a, ax, ay), p1 = edgeOf(b, ax, ay), plen = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
+      // control point: off the middle of the visible stretch, so a straight arrow stays straight
+      const qx = (p0.x + p1.x) / 2 - (p1.y - p0.y) / plen * e.bend, qy = (p0.y + p1.y) / 2 + (p1.x - p0.x) / plen * e.bend;
+      const lx = 0.25 * p0.x + 0.5 * qx + 0.25 * p1.x, ly = 0.25 * p0.y + 0.5 * qy + 0.25 * p1.y;
+      const d = `M${p0.x},${p0.y} Q${qx},${qy} ${p1.x},${p1.y}`;
+      out += `<g class="ch-edge${e.dashed ? ' is-dashed' : ''}${opts.sel === 'edge:' + i ? ' is-sel' : ''}" data-edge="${i}">
+        <path class="ch-hit" d="${d}"/><path class="ch-line" d="${d}"${/>$/.test(e.dir) ? ' marker-end="url(#ch-arrow)"' : ''}${/^</.test(e.dir) ? ' marker-start="url(#ch-arrow-s)"' : ''}/>
+        ${e.text ? txt(chartLines(e.text), lx, ly + 4, 'ch-edge-label') : ''}</g>`;
+    });
+    c.nodes.forEach((n, i) => {
+      const fill = CHART_STYLES[n.style], link = firstLink(n.text);
+      out += `<g class="ch-node${fill ? '' : ' is-text'}${link ? ' is-linked' : ''}${opts.sel === 'node:' + i ? ' is-sel' : ''}" data-node="${i}">
+        ${fill ? `<rect x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="8" style="fill:${fill}"/>` : `<rect class="ch-text-hit" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}"/>`}
+        ${txt(chartLines(n.text), n.x, n.y + 5, 'ch-node-label')}</g>`;
+    });
+    return `<defs><marker id="ch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+      <marker id="ch-arrow-s" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>${out}`;
+  }
+  function chartBounds(c) {
+    const xs = [], ys = [];
+    c.nodes.forEach(n => { xs.push(n.x - n.w / 2, n.x + n.w / 2); ys.push(n.y - n.h / 2, n.y + n.h / 2); });
+    c.frames.forEach(f => { xs.push(f.x, f.x + f.w); ys.push(f.y, f.y + f.h); });
+    if (!xs.length) return { x: 0, y: 0, w: 800, h: 500 };
+    const pad = 60, x = Math.min(...xs) - pad, y = Math.min(...ys) - pad;
+    return { x, y, w: Math.max(...xs) + pad - x, h: Math.max(...ys) + pad - y };
+  }
+
+  function viewChart(ch, focus) {
+    const color = typeOf('chart').color;
+    page(`<section class="map-view chart-view" style="--c:${color}">
+      <div class="map-stage chart-stage" tabindex="0" aria-label="${esc(ch.title)}. Drag to pan; pinch, scroll or double-tap to zoom.">
+        <svg class="chart-svg" xmlns="http://www.w3.org/2000/svg"><g class="chart-root"></g></svg>
+        <div class="map-hud">
+          <div class="map-title"><span class="kicker">Chart</span><h1>${esc(ch.title)}</h1></div>
+          <div class="map-tools">
+            <button type="button" data-act="in" aria-label="Zoom in">+</button>
+            <button type="button" data-act="out" aria-label="Zoom out">−</button>
+            <button type="button" data-act="fit" aria-label="Show whole chart">⤢</button>
+            ${S.world.edit ? '<button type="button" data-act="edit" aria-label="Edit this chart">✎</button>' : ''}
+          </div>
+        </div>
+        <div class="map-card" hidden></div>
+        <div class="pin-bar chart-bar" hidden>
+          <span class="ch-modes" role="group" aria-label="Tap on empty space adds">
+            <button type="button" data-mode="node" aria-pressed="true">＋ Box</button><button type="button" data-mode="text" aria-pressed="false">＋ Text</button>
+            <button type="button" data-mode="frame" aria-pressed="false">＋ Frame</button><button type="button" data-mode="connect" aria-pressed="false">↗ Connect</button></span>
+          <span class="ch-hint">Tap empty space to add. Tap anything to change it.</span>
+          <button type="button" data-cb="text">Edit as text</button>
+          <button type="button" data-cb="cancel">Cancel</button><button type="button" data-cb="save" class="primary">Save chart</button></div>
+        <a class="map-more" href="#about-map">About this chart ↓</a>
+      </div>
+      <div class="wrap map-below" id="about-map">
+        ${editButton(ch)}
+        ${byline(ch)}
+        ${ch.fm.summary ? `<p class="lede">${inline(ch.summary)}</p>` : ''}
+        <div class="prose">${md(ch.body)}</div>
+        ${related(ch)}
+      </div>
+    </section>`, ch.title, 't/chart');
+
+    const main = $('#main'), stage = $('.chart-stage', main), svg = $('.chart-svg', main), root = $('.chart-root', main);
+    const cardEl = $('.map-card', main), bar = $('.chart-bar', main), hint = $('.ch-hint', bar);
+    let c = parseChart(ch.chartText), B = chartBounds(c), s = 1, tx = 0, ty = 0, fitS = 1, raf = 0, touched = false;
+    let editing = false, mode = 'node', sel = '', connectFrom = null, moving = null;
+
+    const render = () => { root.innerHTML = chartSVG(c, { sel }); paint(); };
+    const size = () => ({ w: stage.clientWidth, h: stage.clientHeight });
+    const maxS = () => Math.max(fitS * 6, 2.5);
+    const limits = () => { const { w, h } = size(); fitS = Math.min(w / B.w, h / B.h) || 1; };
+    function clamp() {
+      const { w, h } = size(); limits();
+      s = Math.min(maxS(), Math.max(fitS, s));
+      const mw = B.w * s, mh = B.h * s;
+      tx = mw <= w ? (w - mw) / 2 : Math.min(0, Math.max(w - mw, tx));
+      ty = mh <= h ? (h - mh) / 2 : Math.min(0, Math.max(h - mh, ty));
+    }
+    const draw = () => { raf = 0; root.setAttribute('transform', `translate(${tx - B.x * s} ${ty - B.y * s}) scale(${s})`); };
+    const paint = () => { if (!raf) raf = requestAnimationFrame(draw); };
+    const fit = () => { limits(); s = fitS; touched = false; clamp(); paint(); };
+    const zoomAt = (cx, cy, f) => { limits(); const ns = Math.min(maxS(), Math.max(fitS, s * f)); tx = cx - (cx - tx) * ns / s; ty = cy - (cy - ty) * ns / s; s = ns; touched = true; clamp(); paint(); };
+    const rel = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const toChart = r => ({ x: (r.x - tx) / s + B.x, y: (r.y - ty) / s + B.y });
+    function focusNode(i) {
+      const n = c.nodes[i]; if (!n) return;
+      const { w, h } = size(); limits(); s = Math.max(s, Math.min(maxS(), fitS * 2));
+      tx = w / 2 - (n.x - B.x) * s; ty = h * 0.4 - (n.y - B.y) * s; touched = true; clamp(); paint(); showNode(i);
+    }
+    function showNode(i) {
+      const n = c.nodes[i]; if (!n || n.style === 'text') { cardEl.hidden = true; return; }
+      const e = firstLink(n.text), lines = chartLines(n.text);
+      sel = 'node:' + i; render();
+      cardEl.style.setProperty('--c', CHART_STYLES[n.style] || 'var(--muted)');
+      cardEl.innerHTML = `<button type="button" class="mc-close" aria-label="Close">×</button><div class="mc-body">
+        <p class="kicker">${e ? esc(typeOf(e.type).one) : 'On this chart'}</p><h2>${inline(lines[0])}</h2>
+        ${lines.slice(1).map(l => `<p>${inline(l)}</p>`).join('')}
+        ${e && e.summary ? `<p class="mc-note">${inline(e.summary)}</p>` : ''}
+        ${e ? `<a class="mc-open" href="${href(e)}">Open page →</a>` : ''}</div>`;
+      cardEl.hidden = false;
+    }
+    const closeCard = () => { cardEl.hidden = true; if (sel) { sel = ''; render(); } };
+
+    // pointer: one finger/mouse pans, two fingers pinch-zoom (same feel as maps)
+    const pts = new Map(); let moved = false, sx = 0, sy = 0, lastTap = 0, lx = 0, ly = 0;
+    const onDown = e => {
+      if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.map-hud, .map-card, .map-more, .chart-bar')) return;
+      pts.set(e.pointerId, rel(e)); if (pts.size === 1) { moved = false; sx = e.clientX; sy = e.clientY; } else moved = true;
+    };
+    const onMove = e => {
+      if (!pts.has(e.pointerId)) return;
+      const prev = pts.get(e.pointerId), cur = rel(e); pts.set(e.pointerId, cur);
+      if (pts.size === 1) { tx += cur.x - prev.x; ty += cur.y - prev.y; if (Math.hypot(e.clientX - sx, e.clientY - sy) > 6) { moved = true; touched = true; } clamp(); paint(); }
+      else { const o = [...pts].find(([id]) => id !== e.pointerId)[1];
+        const d0 = Math.hypot(prev.x - o.x, prev.y - o.y), d1 = Math.hypot(cur.x - o.x, cur.y - o.y);
+        tx += (cur.x - prev.x) / 2; ty += (cur.y - prev.y) / 2; if (d0 > 0) zoomAt((cur.x + o.x) / 2, (cur.y + o.y) / 2, d1 / d0); }
+    };
+    const onUp = e => { pts.delete(e.pointerId); };
+    stage.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('pointercancel', onUp);
+    stage.addEventListener('wheel', e => { e.preventDefault(); const r = rel(e), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(r.x, r.y, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015))); }, { passive: false });
+
+    stage.addEventListener('click', e => {
+      if (e.target.closest('.map-more, .chart-bar')) return;
+      if (e.target.closest('.mc-close')) return closeCard();
+      if (e.target.closest('.map-card')) return;
+      const tool = e.target.closest('[data-act]');
+      if (tool) {
+        const { w, h } = size(), act = tool.dataset.act;
+        if (act === 'in') zoomAt(w / 2, h / 2, 1.5);
+        if (act === 'out') zoomAt(w / 2, h / 2, 1 / 1.5);
+        if (act === 'fit') fit();
+        if (act === 'edit' && !editing) withSession(S.dlg, 'Sign in to edit this chart', startEdit, ch.title);
+        return;
+      }
+      if (e.target.closest('.map-hud')) return;
+      if (moved && e.detail !== 0) { moved = false; return; }
+      const r = rel(e), at = toChart(r);
+      const nodeEl = e.target.closest('[data-node]'), frameEl = e.target.closest('[data-frame]'), edgeEl = e.target.closest('[data-edge]');
+      if (!editing) {
+        if (nodeEl) return showNode(+nodeEl.dataset.node);
+        const now = performance.now();
+        if (now - lastTap < 320 && Math.hypot(r.x - lx, r.y - ly) < 30) { lastTap = 0; return zoomAt(r.x, r.y, 2); }
+        lastTap = now; lx = r.x; ly = r.y; return closeCard();
+      }
+      // editing
+      if (moving) { const it = moving.kind === 'node' ? c.nodes[moving.i] : c.frames[moving.i];
+        if (moving.kind === 'node') { it.x = at.x; it.y = at.y; } else { it.x = at.x; it.y = at.y; }
+        moving = null; hint.textContent = 'Tap empty space to add. Tap anything to change it.'; return render(); }
+      if (mode === 'connect') {
+        const hit = nodeEl ? c.nodes[+nodeEl.dataset.node].id : frameEl ? c.frames[+frameEl.dataset.frame].id : null;
+        if (!hit) return;
+        if (!connectFrom) { connectFrom = hit; sel = nodeEl ? 'node:' + nodeEl.dataset.node : 'frame:' + frameEl.dataset.frame; hint.textContent = 'Now tap where the arrow goes.'; return render(); }
+        if (hit === connectFrom) return;
+        c.edges.push({ from: connectFrom, to: hit, dir: '->', dashed: false, bend: 0, text: '' });
+        connectFrom = null; sel = ''; hint.textContent = 'Tap a box to start another arrow.'; render();
+        return edgeForm(c.edges.length - 1);
+      }
+      if (nodeEl) return nodeForm(+nodeEl.dataset.node);
+      if (edgeEl) return edgeForm(+edgeEl.dataset.edge);
+      if (frameEl && !e.target.closest('rect.is-inner')) return frameForm(+frameEl.dataset.frame);
+      if (mode === 'frame') return frameForm(-1, at);
+      return nodeForm(-1, at, mode === 'text' ? 'text' : 'pink');
+    });
+
+    const newId = base => { base = slugify(plain(base)).split('-').slice(0, 2).join('-') || 'box'; let id = base, n = 2;
+      while ([...c.nodes, ...c.frames].some(x => x.id === id)) id = base + n++; return id; };
+    const styleOptions = cur => Object.keys(CHART_STYLES).map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${k === 'text' ? 'No box (just text)' : cap(k)}</option>`).join('');
+    function formShell(title, inner, canRemove, canMove) {
+      cardEl.style.setProperty('--c', 'var(--accent)');
+      cardEl.innerHTML = `<button type="button" class="mc-close" aria-label="Close">×</button>
+        <form class="mc-body pin-form ch-form"><p class="kicker">${title}</p>${inner}
+          <div class="ed-actions">${canRemove ? '<button type="button" data-f="remove">Remove</button>' : ''}${canMove ? '<button type="button" data-f="move">Move</button>' : ''}<span></span>
+          <button type="submit" class="primary">Done</button></div></form>`;
+      cardEl.hidden = false;
+      return $('form', cardEl);
+    }
+    function nodeForm(i, at, style) {
+      const n = i >= 0 ? c.nodes[i] : { id: '', x: at.x, y: at.y, w: style === 'text' ? 140 : 120, h: style === 'text' ? 30 : 60, style, text: '' };
+      sel = i >= 0 ? 'node:' + i : ''; render();
+      const f = formShell(i >= 0 ? 'Change box' : n.style === 'text' ? 'New text' : 'New box', `
+        <label>Text <span class="muted">(one line per row; type [[ to link a page)</span><span class="ed-field"><textarea name="t" rows="3">${esc(chartLines(n.text).join('\n'))}</textarea><span class="ed-links" role="listbox" hidden></span></span></label>
+        <label>Look<select name="st">${styleOptions(n.style)}</select></label>
+        <div class="ch-size"><label>Width<input name="w" inputmode="numeric" value="${n.w}"></label><label>Height<input name="h" inputmode="numeric" value="${n.h}"></label></div>`, i >= 0, i >= 0);
+      attachLinker(f.t, $('.ed-links', f), null);
+      wireChartForm(f, i, 'node', () => {
+        const text = f.t.value.split('\n').map(x => x.trim().replace(/\s+\/\s+/g, ' – ')).filter(Boolean).join(' / ');
+        if (!text) throw new Error('empty');
+        const out = { ...n, text, style: f.st.value, w: Math.max(40, +f.w.value || 120), h: Math.max(24, +f.h.value || 60) };
+        if (i >= 0) c.nodes[i] = out; else { out.id = newId(text.split(' / ')[0]); c.nodes.push(out); }
+      });
+      setTimeout(() => f.t.focus(), 30);
+    }
+    function frameForm(i, at) {
+      const fr = i >= 0 ? c.frames[i] : { id: '', x: at.x, y: at.y, w: 320, h: 160, style: 'dashed', text: '' };
+      sel = i >= 0 ? 'frame:' + i : ''; render();
+      const f = formShell(i >= 0 ? 'Change frame' : 'New frame', `
+        <label>Label (optional)<input name="t" value="${esc(fr.text)}" autocomplete="off"></label>
+        <label>Look<select name="st"><option value="dashed"${fr.style === 'dashed' ? ' selected' : ''}>Dashed outline</option>${Object.keys(CHART_STYLES).filter(k => k !== 'text').map(k => `<option value="${k}"${k === fr.style ? ' selected' : ''}>Filled ${k}</option>`).join('')}</select></label>
+        <div class="ch-size"><label>Width<input name="w" inputmode="numeric" value="${fr.w}"></label><label>Height<input name="h" inputmode="numeric" value="${fr.h}"></label></div>`, i >= 0, i >= 0);
+      wireChartForm(f, i, 'frame', () => {
+        const out = { ...fr, text: f.t.value.trim(), style: f.st.value, w: Math.max(60, +f.w.value || 320), h: Math.max(40, +f.h.value || 160) };
+        if (i >= 0) c.frames[i] = out; else { out.id = newId(out.text || 'frame'); c.frames.push(out); }
+      });
+    }
+    function edgeForm(i) {
+      const ed = c.edges[i]; sel = 'edge:' + i; render();
+      const f = formShell('Arrow', `
+        <label>Label (optional; " / " starts a new line)<input name="t" value="${esc(ed.text)}" autocomplete="off"></label>
+        <label>Arrowheads<select name="dir"><option value="->"${ed.dir === '->' ? ' selected' : ''}>At the end →</option><option value="<-"${ed.dir === '<-' ? ' selected' : ''}>At the start ←</option><option value="<->"${ed.dir === '<->' ? ' selected' : ''}>Both ↔</option><option value="--"${ed.dir === '--' ? ' selected' : ''}>None —</option></select></label>
+        <label class="ed-check"><input type="checkbox" name="dashed"${ed.dashed ? ' checked' : ''}> Dashed (unsure / possible)</label>
+        <label>Curve<input name="bend" type="range" min="-300" max="300" step="10" value="${ed.bend}"></label>`, true, false);
+      const live = () => { c.edges[i] = { ...ed, text: f.t.value.trim(), dir: f.dir.value, dashed: f.dashed.checked, bend: +f.bend.value }; render(); };
+      f.bend.addEventListener('input', live); f.dir.addEventListener('change', live); f.dashed.addEventListener('change', live);
+      wireChartForm(f, i, 'edge', live);
+    }
+    function wireChartForm(f, i, kind, apply) {
+      f.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-f]'); if (!b) return;
+        if (b.dataset.f === 'remove') {
+          if (kind === 'edge') c.edges.splice(i, 1);
+          else { const list = kind === 'node' ? c.nodes : c.frames, id = list[i].id; list.splice(i, 1); c.edges = c.edges.filter(e => e.from !== id && e.to !== id); }
+          sel = ''; cardEl.hidden = true; render();
+        }
+        if (b.dataset.f === 'move') { moving = { kind, i }; cardEl.hidden = true; hint.textContent = 'Tap the new spot.'; }
+      });
+      f.addEventListener('submit', ev => { ev.preventDefault(); try { apply(); } catch { return; } sel = ''; cardEl.hidden = true; render(); });
+    }
+    function startEdit() {
+      if (S.dlg && S.dlg.open) S.dlg.close();
+      editing = true; closeCard(); bar.hidden = false; stage.classList.add('pin-editing');
+    }
+    bar.addEventListener('click', async ev => {
+      const m = ev.target.closest('[data-mode]');
+      if (m) { mode = m.dataset.mode; connectFrom = null; bar.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === m)));
+        hint.textContent = mode === 'connect' ? 'Tap the box the arrow starts from.' : 'Tap empty space to add. Tap anything to change it.'; return; }
+      const b = ev.target.closest('[data-cb]'); if (!b) return;
+      if (b.dataset.cb === 'cancel') return route();
+      if (b.dataset.cb === 'text') {
+        const dlg = S.dlg;
+        dlg.innerHTML = `<form method="dialog" class="ed-form ed-write"><p class="kicker">Chart as text</p><h2>${esc(ch.title)}</h2>
+          <textarea name="t" rows="16" spellcheck="false">${esc(chartText(c))}</textarea>
+          <p class="ed-help">One item per line: <code>node id @ x,y [WxH] [style] : Text / more</code>, <code>frame id @ x,y WxH [style] : Label</code>, <code>edge a -> b [dashed] [bend 80] : Label</code>. Styles: pink gold green blue grey text.</p>
+          <div class="ed-actions"><span></span><button type="button" data-cancel>Cancel</button><button value="ok" class="primary">Apply</button></div></form>`;
+        $('form', dlg).addEventListener('submit', e2 => { e2.preventDefault(); c = parseChart($('form', dlg).t.value); B = chartBounds(c); dlg.close(); fit(); render(); });
+        return show(dlg);
+      }
+      b.disabled = true; b.textContent = 'Saving…';
+      try { await persist({ slug: ch.slug, author: '@pins', text: chartText(c) }, session()); location.reload(); }
+      catch (x) { b.disabled = false; b.textContent = 'Save chart'; hint.textContent = `Couldn’t save: ${x.message}`; }
+    });
+
+    const ro = new ResizeObserver(() => { if (touched) { clamp(); paint(); } else fit(); });
+    ro.observe(stage);
+    render(); fit(); stage.classList.add('is-ready');
+    if (focus) { const i = c.nodes.findIndex(n => n.id === focus || (firstLink(n.text) || {}).slug === focus); if (i >= 0) focusNode(i); }
+    S.cleanup = () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp); ro.disconnect(); };
+  }
+
   /* ---------- editing ----------
      Everything in the catalog can be entered from the page itself. Edits are rows kept by
      world.json edit.endpoint (a small Google Apps Script, see duat-backend/) and layered over
@@ -896,6 +1206,7 @@
     S.entries.push(e);
   }
   function applyPins(e, text) {
+    if (e.type === 'chart') { e.chartText = String(text || '').trim(); e.dirty = true; return; }
     e.pins = String(text || '').split('\n').map(parsePin).filter(Boolean);
     e.dirty = true;
   }
@@ -1354,7 +1665,7 @@
     const cf = catForm(f, () => f.type.value, (k, kind) => kind === 'sort'
       ? Math.max(0, ...S.entries.filter(x => x.type === f.type.value).map(x => x.order || 0)) + 1
       : kind === 'date' ? today : '');
-    f.type.addEventListener('change', () => { $('.ed-newmap', f).hidden = f.type.value !== 'map'; f.text.required = f.type.value !== 'map'; cf.redraw(); });
+    f.type.addEventListener('change', () => { $('.ed-newmap', f).hidden = f.type.value !== 'map'; f.text.required = !['map', 'chart'].includes(f.type.value); cf.redraw(); });
     f.text.required = true;
     wireForm(f, async () => {
       const title = f.title.value.trim().replace(/\s+/g, ' '), slug = slugify(title), type = f.type.value;
@@ -1613,8 +1924,9 @@
     for (const k of ['pins', 'overlay', 'major']) if (e.fm[k]) fm[k] = e.fm[k];
     for (const k of ['showmap', 'showmentions']) if (e.fm[k] === false) fm[k] = false;
     for (const [k, v] of Object.entries(e.fm)) if (!RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length)) fm[k] = v;
+    const chart = e.chartText ? `\n\n\`\`\`chart\n${e.chartText}\n\`\`\`` : '';
     const pins = e.pins.length ? `\n\n\`\`\`pins\n${e.pins.map(p => `${p.x}, ${p.y} | ${p.target ? `[[${p.target}${p.rawLabel ? '|' + p.rawLabel : ''}]]` : p.rawLabel}${p.note ? ' | ' + p.note : ''}`).join('\n')}\n\`\`\`` : '';
-    return `---\n${Object.entries(fm).map(([k, v]) => `${k}: ${fmVal(v)}`).join('\n')}\n---\n${e.body.trim()}${pins}\n`;
+    return `---\n${Object.entries(fm).map(([k, v]) => `${k}: ${fmVal(v)}`).join('\n')}\n---\n${e.body.trim()}${pins}${chart}\n`;
   }
 
   /* pick-a-page box for single-line inputs (pins, merge) */
@@ -1748,6 +2060,7 @@
       const e = resolve(arg);
       if (!e) viewMissing(arg);
       else if (e.type === 'map' && e.image) viewMap(e, params.get('pin'));
+      else if (e.type === 'chart') viewChart(e, params.get('node'));
       else viewEntry(e);
     } else if (kind === 't') viewType(norm(arg));
     else if (kind === 'tag') viewType(null, arg);

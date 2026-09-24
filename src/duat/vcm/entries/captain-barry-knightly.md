@@ -1,7 +1,6 @@
 ---
 title: Captain Barry Knightly
 type: character
-tags: [mentioned]
 faction: "[[City Watch]]"
 author: leo
 ---

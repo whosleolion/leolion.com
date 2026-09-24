@@ -1,7 +1,6 @@
 ---
 title: Jed St. Rose
 type: character
-tags: [mentioned]
 status: Deceased
 author: leo
 ---
