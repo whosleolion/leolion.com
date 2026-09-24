@@ -733,3 +733,26 @@ a.wl-missing:hover { color: var(--text); border-bottom-color: var(--muted); }
 .pin-kind { flex-direction: row; flex-wrap: wrap; } .pin-kind .pk-q { flex-basis: 100%; } .pk-opt { flex: 1 1 0; min-width: 0; padding: 10px; }
 .pk-opt[hidden] { display: none !important; }
 .pk-page { font: 700 0.84rem/1.2 var(--font-display); color: #f4ecd8; background: #14110f; border: 1px solid #000; border-bottom: 3px solid var(--c, var(--accent)); }
+
+/* sync status, conflicts, history */
+.sync-chip { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40;
+  display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 24px); padding: 8px 14px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); font-size: 0.82rem; color: var(--muted); }
+.sync-chip[hidden] { display: none; }
+.sync-chip.is-failed { border-color: #ff7a7a; color: var(--text); border-radius: 14px; }
+.sync-chip button { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; font-size: 0.8rem; }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: sync-pulse 1s ease-in-out infinite alternate; }
+@keyframes sync-pulse { from { opacity: 0.25; } to { opacity: 1; } }
+.conflict .cf-both { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.conflict .cf-both textarea { min-height: 0; height: 180px; font-size: 13px; }
+@media (max-width: 600px) { .conflict .cf-both { grid-template-columns: 1fr; } }
+.ed-wrap { flex-wrap: wrap; }
+.hist-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow: auto; }
+.hist-list li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.hist-head { display: flex; flex-direction: column; gap: 2px; font-size: 0.88rem; }
+.hist-head .muted { font-size: 0.78rem; }
+.hist-list details { grid-column: 1 / -1; font-size: 0.82rem; color: var(--muted); }
+.hist-list pre { white-space: pre-wrap; margin: 6px 0 0; padding: 8px 10px; background: var(--bg); border-radius: 8px; color: var(--text); font-size: 0.8rem; max-height: 240px; overflow: auto; }
+.hist-list button, .gm-deleted button { grid-column: 2; grid-row: 1; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer; font-size: 0.82rem; }
+.gm-deleted { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gm-deleted li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

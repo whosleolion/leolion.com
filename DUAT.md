@@ -121,6 +121,13 @@ Everything in the catalog can be entered from the page itself; the files are jus
 
 **Signing in** is the name chip in the top bar ("Sign in"): pick your name and enter the passkey. You stay signed in on that device; the chip then shows your name, and its menu has GM tools (for the GM) and Sign out. Tapping ✎ Edit while signed out asks you to sign in first.
 
+**Safety.**
+- **Your page text is yours.** Signing in as the GM (the person with role "GM") needs the GM passkey; the save service refuses GM writes made with the player passkey.
+- **Nothing is overwritten unseen.** Every save says which version it was based on. If someone saved the same thing in between, you get a "Saved by someone else meanwhile" box showing both versions: keep editing, use theirs, or save yours over it.
+- **History.** ✎ Edit → **History** lists every earlier version of the page's text, notes, details and pins, with who replaced it and when. **Restore** saves an old version as the current one (the one it replaces is kept too). GM tools → **Deleted pages** brings a deleted page back with its old details.
+- **Backups.** The first save each day copies the whole edits spreadsheet into a "Duat backups" Drive folder (the last 14 are kept).
+- **Slow or down save service.** The catalog opens from the files straight away and adds shared edits when they arrive (a small "Loading shared edits…" chip shows meanwhile). If they can't be loaded, the chip says so and editing is paused until they can, so nobody saves over text they haven't seen.
+
 **The GM's writing is the page.** The person whose role is "GM" (or `world.json` `"gm": "leo"`) writes the page's own text: it shows without any name label. Everyone else's notes appear as labeled blocks ("Thomas's notes"), with chips under the title.
 
 **GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, show or hide the "On the map" and "Mentioned in" sections, merge into another page (notes move over, the name becomes a nickname), and delete. Any page can be deleted, maps and charts included, whatever state its details are in. If other pages link to it, it becomes a ghost (unwritten) page, and writing it again starts a fresh page: nothing saved before the delete comes back. **GM tools** is in the name chip's menu.
@@ -142,8 +149,10 @@ commit and deploy, and finally GM tools → **Clear shared edits**.
 Config lives in `world.json`:
 
 ```json
-"edit": { "endpoint": "<web app URL>", "keyHash": "<sha256 of the passkey>", "gmHash": "<sha256 of the GM passkey>" }
+"edit": { "endpoint": "<web app URL>" }
 ```
+
+(The save service checks passkeys itself. Only a local preview with no endpoint uses `keyHash` / `gmHash`: SHA-256 hashes of test passkeys.)
 
 - **`endpoint` empty:** preview mode. Edits (and uploaded pictures) save in that browser only.
 - **`endpoint` set:** shared. Edits go to a small Google Apps Script (`duat-backend/Code.gs`) that keeps them in a Google Sheet in the GM's Drive and stores uploaded pictures in a "Duat uploads" Drive folder. To set it up (about 2 minutes):
@@ -153,9 +162,13 @@ Config lives in `world.json`:
 
   **Updating the script later:** paste the new code, then Deploy → Manage deployments → ✎ → Version: *New version* → Deploy. That keeps the same URL.
 
-Passkeys are changed from Campaign settings; the save service stores them (as hashes) and every campaign uses the same pair. The hashes in `Code.gs` and `world.json` are only the starting values. Passkeys are shared door keys, not real security: anyone with the player passkey can write as anyone, and the GM passkey can delete. Only give them out accordingly.
+Passkeys are changed from Campaign settings. The save service stores them salted, per campaign (a campaign that sets its own passkeys stops accepting the default ones). The starting hashes in `Code.gs` are public, so **after deploying version 4, set new passkeys in Campaign settings** (use a long GM passkey). Passkeys are shared door keys, not real security: anyone with the player passkey can write as anyone, and the GM passkey can delete. Only give them out accordingly.
 
-**Updating the save service** when `Code.gs` changes: paste the new code, then Deploy → Manage deployments → ✎ → Version: *New version* → Deploy (same URL). GM tools shows which version is running.
+**Updating the save service** when `Code.gs` changes: paste the new code, then Deploy → Manage deployments → ✎ → Version: *New version* → Deploy (same URL). GM tools shows which version is running. Version 4 (history, conflict checks, backups, GM-only page text, salted per-campaign passkeys) asks for no new permissions; the site works with version 3 too, just without those.
+
+## Tests
+
+`node tests/save-service.test.js` runs the save service against stand-ins for Google's services. `node tests/site.test.js` opens the real site in Chromium (Playwright) with that save service behind it: every page renders, slow/down save service, sign-in rules, conflicts, history and restore. Both run on every pull request.
 
 The only thing that still needs the files is the engine itself (`src/duat/engine/`), plus the optional step of folding site edits into `.md` files.
 
