@@ -1,6 +1,7 @@
 ---
 title: Vista City
 type: map
+order: 1
 image: vista-city.webp
 overlay: vista-city-overlay.svg
 pins: labels
