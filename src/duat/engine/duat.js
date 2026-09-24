@@ -1287,6 +1287,16 @@
   }
   function applyEdits(edits) {
     S.deleted = [];
+    // a page deleted and later written again (＋ New / Write this page) starts fresh:
+    // everything saved for it up to the delete is dropped, the delete included
+    const delAt = {};
+    edits.forEach(x => { if (x.author === '@meta') { try { if (JSON.parse(x.text).deleted) delAt[x.slug] = String(x.updated || ''); } catch {} } });
+    const reborn = new Set(edits.filter(x => delAt[x.slug] !== undefined && !String(x.author || '').startsWith('@') && NEW_RE.test(String(x.text || ''))
+      && String(x.updated || '') > delAt[x.slug]).map(x => x.slug));
+    if (reborn.size) {
+      edits = edits.filter(x => !reborn.has(x.slug) || String(x.updated || '') > delAt[x.slug]);
+      S.entries = S.entries.filter(e => !reborn.has(e.slug));
+    }
     const find = slug => S.entries.find(x => x.slug === slug);
     const special = x => String(x.author || '').startsWith('@');
     edits.filter(x => !special(x) && NEW_RE.test(String(x.text || ''))).forEach(createFrom);
@@ -1577,7 +1587,8 @@
         <label class="ed-check"><input type="checkbox" name="showmap"${e.fm.showmap === false ? '' : ' checked'}> Show “On the map”</label>
         <label class="ed-check"><input type="checkbox" name="showmentions"${e.fm.showmentions === false ? '' : ' checked'}> Show “Mentioned in”</label>
         <label>Merge this page into…<span class="ed-field"><input name="merge" placeholder="Pick a page" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span></label>
-        <button type="button" data-delete class="ed-danger">Delete this page</button></fieldset>` : ''}
+        <button type="button" data-del-page class="ed-danger">Delete this page</button></fieldset>`
+      : `<p class="ed-help">Hiding, merging and deleting pages need the GM passkey.</p>`}
       ${footer(me, 'Save details')}
     </form>`;
     const f = $('form', dlg);
@@ -1606,6 +1617,21 @@
       const row = [...facts$.querySelectorAll('.fact-row')].pop(); wireFact(row); $('input', row).focus();
     });
     let mergeInto = null;
+    const delBtn = $('[data-del-page]', f);
+    // deleting skips the form's checks: a half-filled or odd field must never block it
+    if (delBtn) delBtn.addEventListener('click', async ev => {
+      ev.stopPropagation();
+      const linked = e.backlinks.length + e.onMaps.length;
+      if (!confirm(`Delete “${e.title}” for everyone?${linked ? ` Pages that link to it will show it as unwritten, so it can be written again later.` : ''}`)) return;
+      delBtn.disabled = true; delBtn.textContent = 'Deleting…';
+      try {
+        await persist({ slug: e.slug, author: '@meta', text: JSON.stringify({ title: e.title, deleted: true }) }, sess);
+        location.hash = '#/'; location.reload();
+      } catch (x) {
+        delBtn.disabled = false; delBtn.textContent = 'Delete this page';
+        const err = $('.ed-err', f); if (err) { err.textContent = `Couldn’t delete: ${x.message}`; err.hidden = false; } else alert(`Couldn’t delete: ${x.message}`);
+      }
+    });
     if (gm) attachPicker(f.merge, $('.ed-gm .ed-links', f), t => { if (t !== e) { mergeInto = t; f.merge.value = t.title; } }, true);
     wireForm(f, async sub => {
       const list = v => v.split(',').map(x => x.trim()).filter(Boolean);
@@ -1621,11 +1647,6 @@
       if (gm) {
         meta.hidden = f.hidden.checked;
         meta.showmap = f.showmap.checked; meta.showmentions = f.showmentions.checked;
-        if (f.dataset.del === '1') {
-          f.dataset.del = '';
-          if (!confirm(`Delete “${e.title}” for everyone?`)) throw new Error('not deleted');
-          meta.deleted = true;
-        }
         if (mergeInto && f.merge.value.trim()) {
           if (!confirm(`Merge “${e.title}” into “${mergeInto.title}”? Its notes move there and its name becomes a nickname.`)) throw new Error('not merged');
           meta.mergeInto = mergeInto.slug;
