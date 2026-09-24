@@ -1,11 +1,8 @@
 ---
 title: Aster Valley
 type: region
+author: leo
 ---
-::: leo
-Where the power of the [[Illyrian Lands|Illyrian]] dynastic empire is concentrated; home of New Telos.
-:::
+Where Cassandra’s parents are from, in The Illyrian Lands.
 
-::: thomas
-where Cassandra’s parents are from, in The Illyrian Lands.
-:::
+Where the power of the [[Illyrian Lands|Illyrian]] dynastic empire is concentrated; home of New Telos.

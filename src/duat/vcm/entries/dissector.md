@@ -2,11 +2,8 @@
 title: Dissector
 type: character
 tags: [seen]
+author: leo
 ---
-::: leo
-Had [[V|Johnny 5]] when the crew tracked him down.
-:::
+A giant soul-searching murder robot.
 
-::: thomas
-a giant soul-searching murder robot
-:::
+Had [[V|Johnny 5]] when the crew tracked him down.

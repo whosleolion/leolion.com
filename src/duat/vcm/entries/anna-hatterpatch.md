@@ -2,7 +2,6 @@
 title: Anna Hatterpatch
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-Owner of the Glad Nightcap, Sprynger’s cheap accomodations
-:::
+Owner of the Glad Nightcap, Sprynger’s cheap accomodations.

@@ -3,11 +3,8 @@ title: Jed St. Rose
 type: character
 tags: [mentioned]
 status: Deceased
+author: leo
 ---
-::: leo
-Paid tribute to the [[Ranger Saints]].
-:::
+Rosie’s father, a Ridgeland ranger.
 
-::: thomas
-(deceased) - Rosie’s father, a Ridgeland ranger
-:::
+Paid tribute to the [[Ranger Saints]].

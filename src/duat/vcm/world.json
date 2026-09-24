@@ -179,17 +179,43 @@
     "district": {
       "label": "Districts",
       "one": "District",
-      "color": "#e8b45a"
+      "color": "#e8b45a",
+      "fields": [
+        {
+          "label": "Area",
+          "kind": "text"
+        }
+      ]
     },
     "pc": {
       "label": "The Crew",
       "one": "Party member",
-      "color": "#ff5a36"
+      "color": "#ff5a36",
+      "fields": [
+        {
+          "label": "Home",
+          "kind": "page"
+        },
+        {
+          "label": "Family",
+          "kind": "text"
+        }
+      ]
     },
     "character": {
       "label": "NPCs",
       "one": "NPC",
-      "color": "#ff9a6e"
+      "color": "#ff9a6e",
+      "fields": [
+        {
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "label": "Faction",
+          "kind": "page"
+        }
+      ]
     },
     "deity": {
       "label": "Gods & Spirits",
@@ -204,12 +230,37 @@
     "session": {
       "label": "Sessions",
       "one": "Session",
-      "color": "#9fb4ff"
+      "color": "#9fb4ff",
+      "fields": [
+        {
+          "label": "Session number",
+          "kind": "sort"
+        },
+        {
+          "label": "Date",
+          "kind": "date"
+        },
+        {
+          "label": "Players",
+          "kind": "text"
+        }
+      ]
     },
     "nation": {
       "label": "Nations",
       "one": "Nation",
       "color": "#c9a8ff"
+    },
+    "location": {
+      "label": "Locations",
+      "one": "Location",
+      "color": "#7ddc8a",
+      "fields": [
+        {
+          "label": "Where",
+          "kind": "page"
+        }
+      ]
     }
   },
   "mapMajorTypes": [

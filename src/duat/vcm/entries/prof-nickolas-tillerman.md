@@ -3,11 +3,8 @@ title: Prof. Nickolas Tillerman
 type: character
 tags: [seen]
 aliases: [Prof. Nicholas Tillerman, Tillerman]
+author: leo
 ---
-::: leo
-Met at the [[Silver Spindle Smoking Lounge|Silver Spindle]].
-:::
+An ‘expert in the material plane’, actually an avatar of Old Nickolas.
 
-::: thomas
-an ‘expert in the material plane’, actually an avatar of Old Nickolas
-:::
+Met at the [[Silver Spindle Smoking Lounge|Silver Spindle]].

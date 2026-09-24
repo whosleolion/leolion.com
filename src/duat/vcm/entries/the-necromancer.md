@@ -3,7 +3,6 @@ title: The Necromancer
 type: character
 tags: [mentioned]
 status: Deceased
+author: leo
 ---
-::: thomas
-(deceased) - Johnny’s creator, killed by Henchmen
-:::
+Johnny’s creator, killed by Henchmen.

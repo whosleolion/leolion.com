@@ -3,7 +3,6 @@ title: Kit Fowler & Bogwald Biggs
 type: character
 tags: [seen]
 aliases: [Kit Fowler, Bogwald Biggs]
+author: leo
 ---
-::: thomas
-escaped underdark cage fighters, drow pirate & bullywug gladiator
-:::
+Escaped underdark cage fighters, drow pirate & bullywug gladiator.

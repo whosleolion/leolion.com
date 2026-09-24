@@ -3,11 +3,8 @@ title: Lady Agatha Vale
 type: character
 tags: [seen]
 aliases: [Agatha Vale]
+author: leo
 ---
-::: leo
-From [[Aster Valley]].
-:::
+Cassandra’s mother, Co-Chair of the Civic Infrastructure Commission.
 
-::: thomas
-Cassandra’s mother, Co-Chair of the Civic Infrastructure Commission
-:::
+From [[Aster Valley]].

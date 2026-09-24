@@ -2,7 +2,6 @@
 title: Pennyfoot
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-a homonculus farmer, sells onions
-:::
+A homonculus farmer, sells onions.

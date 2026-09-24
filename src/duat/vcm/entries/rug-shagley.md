@@ -3,11 +3,8 @@ title: Rug Shagley
 type: character
 tags: [seen]
 aliases: [Rug]
+author: leo
 ---
-::: leo
-Freed in the prison raid.
-:::
+Underdark, Felt’s firbolg cousin.
 
-::: thomas
-underdark, Felt’s firbolg cousin
-:::
+Freed in the prison raid.

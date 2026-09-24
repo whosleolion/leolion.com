@@ -552,3 +552,32 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .set-move button { width: 28px; height: 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--muted); }
 .fact-x:disabled { opacity: 0.3; cursor: default; }
 @media (max-width: 480px) { .set-person { flex-wrap: wrap; } .set-person input[name=prole] { flex-basis: 100%; order: 3; } }
+
+/* markup guide, duplicate check, category fields */
+.ed-notes-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.85rem; color: var(--muted); margin-bottom: -4px; }
+.ed-guide-wrap { position: relative; }
+.ed-guide-btn { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 0.8rem; cursor: pointer; }
+.ed-guide-btn[aria-expanded="true"] { border-color: var(--c, var(--accent)); }
+.ed-guide {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 10; width: min(380px, calc(100vw - 48px));
+  padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--c, var(--accent)); border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); font-size: 0.82rem; color: var(--text);
+}
+.ed-guide[hidden] { display: none; }
+.ed-guide table { width: 100%; border-collapse: collapse; }
+.ed-guide td { padding: 5px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+.ed-guide tr:first-child td { border-top: 0; }
+.ed-guide td:first-child { width: 55%; }
+.ed-similar { font-size: 0.88rem; padding: 8px 12px; border: 1px solid var(--line); border-left: 3px solid #ffb454; border-radius: 8px; background: var(--panel); }
+.ed-similar[hidden] { display: none; }
+.ed-similar p { margin: 0 0 4px; }
+.ed-similar ul { margin: 0; padding-left: 1.1em; }
+.ed-similar a { color: var(--accent); }
+.ed-catfields { display: flex; flex-direction: column; gap: 8px; }
+.ed-catfields .ed-field, .fact-row .ed-field { position: relative; display: block; }
+.set-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.85rem; }
+.set-field { display: inline-flex; gap: 4px; align-items: center; }
+.set-field input { width: 9.5em; padding: 6px 8px !important; }
+.set-field select { width: auto; padding: 6px 8px !important; }
+.set-field .fact-x { height: 32px; width: 28px; }
+.set-addf { padding: 5px 10px; background: none; border: 1px dashed var(--line); border-radius: 8px; font-size: 0.8rem; cursor: pointer; color: var(--muted); }

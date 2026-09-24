@@ -3,7 +3,6 @@ title: Barnaby
 type: character
 tags: [seen]
 status: Deceased
+author: leo
 ---
-::: thomas
-(Deceased) - Holmwells’ butler, killed by the Goldtusks
-:::
+Holmwells’ butler, killed by the Goldtusks.

@@ -2,7 +2,6 @@
 title: Lewis Greenbeard
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-security guard at the Sanctorum library
-:::
+Security guard at the Sanctorum library.

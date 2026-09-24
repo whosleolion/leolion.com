@@ -2,7 +2,6 @@
 title: Dean Thornton Paletower
 type: character
 tags: [mentioned]
+author: leo
 ---
-::: thomas
-archdean of the Sanctorum Institute
-:::
+Archdean of the Sanctorum Institute.

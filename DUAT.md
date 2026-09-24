@@ -89,9 +89,10 @@ To link straight to a pin, use `#/e/vista-city?pin=sample-location`.
 
 Everything in the catalog can be entered from the page itself; the files are just the starting point.
 
-- **＋ New** (top bar) adds a page: name, category, and your notes. A map needs its image uploaded; a session gets the next session number and today's date automatically.
-- **✎ Edit → Notes**: write your own notes on any page. They show as "Name's notes", and other people's notes are never touched. Tap **🔗 Link** or type `[[` to link a page; **Formatting help** lists tables, quotes, callouts and so on.
-- **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, nicknames and other spellings, tags, info-box rows (label + value, `[[links]]` allowed), session number, a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
+- **＋ New** (top bar) adds a page: name, category, the category's own fields, and your notes. While you type the name it checks every page (hidden ones too) by name and nickname: an exact match (ignoring case, punctuation and a leading "The") is blocked with a link to the existing page; close spellings and shared words are listed, and you confirm by pressing Create again. It also notes where the name is already written as a `[[link]]`. A map needs its image uploaded.
+- **✎ Edit → Notes**: write your own notes on any page in plain markup. They show as "Name's notes", and other people's notes are never touched. Typing `[[` pops up a list of matching pages; **? Markup** opens a cheat sheet (links, bold, headings, lists, quotes, callouts, tables).
+- **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, the category's fields, nicknames and other spellings, tags, other info rows (label + value, markup), a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
+- **The welcome text** at the top of the home page: its own ✎ Edit (GM only), or Campaign settings → Welcome text.
 - **📍 on a map**: tap the map to add a pin (pick a page, or type a plain label), tap a pin to change, move or remove it, then **Save pins**.
 - **The home intro** has its own ✎ Edit.
 
@@ -99,7 +100,9 @@ People sign in by picking their name (from `world.json` `authors`) and entering 
 
 **GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, merge into another page (notes move over, the name becomes a nickname), and delete. The footer then shows **GM tools**.
 
-**Campaign settings (GM tools).** Title, short name, kicker, tagline, accent color; the people who can sign in (name, role, color); categories (plural/singular names, color, order, and whether each is in the top bar, listed newest-first, or always labeled on maps); and new passkeys. Saved as the campaign's settings row, which overrides `world.json` at load. Renaming the campaign is safe: edits are keyed to its fixed id.
+**Campaign settings (GM tools).** Title, short name, kicker, tagline, welcome text, accent color; the people who can sign in (name, role, color); categories (plural/singular names, color, order, their **fields**, and whether each is in the top bar, listed newest-first, or always labeled on maps); and new passkeys.
+
+**Category fields.** Each category lists the fields its pages have, and Page details / ＋ New show exactly those. A field has a name and a kind: *Text*, *Page link* (stored as `[[Page]]`), *Number*, *Date*, or *Sort number* (at most one per category; the category is ordered by it, like a session number). They appear first in the info box, in the listed order. In `world.json` they live under `types.<id>.fields`, e.g. `"session": { "fields": [{ "label": "Session number", "kind": "sort" }, { "label": "Date", "kind": "date" }] }`. Saved as the campaign's settings row, which overrides `world.json` at load. Renaming the campaign is safe: edits are keyed to its fixed id.
 
 **New campaigns (GM tools → Start a new campaign).** Give it a name and a welcome text. It lives entirely in the save service and opens at `/duat/play/?w=<link-name>`, starting with the current campaign's categories and just you as a player. Everything else, including maps, is added from the site.
 

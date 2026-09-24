@@ -1,7 +1,6 @@
 ---
 title: Razorwalk
 type: region
+author: leo
 ---
-::: thomas
-in the Illyrian Lands, where Morningstar disappeared on his travels
-:::
+In the Illyrian Lands, where Morningstar disappeared on his travels.

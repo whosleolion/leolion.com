@@ -2,7 +2,6 @@
 title: Sir Irving Spear
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-warden at Winifred’s Walking Tower, an austere middle-aged knight
-:::
+Warden at Winifred’s Walking Tower, an austere middle-aged knight.

@@ -1,7 +1,6 @@
 ---
 title: Ridgelands
 type: region
+author: leo
 ---
-::: thomas
-where Rosie and Sprynger are from, north highlands of the country
-:::
+Where Rosie and Sprynger are from, north highlands of the country.

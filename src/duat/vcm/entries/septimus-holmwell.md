@@ -3,7 +3,6 @@ title: Septimus Holmwell
 type: character
 tags: [seen]
 aliases: [Mr. Septimus Holmwell]
+author: leo
 ---
-::: thomas
-Sepetiah’s younger brother, hot
-:::
+Sepetiah’s younger brother, hot.

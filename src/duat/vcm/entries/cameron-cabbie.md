@@ -2,7 +2,6 @@
 title: Cameron Cabbie
 type: character
 tags: [seen]
+author: leo
 ---
-::: thomas
-an aspiring cab driver from a long line of cab drivers
-:::
+An aspiring cab driver from a long line of cab drivers.

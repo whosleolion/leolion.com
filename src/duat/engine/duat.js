@@ -13,11 +13,13 @@
 
   const DEFAULT_TYPES = {
     map:       { label: 'Maps',       one: 'Map',       color: '#6fb3ff' },
-    character: { label: 'Characters', one: 'Character', color: '#ff8a5c' },
+    character: { label: 'Characters', one: 'Character', color: '#ff8a5c',
+                 fields: [{ label: 'Status', kind: 'text' }, { label: 'Faction', kind: 'page' }] },
     location:  { label: 'Locations',  one: 'Location',  color: '#7ddc8a' },
     faction:   { label: 'Factions',   one: 'Faction',   color: '#c792ff' },
     item:      { label: 'Items',      one: 'Item',      color: '#ffd166' },
-    session:   { label: 'Sessions',   one: 'Session',   color: '#8fd3d6' },
+    session:   { label: 'Sessions',   one: 'Session',   color: '#8fd3d6',
+                 fields: [{ label: 'Session number', kind: 'sort' }, { label: 'Date', kind: 'date' }, { label: 'Players', kind: 'text' }] },
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
@@ -40,6 +42,12 @@
   const asset = u => /^(https?:)?\/\//.test(u) || /^data:/i.test(u) || u.startsWith('/') || u.includes('/') ? safeUrl(u) : 'images/' + u;
   const href = e => '#/e/' + e.slug.split('/').map(encodeURIComponent).join('/');
   const typeOf = t => S.types[t] || (S.types[t] = { label: cap(t) + 's', one: cap(t), color: '#a4abb8' });
+  // Each category can define its own fields (world.json / Campaign settings: types.<id>.fields).
+  // kind: text | page (pick a page) | number | date | sort (a number the category is ordered by)
+  const FIELD_KINDS = { text: 'Text', page: 'Page link', number: 'Number', date: 'Date', sort: 'Sort number' };
+  const catFields = t => ((S.types[t] || {}).fields || []).filter(x => x && x.label)
+    .map(x => ({ label: x.label, kind: FIELD_KINDS[x.kind] ? x.kind : 'text', key: x.kind === 'sort' ? 'order' : norm(x.label) }));
+  const homeSlug = () => S.world.home || 'home';
   const byTitle = (a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || a.title.localeCompare(b.title, undefined, { numeric: true });
 
   /* ---------- frontmatter ---------- */
@@ -395,7 +403,7 @@
         <h1>${esc(w.title)}</h1>
         ${w.subtitle ? `<p class="hero-sub">${inline(w.subtitle)}</p>` : ''}
       </header>
-      ${home ? `<div class="home-intro-wrap">${editButton(home)}<div class="prose home-intro">${md(home.body)}</div></div>` : ''}
+      ${home ? `<div class="home-intro-wrap">${editButton(home)}<div class="prose home-intro">${md(home.body.replace(/^:::.*$/gm, ''))}</div></div>` : ''}
       ${sections}
     </div>`, '', 'home');
   }
@@ -435,10 +443,15 @@
   }
 
   function infobox(e) {
-    const rows = Object.entries(e.fm).filter(([k, v]) => !RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length));
+    const fields = catFields(e.type), label = Object.fromEntries(fields.map(f => [f.key, f.label]));
+    let rows = Object.entries(e.fm).filter(([k, v]) => !RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length));
+    const sortF = fields.find(f => f.kind === 'sort');
+    if (sortF && e.order != null) rows.push(['order', e.order]);
+    const rank = k => { const i = fields.findIndex(f => f.key === k); return i < 0 ? 1e3 : i; };
+    rows = rows.sort((a, b) => rank(a[0]) - rank(b[0]));
     if (!rows.length) return '';
     const val = v => Array.isArray(v) ? v.map(x => inline(String(x))).join(', ') : v === true ? 'Yes' : v === false ? 'No' : inline(String(v));
-    return `<dl class="facts">${rows.map(([k, v]) => `<div><dt>${esc(cap(k.replace(/[-_]+/g, ' ')))}</dt><dd>${val(v)}</dd></div>`).join('')}</dl>`;
+    return `<dl class="facts">${rows.map(([k, v]) => `<div><dt>${esc(label[k] || cap(k.replace(/[-_]+/g, ' ')))}</dt><dd>${val(v)}</dd></div>`).join('')}</dl>`;
   }
   function related(e) {
     const back = e.backlinks.filter(b => !b.hidden).sort(byTitle);
@@ -818,7 +831,7 @@
     }
   }
   const blockRe = id => new RegExp(`^:::\\s*${id}\\s*\\n[\\s\\S]*?^:::\\s*$`, 'm');
-  const isWhole = (e, id) => toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body);
+  const isWhole = (e, id) => e.slug === homeSlug() || (toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body));
   function ownText(e, id) {
     const m = e.body.match(new RegExp(`^:::\\s*${id}\\s*\\n([\\s\\S]*?)^:::\\s*$`, 'm'));
     if (m) return m[1].trim();
@@ -934,7 +947,9 @@
   }
   function show(dlg) {
     if (!dlg.open) dlg.showModal();
-    setTimeout(() => { const t = $('[autofocus], input[name=title], textarea, select', dlg); if (t) t.focus(); }, 30);
+    // focus the first field, unless the person has already started typing somewhere in the dialog
+    setTimeout(() => { if (dlg.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+      const t = $('[autofocus], input[name=title], textarea, select', dlg); if (t) t.focus(); }, 30);
   }
   function withSession(dlg, kicker, next, title = '') {
     if (session()) return next();
@@ -965,18 +980,23 @@
     });
     show(dlg);
   }
-  const helpText = who => `Tap <b>🔗 Link</b> or type <code>[[</code> to link another page. This text shows as “${esc(who.name)}’s notes”.`;
-  const linkBar = '<div class="ed-bar"><button type="button" class="ed-link">🔗 Link</button></div>';
+  const helpText = who => `Plain markup: type <code>[[</code> to link a page (a list pops up), and tap <b>? Markup</b> for the rest. This text shows as “${esc(who.name)}’s notes”.`;
+  const guide = `<div class="ed-guide-wrap"><button type="button" class="ed-guide-btn" aria-expanded="false">? Markup</button>
+    <div class="ed-guide" role="tooltip" hidden><table>
+      <tr><td><code>[[Page name]]</code></td><td>link to a page</td></tr>
+      <tr><td><code>[[Page name|shown text]]</code></td><td>link with different wording</td></tr>
+      <tr><td><code>**bold**</code> · <code>*italic*</code></td><td><b>bold</b> · <i>italic</i></td></tr>
+      <tr><td><code>==highlight==</code> · <code>~~strike~~</code></td><td><mark>highlight</mark> · <del>strike</del></td></tr>
+      <tr><td><code>## Heading</code></td><td>a section heading</td></tr>
+      <tr><td><code>- item</code> · <code>1. item</code></td><td>lists (indent to nest)</td></tr>
+      <tr><td><code>- [ ] to do</code></td><td>a checkbox</td></tr>
+      <tr><td><code>&gt; a quote</code></td><td>a quote</td></tr>
+      <tr><td><code>&gt; [!rumor] Title</code><br><code>&gt; text</code></td><td>a boxed callout (also note, tip, warning, question)</td></tr>
+      <tr><td><code>| A | B |</code><br><code>|---|---|</code><br><code>| 1 | 2 |</code></td><td>a table</td></tr>
+      <tr><td><code>---</code></td><td>a divider line</td></tr>
+    </table></div></div>`;
   const field = ta => `<div class="ed-field">${ta}<div class="ed-links" role="listbox" hidden></div></div>`;
-  const formatHelp = `<details class="ed-format"><summary>Formatting help</summary><table>
-    <tr><td><code>**bold**</code> · <code>*italic*</code> · <code>==highlight==</code></td><td><b>bold</b> · <i>italic</i> · <mark>highlight</mark></td></tr>
-    <tr><td><code>## Heading</code></td><td>a section heading</td></tr>
-    <tr><td><code>- item</code> · <code>1. item</code> · <code>- [ ] to do</code></td><td>lists and checkboxes</td></tr>
-    <tr><td><code>&gt; a quote</code></td><td>a quote</td></tr>
-    <tr><td><code>&gt; [!rumor] Heard at the bar</code><br><code>&gt; the rumor itself</code></td><td>a boxed callout (also note, tip, warning, question)</td></tr>
-    <tr><td><code>| Item | Price |</code><br><code>|---|---|</code><br><code>| Coffee | 2g |</code></td><td>a table</td></tr>
-    <tr><td><code>[[Page]]</code> · <code>[[Page|shown text]]</code></td><td>links to another page</td></tr>
-  </table></details>`;
+  const notesBox = (label, ta) => `<div class="ed-notes-head"><span>${label}</span>${guide}</div>${field(ta)}`;
   async function persist(edit, sess) {
     if (!editCfg().endpoint) {
       const all = (store.get(localKey()) || []).filter(x => !(x.slug === edit.slug && x.author === edit.author));
@@ -1001,7 +1021,13 @@
   }
   function wireForm(f, onSave, again) {
     const ta = $('textarea[name=text]', f);
-    if (ta) attachLinker(ta, $('.ed-links', ta.parentNode), $('.ed-link', f));
+    if (ta) attachLinker(ta, $('.ed-links', ta.parentNode), null);
+    const gb = $('.ed-guide-btn', f);
+    if (gb) {
+      const pop = gb.nextElementSibling;
+      gb.addEventListener('click', () => { pop.hidden = !pop.hidden; gb.setAttribute('aria-expanded', String(!pop.hidden)); });
+      f.addEventListener('click', ev => { if (!pop.hidden && !ev.target.closest('.ed-guide-wrap')) { pop.hidden = true; gb.setAttribute('aria-expanded', 'false'); } });
+    }
     const sw = $('.ed-switch', f);
     if (sw) sw.addEventListener('click', () => { store.set(sessionKey(), null); renderGMLink(); again(); });
     f.addEventListener('submit', async ev => {
@@ -1031,22 +1057,25 @@
 
   function openEditor(dlg, e, as) {
     const sess = session(), me = authorOf(sess.author), gm = isGM();
+    if (e.slug === homeSlug() && !gm) {
+      dlg.innerHTML = `<form method="dialog" class="ed-form"><p class="kicker">Welcome text</p><p>Only the GM can change the welcome text.</p>
+        <div class="ed-actions"><span></span><button value="cancel" class="primary">OK</button></div></form>`;
+      return show(dlg);
+    }
     const who = authorOf(gm && as ? as : sess.author);
     const people = Object.entries(S.world.authors || {});
     dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${who.color}">
       ${tabs('notes')}
       <h2>${esc(e.title)}</h2>
-      ${gm ? `<label class="ed-as">Notes by<select name="as">${people.map(([id, a]) =>
-        `<option value="${esc(id)}"${id === who.id ? ' selected' : ''}>${esc(a.name)}${id === me.id ? ' (you)' : ''}</option>`).join('')}</select></label>` : `<p class="kicker">${esc(who.name)}’s notes</p>`}
-      ${linkBar}
-      ${field(`<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(who.name)} know about ${esc(e.title)}?">${esc(ownText(e, who.id))}</textarea>`)}
-      <p class="ed-help">${helpText(who)} Other people’s notes aren’t touched. Save it empty to remove these notes.</p>
-      ${formatHelp}
+      ${gm && e.slug !== homeSlug() ? `<label class="ed-as">Notes by<select name="as">${people.map(([id, a]) =>
+        `<option value="${esc(id)}"${id === who.id ? ' selected' : ''}>${esc(a.name)}${id === me.id ? ' (you)' : ''}</option>`).join('')}</select></label>` : ''}
+      ${notesBox(e.slug === homeSlug() ? 'Welcome text' : `${esc(who.name)}’s notes`, `<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(who.name)} know about ${esc(e.title)}?">${esc(ownText(e, who.id))}</textarea>`)}
+      <p class="ed-help">${e.slug === homeSlug() ? 'Shown at the top of the home page. Write in plain markup (tap <b>? Markup</b>).' : `${helpText(who)} Other people’s notes aren’t touched. Save it empty to remove these notes.`}</p>
       ${footer(me, 'Save')}
     </form>`;
     const f = $('form', dlg);
     wireTabs(dlg, e);
-    if (gm) f.as.addEventListener('change', () => openEditor(dlg, e, f.as.value));
+    if (f.as) f.as.addEventListener('change', () => openEditor(dlg, e, f.as.value));
     wireForm(f, async () => {
       const body = f.text.value.trim();
       const text = e.newHeader && e.createdBy === who.id ? `${e.newHeader}\n${body}` : body; // keep a new page's header
@@ -1058,7 +1087,7 @@
 
   /* page details: everything that isn't someone's notes */
   const factRow = (k = '', v = '') => `<div class="fact-row"><input name="fk" placeholder="Label (e.g. Status)" value="${esc(k)}" autocomplete="off">
-    <span class="ed-field"><input name="fv" placeholder="Value — [[links]] work" value="${esc(v)}" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span>
+    <span class="ed-field"><input name="fv" placeholder="Value (markup; type [[ to link)" value="${esc(v)}" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span>
     <button type="button" class="fact-x" aria-label="Remove row">×</button></div>`;
   const typeOptions = cur => S.typeOrder.map(t => `<option value="${esc(t)}"${t === cur ? ' selected' : ''}>${esc(typeOf(t).one)}</option>`).join('');
   const imageField = (url, isMap) => `<div class="ed-image">
@@ -1082,6 +1111,35 @@
     const rm = $('.ed-noimg', box);
     if (rm) rm.addEventListener('click', () => { f.image.value = ''; $('.ed-thumb', box).innerHTML = ''; rm.remove(); });
   }
+  function catForm(f, typeNow, initial) {
+    const slot = $('.ed-catslot', f), typed = {};
+    const redraw = () => {
+      slot.querySelectorAll('[data-ck]').forEach(i => { typed[i.dataset.ck] = i.value; });
+      const t = typeNow(), fields = t ? catFields(t) : [];
+      slot.innerHTML = fields.length ? `<fieldset class="ed-catfields"><legend>${esc(typeOf(t).one)} details</legend>${fields.map(c => {
+        const v = c.key in typed ? typed[c.key] : initial(c.key, c.kind) ?? '';
+        const input = `<input data-ck="${esc(c.key)}" data-kind="${c.kind}" value="${esc(Array.isArray(v) ? v.join(', ') : v)}" autocomplete="off"${c.kind === 'number' || c.kind === 'sort' ? ' inputmode="numeric"' : ''}${c.kind === 'date' ? ' placeholder="e.g. Nov 17, 2025"' : ''}${c.kind === 'page' ? ' placeholder="[[Page name]] (type [[ to pick)"' : ''}>`;
+        return `<label>${esc(c.label)}<span class="ed-field">${input}<span class="ed-links" role="listbox" hidden></span></span></label>`;
+      }).join('')}</fieldset>` : '';
+    };
+    const wireLinks = () => slot.querySelectorAll('[data-ck]').forEach(i => attachLinker(i, $('.ed-links', i.parentNode), null));
+    const redraw2 = () => { redraw(); wireLinks(); };
+    redraw2();
+    return {
+      redraw: redraw2,
+      values() {
+        const out = { facts: {}, hasSort: false, order: '' };
+        slot.querySelectorAll('[data-ck]').forEach(i => {
+          const v = i.value.trim();
+          if (i.dataset.kind === 'sort') { out.hasSort = true; out.order = v; return; }
+          if (!v) return;
+          // a page field is always a link: plain "Goldtusks" is stored as [[Goldtusks]]
+          out.facts[i.dataset.ck] = i.dataset.kind === 'page' && !/\[\[/.test(v) ? v.split(/\s*,\s*/).map(x => `[[${x}]]`).join(', ') : v;
+        });
+        return out;
+      },
+    };
+  }
   function openDetails(dlg, e) {
     const sess = session(), me = authorOf(sess.author), gm = isGM();
     const facts = Object.entries(e.fm).filter(([k, v]) => !RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length))
@@ -1092,8 +1150,8 @@
       <label>Category<select name="type" required>${typeOptions(e.type)}</select></label>
       <label>Nicknames &amp; other spellings<input name="aliases" value="${esc(e.aliases.join(', '))}" placeholder="Separate with commas" autocomplete="off"></label>
       <label>Tags<input name="tags" value="${esc(e.tags.join(', '))}" placeholder="Separate with commas" autocomplete="off"></label>
-      <label class="ed-order"${e.type === 'session' ? '' : ' hidden'}>Session number<input name="order" inputmode="numeric" value="${esc(e.order ?? '')}"></label>
-      <fieldset class="ed-facts"><legend>Info box</legend>${facts.map(([k, v]) => factRow(cap(k), v)).join('')}
+      <div class="ed-catslot"></div>
+      <fieldset class="ed-facts"><legend>Other info rows</legend>${facts.filter(([k]) => !catFields(e.type).some(c => c.key === k)).map(([k, v]) => factRow(cap(k), v)).join('')}
         <button type="button" class="fact-add">+ Add row</button></fieldset>
       <label>Short description <span class="muted">(cards and map pins; leave empty to use the start of the notes)</span>
         <input name="summary" value="${esc(e.fm.summary || '')}" autocomplete="off"></label>
@@ -1117,7 +1175,8 @@
     const f = $('form', dlg);
     wireTabs(dlg, e);
     wireImage(f, e.type === 'map');
-    f.type.addEventListener('change', () => { $('.ed-order', f).hidden = f.type.value !== 'session'; });
+    const cf = catForm(f, () => f.type.value, k => k === 'order' ? e.order ?? '' : e.fm[k]);
+    f.type.addEventListener('change', cf.redraw);
     const ov = $('.ed-overlay', f);
     if (ov) {
       $('input[type=file]', ov).addEventListener('change', async ev => {
@@ -1147,9 +1206,10 @@
       if (clash && clash !== e) throw new Error(`“${clash.title}” is already a page name or nickname`);
       if (e.type === 'map' && !f.image.value) throw new Error('a map needs an image');
       const meta = { title, type: f.type.value, aliases: list(f.aliases.value).filter(a => norm(a) !== norm(title)), tags: list(f.tags.value),
-        summary: f.summary.value.trim(), image: f.image.value, order: f.type.value === 'session' ? f.order.value.trim() : e.order ?? '',
+        summary: f.summary.value.trim(), image: f.image.value,
         ...(e.type === 'map' ? { pinstyle: f.plates.checked ? 'labels' : '', major: [...f.querySelectorAll('input[name=major]:checked')].map(x => x.value), overlay: f.overlay.value } : {}),
-        facts: Object.fromEntries([...facts$.querySelectorAll('.fact-row')].map(r => [$('input[name=fk]', r).value.trim(), $('input[name=fv]', r).value.trim()]).filter(([k, v]) => k && v)) };
+        facts: { ...Object.fromEntries([...facts$.querySelectorAll('.fact-row')].map(r => [$('input[name=fk]', r).value.trim(), $('input[name=fv]', r).value.trim()]).filter(([k, v]) => k && v)), ...cf.values().facts } };
+      meta.order = cf.values().hasSort ? cf.values().order : e.order ?? '';
       if (gm) {
         meta.hidden = f.hidden.checked;
         if (sub && sub.value === 'delete') {
@@ -1168,36 +1228,89 @@
     show(dlg);
   }
 
+  /* broad check for existing pages before creating one: every page, hidden ones included,
+     by name and nickname; exact matches (ignoring case, punctuation and a leading "The"),
+     close spellings, and shared words; plus names already written as [[links]] with no page */
+  const simple = x => norm(x).replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]+/g, '');
+  function editDistance(a, b) {
+    if (Math.abs(a.length - b.length) > 3) return 9;
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  function findSimilar(name) {
+    const q = simple(name), qWords = norm(name).split(/[^a-z0-9]+/).filter(w => w.length >= 4 && !['the', 'and'].includes(w));
+    const out = { exact: null, near: [], mentioned: [] };
+    if (!q) return out;
+    for (const e of S.entries) {
+      const names = [e.title, ...e.aliases];
+      if (names.some(n => simple(n) === q)) { out.exact = out.exact || e; continue; }
+      const close = names.some(n => {
+        const s2 = simple(n), words = norm(n).split(/[^a-z0-9]+/);
+        return (q.length >= 4 && editDistance(q, s2) <= Math.max(1, Math.floor(q.length / 6)))
+          || (q.length >= 5 && (s2.includes(q) || (s2.length >= 5 && q.includes(s2))))
+          || qWords.some(w => words.some(x => x.length >= 4 && (x === w || (w.length >= 5 && editDistance(w, x) <= 1))));
+      });
+      if (close) out.near.push(e);
+    }
+    if (!out.exact) out.mentioned = S.entries.filter(e => [...e.body.matchAll(WL_RE)].some(m => simple(m[1].split('|')[0]) === q));
+    out.near = out.near.slice(0, 8);
+    return out;
+  }
   function openCreator(dlg) {
     const sess = session(), a = authorOf(sess.author);
     dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:${a.color}">
       <p class="kicker">New page</p><h2>Add to the catalog</h2>
       <label>Name<input name="title" required maxlength="80" autocomplete="off" placeholder="e.g. Madame Vex"></label>
+      <div class="ed-similar" hidden></div>
       <label>Category<select name="type" required><option value="">Choose…</option>${typeOptions('')}</select></label>
       <div class="ed-newmap" hidden>${imageField('', true)}</div>
-      <label for="ed-new-text">${esc(a.name)}’s notes</label>
-      ${linkBar}
-      ${field('<textarea id="ed-new-text" name="text" rows="8" spellcheck="true" placeholder="What do you know about it?"></textarea>')}
-      <p class="ed-help">${helpText(a)} Nicknames, tags, info-box rows and a picture can be added afterwards under ✎ Edit → Page details.</p>
-      ${formatHelp}
+      <div class="ed-catslot"></div>
+      ${notesBox(`${esc(a.name)}’s notes`, '<textarea name="text" rows="8" spellcheck="true" placeholder="What do you know about it?"></textarea>')}
+      <p class="ed-help">${helpText(a)} Nicknames, tags, more info rows and a picture can be added afterwards under ✎ Edit → Page details.</p>
       ${footer(a, 'Create page')}
     </form>`;
     const f = $('form', dlg);
     wireImage(f, true);
-    f.type.addEventListener('change', () => { $('.ed-newmap', f).hidden = f.type.value !== 'map'; f.text.required = f.type.value !== 'map'; });
+    let similar = { exact: null, near: [] }, acknowledged = '';
+    const sim = $('.ed-similar', f);
+    f.title.addEventListener('input', () => {
+      similar = findSimilar(f.title.value);
+      acknowledged = '';
+      sim.hidden = !similar.exact && !similar.near.length && !similar.mentioned.length;
+      sim.innerHTML = similar.exact
+        ? `<p class="ed-err">“${esc(similar.exact.title)}” already has a page${norm(similar.exact.title) !== norm(f.title.value) ? ` (“${esc(f.title.value.trim())}” matches one of its names)` : ''}. <a href="${href(similar.exact)}" data-close>Open it</a> and use ✎ Edit instead.</p>`
+        : `${similar.near.length ? `<p>Already here with a similar name:</p><ul>${similar.near.map(e => `<li><a href="${href(e)}" data-close>${esc(e.title)}</a> <span class="muted">${esc(typeOf(e.type).one)}${e.hidden ? ', hidden' : ''}${e.aliases.length ? ` · aka ${esc(e.aliases.slice(0, 3).join(', '))}` : ''}</span></li>`).join('')}</ul>` : ''}
+           ${similar.mentioned.length ? `<p class="muted">Already mentioned (no page yet) in ${similar.mentioned.slice(0, 4).map(e => `<a href="${href(e)}" data-close>${esc(e.title)}</a>`).join(', ')}${similar.mentioned.length > 4 ? ` and ${similar.mentioned.length - 4} more` : ''}. Creating it makes those links live.</p>` : ''}`;
+    });
+    sim.addEventListener('click', ev => { if (ev.target.closest('[data-close]')) dlg.close(); });
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const cf = catForm(f, () => f.type.value, (k, kind) => kind === 'sort'
+      ? Math.max(0, ...S.entries.filter(x => x.type === f.type.value).map(x => x.order || 0)) + 1
+      : kind === 'date' ? today : '');
+    f.type.addEventListener('change', () => { $('.ed-newmap', f).hidden = f.type.value !== 'map'; f.text.required = f.type.value !== 'map'; cf.redraw(); });
     f.text.required = true;
     wireForm(f, async () => {
       const title = f.title.value.trim().replace(/\s+/g, ' '), slug = slugify(title), type = f.type.value;
-      const clash = resolve(title) || S.entries.find(x => x.slug === slug);
+      similar = findSimilar(title);
+      const clash = similar.exact || S.entries.find(x => x.slug === slug);
       if (!slug) throw new Error('that name needs some letters');
       if (clash) throw new Error(`“${clash.title}” already has a page. Open it and use ✎ Edit`);
+      if (similar.near.length && acknowledged !== norm(title)) {
+        acknowledged = norm(title);
+        f.title.dispatchEvent(new Event('input')); acknowledged = norm(title);
+        throw new Error('there are pages with similar names (listed under the name). If this is really something new, press Create page again');
+      }
       if (type === 'map' && !f.image.value) throw new Error('upload the map image first');
       const extra = [];
       if (type === 'map') extra.push(`image: "${f.image.value}"`, 'pins: labels');
-      if (type === 'session') {
-        const n = Math.max(0, ...S.entries.filter(x => x.type === 'session').map(x => x.order || 0)) + 1;
-        extra.push(`order: ${n}`, `date: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
-      }
+      const cv = cf.values();
+      if (cv.hasSort && cv.order !== '') extra.push(`order: ${+cv.order}`);
+      for (const [k, v] of Object.entries(cv.facts)) extra.push(`${k}: ${fmVal(v)}`);
       const header = `---\ntitle: "${title.replace(/"/g, '’')}"\ntype: ${type}${extra.length ? '\n' + extra.join('\n') : ''}\n---`;
       await persist({ slug, author: a.id, text: `${header}\n${f.text.value.trim()}` }, sess);
       location.hash = '#/e/' + slug;
@@ -1276,12 +1389,17 @@
     <input name="prole" placeholder="Role (e.g. plays Rosie)" value="${esc(a.role || '')}" autocomplete="off">
     <input name="pcolor" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(a.color || '') ? a.color : '#9fb4ff')}" aria-label="Color">
     <button type="button" class="fact-x" data-x aria-label="Remove">×</button></div>`;
+  const fieldChip = (x = {}) => `<span class="set-field"><input name="flabel" placeholder="Field name" value="${esc(x.label || '')}" autocomplete="off">
+    <select name="fkind">${Object.entries(FIELD_KINDS).map(([k, l]) => `<option value="${k}"${(x.kind || 'text') === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+    <button type="button" class="fact-x" data-xf aria-label="Remove field">×</button></span>`;
   const catRow = (id, t, w, used) => `<div class="set-row set-cat" data-id="${esc(id)}">
     <div class="set-cat-main"><input name="clabel" placeholder="Plural (e.g. Gangs)" value="${esc(t.label || '')}" required autocomplete="off">
       <input name="cone" placeholder="Singular (e.g. Gang)" value="${esc(t.one || '')}" required autocomplete="off">
       <input name="ccolor" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(t.color || '') ? t.color : '#a4abb8')}" aria-label="Color">
       <span class="set-move"><button type="button" data-up aria-label="Move up">↑</button><button type="button" data-down aria-label="Move down">↓</button></span>
       <button type="button" class="fact-x" data-x aria-label="Remove"${used ? ' disabled title="Has pages"' : ''}>×</button></div>
+    <div class="set-fields"><span class="muted">Fields on its pages:</span>
+      ${(t.fields || []).map(fieldChip).join('')}<button type="button" class="set-addf" data-addf>+ field</button></div>
     <div class="set-cat-opts">
       <label class="ed-check"><input type="checkbox" name="cnav"${(w.navTypes || []).includes(id) ? ' checked' : ''}> In top bar</label>
       <label class="ed-check"><input type="checkbox" name="cnew"${(w.newestFirst || []).includes(id) ? ' checked' : ''}> Newest first</label>
@@ -1295,6 +1413,7 @@
       <label>Short name <span class="muted">(shown on phones)</span><input name="short" value="${esc(w.short || '')}" autocomplete="off"></label>
       <label>Kicker <span class="muted">(small line above the title)</span><input name="kicker" value="${esc(w.kicker || '')}" autocomplete="off"></label>
       <label>Tagline<input name="subtitle" value="${esc(w.subtitle || '')}" autocomplete="off"></label>
+      <label>Welcome text <span class="muted">(top of the home page; plain markup)</span><textarea name="welcome" rows="4">${esc(((resolve(homeSlug()) || S.entries.find(x => x.slug === homeSlug())) || { body: '' }).body.replace(/^:::.*$/gm, '').trim())}</textarea></label>
       <label class="ed-check">Accent color <input name="accent" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test((w.theme || {}).accent || '') ? w.theme.accent : '#ff5a36')}"></label>
       <fieldset class="set-people"><legend>People who can sign in</legend>
         ${Object.entries(w.authors || {}).map(([id, a]) => personRow(id, a)).join('')}
@@ -1312,6 +1431,11 @@
     const f = $('form', dlg);
     const wire = root => {
       root.querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', () => b.closest('.set-row').remove()));
+      root.querySelectorAll('[data-xf]').forEach(b => b.addEventListener('click', () => b.closest('.set-field').remove()));
+      root.querySelectorAll('[data-addf]:not([data-bound])').forEach(b => {
+        b.dataset.bound = '';
+        b.addEventListener('click', () => { b.insertAdjacentHTML('beforebegin', fieldChip()); const c = b.previousElementSibling; wire(c); $('input', c).focus(); });
+      });
       root.querySelectorAll('[data-up]').forEach(b => b.addEventListener('click', () => { const r = b.closest('.set-row'); if (r.previousElementSibling && r.previousElementSibling.classList.contains('set-row')) r.parentNode.insertBefore(r, r.previousElementSibling); }));
       root.querySelectorAll('[data-down]').forEach(b => b.addEventListener('click', () => { const r = b.closest('.set-row'), n = r.nextElementSibling; if (n && n.classList.contains('set-row')) r.parentNode.insertBefore(n, r); }));
     };
@@ -1333,7 +1457,9 @@
         const label = $('[name=clabel]', r).value.trim(), one = $('[name=cone]', r).value.trim(); if (!label || !one) continue;
         const id = r.dataset.id || slugify(one);
         if (!id || types[id]) throw new Error(`the category “${one}” is listed twice`);
-        types[id] = { label, one, color: $('[name=ccolor]', r).value }; typeOrder.push(id);
+        const fields = [...r.querySelectorAll('.set-field')].map(c => ({ label: $('[name=flabel]', c).value.trim(), kind: $('[name=fkind]', c).value })).filter(x => x.label);
+        if (fields.filter(x => x.kind === 'sort').length > 1) throw new Error(`“${label}” can only have one sort number`);
+        types[id] = { label, one, color: $('[name=ccolor]', r).value, fields }; typeOrder.push(id);
         if ($('[name=cnav]', r).checked) navTypes.push(id);
         if ($('[name=cnew]', r).checked) newestFirst.push(id);
         if ($('[name=cmajor]', r).checked) mapMajorTypes.push(id);
@@ -1345,6 +1471,13 @@
         keyHash: f.pk.value ? await sha256(f.pk.value) : editCfg().keyHash, gmHash: f.gk.value ? await sha256(f.gk.value) : editCfg().gmHash };
       const sess = session();
       await persist({ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) }, sess);
+      const home = S.entries.find(x => x.slug === homeSlug()), welcome = f.welcome.value.trim();
+      if (home && welcome !== home.body.replace(/^:::.*$/gm, '').trim()) {
+        const text = home.newHeader && home.createdBy === sess.author ? `${home.newHeader}\n${welcome}` : welcome;
+        await persist({ slug: home.slug, author: sess.author, text }, sess);
+      } else if (!home && welcome) {
+        await persist({ slug: homeSlug(), author: sess.author, text: `---\ntitle: Welcome\ntype: note\nhidden: true\n---\n${welcome}` }, sess);
+      }
       if ((f.pk.value || f.gk.value) && editCfg().endpoint) await post({ action: 'setkeys', world: worldId(), keyHash: st.keyHash, gmHash: st.gmHash }, sess);
       if (f.gk.value) store.set(sessionKey(), { ...sess, key: f.gk.value });
       location.reload();
@@ -1440,8 +1573,7 @@
     box.addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if (b) pick(+b.dataset.i); });
   }
 
-  /* [[ link helper: type [[ (or tap 🔗 Link) and pick a page. The list floats under the line
-     being typed (nothing on the page moves) and matches page names and aliases only. */
+  /* page names and nicknames matching what's typed: the [[ pop-up, and the pin/merge pickers */
   function nameMatches(q, withHidden) {
     q = norm(q);
     const all = S.entries.filter(e => withHidden || !e.hidden);
@@ -1561,7 +1693,9 @@
   function applySettings(row) {
     if (!row) return false;
     let st; try { st = JSON.parse(row.text); } catch { return false; }
+    const before = S.world.types || {};
     for (const k of SETTING_KEYS) if (st[k] !== undefined) S.world[k] = st[k];
+    for (const [id, t] of Object.entries(S.world.types || {})) if (t && !('fields' in t) && before[id] && before[id].fields) t.fields = before[id].fields;
     S.world.edit = { ...(S.world.edit || {}), ...(st.keyHash ? { keyHash: st.keyHash } : {}), ...(st.gmHash ? { gmHash: st.gmHash } : {}) };
     return true;
   }
