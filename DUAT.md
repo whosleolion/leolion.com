@@ -63,7 +63,7 @@ Markdown supports headings, **bold**, *italic*, ~~strike~~, ==highlight==, neste
 - `::: leo` … `:::` wraps one person's account. Several people can write about the same thing (e.g. the GM's recap and a player's notes on the same session), and each block is labeled with its author. Authors live in `world.json` under `"authors": { "leo": { "name": "Leo", "role": "GM", "color": "#ff5a36" } }`. For a whole entry by one person, use `author: leo` in the frontmatter instead. Every author gets a page at `#/by/<id>`.
 - Callouts work like Obsidian's: `> [!rumor] Heard at the bar` (also note, tip, warning, danger, quote, question).
 
-The "Mentioned in" (backlinks) and "On the map" sections build themselves.
+The "Mentioned in" (backlinks) and "On the map" sections build themselves; the GM can switch either off per page (`showmentions: false`, `showmap: false`).
 
 ## Maps
 
@@ -92,15 +92,16 @@ Everything in the catalog can be entered from the page itself; the files are jus
 - **＋ New** (top bar) adds a page: name, category, the category's own fields, and your notes. While you type the name it checks every page (hidden ones too) by name and nickname: an exact match (ignoring case, punctuation and a leading "The") is blocked with a link to the existing page; close spellings and shared words are listed, and you confirm by pressing Create again. It also notes where the name is already written as a `[[link]]`. A map needs its image uploaded.
 - **✎ Edit → Notes**: write your own notes on any page in plain markup. They show as "Name's notes", and other people's notes are never touched. Typing `[[` pops up a list of matching pages; **? Markup** opens a cheat sheet (links, bold, headings, lists, quotes, callouts, tables).
 - **✎ Edit → Page details**: name (renaming keeps the old name as a nickname, so links don't break), category, the category's fields, nicknames and other spellings, tags, other info rows (label + value, markup), a short description, and a picture. Maps also get their display settings: name-plate pins, which categories are always labeled, and an overlay drawing.
-- **The welcome text** at the top of the home page: its own ✎ Edit (GM only), or Campaign settings → Welcome text.
+- **The home page** (kicker, tagline and welcome text): the ✎ Edit beside the title (GM only).
 - **📍 on a map**: tap the map to add a pin (pick a page, or type a plain label), tap a pin to change, move or remove it, then **Save pins**.
-- **The home intro** has its own ✎ Edit.
 
-People sign in by picking their name (from `world.json` `authors`) and entering the shared passkey, and stay signed in on that device ("Not Neha?" switches person).
+**Signing in** is the name chip in the top bar ("Sign in"): pick your name and enter the passkey. You stay signed in on that device; the chip then shows your name, and its menu has GM tools (for the GM) and Sign out. Tapping ✎ Edit while signed out asks you to sign in first.
 
-**GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, merge into another page (notes move over, the name becomes a nickname), and delete. The footer then shows **GM tools**.
+**The GM's writing is the page.** The person whose role is "GM" (or `world.json` `"gm": "leo"`) writes the page's own text: it shows without any name label. Everyone else's notes appear as labeled blocks ("Thomas's notes"), with chips under the title.
 
-**Campaign settings (GM tools).** Title, short name, kicker, tagline, welcome text, accent color; the people who can sign in (name, role, color); categories (plural/singular names, color, order, their **fields**, and whether each is in the top bar, listed newest-first, or always labeled on maps); and new passkeys.
+**GM passkey.** Signing in with the GM passkey (`edit.gmHash`) adds a "Notes by" picker (edit anyone's notes), and in Page details: hide, show or hide the "On the map" and "Mentioned in" sections, merge into another page (notes move over, the name becomes a nickname), and delete. **GM tools** is in the name chip's menu.
+
+**Campaign settings (GM tools).** Title, short name, accent color; the people who can sign in (name, role, color); categories (plural/singular names, color, order, their **fields**, and whether each is in the top bar, listed newest-first, or always labeled on maps); and new passkeys.
 
 **Category fields.** Each category lists the fields its pages have, and Page details / ＋ New show exactly those. A field has a name and a kind: *Text*, *Page link* (stored as `[[Page]]`), *Number*, *Date*, or *Sort number* (at most one per category; the category is ordered by it, like a session number). They appear first in the info box, in the listed order. In `world.json` they live under `types.<id>.fields`, e.g. `"session": { "fields": [{ "label": "Session number", "kind": "sort" }, { "label": "Date", "kind": "date" }] }`. Saved as the campaign's settings row, which overrides `world.json` at load. Renaming the campaign is safe: edits are keyed to its fixed id.
 

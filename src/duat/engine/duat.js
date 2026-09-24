@@ -23,7 +23,7 @@
     note:      { label: 'Notes',      one: 'Note',      color: '#a4abb8' },
   };
   // Frontmatter keys the engine uses itself; every other key becomes an infobox row.
-  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author', 'major', 'overlay']);
+  const RESERVED = new Set(['title', 'type', 'aliases', 'alias', 'tags', 'summary', 'image', 'order', 'hidden', 'pins', 'author', 'major', 'overlay', 'showmap', 'showmentions']);
   const ITEM_RE = /^\s*([-*+]|\d+[.)])\s+/;
   const WL_RE = /\[\[([^\]]+)\]\]/g;
 
@@ -100,6 +100,7 @@
         while (i < lines.length && !/^:::\s*$/.test(lines[i])) buf.push(lines[i++]);
         i++;
         const a = authorOf(m[1]);
+        if (a.id === ownerId()) { out += `<div class="account-main">${blocks(buf)}</div>`; continue; }   // the GM's text is just the page
         out += `<section class="account" style="--c:${a.color}"><header class="account-by"><a href="#/by/${esc(a.id)}">${esc(a.name)}’s notes</a>${a.role ? `<span>${esc(a.role)}</span>` : ''}</header>${blocks(buf)}</section>`;
         continue;
       }
@@ -210,6 +211,12 @@
       .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2').replace(/\[\[([^\]]*)\]\]/g, (_, t) => t.split('#')[0])
       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_~=`]+/g, '').replace(/\s+/g, ' ').trim();
   }
+  // the campaign's GM (role "GM" in the people list): their writing is the page's own text, unlabeled
+  function ownerId() {
+    if (S.world.gm) return norm(S.world.gm);
+    const g = Object.entries(S.world.authors || {}).find(([, a]) => /\bgm\b/i.test(a.role || ''));
+    return g ? g[0] : null;
+  }
   function authorOf(id) {
     id = norm(id);
     const a = (S.world.authors || {})[id] || {};
@@ -316,12 +323,12 @@
             <kbd class="search-key" aria-hidden="true">/</kbd>
             <div class="search-results" role="listbox" hidden></div>
           </div>
-          ${w.edit ? '<button type="button" class="new-btn" data-new aria-label="Add a new page">＋ New</button>' : ''}
+          ${w.edit ? '<button type="button" class="new-btn" data-new aria-label="Add a new page">＋ New</button><button type="button" class="who-btn" data-who aria-haspopup="menu">Sign in</button>' : ''}
         </header>
         <nav class="typenav" aria-label="Browse by type"></nav>
       </div>
       <main id="main" tabindex="-1"></main>
-      <footer class="foot"><span>${esc(w.title)}</span><span class="foot-right"><span class="foot-gm"></span><button type="button" class="foot-duat">catalogued in Duat</button></span></footer>`;
+      <footer class="foot"><span>${esc(w.title)}</span><span class="foot-right"><button type="button" class="foot-duat">catalogued in Duat</button></span></footer>`;
     const counts = {};
     listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
@@ -398,12 +405,12 @@
         ${grid(shown)}</section>`;
     }).join('');
     page(`<div class="wrap home">
-      <header class="hero">
+      <header class="hero">${home ? editButton(home) : ''}
         ${w.kicker ? `<p class="kicker">${esc(w.kicker)}</p>` : ''}
         <h1>${esc(w.title)}</h1>
         ${w.subtitle ? `<p class="hero-sub">${inline(w.subtitle)}</p>` : ''}
       </header>
-      ${home ? `<div class="home-intro-wrap">${editButton(home)}<div class="prose home-intro">${md(home.body.replace(/^:::.*$/gm, ''))}</div></div>` : ''}
+      ${home ? `<div class="prose home-intro">${md(home.body.replace(/^:::.*$/gm, ''))}</div>` : ''}
       ${sections}
     </div>`, '', 'home');
   }
@@ -454,8 +461,8 @@
     return `<dl class="facts">${rows.map(([k, v]) => `<div><dt>${esc(label[k] || cap(k.replace(/[-_]+/g, ' ')))}</dt><dd>${val(v)}</dd></div>`).join('')}</dl>`;
   }
   function related(e) {
-    const back = e.backlinks.filter(b => !b.hidden).sort(byTitle);
-    const maps = e.onMaps.map(({ map, pin }) => `<a class="chip" href="${href(map)}?pin=${encodeURIComponent(e.slug)}" style="--c:${typeOf('map').color}">
+    const back = e.fm.showmentions === false ? [] : e.backlinks.filter(b => !b.hidden).sort(byTitle);
+    const maps = (e.fm.showmap === false ? [] : e.onMaps).map(({ map, pin }) => `<a class="chip" href="${href(map)}?pin=${encodeURIComponent(e.slug)}" style="--c:${typeOf('map').color}">
       ◉ ${esc(map.title)}${pin.label !== e.title ? ` — ${esc(pin.label)}` : ''}</a>`).join('');
     return (maps ? `<section class="related"><h2>On the map</h2><div class="chips">${maps}</div></section>` : '')
       + (back.length ? `<section class="related"><h2>Mentioned in</h2><div class="chips">${back.map(b =>
@@ -463,10 +470,10 @@
   }
 
   function byline(e) {
-    if (!e.authors.length) return '';
-    const inBody = new Set([...e.body.matchAll(/^:::\s*([\w-]+)\s*$/gm)].map(m => norm(m[1])));
-    return `<p class="byline">${e.authors.map(id => { const a = authorOf(id);
-      return `<a href="#/by/${esc(a.id)}" style="--c:${a.color}">${inBody.has(id) ? '' : 'From '}${esc(a.name)}’s notes</a>`; }).join('')}</p>`;
+    const others = e.authors.filter(id => id !== ownerId());
+    if (!others.length) return '';
+    return `<p class="byline">${others.map(id => { const a = authorOf(id);
+      return `<a href="#/by/${esc(a.id)}" style="--c:${a.color}">${esc(a.name)}’s notes</a>`; }).join('')}</p>`;
   }
 
   function viewEntry(e) {
@@ -559,9 +566,11 @@
     function clamp() {
       const { w, h } = size();
       limits();
-      s = Math.min(maxS(), Math.max(fitS * 0.8, s));
-      tx = Math.min(w / 2, Math.max(w / 2 - W * s, tx));
-      ty = Math.min(h / 2, Math.max(h / 2 - H * s, ty));
+      s = Math.min(maxS(), Math.max(fitS, s));
+      // an axis wider than the screen stops at the image's edges; a narrower one stays centered
+      const mw = W * s, mh = H * s;
+      tx = mw <= w ? (w - mw) / 2 : Math.min(0, Math.max(w - mw, tx));
+      ty = mh <= h ? (h - mh) / 2 : Math.min(0, Math.max(h - mh, ty));
     }
     function draw() {
       raf = 0;
@@ -581,7 +590,7 @@
     }
     function zoomAt(cx, cy, f) {
       limits();
-      const ns = Math.min(maxS(), Math.max(fitS * 0.8, s * f));
+      const ns = Math.min(maxS(), Math.max(fitS, s * f));
       tx = cx - (cx - tx) * ns / s; ty = cy - (cy - ty) * ns / s; s = ns;
       touched = true; clamp(); paint();
     }
@@ -831,7 +840,8 @@
     }
   }
   const blockRe = id => new RegExp(`^:::\\s*${id}\\s*\\n[\\s\\S]*?^:::\\s*$`, 'm');
-  const isWhole = (e, id) => e.slug === homeSlug() || (toArray(e.fm.author).map(norm).includes(id) && !/^:::/m.test(e.body));
+  const isWhole = (e, id) => e.slug === homeSlug() || (!/^:::/m.test(e.body) &&
+    (toArray(e.fm.author).map(norm).includes(id) || (id === ownerId() && !toArray(e.fm.author).length)));   // unowned page text is the GM's
   function ownText(e, id) {
     const m = e.body.match(new RegExp(`^:::\\s*${id}\\s*\\n([\\s\\S]*?)^:::\\s*$`, 'm'));
     if (m) return m[1].trim();
@@ -891,6 +901,7 @@
     if ('image' in meta) e.image = meta.image || '';
     if ('order' in meta) e.order = meta.order === '' || meta.order == null || isNaN(+meta.order) ? null : +meta.order;
     if ('hidden' in meta) e.hidden = !!meta.hidden;
+    for (const k of ['showmap', 'showmentions']) if (k in meta) e.fm[k] = meta[k] === false ? false : '';
     if ('pinstyle' in meta) e.fm.pins = meta.pinstyle || '';
     if ('major' in meta) e.fm.major = (meta.major || []).length ? meta.major : '';
     if ('overlay' in meta) e.fm.overlay = meta.overlay || '';
@@ -939,7 +950,10 @@
     document.body.append(dlg);
     document.addEventListener('click', ev => {
       if (ev.target.closest('[data-new]')) return withSession(dlg, 'Sign in to add a page', () => openCreator(dlg));
-      if (ev.target.closest('[data-gm]')) return openGM();
+      if (ev.target.closest('[data-who]')) return toggleWho();
+      if (ev.target.closest('[data-wm=out]')) { store.set(sessionKey(), null); return renderGMLink(); }
+      if (ev.target.closest('[data-gm]')) { closeWho(); return openGM(); }
+      if (!ev.target.closest('.who-menu')) closeWho();
       const b = ev.target.closest('[data-edit]');
       const e = b && S.entries.find(x => x.slug === b.dataset.edit);
       if (e) withSession(dlg, 'Sign in to edit', () => openEditor(dlg, e), e.title);
@@ -980,7 +994,7 @@
     });
     show(dlg);
   }
-  const helpText = who => `Plain markup: type <code>[[</code> to link a page (a list pops up), and tap <b>? Markup</b> for the rest. This text shows as “${esc(who.name)}’s notes”.`;
+  const helpText = who => `Plain markup: type <code>[[</code> to link a page (a list pops up), and tap <b>? Markup</b> for the rest. ${who.id === ownerId() ? 'This is the page’s own text.' : `This text shows as “${esc(who.name)}’s notes”.`}`;
   const guide = `<div class="ed-guide-wrap"><button type="button" class="ed-guide-btn" aria-expanded="false">? Markup</button>
     <div class="ed-guide" role="tooltip" hidden><table>
       <tr><td><code>[[Page name]]</code></td><td>link to a page</td></tr>
@@ -1045,7 +1059,7 @@
   }
   const footer = (a, action) => `${!editCfg().endpoint ? '<p class="ed-warn">Preview mode: saves stay in this browser until the shared save service is connected.</p>' : ''}
     <p class="ed-err" hidden></p>
-    <div class="ed-actions"><button type="button" class="ed-switch">Not ${esc(a.name)}?</button><span></span>
+    <div class="ed-actions"><span></span>
       <button value="cancel" formnovalidate>Cancel</button><button value="ok" class="primary">${action}</button></div>`;
   const tabs = (on) => `<div class="ed-tabs" role="tablist">
     <button type="button" role="tab" data-tab="notes" aria-selected="${on === 'notes'}">Notes</button>
@@ -1057,8 +1071,9 @@
 
   function openEditor(dlg, e, as) {
     const sess = session(), me = authorOf(sess.author), gm = isGM();
-    if (e.slug === homeSlug() && !gm) {
-      dlg.innerHTML = `<form method="dialog" class="ed-form"><p class="kicker">Welcome text</p><p>Only the GM can change the welcome text.</p>
+    if (e.slug === homeSlug()) {
+      if (gm) return openHome(dlg, e);
+      dlg.innerHTML = `<form method="dialog" class="ed-form"><p class="kicker">Home page</p><p>Only the GM can change the home page.</p>
         <div class="ed-actions"><span></span><button value="cancel" class="primary">OK</button></div></form>`;
       return show(dlg);
     }
@@ -1069,7 +1084,7 @@
       <h2>${esc(e.title)}</h2>
       ${gm && e.slug !== homeSlug() ? `<label class="ed-as">Notes by<select name="as">${people.map(([id, a]) =>
         `<option value="${esc(id)}"${id === who.id ? ' selected' : ''}>${esc(a.name)}${id === me.id ? ' (you)' : ''}</option>`).join('')}</select></label>` : ''}
-      ${notesBox(e.slug === homeSlug() ? 'Welcome text' : `${esc(who.name)}’s notes`, `<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(who.name)} know about ${esc(e.title)}?">${esc(ownText(e, who.id))}</textarea>`)}
+      ${notesBox(who.id === ownerId() ? 'Page text' : `${esc(who.name)}’s notes`, `<textarea name="text" rows="12" spellcheck="true" placeholder="What does ${esc(who.name)} know about ${esc(e.title)}?">${esc(ownText(e, who.id))}</textarea>`)}
       <p class="ed-help">${e.slug === homeSlug() ? 'Shown at the top of the home page. Write in plain markup (tap <b>? Markup</b>).' : `${helpText(who)} Other people’s notes aren’t touched. Save it empty to remove these notes.`}</p>
       ${footer(me, 'Save')}
     </form>`;
@@ -1082,6 +1097,33 @@
       await persist({ slug: e.slug, author: who.id, text }, sess);
       location.reload();
     }, () => withSession(dlg, 'Sign in to edit', () => openEditor(dlg, e), e.title));
+    show(dlg);
+  }
+
+  function currentSettings() {
+    const st = {};
+    for (const k of SETTING_KEYS) if (S.world[k] !== undefined) st[k] = S.world[k];
+    return { ...st, keyHash: editCfg().keyHash, gmHash: editCfg().gmHash };
+  }
+  function openHome(dlg, e) {
+    const w = S.world, sess = session(), me = authorOf(sess.author);
+    const welcome = e.body.replace(/^:::.*$/gm, '').trim();
+    dlg.innerHTML = `<form method="dialog" class="ed-form ed-write" style="--c:var(--accent)">
+      <p class="kicker">Home page</p><h2>${esc(w.title)}</h2>
+      <label>Kicker <span class="muted">(small line above the title)</span><input name="kicker" value="${esc(w.kicker || '')}" autocomplete="off"></label>
+      <label>Tagline <span class="muted">(under the title)</span><input name="subtitle" value="${esc(w.subtitle || '')}" autocomplete="off"></label>
+      ${notesBox('Welcome text', `<textarea name="text" rows="8" spellcheck="true">${esc(welcome)}</textarea>`)}
+      <p class="ed-help">Plain markup: type <code>[[</code> to link a page. The campaign title itself is under GM tools → Campaign settings.</p>
+      ${footer(me, 'Save')}
+    </form>`;
+    const f = $('form', dlg);
+    wireForm(f, async () => {
+      if (f.kicker.value.trim() !== (w.kicker || '') || f.subtitle.value.trim() !== (w.subtitle || ''))
+        await persist({ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify({ ...currentSettings(), kicker: f.kicker.value.trim(), subtitle: f.subtitle.value.trim() }) }, sess);
+      const body = f.text.value.trim();
+      if (body !== welcome) await persist({ slug: e.slug, author: sess.author, text: e.newHeader && e.createdBy === sess.author ? `${e.newHeader}\n${body}` : body }, sess);
+      location.reload();
+    }, () => openHome(dlg, e));
     show(dlg);
   }
 
@@ -1168,6 +1210,8 @@
       </fieldset>` : ''}
       ${gm ? `<fieldset class="ed-gm"><legend>GM</legend>
         <label class="ed-check"><input type="checkbox" name="hidden"${e.hidden ? ' checked' : ''}> Hidden from lists and search</label>
+        <label class="ed-check"><input type="checkbox" name="showmap"${e.fm.showmap === false ? '' : ' checked'}> Show “On the map”</label>
+        <label class="ed-check"><input type="checkbox" name="showmentions"${e.fm.showmentions === false ? '' : ' checked'}> Show “Mentioned in”</label>
         <label>Merge this page into…<span class="ed-field"><input name="merge" placeholder="Pick a page" autocomplete="off"><span class="ed-links" role="listbox" hidden></span></span></label>
         <button type="submit" value="delete" class="ed-danger">Delete this page</button></fieldset>` : ''}
       ${footer(me, 'Save details')}
@@ -1212,6 +1256,7 @@
       meta.order = cf.values().hasSort ? cf.values().order : e.order ?? '';
       if (gm) {
         meta.hidden = f.hidden.checked;
+        meta.showmap = f.showmap.checked; meta.showmentions = f.showmentions.checked;
         if (sub && sub.value === 'delete') {
           if (!confirm(`Delete “${e.title}” for everyone?`)) throw new Error('not deleted');
           meta.deleted = true;
@@ -1336,9 +1381,25 @@
   }
 
   /* GM tools: export edits back into .md files, then clear the shared sheet */
-  function renderGMLink() {
-    const slot = $('.foot-gm'); if (!slot) return;
-    slot.innerHTML = isGM() ? '<button type="button" class="foot-link" data-gm>GM tools</button>' : '';
+  function renderGMLink() {   // the name chip in the top bar: "Sign in", or "Leo · GM ▾" with a small menu
+    const b = $('.who-btn'); if (!b) return;
+    const sess = session(), a = sess && authorOf(sess.author);
+    b.innerHTML = a ? `<span class="who-dot" style="background:${a.color}"></span><span class="who-name">${esc(a.name)}${isGM() ? ' · GM' : ''}</span> ▾` : 'Sign in';
+    b.classList.toggle('is-in', !!a);
+    closeWho();
+  }
+  function closeWho() { const m = $('.who-menu'); if (m) m.remove(); }
+  function toggleWho() {
+    if ($('.who-menu')) return closeWho();
+    if (!session()) return withSession(S.dlg, 'Sign in', () => { if (S.dlg.open) S.dlg.close(); renderGMLink(); });
+    const a = authorOf(session().author), b = $('.who-btn'), r = b.getBoundingClientRect();
+    const m = document.createElement('div');
+    m.className = 'who-menu'; m.setAttribute('role', 'menu');
+    m.innerHTML = `<p class="muted">Signed in as <b>${esc(a.name)}</b>${a.role ? ` (${esc(a.role)})` : ''}</p>
+      ${isGM() ? '<button type="button" role="menuitem" data-gm>GM tools</button>' : ''}
+      <button type="button" role="menuitem" data-wm="out">Sign out</button>`;
+    m.style.top = (r.bottom + 6) + 'px'; m.style.right = Math.max(8, innerWidth - r.right) + 'px';
+    document.body.append(m);
   }
   function openGM() {
     const dlg = S.dlg, changed = S.entries.filter(e => e.dirty);
@@ -1411,9 +1472,7 @@
       <p class="kicker">GM tools</p><h2>Campaign settings</h2>
       <label>Title<input name="title" required value="${esc(w.title || '')}" autocomplete="off"></label>
       <label>Short name <span class="muted">(shown on phones)</span><input name="short" value="${esc(w.short || '')}" autocomplete="off"></label>
-      <label>Kicker <span class="muted">(small line above the title)</span><input name="kicker" value="${esc(w.kicker || '')}" autocomplete="off"></label>
-      <label>Tagline<input name="subtitle" value="${esc(w.subtitle || '')}" autocomplete="off"></label>
-      <label>Welcome text <span class="muted">(top of the home page; plain markup)</span><textarea name="welcome" rows="4">${esc(((resolve(homeSlug()) || S.entries.find(x => x.slug === homeSlug())) || { body: '' }).body.replace(/^:::.*$/gm, '').trim())}</textarea></label>
+      <p class="muted">The kicker, tagline and welcome text are edited on the home page (✎ Edit).</p>
       <label class="ed-check">Accent color <input name="accent" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test((w.theme || {}).accent || '') ? w.theme.accent : '#ff5a36')}"></label>
       <fieldset class="set-people"><legend>People who can sign in</legend>
         ${Object.entries(w.authors || {}).map(([id, a]) => personRow(id, a)).join('')}
@@ -1466,18 +1525,11 @@
       }
       const missing = [...used].filter(t => !types[t]);
       if (missing.length) throw new Error(`pages still use ${missing.map(t => typeOf(t).one).join(', ')}; keep that category`);
-      const st = { title: f.title.value.trim(), short: f.short.value.trim(), kicker: f.kicker.value.trim(), subtitle: f.subtitle.value.trim(),
+      const st = { title: f.title.value.trim(), short: f.short.value.trim(), kicker: w.kicker || '', subtitle: w.subtitle || '',
         theme: { ...(w.theme || {}), accent: f.accent.value }, authors, types, typeOrder, navTypes, newestFirst, mapMajorTypes, home: w.home || 'home',
         keyHash: f.pk.value ? await sha256(f.pk.value) : editCfg().keyHash, gmHash: f.gk.value ? await sha256(f.gk.value) : editCfg().gmHash };
       const sess = session();
       await persist({ slug: SETTINGS_SLUG, author: '@world', text: JSON.stringify(st) }, sess);
-      const home = S.entries.find(x => x.slug === homeSlug()), welcome = f.welcome.value.trim();
-      if (home && welcome !== home.body.replace(/^:::.*$/gm, '').trim()) {
-        const text = home.newHeader && home.createdBy === sess.author ? `${home.newHeader}\n${welcome}` : welcome;
-        await persist({ slug: home.slug, author: sess.author, text }, sess);
-      } else if (!home && welcome) {
-        await persist({ slug: homeSlug(), author: sess.author, text: `---\ntitle: Welcome\ntype: note\nhidden: true\n---\n${welcome}` }, sess);
-      }
       if ((f.pk.value || f.gk.value) && editCfg().endpoint) await post({ action: 'setkeys', world: worldId(), keyHash: st.keyHash, gmHash: st.gmHash }, sess);
       if (f.gk.value) store.set(sessionKey(), { ...sess, key: f.gk.value });
       location.reload();
@@ -1542,6 +1594,7 @@
     if (e.hidden) fm.hidden = true;
     if (e.fm.author && !/^:::/m.test(e.body)) fm.author = toArray(e.fm.author).join(', ');
     for (const k of ['pins', 'overlay', 'major']) if (e.fm[k]) fm[k] = e.fm[k];
+    for (const k of ['showmap', 'showmentions']) if (e.fm[k] === false) fm[k] = false;
     for (const [k, v] of Object.entries(e.fm)) if (!RESERVED.has(k) && v !== '' && !(Array.isArray(v) && !v.length)) fm[k] = v;
     const pins = e.pins.length ? `\n\n\`\`\`pins\n${e.pins.map(p => `${p.x}, ${p.y} | ${p.target ? `[[${p.target}${p.rawLabel ? '|' + p.rawLabel : ''}]]` : p.rawLabel}${p.note ? ' | ' + p.note : ''}`).join('\n')}\n\`\`\`` : '';
     return `---\n${Object.entries(fm).map(([k, v]) => `${k}: ${fmVal(v)}`).join('\n')}\n---\n${e.body.trim()}${pins}\n`;

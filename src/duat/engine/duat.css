@@ -581,3 +581,25 @@ a.wl:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
 .set-field select { width: auto; padding: 6px 8px !important; }
 .set-field .fact-x { height: 32px; width: 28px; }
 .set-addf { padding: 5px 10px; background: none; border: 1px dashed var(--line); border-radius: 8px; font-size: 0.8rem; cursor: pointer; color: var(--muted); }
+
+/* sign-in chip, home page edit, GM text */
+.who-btn {
+  flex: none; height: 38px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px; color: var(--muted);
+  font-size: 0.85rem; cursor: pointer; white-space: nowrap;
+}
+.who-btn.is-in { color: var(--text); }
+.who-btn:hover { border-color: var(--accent); }
+.who-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+@media (max-width: 480px) { .who-name { display: none; } .who-btn { padding: 0 10px; } }
+.who-menu {
+  position: fixed; z-index: 60; min-width: 200px; padding: 8px; display: flex; flex-direction: column; gap: 4px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+.who-menu p { margin: 4px 6px 6px; font-size: 0.82rem; }
+.who-menu button { text-align: left; padding: 8px 10px; background: none; border: 0; border-radius: 6px; color: var(--text); font-size: 0.9rem; cursor: pointer; }
+.who-menu button:hover { background: var(--panel); }
+.hero { position: relative; }
+.hero .edit-btn { top: 44px; }
+.hero h1, .hero-sub { padding-right: 84px; }
+.account-main > :last-child { margin-bottom: 1.2em; }
