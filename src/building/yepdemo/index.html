@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="YEP — a small 1-bit walkaround RPG demo by Leo Lion, in progress." />
+  <meta name="theme-color" content="#000000" />
+  <title>YEP — 1-bit walkaround (demo)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000; color: #fff;
+      overflow: hidden; overscroll-behavior: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none; touch-action: none;
+      font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+    }
+    body {
+      display: flex; flex-direction: column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    #stage {
+      flex: 1; min-height: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px;
+    }
+    canvas#game {
+      display: block;
+      image-rendering: pixelated; image-rendering: crisp-edges;
+      outline: 2px solid #fff; outline-offset: 4px;
+    }
+    footer {
+      display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;
+      padding: 6px 16px 12px; color: #fff; opacity: .7; letter-spacing: .04em;
+    }
+    footer a, footer button { color: inherit; background: none; border: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+
+    /* touch controls: only on coarse pointers */
+    #pad { display: none; }
+    @media (pointer: coarse) {
+      #pad {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 28px 20px; flex: 0 0 auto;
+      }
+      .keys-hint { display: none; }
+      #stage { padding: 12px 8px; }
+    }
+    #dpad {
+      position: relative; width: 132px; height: 132px; touch-action: none;
+    }
+    #dpad span {
+      position: absolute; width: 44px; height: 44px;
+      background: #fff; border: 3px solid #fff;
+    }
+    #dpad .u { left: 44px; top: 0; } #dpad .d { left: 44px; bottom: 0; }
+    #dpad .l { left: 0; top: 44px; } #dpad .r { right: 0; top: 44px; }
+    #dpad .c { left: 44px; top: 44px; }
+    #dpad .u::after, #dpad .d::after, #dpad .l::after, #dpad .r::after {
+      content: ''; position: absolute; left: 50%; top: 50%;
+      border: 8px solid transparent; transform: translate(-50%, -50%);
+    }
+    #dpad .u::after { border-bottom-color: #000; margin-top: -4px; }
+    #dpad .d::after { border-top-color: #000; margin-top: 4px; }
+    #dpad .l::after { border-right-color: #000; margin-left: -4px; }
+    #dpad .r::after { border-left-color: #000; margin-left: 4px; }
+    .ab { display: flex; gap: 18px; align-items: flex-end; }
+    .ab button {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: #fff; color: #000; border: 3px solid #fff;
+      font: bold 22px ui-monospace, Menlo, monospace; touch-action: none;
+    }
+    .ab button:active { background: #000; color: #fff; }
+    #btn-a { margin-bottom: 28px; }
+  </style>
+</head>
+<body>
+  <div id="stage"><canvas id="game" width="240" height="160" aria-label="YEP, a 1-bit walkaround game"></canvas></div>
+
+  <div id="pad">
+    <div id="dpad" aria-label="Direction pad">
+      <span class="u"></span><span class="l"></span><span class="c"></span><span class="r"></span><span class="d"></span>
+    </div>
+    <div class="ab">
+      <button id="btn-b" aria-label="B, run">B</button>
+      <button id="btn-a" aria-label="A, talk and confirm">A</button>
+    </div>
+  </div>
+
+  <footer>
+    <span class="keys-hint">ARROWS/WASD move · Z talk · X hold to run</span>
+    <button id="mute" type="button">SOUND ON</button>
+    <a href="/">leolion.com</a>
+  </footer>
+
+  <script src="game.js"></script>
+</body>
+</html>
