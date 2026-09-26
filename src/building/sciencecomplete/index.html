@@ -4,18 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="robots" content="noindex" />
-  <meta name="description" content="Science Complete — a 1-bit lab-escape RPG by Leo Lion, rough build." />
-  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Science Complete — a phosphor-green lab-escape RPG by Leo Lion, rough build." />
+  <meta name="theme-color" content="#020b05" />
   <title>SCIENCE COMPLETE (rough build)</title>
   <style>
+    :root {
+      --bg: #020b05; --deep: #06200f; --dim: #0f5a2a; --mid: #22a24c; --hi: #63ff95; --hot: #d8ffe4;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%; height: 100%;
-      background: #000; color: #fff;
+      background: radial-gradient(ellipse at center, #041509 0%, #010603 70%);
+      background-color: var(--bg);
+      color: var(--mid);
       overflow: hidden; overscroll-behavior: none;
       -webkit-user-select: none; user-select: none;
       -webkit-touch-callout: none; touch-action: none;
       font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .06em;
     }
     body {
       display: flex; flex-direction: column;
@@ -24,76 +30,86 @@
     #stage {
       flex: 1; min-height: 0;
       display: flex; align-items: center; justify-content: center;
-      padding: 12px;
+      padding: 16px;
     }
     canvas#game {
       display: block;
-      image-rendering: pixelated; image-rendering: crisp-edges;
-      outline: 2px solid #fff; outline-offset: 4px;
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 3px #051a0c,
+        0 0 0 5px #0a3018,
+        0 0 40px rgba(99, 255, 149, .12),
+        0 0 120px rgba(99, 255, 149, .06);
+      image-rendering: pixelated;
     }
     footer {
       display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;
-      padding: 6px 16px 12px; color: #fff; opacity: .7; letter-spacing: .04em;
+      padding: 6px 16px 12px; color: var(--dim);
     }
-    footer a, footer button { color: inherit; background: none; border: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+    footer a, footer button { color: var(--mid); background: none; border: 0; font: inherit; letter-spacing: inherit; text-decoration: underline; cursor: pointer; }
+    footer .keys-hint b { color: var(--mid); font-weight: normal; }
 
-    /* touch controls: only on coarse pointers */
     #pad { display: none; }
     @media (pointer: coarse) {
       #pad {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 8px 28px 20px; flex: 0 0 auto;
+        display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+        padding: 8px 24px 18px; flex: 0 0 auto;
       }
       .keys-hint { display: none; }
       #stage { padding: 12px 8px; }
     }
-    #dpad {
-      position: relative; width: 132px; height: 132px; touch-action: none;
-    }
+    #dpad { position: relative; width: 132px; height: 132px; touch-action: none; }
     #dpad span {
       position: absolute; width: 44px; height: 44px;
-      background: #fff; border: 3px solid #fff;
+      background: var(--deep); border: 2px solid var(--mid);
     }
-    #dpad .u { left: 44px; top: 0; } #dpad .d { left: 44px; bottom: 0; }
-    #dpad .l { left: 0; top: 44px; } #dpad .r { right: 0; top: 44px; }
-    #dpad .c { left: 44px; top: 44px; }
+    #dpad .u { left: 44px; top: 0; border-bottom: 0; } #dpad .d { left: 44px; bottom: 0; border-top: 0; }
+    #dpad .l { left: 0; top: 44px; border-right: 0; } #dpad .r { right: 0; top: 44px; border-left: 0; }
+    #dpad .c { left: 44px; top: 44px; border: 0; }
     #dpad .u::after, #dpad .d::after, #dpad .l::after, #dpad .r::after {
       content: ''; position: absolute; left: 50%; top: 50%;
       border: 8px solid transparent; transform: translate(-50%, -50%);
     }
-    #dpad .u::after { border-bottom-color: #000; margin-top: -4px; }
-    #dpad .d::after { border-top-color: #000; margin-top: 4px; }
-    #dpad .l::after { border-right-color: #000; margin-left: -4px; }
-    #dpad .r::after { border-left-color: #000; margin-left: 4px; }
-    .ab { display: flex; gap: 18px; align-items: flex-end; }
-    .ab button {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: #fff; color: #000; border: 3px solid #fff;
-      font: bold 22px ui-monospace, Menlo, monospace; touch-action: none;
+    #dpad .u::after { border-bottom-color: var(--hi); margin-top: -4px; }
+    #dpad .d::after { border-top-color: var(--hi); margin-top: 4px; }
+    #dpad .l::after { border-right-color: var(--hi); margin-left: -4px; }
+    #dpad .r::after { border-left-color: var(--hi); margin-left: 4px; }
+    .mid { display: flex; justify-content: center; align-self: end; margin-bottom: 4px; }
+    #btn-start {
+      padding: 6px 12px; border: 2px solid var(--dim); background: var(--bg); color: var(--mid);
+      font: 11px ui-monospace, Menlo, monospace; letter-spacing: .12em; touch-action: none;
     }
-    .ab button:active { background: #000; color: #fff; }
+    .ab { display: flex; gap: 16px; align-items: flex-end; }
+    .ab button {
+      width: 62px; height: 62px; border-radius: 50%;
+      background: var(--deep); color: var(--hi); border: 2px solid var(--mid);
+      font: bold 20px ui-monospace, Menlo, monospace; touch-action: none;
+      box-shadow: 0 0 16px rgba(99, 255, 149, .15);
+    }
+    .ab button:active, #btn-start:active { background: var(--hi); color: var(--bg); }
     #btn-a { margin-bottom: 28px; }
   </style>
 </head>
 <body>
-  <div id="stage"><canvas id="game" width="240" height="160" aria-label="Science Complete, a 1-bit game"></canvas></div>
+  <div id="stage"><canvas id="game" width="240" height="160" aria-label="Science Complete"></canvas></div>
 
   <div id="pad">
     <div id="dpad" aria-label="Direction pad">
       <span class="u"></span><span class="l"></span><span class="c"></span><span class="r"></span><span class="d"></span>
     </div>
+    <div class="mid"><button id="btn-start" aria-label="Pause menu">START</button></div>
     <div class="ab">
-      <button id="btn-b" aria-label="B, items and back">B</button>
-      <button id="btn-a" aria-label="A, talk and confirm">A</button>
+      <button id="btn-b" aria-label="B: items, back">B</button>
+      <button id="btn-a" aria-label="A: examine, talk, confirm">A</button>
     </div>
   </div>
 
   <footer>
-    <span class="keys-hint">ARROWS/WASD move · Z examine/talk · X items · SHIFT run</span>
+    <span class="keys-hint"><b>ARROWS</b> move · <b>Z</b> examine · <b>X</b> items · <b>ESC</b> menu · <b>SHIFT</b> run</span>
     <button id="mute" type="button">SOUND ON</button>
     <a href="/">leolion.com</a>
   </footer>
 
-  <script src="game.js"></script>
+  <script type="module" src="js/engine.js"></script>
 </body>
 </html>

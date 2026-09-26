@@ -46,7 +46,9 @@
   "mat": 41,
   "flower": 42,
   "void": 43,
-  "rug": 44
+  "rug": 44,
+  "chalk": 45,
+  "desk": 46
  },
  "sprites": {
   "s_down0": 0,
@@ -77,7 +79,25 @@
   "phone": 25,
   "usb": 26,
   "arrow": 27,
-  "cursor": 28
+  "cursor": 28,
+  "hatch0": 29,
+  "hatch1": 30,
+  "diane0": 31,
+  "diane1": 32,
+  "i_wetNotes": 33,
+  "i_microscope": 34,
+  "i_adapter": 35,
+  "i_dryNotes": 36,
+  "i_chris": 37,
+  "i_camera": 38,
+  "i_inspiration": 39,
+  "i_beePic": 40,
+  "i_hat": 41,
+  "i_extenders": 42,
+  "i_chain": 43,
+  "i_armor": 44,
+  "i_blade": 45,
+  "i_usb": 46
  },
  "font": {
   "cell": 8,
