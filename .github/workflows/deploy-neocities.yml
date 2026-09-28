@@ -17,6 +17,16 @@ jobs:
       - name: Bundle Duat campaigns (one request per visit instead of one per page)
         run: python3 duat-backend/bundle.py src/duat
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Skunkpets Redux is edited as tools/skunkpets-redux/skunkpets-redux.twee;
+      # rebuild its page here so an edit pushed from anywhere (even the GitHub
+      # web editor) goes live without anyone running the build locally.
+      - name: Build Skunkpets Redux
+        run: node tools/skunkpets-redux/build.js
+
       - name: Upload src/ to Neocities
         env:
           NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_LEOLIONCOM }}

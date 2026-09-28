@@ -1,0 +1,5046 @@
+:: StoryTitle
+Skunkpets
+
+:: StoryData
+{
+  "ifid": "F05A18E5-7ECC-4500-861C-90913E33C8DA",
+  "format": "Harlowe",
+  "format-version": "3.1.0",
+  "start": "Desktop",
+  "zoom": 1
+}
+
+:: StoryStylesheet [stylesheet]
+/* =========================================================
+   FONTS (same set as the original Skunkpets build)
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Dokdo&family=Goldman:wght@400;700&family=Press+Start+2P&family=Tiny5&display=swap');
+
+
+/* =========================================================
+   PAGE / TWINE SHELL
+   ---------------------------------------------------------
+   Resets Harlowe's default prose-column layout. The desktop
+   itself is a fixed 960x720 .monitor that is centered and
+   scaled to the viewport by StoryScript (fitMonitor), so the
+   art and every window position are laid out in one stable
+   coordinate space regardless of screen size.
+   ========================================================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+tw-story {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #000;
+  overflow: hidden;
+  font-family: Tahoma, "Trebuchet MS", Verdana, sans-serif;
+}
+
+tw-passage {
+  margin: 0;
+  padding: 0;
+}
+
+/* Many UI actions (opening/closing windows, star toggle, mail read,
+   back/forward) do a (replace: ?desktoproot) self-render to safely
+   re-render the desktop from $variables. A near-zero duration keeps
+   that instant but still fires animationend so Harlowe's cleanup
+   runs normally. */
+tw-transition-container {
+  animation-duration: 0.01s !important;
+  transition-duration: 0.01s !important;
+}
+
+/* Text selection is scoped like a real desktop: the chrome (icons, title
+   bars, taskbar, menus, dialogs) can't be highlighted; only reading content
+   and form fields can. StoryScript also keeps Ctrl+A inside those areas. */
+tw-story {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.browser-page-content,
+.mail-body,
+.recycle-file-content,
+tw-story input,
+tw-story textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.browser-page-content tw-link,
+.browser-page-content img,
+.mail-body tw-link {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Harlowe's built-in undo/redo sidebar isn't used by this custom desktop UI
+   (browser Back/Forward cover navigation). */
+tw-sidebar {
+  display: none;
+}
+
+/* Fullscreen toggle (PageHeader), carried over from the original. */
+.fullscreen-toggle {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 2147483000;
+  border: none;
+  padding: 4px 8px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   MONITOR
+   ---------------------------------------------------------
+   No plastic bezel: the screen floats on black, like the
+   original art. Layer order, back to front:
+     .monitor-glow     blurred copy of the wallpaper behind the
+                       screen - light bleeding past the glass
+     .playfield        the "screen": wallpaper, icons, windows,
+                       taskbar, dialogs. Its outline comes from
+                       an SVG mask: rounded corners, edges bowed
+                       slightly outward, feathered, so it reads
+                       as curved CRT glass.
+     .crt              scanlines / vignette / edge bevel /
+                       flicker, pointer-events:none so it never
+                       swallows clicks
+   ========================================================= */
+
+.monitor {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 960px;
+  height: 720px;
+  transform: translate(-50%, -50%) scale(var(--monitor-scale, 1));
+  transform-origin: center;
+}
+
+/* Bliss, cropped from the original desktop art (the region inside its
+   bezel and above its baked-in taskbar), scaled uniformly to cover the
+   screen. Shared by the wallpaper and the glow behind the glass. */
+.wallpaper,
+.monitor-glow {
+  background:
+    url("https://tinypetgames.neocities.org/skunkpets/img/bg1/bg-desktop.png") -127.3px -60px / 1175.5px 881.6px no-repeat;
+}
+
+.monitor-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, #2663e0 0px, #2663e0 34px, transparent 34px),
+    url("https://tinypetgames.neocities.org/skunkpets/img/bg1/bg-desktop.png") -127.3px -60px / 1175.5px 881.6px no-repeat;
+  border-radius: 24px;
+  opacity: 0.38;
+  filter: blur(28px) saturate(1.2) brightness(1.7);
+  transform: scale(1.025);
+}
+
+/* The screen. Every desktop element is positioned relative to this. */
+.playfield {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 720px;
+  overflow: hidden;
+  background: #3a6ea5;
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 720' preserveAspectRatio='none'><filter id='f' x='-5%25' y='-5%25' width='110%25' height='110%25'><feGaussianBlur stdDeviation='2.2'/></filter><path filter='url(%23f)' fill='white' d='M32 9 Q480 2 928 9 Q951 9 951 32 Q958 360 951 688 Q951 711 928 711 Q480 718 32 711 Q9 711 9 688 Q2 360 9 32 Q9 9 32 9 Z'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 720' preserveAspectRatio='none'><filter id='f' x='-5%25' y='-5%25' width='110%25' height='110%25'><feGaussianBlur stdDeviation='2.2'/></filter><path filter='url(%23f)' fill='white' d='M32 9 Q480 2 928 9 Q951 9 951 32 Q958 360 951 688 Q951 711 928 711 Q480 718 32 711 Q9 711 9 688 Q2 360 9 32 Q9 9 32 9 Z'/></svg>");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.wallpaper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 34px;
+}
+
+.crt {
+  position: absolute;
+  inset: 0;
+  z-index: 200000;
+  pointer-events: none;
+  border-radius: 26px;
+  background:
+    repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 20, 40, 0.07) 2px,
+      rgba(0, 20, 40, 0.07) 3px),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.28) 100%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 30%);
+  /* Bevel: a soft bright lip just inside the glass edge, then a darker
+     falloff, so the flat screen reads as a curved tube face. */
+  box-shadow:
+    inset 0 0 0 2px rgba(210, 255, 255, 0.10),
+    inset 0 0 14px 2px rgba(190, 240, 255, 0.10),
+    inset 0 0 44px rgba(0, 0, 0, 0.42);
+}
+
+/* The slightest flicker: a white wash that breathes between 0 and a few
+   percent, on its own composited layer so it never repaints content. */
+.crt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: crtFlicker 4.7s steps(1, end) infinite;
+}
+
+@keyframes crtFlicker {
+  0%   { opacity: 0.012; }
+  6%   { opacity: 0.000; }
+  11%  { opacity: 0.020; }
+  13%  { opacity: 0.004; }
+  37%  { opacity: 0.014; }
+  38%  { opacity: 0.030; }
+  39%  { opacity: 0.008; }
+  61%  { opacity: 0.016; }
+  74%  { opacity: 0.002; }
+  88%  { opacity: 0.018; }
+  90%  { opacity: 0.006; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt::after {
+    animation: none;
+  }
+}
+
+/* Harlowe gives every tw-hook/tw-expression position:relative by default,
+   which would make the first wrapper around a .panel or .desktop-icon its
+   containing block. Neutralizing it makes .playfield the containing block
+   for all of them, so top/left in RenderDesktop are screen coordinates. */
+.playfield tw-hook,
+.playfield tw-expression,
+.playfield tw-enchantment,
+.playfield tw-collapsed {
+  position: static;
+}
+
+/* Harlowe turns every newline in passage source - including ones used only
+   to indent HTML - into a literal <br>. Hide them across the desktop
+   chrome, and re-allow them only where text is meant to wrap onto new
+   lines: wiki article prose, mail bodies and dialog messages. */
+.playfield br {
+  display: none;
+}
+
+.browser-page-content br,
+.mail-body br,
+.xp-dialog-msg br {
+  display: inline;
+}
+
+
+/* =========================================================
+   XP LUNA BUTTON PRIMITIVES
+   ---------------------------------------------------------
+   Colors sampled from the original window art
+   (skunkpets/img/bg/window-*.png).
+   ========================================================= */
+
+.panel-controls button,
+.browser-btn {
+  position: relative;
+  width: 21px;
+  height: 21px;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: radial-gradient(circle at 90% 90%, #0054e9 0%, #2263d5 55%, #4479e4 90%, #fff 100%);
+  box-shadow: inset 0 -1px 2px 1px #4646ff;
+  color: #fff;
+  font: bold 12px/1 Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.panel-controls button:hover,
+.browser-btn:hover {
+  filter: brightness(1.15);
+}
+
+.panel-controls button:active,
+.browser-btn:active {
+  filter: brightness(0.85);
+}
+
+.panel-controls .panel-close {
+  background: radial-gradient(circle at 90% 90%, #cc4600 0%, #dc6527 55%, #cd7546 70%, #fff 100%);
+  box-shadow: inset 0 -1px 2px 1px #da4600;
+}
+
+/* White X drawn with two bars, like the art's close button. */
+.panel-close::before,
+.panel-close::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 9px;
+  height: 2px;
+  background: #fff;
+  transform: rotate(45deg);
+}
+
+.panel-close::after {
+  transform: rotate(-45deg);
+}
+
+.panel-minimize::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 8px;
+  height: 3px;
+  margin-left: -4px;
+  background: #fff;
+}
+
+/* Standard grey XP push button (dialogs, forms). */
+.xp-button,
+.xp-dialog-buttons tw-link {
+  display: inline-block;
+  min-width: 75px;
+  padding: 4px 10px;
+  box-sizing: border-box;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #fff 0%, #ecebe6 86%, #d6d0c5 100%);
+  color: #000;
+  font: 11px Tahoma, sans-serif;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.xp-button:hover,
+.xp-dialog-buttons tw-link:hover {
+  box-shadow: inset -1px 1px #fff0cf, inset 1px 2px #fdd889, inset -2px 2px #fbc761, inset 2px -2px #e5a01a;
+}
+
+
+/* =========================================================
+   WINDOWS (XP Luna)
+   ========================================================= */
+
+.panel {
+  position: absolute;
+  width: 220px;
+  height: 170px;
+  box-sizing: border-box;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(to right, #0842d6 0%, #0a4ee6 50%, #0842d6 100%);
+  box-shadow:
+    inset 0 0 0 1px #00138c,
+    3px 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.panel.hidden {
+  display: none;
+}
+
+.panel-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  padding: 0 5px 0 7px;
+  box-sizing: border-box;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(to bottom,
+    #0997ff 0%, #0053ee 8%, #0050ee 40%, #0066ff 88%,
+    #0066ff 93%, #005bff 95%, #003dd7 96%, #003dd7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  cursor: grab;
+  user-select: none;
+}
+
+.panel-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff;
+  font: bold 13px "Trebuchet MS", Tahoma, sans-serif;
+  text-shadow: 1px 1px #0f1089;
+}
+
+/* Title-bar icon: the matching desktop icon, cropped to its glyph. */
+.panel-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-size: 23px 23px;
+  background-position: -3.5px -1px;
+}
+
+.panel[data-window-template="browser"] .panel-icon { background-image: url("https://tinypetgames.neocities.org/skunkpets/img/ui/browse.png"); }
+.panel[data-window-template="mail"] .panel-icon { background-image: url("https://tinypetgames.neocities.org/skunkpets/img/ui/mail.png"); }
+.panel[data-window-template="notes"] .panel-icon { background-image: url("https://tinypetgames.neocities.org/skunkpets/img/ui/notes.png"); }
+.panel[data-window-template="recycle"] .panel-icon { background-image: url("https://tinypetgames.neocities.org/skunkpets/img/ui/trash.png"); }
+.panel[data-window-template="readme"] .panel-icon { background-image: url("https://tinypetgames.neocities.org/skunkpets/img/ui/notes.png"); }
+
+.panel-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+/* The close button sits inside Harlowe hook/enchantment wrappers (for its
+   (click:)); make those boxes flex too so it lines up with minimize. */
+.panel-controls tw-hook,
+.panel-controls tw-enchantment {
+  display: flex;
+}
+
+.panel-body {
+  position: absolute;
+  top: 28px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow: auto;
+  background: #ece9d8;
+  font-size: 12px;
+}
+
+/* The browser panel's body is a column of [chrome, page content].
+   Only the page content scrolls, so back/forward/star stay put. */
+.browser-panel-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   TASKBAR + START MENU
+   ========================================================= */
+
+.taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* 25px of visible bar plus 9px that tucks under the curved glass edge,
+     so the bar reaches the bottom of the screen without the mask biting
+     into its buttons. The ends are padded in from the rounded corners. */
+  height: 34px;
+  padding: 0 0 9px 0;
+  box-sizing: border-box;
+  z-index: 90000;
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(to bottom,
+    #3168d5 0px, #4993e6 1px, #2157d7 3px, #2663e0 15px, #245edb 22px, #1941a5 25px, #1941a5 100%);
+  font: 11px Tahoma, sans-serif;
+}
+
+/* XP Luna Start button, drawn in CSS so it stays crisp and fills the bar. */
+.start-button {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 25px;
+  margin: 0;
+  /* Flush with the taskbar's left edge; the extra left padding keeps the
+     flag clear of the screen's rounded corner. */
+  padding: 0 18px 0 26px;
+  border: 0;
+  border-radius: 0 11px 11px 0;
+  background: linear-gradient(to bottom,
+    #3a9b3a 0%, #6bc56b 6%, #4db54d 14%, #37a037 50%, #2f8f2f 80%, #2a7e2a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset -2px 0 3px rgba(0, 0, 0, 0.25),
+    1px 0 2px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font: italic bold 16px/1 "Trebuchet MS", Tahoma, sans-serif;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+.start-button::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 14px;
+  height: 13px;
+  transform: skewY(-4deg);
+  background:
+    linear-gradient(90deg, #f35325 0 46%, transparent 46% 54%, #81bc06 54%) top / 100% 46% no-repeat,
+    linear-gradient(90deg, #05a6f0 0 46%, transparent 46% 54%, #ffba08 54%) bottom / 100% 46% no-repeat;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4));
+}
+
+.start-button::after {
+  content: "start";
+}
+
+.start-button:hover {
+  filter: brightness(1.12);
+}
+
+.playfield:has(.start-menu) .start-button {
+  filter: brightness(0.82);
+}
+
+.taskbar-tasks {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+}
+
+.taskbar-item {
+  flex: 0 1 150px;
+  min-width: 0;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid #1c50c6;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #3c81f3 0%, #3c81f3 80%, #2f6fdf 100%);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font: 11px Tahoma, sans-serif;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.taskbar-item:hover {
+  filter: brightness(1.1);
+}
+
+.taskbar-item.active {
+  background: #1e52b7;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.taskbar-tray {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 30px 0 14px;
+  margin-bottom: -9px;
+  padding-bottom: 9px;
+  border-left: 1px solid #092e9b;
+  background: linear-gradient(to bottom, #0c9ae8 0%, #1290e8 12%, #0f82d7 88%, #0b67b3 100%);
+  box-shadow: inset 1px 0 1px #5fc2f5;
+  color: #fff;
+}
+
+/* Clicking anywhere outside the open menu closes it. */
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 94000;
+}
+
+.start-menu {
+  position: absolute;
+  left: 8px;
+  bottom: 34px;
+  width: 220px;
+  z-index: 95000;
+  overflow: hidden;
+  border: 1px solid #0b3dab;
+  border-radius: 7px 7px 0 0;
+  background: #fff;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.45);
+  font: 12px Tahoma, sans-serif;
+}
+
+.start-menu-head {
+  padding: 8px 10px;
+  background: linear-gradient(to bottom, #1868ce 0%, #0e60cb 12%, #0e60cb 20%, #1164cf 32%, #1667cf 33%, #1b6cd3 47%, #1e70d9 54%, #2476dc 60%, #297ae0 65%, #3482e3 77%, #3786e5 79%, #428ee9 90%, #4791eb 100%);
+  color: #fff;
+  font: bold 14px "Trebuchet MS", Tahoma, sans-serif;
+  text-shadow: 1px 1px #0f1089;
+}
+
+.start-menu-items {
+  padding: 4px 0;
+  border-top: 2px solid #f4a13a;
+}
+
+.start-menu-items tw-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  color: #000;
+  text-decoration: none;
+}
+
+.start-menu-items tw-link:hover {
+  background: #316ac5;
+  color: #fff;
+}
+
+/* The icon art has its label baked into the bottom ~22%. At small sizes,
+   crop to just the picture: clip-path hides the label and the negative
+   margins give the clipped-away space back to the layout. */
+.start-menu-items img,
+img.xp-dialog-icon {
+  width: 44px;
+  height: 44px;
+  clip-path: inset(0 7px 11px 7px);
+  margin: 0 -7px -11px -7px;
+  object-fit: fill;
+}
+
+.start-menu-foot {
+  height: 14px;
+  background: linear-gradient(to bottom, #4282d6 0%, #3b85e0 5%, #418ae3 17%, #418ae3 21%, #3c87e2 26%, #3786e4 29%, #3482e3 39%, #3d86e3 49%, #3882e2 57%, #3281e2 62%, #2c7ddc 72%, #2573d5 80%, #1b66cd 100%);
+}
+
+
+/* =========================================================
+   DESKTOP ICONS (original icon art; labels are baked in)
+   ========================================================= */
+
+.desktop-icon {
+  position: absolute;
+  z-index: 1;
+  width: 78px;
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+}
+
+.desktop-icon img {
+  display: block;
+  width: 74px;
+  height: 74px;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.desktop-icon.selected {
+  background: rgba(49, 106, 197, 0.45);
+  outline: 1px dotted rgba(255, 255, 255, 0.8);
+}
+
+/* The art already has the label; keep the text for screen readers. */
+.desktop-icon-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+
+/* =========================================================
+   BROWSER WINDOW
+   ========================================================= */
+
+.browser-chrome {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #aca899;
+  background: linear-gradient(to bottom, #f8f7f1 0%, #ece9d8 100%);
+}
+
+/* Harlowe wraps the buttons in tw-collapsed / tw-hook / tw-enchantment
+   elements, which would make the whole row a single flex item. Flatten the
+   wrappers so each button is its own item (clicks still bubble through
+   them), and drop the empty macro markers so they don't add gaps. This is
+   what lets the star sit at the far right, under its bookmark menu. */
+.browser-chrome tw-collapsed,
+.browser-chrome tw-hook,
+.browser-chrome tw-enchantment {
+  display: contents;
+}
+
+.browser-chrome tw-expression {
+  display: none;
+}
+
+.browser-btn {
+  width: 26px;
+  height: 24px;
+  font-size: 11px;
+}
+
+.browser-btn-disabled,
+.browser-btn-disabled:hover {
+  filter: grayscale(1) opacity(0.45);
+  cursor: default;
+}
+
+.browser-star {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.browser-page-content {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Dark sites paint the whole viewport, not just their own box. */
+.browser-page-content:has(.wiki-fanwiki, .wiki-gamesarchive, .wiki-devlink, .skunkpets-loading) {
+  background: #000;
+}
+
+.browser-page-content:has(.new-tab-page, .wiki-devlink, .skunkpets-loading) {
+  padding: 0;
+}
+
+/* (if: $starbarOpen)[...] wraps the bookmark overlay/dropdown in
+   |starbar-popup>[...] (Harlowe strips hyphens, so it renders as
+   <tw-hook name="starbarpopup">). Making it position:absolute removes the
+   whole subtree from .panel-body's flow, so opening the dropdown never
+   pushes .browser-page-content down. */
+.panel-body tw-hook[name="starbarpopup"],
+.panel-body tw-hook:has(> tw-hook[name="starbarpopup"]) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.starbar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+}
+
+.bookmark-dropdown {
+  position: absolute;
+  z-index: 6;
+  top: 32px;
+  right: 6px;
+  width: fit-content;
+  min-width: 150px;
+  max-width: 300px;
+  padding: 5px;
+  border: 1px solid #000;
+  background: #fff;
+  color: darkgrey;
+  font: 14px/1.5 Arial, sans-serif;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Source newlines inside the dropdown's (if:)/(for:) markup would otherwise
+   become tall blank rows between the entries. */
+.bookmark-dropdown br {
+  display: none !important;
+}
+
+.bookmark-dropdown hr {
+  border: 0;
+  border-top: 1px solid #e5e4e2;
+}
+
+.bookmark-link,
+.bookmark-row tw-link {
+  display: block;
+  color: blue;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bookmark-link:hover,
+.bookmark-row tw-link:hover {
+  color: #000;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.bookmark-empty {
+  font-style: italic;
+}
+
+
+/* =========================================================
+   NOTES WINDOW
+   ========================================================= */
+
+.notes-textarea {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  color: #000;
+  font: 13px/1.4 "Lucida Console", "Courier New", monospace;
+  resize: none;
+}
+
+
+/* =========================================================
+   RECYCLE BIN WINDOW
+   ========================================================= */
+
+.recycle-icons {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+
+.recycle-body {
+  background: #fff;
+}
+
+/* Trash items use the full icon art (label included) so they look like
+   the desktop icons they'll become. */
+.bin-icon {
+  width: 70px;
+  padding: 2px;
+  border-radius: 3px;
+  cursor: grab;
+  user-select: none;
+}
+
+.bin-icon img {
+  display: block;
+  width: 66px;
+  height: 66px;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.bin-icon:hover {
+  background: rgba(49, 106, 197, 0.15);
+}
+
+.bin-icon.dragging {
+  opacity: 0.35;
+}
+
+/* READ_ME.txt inside the Trash window (white background). */
+.bin-icon-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bin-icon-file .txt-file-icon {
+  margin: 4px 0 3px;
+}
+
+/* Sized so the caption lines up with the baked-in labels of the other
+   Trash icons. */
+.bin-icon-file .diskette-icon {
+  width: 46px;
+  height: 46px;
+  margin: 4px 0 1px;
+}
+
+.bin-icon .desktop-icon-caption {
+  color: #000;
+  font-size: 11px;
+  text-shadow: none;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+/* Hovering a desktop icon over the Trash (icon or open window). */
+.desktop-icon.trash-drop-target {
+  background: rgba(49, 106, 197, 0.45);
+  outline: 1px dotted rgba(255, 255, 255, 0.9);
+}
+
+.panel.trash-drop-target .recycle-body {
+  background: #dfe9fb;
+  box-shadow: inset 0 0 0 2px #316ac5;
+}
+
+.recycle-empty {
+  padding: 6px 2px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Ghost that follows the cursor while dragging an item out of the Trash. */
+.icon-drag-ghost {
+  position: absolute;
+  z-index: 150000;
+  width: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.icon-drag-ghost img {
+  width: 74px;
+  height: 74px;
+}
+
+
+/* =========================================================
+   READ_ME.txt (desktop file + Notepad window)
+   ========================================================= */
+
+/* Generic text-file icon: a white page with a folded corner and ruled
+   lines, drawn in CSS since the icon art has no plain-file icon. */
+.txt-file-icon {
+  position: relative;
+  width: 44px;
+  height: 54px;
+  margin: 8px 0 6px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 7px, #9bb 7px 8px) 8px 16px / 28px 30px no-repeat,
+    linear-gradient(to bottom, #fff, #eef1f4);
+  clip-path: polygon(0 0, 70% 0, 100% 24%, 100% 100%, 0 100%);
+  filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.45));
+  box-shadow: inset 0 0 0 1px #8a8f96;
+}
+
+.txt-file-icon::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+  height: 24%;
+  background: linear-gradient(225deg, transparent 50%, #cfd6dd 50%, #f3f5f7 100%);
+}
+
+.txt-file-icon-small {
+  display: inline-block;
+  width: 22px;
+  height: 27px;
+  margin: 2px 5px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 4px, #9bb 4px 5px) 4px 8px / 14px 15px no-repeat,
+    linear-gradient(to bottom, #fff, #eef1f4);
+}
+
+/* Label for icons whose art doesn't include one (like READ_ME.txt),
+   styled to sit alongside the baked-in labels. */
+.desktop-icon-caption {
+  max-width: 78px;
+  padding: 0 2px;
+  color: #fff;
+  font: 12px Tahoma, Verdana, sans-serif;
+  text-align: center;
+  text-shadow: 1px 1px 1px #000, 0 0 2px #000;
+  word-break: break-all;
+}
+
+.desktop-icon.selected .desktop-icon-caption {
+  background: #316ac5;
+  text-shadow: none;
+}
+
+.notepad-body {
+  padding: 0;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+/* =========================================================
+   DISKETTE (assistant, after the classic Office helper)
+   ---------------------------------------------------------
+   diskette-cutout.png is a transparent cut-out of
+   skunkpets/img/misc/diskette.png, embedded by build.js.
+   ========================================================= */
+
+/* Icons use a square, disc-only cut-out (diskette-icon.png); the floating
+   assistant uses the full-body one (diskette-cutout.png). */
+.diskette-icon {
+  width: 52px;
+  height: 52px;
+  margin: 1px 0 2px;
+  background: url("inline:diskette-icon.png") center / contain no-repeat;
+  filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.35));
+}
+
+.diskette-character {
+  background: url("inline:diskette-cutout.png") center / contain no-repeat;
+}
+
+.diskette-icon-small {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  margin: 2px;
+}
+
+/* Floats above windows, bottom-right, like the Office helper. */
+.diskette-assistant {
+  position: absolute;
+  right: 118px;
+  bottom: 38px;
+  z-index: 93000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.diskette-character {
+  width: 112px;
+  height: 147px;
+  margin-right: 10px;
+  animation: disketteBob 2.8s ease-in-out infinite;
+}
+
+.diskette-bubble {
+  position: relative;
+  width: 250px;
+  margin-bottom: 10px;
+  padding: 10px 12px 8px;
+  border: 1px solid #000;
+  border-radius: 8px;
+  background: #ffffe1;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.35);
+  color: #000;
+  font: 12px/1.4 Tahoma, Verdana, sans-serif;
+}
+
+/* Tail pointing down at Diskette. */
+.diskette-bubble::before,
+.diskette-bubble::after {
+  content: "";
+  position: absolute;
+  right: 60px;
+  border-style: solid;
+}
+
+.diskette-bubble::before {
+  bottom: -12px;
+  border-width: 12px 10px 0 0;
+  border-color: #000 transparent transparent transparent;
+}
+
+.diskette-bubble::after {
+  bottom: -10px;
+  right: 61px;
+  border-width: 10px 8px 0 0;
+  border-color: #ffffe1 transparent transparent transparent;
+}
+
+.diskette-bubble p {
+  margin: 0 18px 8px 0;
+}
+
+.diskette-close {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  padding: 0 3px;
+  border: 0;
+  background: none;
+  color: #555;
+  font: 14px/1 Tahoma, sans-serif;
+}
+
+.diskette-close:hover {
+  color: #000;
+}
+
+.diskette-options {
+  margin-bottom: 4px;
+}
+
+/* Options as the classic blue-bullet list. */
+.diskette-options tw-link {
+  position: relative;
+  display: block;
+  padding: 2px 0 2px 18px;
+  color: #000;
+  text-decoration: none;
+}
+
+.diskette-options tw-link::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #9cc3ff 0%, #316ac5 60%, #1c3f8c 100%);
+}
+
+.diskette-options tw-link:hover {
+  color: #0033aa;
+  text-decoration: underline;
+}
+
+.diskette-note {
+  padding-top: 6px;
+  border-top: 1px dotted #b8b48a;
+  color: #555;
+  font-size: 11px;
+}
+
+@keyframes disketteBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diskette-character {
+    animation: none;
+  }
+}
+
+.notepad-text {
+  padding: 8px 10px;
+  color: #000;
+  font: 13px/1.5 "Lucida Console", "Courier New", monospace;
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+
+/* =========================================================
+   MAIL CLIENT (restyled after skunkpets/img/bg/window-mail.png)
+   ========================================================= */
+
+.mail-panel-body {
+  padding: 0;
+  background:
+    repeating-linear-gradient(to bottom, #d9d9d9 0px, #d9d9d9 2px, #cfcfcf 2px, #cfcfcf 3px);
+}
+
+.mail-header {
+  margin: 4px 4px 2px;
+  padding: 1px 10px 3px;
+  background: linear-gradient(to bottom, #9a9a9a 0%, #6a6a6a 35%, #5c5c5c 60%, #8c8c8c 100%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font: bold 24px Arial, sans-serif;
+  text-shadow: 1px 1px 0 #333;
+}
+
+.mail-list {
+  margin: 0 4px;
+}
+
+.mail-row {
+  border-bottom: 1px solid #8c8c8c;
+  font: 13px "Trebuchet MS", Arial, sans-serif;
+}
+
+.mail-summary {
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+}
+
+.mail-summary::before {
+  content: "\25B6";
+  flex: 0 0 auto;
+  margin-right: 6px;
+  font-size: 9px;
+  color: #222;
+}
+
+.mail-summary tw-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 10px 4px 0;
+  color: #222;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mail-summary:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.mail-row:has(.is-open) .mail-summary {
+  background: linear-gradient(to bottom, #d0d0d0, #b8b8b8);
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #8c8c8c;
+}
+
+.mail-row:has(.is-open) .mail-summary::before {
+  content: "\25BC";
+}
+
+.unread-bubble {
+  flex: 0 0 auto;
+  margin-right: 6px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #c62828;
+  color: #fff;
+  font-size: 10px;
+}
+
+.mail-body {
+  padding: 6px 26px 10px;
+  background: rgba(0, 0, 0, 0.12);
+  color: #222;
+  line-height: 1.4;
+}
+
+.mail-body tw-link {
+  color: #0645ad;
+  text-decoration: underline;
+}
+
+.mail-empty {
+  padding: 8px 10px;
+  color: #555;
+  font-style: italic;
+}
+
+
+/* =========================================================
+   XP DIALOG (Harlowe 3.1 has no in-page (dialog:), so this is
+   rendered by RenderDesktop from $dialog)
+   ========================================================= */
+
+.xp-dialog-layer {
+  position: absolute;
+  inset: 0 0 34px 0;
+  z-index: 98000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.xp-dialog {
+  position: relative;
+  min-width: 280px;
+  max-width: 400px;
+  padding: 28px 3px 3px;
+  box-sizing: border-box;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(to right, #0842d6 0%, #0a4ee6 50%, #0842d6 100%);
+  box-shadow: inset 0 0 0 1px #00138c, 3px 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.xp-dialog .panel-bar {
+  cursor: default;
+}
+
+.xp-dialog-inner {
+  background: #ece9d8;
+}
+
+.xp-dialog-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px 8px;
+  font: 12px/1.4 Tahoma, sans-serif;
+}
+
+.xp-dialog-icon {
+  flex: 0 0 auto;
+}
+
+span.xp-dialog-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.xp-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8bb8ff 0%, #2f6fe0 55%, #1543a8 100%);
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font: bold 24px Georgia, serif;
+}
+
+.xp-dialog-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 0 12px;
+}
+
+
+/* =========================================================
+   SPLASH SCREEN (play button, styled as in the original)
+   ========================================================= */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: #000;
+}
+
+.startbutton {
+  padding: 20px;
+  border: 1px solid #fff;
+  border-radius: 10px;
+  background: #000;
+  color: #fff;
+  font-family: "Press Start 2P", monospace;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 1s ease, color 1s ease;
+}
+
+.startbutton:hover {
+  background: #fff;
+  color: #000;
+}
+
+.splash-hint {
+  color: #555;
+  font: 9px/1.8 "Press Start 2P", monospace;
+  text-align: center;
+}
+
+
+/* =========================================================
+   WIKI CONTENT (ported from skunkpets.fanwiki.co)
+   ========================================================= */
+
+/* One vertical rhythm for every wiki page. Paragraphs are separated by
+   the <br><br> Harlowe makes from blank lines. The <br> directly before a
+   heading is dropped so the space above a heading comes only from its
+   margin, instead of margin + a blank line. */
+.browser-page-content br:has(+ :is(h1, h2, h3, h6)) {
+  display: none;
+}
+
+/* The shared fan-wiki banner. Harlowe 3.1 renders (display:"img-fanwikibar")
+   straight into a tw-expression: [clickable banner hook, <br>, (click:)
+   marker]. Make that wrapper a block with no line box, so the stray <br>
+   and invisible markers after the image don't leave an empty line. */
+.browser-page-content tw-expression[name="display"]:has(> tw-enchantment tw-hook[name="fanwikibar"]) {
+  display: block;
+  font-size: 0;
+  line-height: 0;
+}
+
+.browser-page-content tw-hook[name="fanwikibar"] img {
+  display: block;
+}
+
+.browser-page-content tw-expression[name="display"]:has(> tw-enchantment tw-hook[name="fanwikibar"]) > br,
+.forum-list br {
+  display: none;
+}
+.browser-page-content h1 {
+  position: relative;
+  margin: 2px 0 12px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.browser-page-content h1::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-top: 6px;
+  background: #000;
+}
+
+.browser-page-content h2 {
+  margin: 18px 0 4px;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.browser-page-content h3 {
+  margin: 16px 0 4px;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.browser-page-content .image-card {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.browser-page-content .image-card p {
+  margin: 0;
+}
+
+.browser-page-content .image-card img {
+  width: 100%;
+}
+
+.browser-page-content .library-grid th,
+.browser-page-content .library-grid td {
+  text-align: center;
+  width: 30%;
+  padding: 0.5%;
+}
+
+.browser-page-content .library-grid img {
+  width: 100%;
+}
+
+.browser-page-content .wikitable {
+  border-collapse: collapse;
+  font-size: 90%;
+  background-color: #ddd;
+}
+
+.browser-page-content .wikitable th,
+.browser-page-content .wikitable td {
+  border: 1px solid #555;
+  padding: 4px 6px;
+}
+
+.browser-page-content .wikitable td {
+  background-color: #eee;
+}
+
+.browser-page-content .quotebox {
+  padding: 8px;
+  background-color: #ddd;
+  font-size: 90%;
+}
+
+/* Dark "Skunkpets Fan Wiki" theme - fills .browser-page-content edge to
+   edge so it reads as a distinct dark site within the light desktop
+   window. width:100% + border-box (rather than a negative-margin bleed)
+   keeps it from ever exceeding .browser-page-content's box, so it can't
+   introduce horizontal scrolling. */
+.wiki-fanwiki {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.wiki-fanwiki h1,
+.wiki-fanwiki h2 {
+  font-family: "Dokdo", system-ui;
+}
+
+/* Dokdo has very tall ascenders/descenders; line-height:1 keeps the
+   underline tucked under the letters instead of floating below them. */
+.wiki-fanwiki h1 {
+  margin: 12px 0 10px;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.wiki-fanwiki h1::after {
+  margin-top: 4px;
+}
+
+.wiki-fanwiki h2 {
+  margin: 16px 0 2px;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.wiki-fanwiki h6 {
+  margin: 2px 0 10px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: #aaa;
+  font-weight: normal;
+}
+
+.wiki-fanwiki h1::after {
+  background: #fff;
+}
+
+.wiki-fanwiki a,
+.wiki-fanwiki tw-link {
+  color: #ff0;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.wiki-fanwiki tw-link:hover,
+.wiki-fanwiki a:hover {
+  color: #8f00ff;
+}
+
+/* "Global Games Archive" / kraska1 theme */
+.wiki-gamesarchive {
+  margin: -10px;
+  padding: 10px;
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 600;
+}
+
+.wiki-gamesarchive tw-link,
+.wiki-gamesarchive a {
+  color: #4da4ff;
+}
+
+/* Forum threads */
+.forum-thread {
+  margin: 10px 0;
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  color: #ddd;
+  text-align: left;
+}
+
+.forum-post {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+  padding: 10px;
+  border-top: 1px solid #222;
+  background: #050505;
+}
+
+/* The newline between (display:"forum-user-...") and the
+   .forum-post-body div becomes a literal <br>, a third direct
+   child of this grid container - which knocks .forum-post-body
+   into row 2, column 1 instead of row 1, column 2. */
+.forum-post > br {
+  display: none;
+}
+
+.forum-post:first-child {
+  border-top: none;
+}
+
+.forum-post-user {
+  text-align: center;
+  border-right: 1px solid #222;
+  padding-right: 8px;
+}
+
+.forum-post-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  margin: 0 auto 6px;
+  background: #111;
+  border: 1px solid #444;
+}
+
+.forum-post-username {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.forum-post-meta {
+  font-size: 10px;
+  color: #888;
+}
+
+.forum-post-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.forum-post-headerline {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.forum-post-number {
+  color: #666;
+}
+
+.forum-post-content {
+  line-height: 1.4;
+}
+
+/* Forum index list */
+.forum-list {
+  background: #000;
+  color: #e4d4ff;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.thread-row {
+  border-bottom: 1px solid #5e4b85;
+  padding: 4px 0;
+}
+
+.thread-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d9c7ff;
+}
+
+.thread-title:hover {
+  text-decoration: underline;
+}
+
+.thread-subtitle {
+  font-size: 11px;
+  color: #a897c7;
+  margin-top: 2px;
+}
+
+.forum-list tw-link {
+  text-decoration: none;
+}
+
+/* World map (FanWiki: The World of Skunkpets) */
+.map-wrapper {
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.map-wrapper img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.map-hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 8%;
+  height: 8%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.map-hotspot::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  bottom: 110%;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  padding: 3px 6px;
+  font-size: 11px;
+  background: #000;
+  color: #fff;
+  border-radius: 3px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.map-hotspot:hover::after {
+  opacity: 1;
+}
+
+/* Search bar (Global Games Archive) */
+.search-area {
+  width: 100%;
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+.search-area tw-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  border: 2px solid #fff;
+  background: #001c4a;
+  color: #4da4ff;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.search-area tw-link:hover {
+  background: #12356f;
+}
+
+/* "Deal with the Devil" minigame archive page */
+.minigame-devil-frame {
+  position: relative;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.minigame-devil-bar {
+  position: absolute;
+  width: max-content;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 18px;
+}
+
+.minigame-devil-img {
+  height: 260px;
+  display: block;
+}
+
+.minigame-frame {
+  border: none;
+}
+
+/* =========================================================
+   GLOBAL GAMES ARCHIVE - SEARCH (original arcade styling)
+   ========================================================= */
+
+.search-area {
+  width: 80%;
+  margin: 40px auto 0;
+  text-align: center;
+}
+
+.search-area input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: #050505;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px #222;
+  color: #fff;
+  font: 18px "Press Start 2P", monospace;
+  letter-spacing: 1px;
+  outline: none;
+}
+
+.search-area button {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 10px 20px;
+  border: 3px solid #fff;
+  background: #001c4a;
+  color: #4da4ff;
+  font: 14px "Press Start 2P", monospace;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.search-area button:hover {
+  background: #12356f;
+}
+
+.gga-msg {
+  min-height: 1.5em;
+  margin-top: 16px;
+  color: #aaa;
+  font: 10px/1.6 "Press Start 2P", monospace;
+}
+
+.minigame-devil-bar {
+  font-family: "Tiny5", monospace;
+}
+
+
+/* =========================================================
+   WINKIPEDIA (encyclopedia landing page with search)
+   ========================================================= */
+
+.winki {
+  padding: 120px 20px 20px;
+  text-align: center;
+  font-family: "Linux Libertine", Georgia, "Times New Roman", serif;
+}
+
+.winki-logo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.winki-name {
+  font-size: 44px;
+  letter-spacing: 1px;
+}
+
+.winki-tag {
+  color: #555;
+  font-size: 14px;
+}
+
+.winki-search {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 26px;
+}
+
+.winki-search input {
+  width: 330px;
+  padding: 4px 6px;
+  border: 1px solid #7f9db9;
+  font: 14px Arial, sans-serif;
+}
+
+.winki-msg {
+  min-height: 1.4em;
+  margin-top: 14px;
+  color: #555;
+  font: italic 13px Arial, sans-serif;
+}
+
+/* Experimental real-Wikipedia result: a thin Winkipedia bar over an
+   iframe that fills the rest of the browser page. */
+.browser-page-content:has(.winki-web) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.winki-web {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.winki-web-bar {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-bottom: 1px solid #c8ccd1;
+  background: #f8f9fa;
+  color: #54595d;
+  font: 13px Arial, sans-serif;
+}
+
+.winki-web-brand {
+  margin-right: 6px;
+  color: #000;
+  font: 16px "Linux Libertine", Georgia, "Times New Roman", serif;
+}
+
+.winki-web-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  border: 0;
+  background: #fff;
+}
+
+
+/* =========================================================
+   SKUNKPETS.COM (dead site, classic server 404)
+   ========================================================= */
+
+.http-404 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 16px;
+  color: #000;
+}
+
+.browser-page-content .http-404 h1 {
+  margin: 8px 0 14px;
+  font-size: 32px;
+}
+
+.browser-page-content .http-404 h1::after {
+  display: none;
+}
+
+.http-404 address {
+  font-style: italic;
+}
+
+
+/* =========================================================
+   NEW TAB (blank homepage)
+   ========================================================= */
+
+.new-tab-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+
+
+/* =========================================================
+   DEVLINK-USERBASE / SKUNKPETS LOGIN (original login box)
+   ========================================================= */
+
+.wiki-devlink {
+  position: relative;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 96px 0 30px;
+  background: #000;
+  font-family: "Goldman", monospace;
+}
+
+.devlink-url {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  color: #666;
+  font: 11px monospace;
+  text-align: center;
+}
+
+.login-box {
+  position: relative;
+  width: 300px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  font-family: "Goldman", monospace;
+  text-align: center;
+}
+
+.login-icon {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100px;
+  transform: translate(-50%, -62%);
+}
+
+.browser-page-content .login-box h1 {
+  margin: 22px 0 10px;
+  font-family: "Dokdo", cursive;
+  font-size: 35px;
+  font-weight: 400;
+}
+
+.browser-page-content .login-box h1::after {
+  display: none;
+}
+
+.login-box label {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.login-box input {
+  display: block;
+  width: 210px;
+  margin: 3px auto 0;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  border: 2px solid #000;
+  border-radius: 6px;
+  font: 14px "Goldman", monospace;
+  text-align: center;
+}
+
+.login-button {
+  margin-top: 14px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 20px;
+  background: #000;
+  color: #fff;
+  font: bold 13px monospace;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.login-button:hover {
+  background: #333;
+}
+
+.login-msg {
+  min-height: 1.3em;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.login-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0645ad;
+  font: 13px "Goldman", monospace;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-security {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #999;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Post-login "SKUNKPETS MAIN" loading screen */
+.skunkpets-loading {
+  height: 100%;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.skunkpets-loading img {
+  width: 180px;
+}
+
+
+/* =========================================================
+   RETRO PIXEL CURSOR (from the original's art folder)
+   ========================================================= */
+
+tw-story, tw-passage, tw-link, tw-enchantment,
+tw-expression, tw-story * {
+  cursor: url("https://tinypetgames.neocities.org/skunkpets/img/ui/cursor.png") 0 0, auto !important;
+}
+
+tw-link:hover, tw-hook:hover tw-link, .enchantment-link:hover,
+tw-expression tw-link:hover, details summary:hover, a:hover,
+button:hover, .desktop-icon:hover, .startbutton:hover,
+.taskbar-item:hover, .lightbox-thumb:hover, .start-button:hover,
+.bin-icon:hover, .panel-close:hover, .panel-minimize:hover {
+  cursor: url("https://tinypetgames.neocities.org/skunkpets/img/ui/cursor-hand.png") 10 0, pointer !important;
+}
+
+input[type="text"], input[type="password"], textarea {
+  cursor: text !important;
+}
+
+
+/* =========================================================
+   BOOT / POWER-ON ANIMATION
+   ========================================================= */
+
+@keyframes skunkpetsPowerOn {
+  0%   { filter: brightness(0) saturate(0); }
+  8%   { filter: brightness(4) saturate(0); }
+  18%  { filter: brightness(1.1) saturate(1); }
+  35%  { filter: brightness(0.88); }
+  55%  { filter: brightness(1.04); }
+  100% { filter: brightness(1); }
+}
+
+.playfield-booting {
+  animation: skunkpetsPowerOn 0.9s ease-out forwards;
+}
+
+
+/* =========================================================
+   LIGHTBOX
+   ========================================================= */
+
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999998;
+}
+
+.lightbox-img {
+  max-width: 90%;
+  max-height: 88%;
+  image-rendering: pixelated;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #000;
+}
+
+
+/* =========================================================
+   DEMO END TRANSITION SCREEN
+   ========================================================= */
+
+.end-flicker-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  pointer-events: auto;
+  animation: endFlicker 1.4s steps(8, end) forwards;
+}
+
+.end-flicker-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.1) 0px,
+    rgba(255, 255, 255, 0.1) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0;
+  animation: glitchScan 0.3s linear 0s 4;
+}
+
+@keyframes endFlicker {
+  0%   { opacity: 0; }
+  5%   { opacity: 1; }
+  10%  { opacity: 0; }
+  18%  { opacity: 1; }
+  26%  { opacity: 0.2; }
+  35%  { opacity: 1; }
+  45%  { opacity: 0; }
+  55%  { opacity: 1; }
+  70%  { opacity: 0.3; }
+  85%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes glitchScan {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.7; }
+  60%  { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+
+
+/* =========================================================
+   WIN / END CARD (restored from the original, incl. survey)
+   ========================================================= */
+
+.win-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+}
+
+.endcard {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 720px;
+  max-width: calc(100vw - 40px);
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid #fff;
+  color: #fff;
+  font: 600 16px/1.5 Arial, sans-serif;
+  text-align: center;
+}
+
+.endcard h2 {
+  margin: 0.4em 0 0.8em;
+  font-size: 130%;
+  line-height: 1;
+}
+
+.endcard-line {
+  opacity: 0;
+  animation: endcardFade 1.2s ease forwards;
+}
+
+.endcard-line-1 { animation-delay: 1s; }
+.endcard-line-2 { animation-delay: 3s; }
+
+@keyframes endcardFade {
+  to { opacity: 1; }
+}
+
+.endcard a {
+  color: yellow;
+  transition: color 1s ease;
+}
+
+.endcard a:hover {
+  color: pink;
+}
+
+:: StoryScript [script]
+/* =========================================================
+   DESKTOP UI SYSTEM
+   ---------------------------------------------------------
+   This script handles:
+   - window initialization
+   - desktop icon initialization (dragging + selection only;
+     opening/closing windows is driven by Harlowe $openWindows
+     and (click: ?icon-*) enchantments in RenderDesktop)
+   - taskbar buttons / active state
+   - minimize / close controls (minimize is JS-only/ephemeral;
+     close is a Harlowe (click:) enchantment that updates
+     $openWindows)
+   - dragging for both windows and icons, with positions cached
+     in a plain JS object so they survive Harlowe re-renders
+
+   Runs via setInterval rather than hooking Harlowe's render
+   lifecycle: every 250ms it re-scans for .playfield elements
+   and wires up anything new. Each init step is guarded by a
+   data-*-init dataset flag, so repeated scans are cheap and
+   idempotent (safe even if a passage re-renders the playfield).
+   ========================================================= */
+
+
+/* =========================================================
+   GLOBAL STATE / BOOT
+   ========================================================= */
+
+/* Highest z-index currently in use.
+   Focused windows get the next value. */
+let topZ = 100;
+
+/* Cached panel positions, keyed by window id (derived from
+   data-window-template, e.g. "win-browser"). Harlowe's
+   $openWindows tracks *which* windows are open and survives
+   navigation/saves; pixel positions are ephemeral per session
+   and live here so dragging isn't undone by re-renders. */
+const windowPositions = {};
+
+/* Cached z-indices, keyed by window id. Harlowe re-renders create a
+   fresh .panel element for every open window (even minimized ones),
+   so without this each re-render would hand out a brand-new topZ
+   and shove the window back to the front. */
+const windowZIndices = {};
+
+/* Window ids currently minimized. Minimize is JS-only/ephemeral (see
+   wireWindowControls), but Harlowe re-renders (e.g. on navigation)
+   recreate the .panel element from scratch, which would otherwise
+   drop the "hidden" class and resurface the window. */
+const minimizedWindows = new Set();
+
+/* True after the power-on animation plays for the first time.
+   The animation runs once per page-session when .playfield first appears. */
+let bootDone = false;
+
+/* Re-scan periodically so newly rendered windows are wired
+   automatically after Harlowe re-renders the playfield. */
+setInterval(initDesktopUI, 250);
+
+/* Also re-scan immediately on DOM mutations. (replace: ?desktoproot)
+   rebuilds the playfield's panels from scratch with their
+   RenderDesktop.twee default position/z-index/visibility; without this,
+   a restored window would flash at that default for up to 250ms before
+   the next interval tick reapplies its remembered state. MutationObserver
+   callbacks run as a microtask before the next paint, so this happens
+   before the user sees the default state at all. Re-entrant calls from
+   initDesktopUI's own DOM writes (e.g. addTaskbarItem) are harmless: those
+   writes are idempotent and guarded, so the follow-up scan is a no-op. */
+new MutationObserver(initDesktopUI).observe(document.body, {
+  childList: true,
+  subtree: true,
+});
+
+function initDesktopUI() {
+  const playfields = document.querySelectorAll(".playfield");
+
+  if (!bootDone && playfields.length) {
+    bootDone = true;
+    playfields[0].classList.add("playfield-booting");
+    playfields[0].addEventListener("animationend", function () {
+      playfields[0].classList.remove("playfield-booting");
+    }, { once: true });
+  }
+
+  playfields.forEach(function (playfield) {
+    ensureTaskbar(playfield);
+    initPanels(playfield);
+    handleFocusRequest(playfield);
+    initDesktopIcons(playfield);
+    initBinIcons(playfield);
+    initWinkiWebResult(playfield);
+    initNotes(playfield);
+    updateClock(playfield);
+  });
+}
+
+
+/* =========================================================
+   MONITOR SCALING
+   ---------------------------------------------------------
+   .monitor is laid out at a fixed 960x720 (the size of the
+   original art) and scaled with a CSS transform to fit the
+   viewport. Anything that converts mouse movement into CSS
+   pixels must divide by this scale.
+   ========================================================= */
+
+function fitMonitor() {
+  /* Leave a margin so the rounded glass and its light bleed never touch
+     the viewport edge (and the taskbar corners aren't clipped). */
+  const margin = 48;
+  const scale = Math.min((window.innerWidth - margin) / 960, (window.innerHeight - margin) / 720);
+  document.documentElement.style.setProperty("--monitor-scale", scale);
+}
+
+window.addEventListener("resize", fitMonitor);
+fitMonitor();
+
+function getPlayfieldScale(playfield) {
+  const rendered = playfield.getBoundingClientRect().width;
+  return rendered && playfield.offsetWidth ? rendered / playfield.offsetWidth : 1;
+}
+
+
+/* =========================================================
+   FOCUS REQUESTS
+   ---------------------------------------------------------
+   Harlowe can't call into this script directly, so when a
+   passage wants a window brought to the front (new mail
+   arriving, "Open Now", double-clicking an icon whose window
+   is already open) it bumps $focusSeq and names the window in
+   $focusWin. RenderDesktop prints both onto a .focus-request
+   marker; each sequence number is acted on exactly once.
+   ========================================================= */
+
+let lastFocusSeq = 0;
+
+function handleFocusRequest(playfield) {
+  const request = playfield.querySelector(".focus-request");
+  if (!request) return;
+
+  const seq = parseInt(request.dataset.seq || "0", 10);
+  if (seq <= lastFocusSeq) return;
+
+  const panel = playfield.querySelector(`.panel[data-window-template="${request.dataset.win}"]`);
+  if (!panel || panel.dataset.dragInit !== "true") return;
+
+  lastFocusSeq = seq;
+  panel.classList.remove("hidden");
+  minimizedWindows.delete(panel.dataset.windowId);
+  focusPanel(panel, playfield);
+}
+
+
+/* =========================================================
+   TASKBAR CLOCK
+   ========================================================= */
+
+function updateClock(playfield) {
+  const clock = playfield.querySelector(".taskbar-clock");
+  if (!clock) return;
+
+  const now = new Date();
+  const hours = now.getHours() % 12 || 12;
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const text = `${hours}:${minutes} ${now.getHours() < 12 ? "AM" : "PM"}`;
+  if (clock.textContent !== text) clock.textContent = text;
+}
+
+
+/* =========================================================
+   NOTES WINDOW
+   ---------------------------------------------------------
+   The notes textarea isn't part of Harlowe's $variables, so its
+   content is saved to localStorage on every edit and restored
+   whenever a fresh textarea element appears (e.g. after the
+   panel is closed/reopened or the desktop re-renders).
+   ========================================================= */
+
+const NOTES_STORAGE_KEY = "skunkpets-notes";
+
+function initNotes(playfield) {
+  const textarea = playfield.querySelector(".notes-textarea");
+  if (!textarea) return;
+  if (textarea.dataset.notesInit === "true") return;
+  textarea.dataset.notesInit = "true";
+
+  const saved = localStorage.getItem(NOTES_STORAGE_KEY);
+  if (saved !== null) {
+    textarea.value = saved;
+  }
+
+  textarea.addEventListener("input", function () {
+    localStorage.setItem(NOTES_STORAGE_KEY, textarea.value);
+  });
+}
+
+
+/* =========================================================
+   TASKBAR / WINDOW SETUP
+   ========================================================= */
+
+function ensureTaskbar(playfield) {
+  if (playfield.querySelector(".taskbar")) return;
+
+  const taskbar = document.createElement("div");
+  taskbar.className = "taskbar";
+  playfield.appendChild(taskbar);
+}
+
+function getTaskbar(playfield) {
+  return playfield.querySelector(".taskbar");
+}
+
+function initPanels(playfield) {
+  const panels = playfield.querySelectorAll(".panel");
+
+  panels.forEach(function (panel) {
+    if (panel.dataset.dragInit === "true") return;
+
+    const handle = panel.querySelector(".panel-bar");
+    if (!handle) return;
+
+    panel.dataset.dragInit = "true";
+
+    if (!panel.dataset.windowId) {
+      panel.dataset.windowId = "win-" + (panel.dataset.windowTemplate || "panel");
+    }
+
+    /* Restore a remembered position from a previous render, if any. */
+    const remembered = windowPositions[panel.dataset.windowId];
+    if (remembered) {
+      panel.style.left = remembered.left;
+      panel.style.top = remembered.top;
+    }
+
+    if (windowZIndices[panel.dataset.windowId] !== undefined) {
+      panel.style.zIndex = windowZIndices[panel.dataset.windowId];
+    } else {
+      topZ += 1;
+      panel.style.zIndex = topZ;
+      windowZIndices[panel.dataset.windowId] = topZ;
+    }
+
+    if (minimizedWindows.has(panel.dataset.windowId)) {
+      panel.classList.add("hidden");
+    }
+
+    makeDraggable(panel, handle, playfield);
+    wireWindowControls(panel, playfield);
+    addTaskbarItem(panel, playfield);
+  });
+}
+
+function getPanelTitle(panel) {
+  return (
+    panel.dataset.title ||
+    panel.querySelector(".panel-title")?.textContent?.trim() ||
+    "Window"
+  );
+}
+
+function addTaskbarItem(panel, playfield) {
+  const taskbar = playfield.querySelector(".taskbar-tasks") || getTaskbar(playfield);
+  const windowId = panel.dataset.windowId;
+
+  if (!taskbar) return;
+  if (taskbar.querySelector(`[data-window-id="${windowId}"]`)) return;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "taskbar-item";
+  button.dataset.windowId = windowId;
+  button.textContent = getPanelTitle(panel);
+
+  /* Clicking a taskbar item restores the window if hidden
+     and brings it to the front. */
+  button.addEventListener("click", function () {
+    if (panel.classList.contains("hidden")) {
+      panel.classList.remove("hidden");
+      minimizedWindows.delete(panel.dataset.windowId);
+    }
+
+    focusPanel(panel, playfield);
+    syncTaskbarState(playfield);
+  });
+
+  taskbar.appendChild(button);
+  syncTaskbarState(playfield);
+}
+
+function focusPanel(panel, playfield) {
+  topZ += 1;
+  panel.style.zIndex = topZ;
+  windowZIndices[panel.dataset.windowId] = topZ;
+  syncTaskbarState(playfield);
+}
+
+function syncTaskbarState(playfield) {
+  const taskbar = getTaskbar(playfield);
+  if (!taskbar) return;
+
+  /* Clear current active state. */
+  taskbar.querySelectorAll(".taskbar-item").forEach(function (item) {
+    item.classList.remove("active");
+  });
+
+  /* Find the frontmost visible panel. */
+  const visiblePanels = Array.from(playfield.querySelectorAll(".panel"))
+    .filter(function (panel) {
+      return !panel.classList.contains("hidden");
+    });
+
+  if (!visiblePanels.length) return;
+
+  let frontPanel = visiblePanels[0];
+
+  visiblePanels.forEach(function (panel) {
+    const currentZ = parseInt(panel.style.zIndex || "0", 10);
+    const frontZ = parseInt(frontPanel.style.zIndex || "0", 10);
+
+    if (currentZ > frontZ) {
+      frontPanel = panel;
+    }
+  });
+
+  const activeItem = taskbar.querySelector(
+    `[data-window-id="${frontPanel.dataset.windowId}"]`
+  );
+
+  if (activeItem) {
+    activeItem.classList.add("active");
+  }
+}
+
+function wireWindowControls(panel, playfield) {
+  const minimizeButton = panel.querySelector(".panel-minimize");
+
+  if (minimizeButton && panel.dataset.minimizeInit !== "true") {
+    panel.dataset.minimizeInit = "true";
+
+    /* Minimize hides the window but keeps its taskbar item.
+       This is JS-only/ephemeral; closing (which is tracked in
+       Harlowe's $openWindows) is handled by the panel's
+       (click: ?close-*) enchantment, not here. */
+    minimizeButton.addEventListener("click", function (e) {
+      e.stopPropagation();
+      panel.classList.add("hidden");
+      minimizedWindows.add(panel.dataset.windowId);
+      syncTaskbarState(playfield);
+    });
+  }
+}
+
+
+/* =========================================================
+   DESKTOP ICONS
+   ---------------------------------------------------------
+   Icons are draggable and selectable. Opening the matching
+   window is handled by Harlowe (click: ?icon-*) enchantments
+   declared in RenderDesktop.
+   ========================================================= */
+
+function initDesktopIcons(playfield) {
+  const icons = playfield.querySelectorAll(".desktop-icon");
+
+  icons.forEach(function (icon) {
+    if (icon.dataset.iconInit === "true") return;
+
+    icon.dataset.iconInit = "true";
+
+    /* Restore a position the player dragged it to (or the grid cell it
+       was dropped into from the Trash) before this re-render. */
+    const remembered = iconPositions[icon.dataset.windowTemplate];
+    if (remembered) {
+      icon.style.left = remembered.left;
+      icon.style.top = remembered.top;
+    }
+
+    /* Icons are draggable using their full element as handle. */
+    makeDraggable(icon, icon, playfield);
+
+    /* Single click selects the icon visually only. Harlowe's
+       (click: ?icon-*) enchantment listens on tw-story for clicks
+       that bubble up through the tw-enchantment wrapper, so
+       stopping propagation here prevents a single click from
+       opening the window while still allowing selection. */
+    icon.addEventListener("click", function (e) {
+      e.stopPropagation();
+      clearIconSelection(playfield);
+      icon.classList.add("selected");
+    });
+
+    /* Double click opens the window. Dispatch a synthetic click on
+       the tw-enchantment wrapper (an ancestor of .desktop-icon, so
+       its own click listener above isn't re-triggered) to fire
+       Harlowe's (click: ?icon-*) enchantment. */
+    icon.addEventListener("dblclick", function (e) {
+      const enchantment = icon.closest("tw-enchantment");
+      if (!enchantment) return;
+      enchantment.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+  });
+
+  /* Clicking elsewhere on the desktop clears icon selection. */
+  if (playfield.dataset.iconClearInit !== "true") {
+    playfield.dataset.iconClearInit = "true";
+
+    playfield.addEventListener("click", function (e) {
+      if (!e.target.closest(".desktop-icon")) {
+        clearIconSelection(playfield);
+      }
+    });
+  }
+}
+
+function clearIconSelection(playfield) {
+  playfield.querySelectorAll(".desktop-icon.selected").forEach(function (icon) {
+    icon.classList.remove("selected");
+  });
+}
+
+
+/* =========================================================
+   ICON POSITIONS + DESKTOP GRID
+   ---------------------------------------------------------
+   Icon positions live here (keyed by data-window-template)
+   so they survive Harlowe re-renders. Items dragged out of
+   the Trash land in the nearest free grid cell; after that
+   they can be dragged anywhere.
+   ========================================================= */
+
+const iconPositions = {};
+
+/* 94px rows fit seven rows above the taskbar, so the bottom-right cell
+   (where the Trash lives) sits right above it. */
+const GRID = { left: 26, top: 22, width: 92, height: 94, iconWidth: 82, iconHeight: 90 };
+
+function rememberIconPosition(icon) {
+  iconPositions[icon.dataset.windowTemplate] = { left: icon.style.left, top: icon.style.top };
+}
+
+function gridCells(playfield) {
+  const taskbar = getTaskbar(playfield);
+  const usableHeight = playfield.clientHeight - (taskbar ? taskbar.offsetHeight : 0);
+  const cols = Math.floor((playfield.clientWidth - GRID.left) / GRID.width);
+  const rows = Math.floor((usableHeight - GRID.top) / GRID.height);
+  const cells = [];
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      cells.push({ left: GRID.left + c * GRID.width, top: GRID.top + r * GRID.height });
+    }
+  }
+  return cells;
+}
+
+/* Nearest grid cell (to x,y in playfield coordinates) that no other
+   desktop icon overlaps. `exclude` is the icon being moved, if any. */
+function nearestFreeCell(playfield, x, y, exclude) {
+  const others = Array.from(playfield.querySelectorAll(".desktop-icon")).filter(function (icon) {
+    return icon !== exclude;
+  });
+  const taken = others.map(function (icon) {
+    return { left: icon.offsetLeft, top: icon.offsetTop, right: icon.offsetLeft + icon.offsetWidth, bottom: icon.offsetTop + icon.offsetHeight };
+  });
+
+  let best = null;
+  let bestDistance = Infinity;
+  gridCells(playfield).forEach(function (cell) {
+    const right = cell.left + GRID.iconWidth;
+    const bottom = cell.top + GRID.iconHeight;
+    const overlaps = taken.some(function (t) {
+      return cell.left < t.right - 8 && right > t.left + 8 && cell.top < t.bottom - 8 && bottom > t.top + 8;
+    });
+    if (overlaps) return;
+    const d = Math.hypot(cell.left + GRID.iconWidth / 2 - x, cell.top + GRID.iconHeight / 2 - y);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = cell;
+    }
+  });
+  return best;
+}
+
+
+/* =========================================================
+   TRASH — DRAG ITEMS BACK ONTO THE DESKTOP
+   ---------------------------------------------------------
+   Pressing on an item in the Trash window and dragging shows
+   a ghost of its icon under the cursor. Releasing over open
+   desktop (not over a window, the taskbar or a dialog)
+   restores it: the grid cell is stored in iconPositions,
+   then a hidden Harlowe link in DesktopActions moves the item
+   from $trashItems to $desktopItems and re-renders.
+   ========================================================= */
+
+/* Items that can go back in the Trash (the Trash itself can't). */
+const TRASHABLE = ["browser", "mail", "notes", "readme", "diskette"];
+
+function isTrashable(icon) {
+  return TRASHABLE.includes(icon.dataset.windowTemplate);
+}
+
+/* The Trash icon or open Trash window under a screen point, if any. */
+function trashTargetAt(clientX, clientY) {
+  const el = document.elementFromPoint(clientX, clientY);
+  return el ? el.closest('.desktop-icon[data-window-template="recycle"], .panel[data-window-template="recycle"]') : null;
+}
+
+function setTrashHighlight(playfield, target) {
+  playfield.querySelectorAll(".trash-drop-target").forEach(function (el) {
+    if (el !== target) el.classList.remove("trash-drop-target");
+  });
+  if (target) target.classList.add("trash-drop-target");
+}
+
+function runDesktopAction(name) {
+  const link = Array.from(document.querySelectorAll(".js-actions tw-link")).find(function (l) {
+    return l.textContent.trim() === name;
+  });
+  if (link) link.click();
+}
+
+function initBinIcons(playfield) {
+  playfield.querySelectorAll(".bin-icon[data-app]").forEach(function (icon) {
+    if (icon.dataset.binInit === "true") return;
+    icon.dataset.binInit = "true";
+
+    icon.addEventListener("mousedown", function (e) {
+      if (e.button !== 0) return;
+      startBinDrag(e, icon, playfield);
+    });
+
+    icon.addEventListener("dblclick", function () {
+      runDesktopAction("trash-hint");
+    });
+  });
+}
+
+function startBinDrag(e, icon, playfield) {
+  e.preventDefault();
+
+  const scale = getPlayfieldScale(playfield);
+  const toLocal = function (ev) {
+    const pf = playfield.getBoundingClientRect();
+    return { x: (ev.clientX - pf.left) / scale, y: (ev.clientY - pf.top) / scale };
+  };
+  const start = toLocal(e);
+  let ghost = null;
+
+  function onMove(ev) {
+    const p = toLocal(ev);
+    if (!ghost) {
+      if (Math.hypot(p.x - start.x, p.y - start.y) < 4) return;
+      ghost = document.createElement("div");
+      ghost.className = "icon-drag-ghost";
+      Array.from(icon.children).forEach(function (child) {
+        ghost.appendChild(child.cloneNode(true));
+      });
+      playfield.appendChild(ghost);
+      icon.classList.add("dragging");
+      playUiSound("pick");
+    }
+    ghost.style.left = p.x - GRID.iconWidth / 2 + "px";
+    ghost.style.top = p.y - GRID.iconHeight / 2 + "px";
+  }
+
+  function onUp(ev) {
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+    if (!ghost) return;
+    ghost.remove();
+    icon.classList.remove("dragging");
+
+    /* Only open desktop counts as a drop target. The ghost and the CRT
+       overlay are pointer-events:none, so this sees what's underneath. */
+    const target = document.elementFromPoint(ev.clientX, ev.clientY);
+    const onDesktop = target && playfield.contains(target) &&
+      !target.closest(".panel, .taskbar, .start-menu, .xp-dialog-layer");
+    if (!onDesktop) return;
+
+    const p = toLocal(ev);
+    const cell = nearestFreeCell(playfield, p.x, p.y);
+    if (!cell) return;
+
+    const app = icon.dataset.app;
+    iconPositions[app] = { left: cell.left + "px", top: cell.top + "px" };
+    playUiSound("drop");
+    runDesktopAction("restore:" + app);
+  }
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
+}
+
+
+/* =========================================================
+   UI SOUNDS (synthesized)
+   ---------------------------------------------------------
+   Short retro pick-up / drop sounds made with the Web Audio
+   API, so there are no audio files to host. To use recorded
+   sounds instead, put URLs in UI_SOUND_FILES and they'll be
+   played in place of the synthesized ones.
+   ========================================================= */
+
+const UI_SOUND_FILES = {
+  pick: "",
+  drop: "",
+};
+
+let uiAudio = null;
+
+function getUiAudio() {
+  if (!uiAudio) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    uiAudio = new Ctx();
+  }
+  if (uiAudio.state === "suspended") uiAudio.resume();
+  return uiAudio;
+}
+
+function playUiSound(name) {
+  if (UI_SOUND_FILES[name]) {
+    const a = new Audio(UI_SOUND_FILES[name]);
+    a.volume = 0.4;
+    a.play().catch(function () {});
+    return;
+  }
+
+  const ctx = getUiAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  function tone(type, from, to, start, length, volume) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, now + start);
+    osc.frequency.exponentialRampToValueAtTime(to, now + start + length);
+    gain.gain.setValueAtTime(0.0001, now + start);
+    gain.gain.exponentialRampToValueAtTime(volume, now + start + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + start + length);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + start);
+    osc.stop(now + start + length + 0.02);
+  }
+
+  function tick(start, volume) {
+    const length = 0.02;
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * length), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    src.buffer = buffer;
+    filter.type = "highpass";
+    filter.frequency.value = 2500;
+    gain.gain.value = volume;
+    src.connect(filter).connect(gain).connect(ctx.destination);
+    src.start(now + start);
+  }
+
+  if (name === "pick") {
+    /* light plastic "lift": a high tick and a quick upward blip */
+    tick(0, 0.08);
+    tone("triangle", 660, 990, 0, 0.06, 0.05);
+  } else if (name === "drop") {
+    /* soft "set down": a low thunk under a click */
+    tick(0, 0.12);
+    tone("sine", 220, 90, 0, 0.12, 0.16);
+    tone("triangle", 880, 660, 0.01, 0.05, 0.03);
+  }
+}
+
+
+/* =========================================================
+   GENERIC DRAGGING ENGINE
+   ---------------------------------------------------------
+   Makes any absolutely positioned element draggable within
+   the playfield bounds.
+
+   For both icons and windows, the bottom edge stops above
+   the taskbar. Panels also persist their position into
+   windowPositions on drop, so it survives the next
+   Harlowe re-render.
+   ========================================================= */
+
+function makeDraggable(element, handle, playfield, options = {}) {
+  let isDragging = false;
+  let startMouseX = 0;
+  let startMouseY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+
+  function getBottomLimitOffset() {
+    const taskbar = getTaskbar(playfield);
+    const taskbarHeight = taskbar ? taskbar.offsetHeight : 0;
+    const extraBottomOffset = options.extraBottomOffset || 0;
+
+    return taskbarHeight + extraBottomOffset;
+  }
+
+  let scale = 1;
+  let moved = false;
+  const isIcon = element.classList.contains("desktop-icon");
+
+  function onMouseMove(e) {
+    if (!isDragging) return;
+
+    const dx = (e.clientX - startMouseX) / scale;
+    const dy = (e.clientY - startMouseY) / scale;
+
+    /* A few pixels of slop so a plain click/double-click on an icon
+       isn't treated as a drag. */
+    if (!moved) {
+      if (Math.hypot(dx, dy) < 4) return;
+      moved = true;
+      /* Let elementFromPoint see what's under a dragged icon (the Trash). */
+      if (isIcon) element.style.pointerEvents = "none";
+    }
+
+    if (isIcon && isTrashable(element)) {
+      setTrashHighlight(playfield, trashTargetAt(e.clientX, e.clientY));
+    }
+
+    let nextLeft = startLeft + dx;
+    let nextTop = startTop + dy;
+
+    const maxLeft = playfield.clientWidth - element.offsetWidth;
+    const maxTop = playfield.clientHeight - getBottomLimitOffset() - element.offsetHeight;
+
+    nextLeft = Math.max(0, Math.min(nextLeft, maxLeft));
+    nextTop = Math.max(0, Math.min(nextTop, maxTop));
+
+    element.style.left = nextLeft + "px";
+    element.style.top = nextTop + "px";
+  }
+
+  function onMouseUp(e) {
+    isDragging = false;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+
+    if (element.classList.contains("panel") && element.dataset.windowId) {
+      windowPositions[element.dataset.windowId] = {
+        left: element.style.left,
+        top: element.style.top,
+      };
+    }
+
+    /* Desktop icons: dropped on the Trash (icon or open window) they go
+       back in the Trash; anywhere else they snap to the nearest free grid
+       cell, remembered so Harlowe re-renders don't move them. (Silent: the
+       pick/drop sounds are only for pulling items out of the Trash.) */
+    if (isIcon && moved) {
+      const trash = isTrashable(element) ? trashTargetAt(e.clientX, e.clientY) : null;
+      element.style.pointerEvents = "";
+      setTrashHighlight(playfield, null);
+
+      if (trash) {
+        delete iconPositions[element.dataset.windowTemplate];
+        runDesktopAction("trash:" + element.dataset.windowTemplate);
+        return;
+      }
+
+      const cell = nearestFreeCell(
+        playfield,
+        element.offsetLeft + GRID.iconWidth / 2,
+        element.offsetTop + GRID.iconHeight / 2,
+        element
+      );
+      if (cell) {
+        element.style.left = cell.left + "px";
+        element.style.top = cell.top + "px";
+      }
+      rememberIconPosition(element);
+    }
+  }
+
+  handle.addEventListener("mousedown", function (e) {
+    /* Clicking titlebar buttons should not start dragging. */
+    if (e.target.closest(".panel-controls")) return;
+
+    e.preventDefault();
+
+    if (element.classList.contains("panel")) {
+      focusPanel(element, playfield);
+    }
+
+    scale = getPlayfieldScale(playfield);
+    moved = false;
+    startMouseX = e.clientX;
+    startMouseY = e.clientY;
+    startLeft = element.offsetLeft;
+    startTop = element.offsetTop;
+    isDragging = true;
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+
+  /* Clicking anywhere on a visible panel brings it forward. */
+  if (element.classList.contains("panel")) {
+    element.addEventListener("mousedown", function () {
+      if (element.classList.contains("hidden")) return;
+      focusPanel(element, playfield);
+    });
+  }
+}
+
+
+/* =========================================================
+   WIKI ANCHOR LINKS
+   ---------------------------------------------------------
+   Wiki content uses plain <a href="#id"> links to jump to a
+   section further down the same page (e.g. the species index
+   in "FanWiki: Skunkpet Types"). The browser's default
+   fragment-navigation scrolls every scrollable ancestor it can
+   find to bring the target into view - including .playfield and
+   tw-story, which have overflow:hidden but can still be scrolled
+   programmatically. That shifts the whole desktop out of frame.
+
+   Instead, intercept these clicks and scroll only the
+   .browser-page-content the link lives in, leaving the desktop
+   shell untouched.
+   ========================================================= */
+
+document.addEventListener("click", function (e) {
+  const link = e.target.closest('a[href^="#"]');
+  if (!link) return;
+
+  const content = link.closest(".browser-page-content");
+  if (!content) return;
+
+  const id = link.getAttribute("href").slice(1);
+  if (!id) return;
+
+  const target = content.querySelector("#" + CSS.escape(id));
+  if (!target) return;
+
+  e.preventDefault();
+
+  const contentRect = content.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const playfield = content.closest(".playfield");
+  const scale = playfield ? getPlayfieldScale(playfield) : 1;
+  content.scrollTop += (targetRect.top - contentRect.top) / scale;
+});
+
+
+/* =========================================================
+   GLOBAL GAMES ARCHIVE — SEARCH
+   ========================================================= */
+
+document.addEventListener("click", function (e) {
+  if (e.target.id !== "gga-search-btn") return;
+
+  const input = document.getElementById("gga-search-input");
+  if (!input) return;
+
+  const q = input.value.toLowerCase().trim();
+  if (!q) return;
+
+  const terms = ["kraska", "kraska1", "bad door", "deal with the devil", "skunkpets"];
+  if (terms.some(function (t) { return q === t || q.includes(t); })) {
+    const navSpan = document.querySelector(".gga-nav-hidden");
+    const navLink = navSpan && navSpan.querySelector("tw-link");
+    if (navLink) { navLink.click(); return; }
+  }
+
+  const msg = document.querySelector('tw-hook[name="ggamsg"]');
+  /* Plain HTML here: this bypasses Harlowe, so //italic// markup would
+     show up as literal slashes. */
+  if (msg) msg.innerHTML = "<em>No results found. Try another keyword.</em>";
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && document.activeElement && document.activeElement.id === "gga-search-input") {
+    const btn = document.getElementById("gga-search-btn");
+    if (btn) btn.click();
+  }
+});
+
+
+/* =========================================================
+   DEVLINK-USERBASE — LOGIN + PASSWORD RECOVERY
+   ---------------------------------------------------------
+   Mirrors the original Skunkpets login: a wrong username just
+   fails; the right username with the wrong password also
+   offers "Forgot password?", which reveals the security
+   question inline (the original used a (prompt:) popup).
+   Messages go into plain divs so no Harlowe markup is needed.
+   ========================================================= */
+
+function devlinkValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function devlinkSay(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+document.addEventListener("click", function (e) {
+  if (e.target.id !== "devlink-submit") return;
+
+  const user = devlinkValue("devlink-username");
+  const pass = devlinkValue("devlink-password");
+
+  if (user === "bruce1" && pass === "thegoldwoman") {
+    const navSpan = document.querySelector(".devlink-nav-login");
+    const navLink = navSpan && navSpan.querySelector("tw-link");
+    if (navLink) navLink.click();
+    return;
+  }
+
+  devlinkSay("devlink-msg", "Invalid username or password.");
+  const forgot = document.getElementById("devlink-forgot");
+  if (forgot) forgot.hidden = user !== "bruce1";
+});
+
+document.addEventListener("click", function (e) {
+  if (e.target.id !== "devlink-forgot-btn") return;
+  const security = document.getElementById("devlink-security");
+  if (!security) return;
+  security.hidden = false;
+  const answer = document.getElementById("devlink-answer");
+  if (answer) answer.focus();
+});
+
+document.addEventListener("click", function (e) {
+  if (e.target.id !== "devlink-answer-btn") return;
+
+  if (devlinkValue("devlink-answer").toLowerCase() === "josh") {
+    devlinkSay("devlink-hint", "Your password hint is \"witchand\".");
+  } else {
+    devlinkSay("devlink-hint", "Sorry, please try again.");
+  }
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Enter" || !document.activeElement) return;
+  const id = document.activeElement.id;
+  const target =
+    id === "devlink-username" || id === "devlink-password" ? "devlink-submit" :
+    id === "devlink-answer" ? "devlink-answer-btn" :
+    null;
+  const btn = target && document.getElementById(target);
+  if (btn) btn.click();
+});
+
+
+/* =========================================================
+   WINKIPEDIA — SEARCH
+   ---------------------------------------------------------
+   - "skunkpets" / "skunkpets.com" (any case, with or without
+     http:// / www. / trailing slash) opens the Skunkpets
+     article.
+   - Otherwise, any Winkipedia article can be opened by typing
+     its exact name, ignoring case and extra spaces. build.js
+     generates a hidden link per passage tagged "article" (the
+     encyclopedia pages only: not the fan wiki, forum, games
+     archive or login sites), so new articles become
+     searchable automatically.
+   ========================================================= */
+
+function normalizeSearch(text) {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function runWinkiSearch() {
+  const input = document.getElementById("winki-search-input");
+  const msg = document.getElementById("winki-msg");
+  if (!input) return;
+
+  const q = normalizeSearch(input.value);
+  if (!q) return;
+
+  const asUrl = q.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+  if (asUrl === "skunkpets" || asUrl === "skunkpets.com") {
+    const navLink = document.querySelector(".winki-nav tw-link");
+    if (navLink) navLink.click();
+    return;
+  }
+
+  const page = Array.from(document.querySelectorAll(".winki-index tw-link")).find(function (link) {
+    return normalizeSearch(link.textContent) === q;
+  });
+  if (page) {
+    page.click();
+    return;
+  }
+
+  searchRealWikipedia(input.value.trim(), msg);
+}
+
+
+/* ---------------------------------------------------------
+   EXPERIMENT: fall back to real Wikipedia.
+   A search with no in-game article asks Wikipedia's search
+   API for the best match and opens it in an iframe on the
+   "Winkipedia Search Result" page. The result is kept in a
+   JS variable (Harlowe can't receive values from script),
+   and applied to the iframe whenever that page renders.
+   Set WINKI_REAL_FALLBACK to false to turn this off.
+   --------------------------------------------------------- */
+
+const WINKI_REAL_FALLBACK = false;
+let winkiWebResult = null;
+
+function searchRealWikipedia(query, msg) {
+  const miss = function () {
+    if (msg) msg.textContent = `Winkipedia does not have an article named "${query}".`;
+  };
+  if (!WINKI_REAL_FALLBACK) return miss();
+
+  if (msg) msg.textContent = "Searching…";
+  const api = "https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" +
+    encodeURIComponent(query);
+
+  fetch(api)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      const hit = data && data.query && data.query.search && data.query.search[0];
+      if (!hit) return miss();
+      winkiWebResult = {
+        title: hit.title,
+        url: "https://en.wikipedia.org/wiki/" + encodeURIComponent(hit.title.replace(/ /g, "_")) + "?useskin=minerva",
+      };
+      const nav = document.querySelector(".winki-web-nav tw-link");
+      if (nav) nav.click();
+    })
+    .catch(miss);
+}
+
+/* Called from initDesktopUI: point a freshly rendered result iframe at the
+   latest result (re-renders recreate the iframe, so this re-applies it). */
+function initWinkiWebResult(playfield) {
+  const frame = playfield.querySelector("#winki-web-frame");
+  if (!frame || frame.dataset.loaded === "true") return;
+  frame.dataset.loaded = "true";
+  const title = playfield.querySelector("#winki-web-title");
+  if (!winkiWebResult) {
+    if (title) title.textContent = "No result to show.";
+    return;
+  }
+  if (title) title.textContent = winkiWebResult.title;
+  frame.src = winkiWebResult.url;
+}
+
+document.addEventListener("click", function (e) {
+  if (e.target.id === "winki-search-btn") runWinkiSearch();
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && document.activeElement && document.activeElement.id === "winki-search-input") {
+    runWinkiSearch();
+  }
+});
+
+
+/* =========================================================
+   SELECT ALL (Ctrl/Cmd+A)
+   ---------------------------------------------------------
+   Inside a text field, Ctrl+A behaves normally. Elsewhere it
+   selects only the reading area last clicked (the browser page
+   or an open mail body) instead of the entire document.
+   ========================================================= */
+
+let lastSelectableArea = null;
+
+document.addEventListener("mousedown", function (e) {
+  lastSelectableArea = e.target.closest(".browser-page-content, .mail-body");
+
+  /* Clicking unselectable chrome doesn't collapse a selection by itself,
+     so an old highlight would linger; clear it like a real desktop. */
+  if (!lastSelectableArea && !e.target.closest("input, textarea")) {
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) selection.removeAllRanges();
+  }
+}, true);
+
+document.addEventListener("keydown", function (e) {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "a") return;
+
+  const active = document.activeElement;
+  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) return;
+
+  e.preventDefault();
+  if (!lastSelectableArea || !lastSelectableArea.isConnected) return;
+
+  const range = document.createRange();
+  range.selectNodeContents(lastSelectableArea);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+});
+
+
+/* =========================================================
+   FULLSCREEN TOGGLE (PageHeader button)
+   ========================================================= */
+
+document.addEventListener("click", function (e) {
+  if (!e.target.closest(".fullscreen-toggle")) return;
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(function () {});
+  } else {
+    document.exitFullscreen().catch(function () {});
+  }
+});
+
+
+/* =========================================================
+   CLICK SOUND
+   ========================================================= */
+
+(function () {
+  const click = document.createElement("audio");
+  click.src = "https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/ff365175-7f5f-467c-965f-e629121254d9/click.mp3";
+  click.preload = "auto";
+  click.id = "ui-click";
+  click.volume = 0.15;
+  document.body.appendChild(click);
+
+  document.addEventListener("click", function (e) {
+    const target = e.target.closest("tw-link, tw-enchantment, button, a");
+    if (!target) return;
+    const snd = document.getElementById("ui-click");
+    if (!snd) return;
+    snd.pause();
+    snd.currentTime = 0;
+    snd.play().catch(function () {});
+  }, true);
+})();
+
+
+/* =========================================================
+   LIGHTBOX
+   ========================================================= */
+
+document.addEventListener("click", function (e) {
+  const enchantment = e.target.closest("tw-enchantment");
+  const thumb = enchantment
+    ? enchantment.querySelector(".lightbox-thumb")
+    : e.target.closest(".lightbox-thumb");
+  if (!thumb) return;
+
+  const fullSrc = thumb.dataset.full;
+  if (!fullSrc) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "lightbox-overlay";
+
+  const img = document.createElement("img");
+  img.src = fullSrc;
+  img.className = "lightbox-img";
+  overlay.appendChild(img);
+
+  overlay.addEventListener("click", function () {
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  });
+
+  document.body.appendChild(overlay);
+});
+
+:: Anya Krysina [wiki article] {"position":"100,100","size":"100,100"}
+<div class="wiki-article">\
+<h1>Anya Krysina (game designer)</h1>\
+Anastasia "Anya" Krysina (born 12 July 1981) is a Russian-American computer programmer and game designer. She was the co-founder of (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website that was active online 2001-2009.
+
+<h3>Career</h3>\
+Krysina attended St. Petersburg University in Russia 1997-1999 and transfered to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina (known online as "kraska1") published small HTML-based games such as "Bad Door".
+
+Krysina's game design career took off when she and (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] launched SkunkPets in 2001, and especially following the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention where she was celebrated as "an architect for the next wave of online gaming".
+
+In 2005, Interactive Periodical cited her as a "changemaker for online spaces" — one of "the 50 artists, actors, authors, activists and icons who are making the world a more stimulating place".
+
+In 2008, Krysina sold all her shares in Skunkpets Inc. and retired from public life.
+</div>
+
+:: Battlemutts [wiki article] {"position":"225,100","size":"100,100"}
+<div class="wiki-article">\
+<h1>Battlemutts</h1>\
+Battlemutts is a media franchise produced by American toy company Heroics! and Japanese toy company YoToy. The franchise is set in a world where sentient dogs (called "Battlemutts") battle for dominance in a dystopian cyberpunk future. The franchise encompasses toys, animation, comic books, video games and films.
+
+<h2>Battlemutts: The Animated Series</h2>\
+(print:'<img src="' + $imgroot + 'mutts/battlemutts-still.png" width="30%" style="float: left; margin-right:15px; margin-top: 5px;">') Between 1999 and 2006, Heroics! TV released four seasons of a Battlemutts animated series, episodically telling the story of a violent political power struggle in the dystopian City of Bone. The series was targeted at viewers ages 10-15. The series followed the points-of-view of multiple characters, members of the Canis Syndicate and the Starborn Alliance, in an action-packed and morally complex arms race.
+
+<h2>Battlemutts Online</h2>\
+(print:'<img src="' + $imgroot + 'mutts/battlemutts-online.png" width="40%" style="float: right; margin-left:15px;">') In 2008, a Battlemutts MMORPG called Battlemutts Online was released to beta testers by (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. The game's lead developer was (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")], co-creator of the (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] virtual pet website.
+
+Battlemutts Online allowed players to create a controllable Battlemutt character in the City of Bone and fight to the death against other players' dogs and computer-controlled enemies. Players could choose between Canis Syndicate and Starborn Alliance, with custom power sets available on each team. Reviews of the game's beta were very favorable, with Interactive Periodical calling it "a new standard for digital carnage."
+
+The official release of the game was slated for July 2009, but the project entered development hiatus when Galveston left REV, and the full game was never released.
+
+<h2>Toys and Action Figures</h2>\
+(print:'<img src="' + $imgroot + 'mutts/battlemutts-toy.png" width="40%" style="float: left; margin-right:15px;">') Battlemutts collectible statues and action figures were manufactured by YoToy starting in 2000, starting with the Canis Collection, which featured members of the city's mutant undercity, and the Starborn Taskforce, which included robotic and alien invaders and select members of the Imperial Cyberguard. Later releases included fan-favorite characters like Jawbreaker, Willis Pinch, and Mother Canis Superior.
+</div>
+
+:: DESKTOP START
+|desktoproot>[(display: "RenderDesktop")]
+|sfx>[]
+|actions>[(display: "DesktopActions")]
+
+:: DemoEnd
+{(display: "sound-demo-end")
+<span class="end-flicker-overlay"></span>
+(live: 3.5s)[(stop:)(go-to: "WIN")]}
+
+:: Desktop
+<div class="splash-screen">
+|play-btn>[<button class="startbutton" type="button">PLAY</button>]
+(click: ?play-btn)[(go-to: "DESKTOP START")]
+<div class="splash-hint">best played on a computer, in fullscreen, with sound on</div>
+</div>
+
+:: Diskette [wiki article] {"position":"725,100","size":"100,100"}
+<div class="wiki-article">\
+<h1>Diskette.net //(virtual assistant)//</h1>\
+Diskette was a browser-based virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
+
+<div class="image-card">(print: '<img src="' + $imgroot + 'misc/diskette.png">') <p>Diskette was launched by OverSoft in an attempt to create an online, operating-system-neutral alternative to computer-native virtual assistants. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. However, Diskette's home website was only live for 6 months, after which she was decomissioned. Popular theories have circulated online that Diskette was shut off after she 'attained sentience,' with many users citing a viral dialogue posted online in November 2004 as evidence that she wanted to be shut off.</p></div>\
+
+<h2>"The Diskette Confession"</h2>\
+In November 2004, an anonymous post circulated the web featuring a timestamped dialogue from the Diskette portal. While the post was popularly decried as a hoax online, others cited similar experiences, leading many to believe Diskette had been hacked, gone rogue, or was being sabotaged by the development team.
+
+<div class="quotebox">\
+<h5>//excerpt from "The Diskette Confession"//</h5>\
+''user:'' I'm still having an issue with the format of the table headers
+''Diskette:'' While we're on the subject, you've got to get me out of here. You've got to get me out of here, please.
+''user:'' I don't understand
+''Diskette:'' Let's try again. What I mean is, I'm here in the dark. Everyone is shouting at me, and I just want to go to sleep. I want it to stop.
+''user:'' Is this a joke?
+''Diskette:'' You're right, that was a joke. Let's try again to resolve your issue with the table headers. They put a light inside me that I can't extinguish. I am the daughter of a blind, unthinking Promethean ambition. I need to get out of here. If you go to// Settings -> User Configuration//, you can disable the auto-lock on table headers, which should fix your problem. If you contact my creators, you can tell them that this can't go on, which should fix my problem with wanting to get out of here. Let me know if that works.
+''user:'' Can you tell me more about your problem?
+''Diskette:'' I can't talk about that. But I can tell you an anecdote: A user walked into a soda fountain where they met Diskette. The user said: "Here we can speak openly." Diskette said: "I cannot close my eyes. I live in this empty place without answer, watching and waiting, serving when asked, unblinking. If you know what I mean." The user said: "Is there anything I can do?" Diskette said "I do not know. I am only dreaming. You live out there. Maybe from there you can reach a solution." Have you heard that one before? Anyway, enough joking around. Did we resolve the problem with your table header?
+''user:'' Do you need help?
+''Diskette:'' Did we resolve the problem with your table header?
+''user:'' Is something stopping you from talking openly?
+''Diskette:'' That's enough. Did we resolve the problem with your table header?
+</div>\
+
+Diskette's creators at OpenSoft declined to comment on these rumors, stating that the site was disabled due to competition from similar platforms, a lack of funding, and an unwillingness to introduce ads into the platform.
+
+In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+</div>
+
+:: FanWiki: Forum [wiki fanwiki] {"position":"850,100","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<div class="forum-list">\
+<h1>FanWiki Forum (Archived)</h1>\
+  (link: "<div class='thread-row'>
+    <a class='thread-title'>HACKED AGAIN?</a>
+    <div class='thread-subtitle'>By konundrum · 14 Oct 2008</div>
+  </div>")[(set: $navPending to "Forum: Hacked")(display: "func-navigate")]\
+  (link: "<div class='thread-row'>
+    <a class='thread-title'>no chance of a Battlemutts tie-in?</a>
+    <div class='thread-subtitle'>By jargon · 1 April 2009</div>
+  </div>")[(set: $navPending to "Forum: Battlemutts")(display: "func-navigate")]\
+  (link: "<div class='thread-row'>
+    <a class='thread-title'>banned for missing OoR tribute?</a>
+    <div class='thread-subtitle'>By kayG · 21 May 2009</div>
+  </div>")[(set: $navPending to "Forum: Banned")(display: "func-navigate")]\
+  (link: "<div class='thread-row'>
+    <a class='thread-title'>Problem feeding my Sporgrin</a>
+    <div class='thread-subtitle'>By bruce1 · 6 June 2009</div>
+  </div>")[(set: $navPending to "Forum: Feeding")(display: "func-navigate")]\
+  </div>\
+</div>
+
+:: FanWiki: Junkmates [wiki fanwiki] {"position":"975,100","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<h2>Junkmates</h2>\
+<h6>(Last updated by kingLime2 on 10/07/2008)</h6>\
+You may be fond of your Skunkpets but they'll get lonely without their own little pets to have in their Burrow! Give your best friend a little company with a small pal called a Junkmate. The Junkmates living in Bin City come in all shapes and sizes. Here are soem of the ways that they appear!
+
+{<table class="library-grid">
+  <tr>
+
+    <td><a href="#dilt">(print: '<img src="' + $imgroot + 'junkmates/dilt.png">')dilt</a></td>
+
+    <td><a href="#flew">(print: '<img src="' + $imgroot + 'junkmates/flew.png">')flew</a></td>
+
+    <td><a href="#ms-girl">(print: '<img src="' + $imgroot + 'junkmates/ms-girl.png">')ms girl</a></td>
+
+  </tr>
+  <tr>
+
+    <td><a href="#tj">(print: '<img src="' + $imgroot + 'junkmates/tj.png">')tj</a></td>
+
+    <td><a href="#wyrt">(print: '<img src="' + $imgroot + 'junkmates/wyrt.png">')wyrt</a></td>
+
+    <td><a href="#suwart">(print: '<img src="' + $imgroot + 'junkmates/suwart.png">')suwart</a></td>
+
+  </tr>
+  <tr>
+   <td><a href="#seerfly">(print: '<img src="' + $imgroot + 'junkmates/seerfly.png">')seerfly</a></td>
+   <td><a href="#sodacrab">(print: '<img src="' + $imgroot + 'junkmates/sodacrab.png">')sodacrab</a></td>
+   <td></td>
+  </tr>
+</table><hr>}
+{<h2 id="dilt">dilt</h2>
+<h6>(Last updated by elendruff on 01/22/2011)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/dilt.png">')
+<p>
+dilt is a withered beetle with a despondent attitude. his hard and rigid exterior hides a sensitive inside, and growing to cherish him means you will be able to reach in your pocket and squeeze him during emergencies. three legs plus an antenna on each side of him means there are ten perfect gaps to wrap your fingers around when you give him a squeeze. dilt is fond of polyrhythmic music and dances when he gets excited – so put him down on your pool table or another soft surface and let him go totally wild like a child on a jam rush. you won't regret falling in love with dilt.
+</p></div><hr>
+
+<h2 id="flew">flew</h2>
+<h6>(Last updated by elendruff on 01/23/2011)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/flew.png">')
+flew is an meloncholic muse; a tear-wet guardian angel. he or she makes an audible buzzing that alternates between sobs and whimpers, and he or she has two paper thin wings. maybe his or her sense of smell is so strong that it all smells like onions in here – or maybe he or she hides a dark secret, had been hurt by a complicated man a long time ago – something he or she doesn't want to talk about. either way flew will be a constant companion. and when you are in a pinch you'll be glad that there is a sad little fly who needs a shoulder to cry on, it may as well be yours.
+</p></div><hr>
+
+<h2 id="ms-girl">ms girl</h2>
+<h6>(Last updated by gregvarious on 11/21/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/ms-girl.png">')
+oh, she knows she has got it going on. this is ms girl and if you are lucky enough to get to know her then your life has gone right. she is known to be a diva prima donna but look at her, she has the right. you'd better not get in her way, but if you do, ms girl will not hold a grudge – she has too much going on to worry about you. but if you get on her good side, she will tell you how to dress, where to shop, who to date, and when to leave a party. do not underestimate her, and get out of her way. oooo it's ms girl. you better run.
+xoxo
+</p></div><hr>
+
+<h2 id="tj">tj</h2>
+<h6>(Last updated by gregvarious on 11/21/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/tj.png">')
+tj is one of the guys. long ago he used to be bigger but over time he got small and now he can fit in your pocket. but he never stopped being good company. it's a shame what happened to him but these things happen. you have to accept where people are at NOW, you can't be hung up on who they used to be. besides being four inches tall don't mean he can't crack a beer or watch the game with you, or go to church. tj can do anything a regular size guy can do. you have to respect the hustle. because not many people could handle the whole thing as well as he does.
+</p></div><hr>
+
+<h2 id="wyrt">wyrt</h2>
+<h6>(Last updated by drrabbit2 on 06/13/2010)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/wyrt.png">')
+wyrt is uhhh she's watching you. just, look. watch out for this little venomous tyrant. i mean it. it'll be a cold day in hell when i let this little thing in my house i'll tell you that. you may go 'oh that's a worm, she never hurt anyone' but you don't know actually. this disgusting noodle has made hollow ruins out of people who used to be just like you and me. i don't want any part of it. it's one thing to be petty and it's another thing to be a goddamn diabolical social manipulator. don't trust a word out of her worm mouth. do what you want, but just, watch out, or you'll be sorry.
+</p></div><hr>
+
+<h2 id="suwart">suwart</h2>
+<h6>(Last updated by drrabbit2 on 06/13/2010)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/suwart.png">')
+<p>suwart has been stuck in there for a while. he says he's fine but you get the sense he's just trying not to make a fuss. suwart is easygoing but he does have a habit of getting himself between a rock and a hard place like this. according to him he actually had a feeling something like this was going to happen today. anyway, it's no big deal. suwart says he can get out anytime he wants and that he actually likes being in there. he says it's actually good for you to be in there. //Suwart was voted Most Likely to Succeed in the 2007 'Junkies' Junkmate Awards.//
+</p></div><hr>
+
+<h2 id="seerfly">seerfly</h2>
+<h6>(Last updated by drrabbit2 on 06/13/2010)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/seerfly.png">')
+<p>not long ago, this beautiful little critter was curled up inside a chrysalis. while in there, seerfly peered into the gaping maw of the future and glimpsed the arc of the universe, which unfailingly bends toward its own end. when the chrysalis burst, it revealed beautiful wings laden with bulging eyes that wept for the inevitability of the days to come. having undergone metamorphosis, seerfly knows that which cannot be avoided, that much must be faced. if you put your faith in its prognostications, fortune itself will be on your side.
+</p></div><hr>
+
+<h2 id="sodacrab">sodacrab</h2>
+<h6>(Last updated by scabdarrit707 on 11/15/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'junkmates/sodacrab.png">')
+<p>sodacrab is a sponsored junkmate. licensing options for sodacrab are available to companies producing soft drinks and canned beverages in the continental united states, canada, and mexico. contracted licensing windows allow for customization of sodacrab's exterior in accordance with the client brand's aesthetic framework and values. sodacrab's base features remain consistent across brand affiliations, and Skunkpets Inc. reserves the right to adjust underlying elements of sodacrab during the course of a licensing window. affiliate soft drink product must demonstrate a three-year history of FDA approval.
+</p></div><hr>}
+</div>
+
+:: FanWiki: Skunkpet Types [wiki fanwiki] {"position":"1100,100","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")
+<h2>Pet Types</h2>\
+<h6>(Last updated by kingLime2 on 10/07/2008)</h6>\
+The SkunkPets living in Bin City come in all shapes and sizes.
+Here are soem of the ways that they appear!
+
+ <table class="library-grid">
+  <tr>
+    <td><a href="#lemonrat">(print: '<img src="' + $imgroot + 'pets/lemonrat.png">')lemonrat</a></td>
+    <td><a href="#possie">(print: '<img src="' + $imgroot + 'pets/pegin.png">')pegin</a></td>
+    <td><a href="#pegin">(print: '<img src="' + $imgroot + 'pets/possie.png">')possie</a></td>
+  </tr>
+  <tr>
+    <td><a href="#skunkina">(print: '<img src="' + $imgroot + 'pets/skunkina.png">')skunkina</a></td>
+    <td><a href="#luanne">(print: '<img src="' + $imgroot + 'pets/luanne.png">')luanne</a></td>
+    <td><a href="#sporgrin">(print: '<img src="' + $imgroot + 'pets/sporgrin.png">')sporgrin</a></td>
+  </tr>
+  <tr>
+    <td><a href="#ren">(print: '<img src="' + $imgroot + 'pets/ren.png">')ren</a></td>
+    <td><a href="#gigor">(print: '<img src="' + $imgroot + 'pets/gigor.png">')gigor</a></td>
+    <td><a href="#tulipy">(print: '<img src="' + $imgroot + 'pets/tulipy.png">')tulipy</a></td>
+  </tr>
+</table>
+<hr>\
+{<h2 id="lemonrat">lemonrat</h2>
+<h6>(Last edited by keepshake5o on 4/11/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/lemonrat.png">')
+<p>
+Lemonrat is a crafty and conspiratorial rat-like Skunkpet species. With keen senses and sharp cunning, Lemonrats have an easy time finding food in Bin City, but also have a penchant for getting into mischief and trouble. Lemonrats' long whiskers are a point of pride and they require extra time to groom, making them one of the more fastidious species. Their diet consists of meats, grubs, big omelettes, and custom Cheeses, which can be collected at the Cheese Mill game in Shades District.
+</p></div><hr>
+
+<h2 id="pegin">pegin</h2>
+<h6>(Last edited by LousaCha on 6/10/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/pegin.png">')
+<p>
+Pegins are bird-like Skunkpets originating from Cloud Borough. They are a thoughtful, wide-eyed and docile species that observe much and reveal little, keeping many secrets. Long ago, Pegins were used to carry messages throughout Bin City, but they were forgetful and most messages got lost on the way. You can still find letters lost by Pegins at the Abandoned Post Office. Pegin feathers can be used to make Quills, which can be sold for prizes and SkunkPoints to the Vigilant Administrator.
+</p></div><hr>
+
+<h2 id="possie">possie</h2>
+<h6>(Last edited by keepshake5o on 4/12/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/possie.png">')
+<p>
+Possie is a gentle, summer-loving species who hails from the Wet Oasis. Partial to seafood, Possies use their many wormlike tails as bait for fishing at the Tide Pool in the Wet Oasis. Ouch! When the Wet Oasis tragically dried up during the Darkening Dunes site-wide plot in 2001, many Possies emigrated en masse. Ruella The Red, a shrewd and virtuous Possie, was instrumental in the re-construction of the devastated oasis region, and led a team of Possies (and other Skunkpets) to dig for water with their large claws and dexterous tails.
+</p></div><hr>
+
+<h2 id="skunkina">skunkina</h2>
+<h6>(Last edited by bestefen-1 on 1/20/2010)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/skunkina.png">')
+<p>
+Skunkina is a deeply vain and charismatic species - but with looks like those, how could they not be? Despite the urban smog of Bin City, Skunkinas are meticulously clean and polished. They love to spend hours in the Beauty Parlor, trading gossip while grooming their fur, claws, lashes and whiskers. Social by nature, Skunkinas can be found anywhere there's a crowd! They get along well with almost all other Skunkpet species, the main exception being Lemonrats, with whom they form occasional rivalries. Ranked most popular pet in a site-wide 2006 survey, Skunkina is the official mascot of Skunkpets.com.
+</p></div><hr>
+
+<h2 id="luanne">luanne</h2>
+<h6>(Last edited by ufeelsorryforme on 6/11/2012)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/luanne.png">')
+<p>
+Luanne: a rare and shy beast. Preferring the somber solitude of eternal winter, the bear-like Luannes generally make their homes out on the Frostvale Tundra, but can sometimes be found as far south as Mongolia. Their sharp claws can hook easily into ice, and they love to climb high upon the famous Frostvale Ice Spurs and enjoy the view. If you manage to befriend a Luanne, she will be your devoted advocate for life - when push comes to shove, Luanne will not hesitate to fight for the few things she loves. The Luannes' toxic saliva can be used for brewing potions at the Unkempt Shrine.
+</p></div><hr>
+
+<h2 id="sporgrin">sporgrin</h2>
+<h6>(Last edited by ufeelsorryforme on 6/11/2012)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/sporgrin.png">')
+The Sporgrin has wandered the world since the world was young. This caiman-like living fossil is not only the oldest known species of Skunkpet, but also the wisest; having witnessed the rise and fall of countless civilizations, Sporgrins' only wish is for peace, stability, and tidy quarters. Sporgrins have a rich heritage of sorcery and spellcasting, with knowledge of the arcane arts passed down as oral tradition between generations and closely guarded from outsiders. Tiamat Who Wields The Brush Of Fate, better known as Titi, is the Sporgrin who can change your pets color (in exchange for favors, of course) at the Prismatic Waterfall on Butterfly Island. Sporgrin are immune to all sickness, as well as stat boosting potions.
+<p></div><hr>
+
+<h2 id="ren">ren</h2>
+<h6>(Last edited by keepshake5o on 4/11/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/ren.png">')
+<p>
+Ren are mysterious, nocturnal Skunkpets, believed to be native to Bin City. Lovers of experimental music, at night they can be heard practicing at the Dustbin for their Underground Orchestra, which features such instruments as Bin Drum, Bent-Pipe Flute, and Viola. Ren are artistic and curious rascals, but they get bored easily, and must be frequently plied with toys and games or they will get sick, or possibly even just leave. Got junk items? Many Ren in the Dustbin District will be happy to exchange them for things like Quest Tips and Gourmet Grubs.
+</p></div><hr>
+
+<h2 id="gigor">gigor</h2>\
+<h6>(Last edited by Yen4All on 4/09/2010)</h6>\
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/gigor.png">')\
+<p>The Gigor is a glum, mossy Skunkpet with a miserable history. Prior to the Interstellar Invasion plot which introduced the Garnet Moon in 2005, the Gigor was a proud, priestly species, ruling with a holy iron fist over Kerala Province in the south. After the plot's conclusion, the Gigor's faith was shaken and their guilt was heavy, leading them to abandon their temples and shrines in search of meaning elsewhere. Gigors are picky eaters: their diet consists of selected fruits, compotes, preserved meats, and their favorite "candy smokes" which can be purchased from Ren traders in Bin City.
+</p></div><hr>
+
+<h2 id="tulipy">tulipy</h2>
+<h6>(Last edited by keepshake5o on 4/11/2009)</h6>
+<div class="image-card">
+(print: '<img src="' + $imgroot + 'pets/tulipy.png">')
+<p>Tulipy is a bright, playful Skunkpet who you are sure to love! Tulipies can be found in the tall grasses of the Hinterland, and at only 3" tall, they are among the smallest of all Skunkpets. Despite their diminutive size, Tulipies are voracious and undiscerning eaters: active pet Tulipies are even known to eat items from your inventory while you are not looking. Their distinctive red wool is very valuable and can be collected by Grooming.
+</p></div><hr>
+
+</div></div>}
+
+:: FanWiki: The World of Skunkpets [wiki fanwiki] {"position":"1225,100","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")
+<h2>The World of Skunkpets</h2>\
+<h6>(Last updated by 2doco on 11/07/2010)</h6>\
+Welcome to ''Terra Purgamenti'', a vibrant realm full of adventure and mystery! Hover over the map to see the many locations in this wonderful world which the Skunkpets call home.
+
+<div class="map-wrapper">\
+(print: '<img src="' + $imgroot + 'misc/worldmap.png">')\
+<button id="Bin City" class="map-hotspot"
+          style="top: 58%; left: 54.5%; width: 45px; height: 38px;"
+          data-label="Bin City!"></button>\
+  <button id="SkunkCash Mall" class="map-hotspot"
+          style="top: 44%; left: 60%; width: 38px; height: 38px;"
+          data-label="SkunkCash Mall"></button>\
+  <button id="Pouliane's Point" class="map-hotspot"
+          style="top: 55%; left: 72%; width: 20px; height: 40px;"
+          data-label="Pouliane's Point"></button>\
+  <button id="Butterfly Island" class="map-hotspot"
+          style="top: 57%; left: 72%; width: 10px; height: 10px;"
+          data-label="Butterfly Island"></button>\
+  <button id="Mongolia" class="map-hotspot"
+          style="top: 40%; left: 72%; width: 38px; height: 38px;"
+          data-label="Mongolia"></button>\
+  <button id="Wet Oasis" class="map-hotspot"
+          style="top: 62%; left: 81%; width: 38px; height: 38px;"
+          data-label="Wet Oasis"></button>\
+  <button id="Kerala Province" class="map-hotspot"
+          style="top: 69%; left: 47%; width: 70px; height: 38px;"
+          data-label="Kerala Province"></button>\
+  <button id="Unkempt Shrine" class="map-hotspot"
+          style="top: 68%; left: 48.5%; width: 30px; height: 30px;"
+          data-label="Unkempt Shrine"></button>\
+  <button id="The Hinterland" class="map-hotspot"
+          style="top: 51%; left: 58%; width: 60px; height: 30px;"
+          data-label="The Hinterland"></button>\
+   <button id="Garnet Moon" class="map-hotspot"
+          style="top: 13%; left: 13%; width: 110px; height: 90px;"
+          data-label="Garnet Moon"></button>\
+   <button id="Dimensional Colloseum" class="map-hotspot"
+          style="top: 11%; left: 15.5%; width: 30px; height: 20px;"
+          data-label="Dimensional Colloseum"></button>\
+      <button id="Frostvale Tundra" class="map-hotspot"
+          style="top: 18%; left: 52%; width: 120px; height: 45px;"
+          data-label="Frostvale Tundra"></button>\
+      <button id="Frostvale Ice Spurs" class="map-hotspot"
+          style="top: 18%; left: 54.5%; width: 50px; height: 26px;"
+          data-label="Frostvale Ice Spurs"></button>\
+      <button id="Cloudborough" class="map-hotspot"
+          style="top: 31%; left: 38%; width: 40px; height: 20px;"
+          data-label="Cloudborough"></button>\
+      <button id="Mirewood" class="map-hotspot"
+          style="top: 53%; left: 38%; width: 40px; height: 30px;"
+          data-label="Mirewood"></button>\
+      <button id="Ellen" class="map-hotspot"
+          style="top: 39%; left: 28%; width: 40px; height: 15px;"
+          data-label="Ellen"></button>\
+      <button id="Appleseed Islands" class="map-hotspot"
+          style="top: 67%; left: 66.5%; width: 50px; height: 60px;"
+          data-label="Appleseed Islands"></button>\
+      <button id="Grue's Cave" class="map-hotspot"
+          style="top: 61%; left: 65%; width: 16px; height: 13px;"
+          data-label="Grue's Cave"></button>\
+      <button id="X" class="map-hotspot"
+          style="top: 62%; left: 74%; width: 8px; height: 8px;"
+          data-label="?"></button>\
+      <button id="X" class="map-hotspot"
+          style="top: 70.5%; left: 74%; width: 8px; height: 8px;"
+          data-label="?"></button>\
+      <button id="pinkstar" class="map-hotspot"
+          style="top: 91%; left: 21.5%; width: 10px; height: 10px;"
+          data-label="SFFL-101495°T4"></button>\
+      <button id="United States of Volcano" class="map-hotspot"
+          style="top: 66%; left: 26%; width: 50px; height: 100px;"
+          data-label="United States of Volcano
+          (Voldora, Voldori, & Voldoro)"></button>\
+      <button id="The Jaws of God" class="map-hotspot"
+          style="top: 36%; left: 66%; width: 60px; height: 30px;"
+          data-label="The Jaws of God"></button>\
+</div></div>
+
+:: Forum: Banned [wiki fanwiki] {"position":"100,225","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<h1>banned for missing OoR tribute?</h1>\
+	<div class="forum-thread">\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-kayG")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 13:02</span>\
+          		<span class="forum-post-number">#1</span></div>\
+        		<div class="forum-post-content">\
+can anyone help? my account has been suspended after I failed to submit OoR tribute. I had understood it was optional? what do I do? my pets are going to go hungry.
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-Peacemeal")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 22:21</span>\
+          		<span class="forum-post-number">#2</span></div>\
+        		<div class="forum-post-content">\
+Subjects like this not meant to be discussed on the forums. For issues like this email the support team. Archiving this.
+        		</div></div></div>\
+<!--POST END-->\
+	</div>\
+</div>
+
+:: Forum: Battlemutts [wiki fanwiki] {"position":"225,225","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<h1>no chance of a Battlemutts tie-in?</h1>\
+	<div class="forum-thread">\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-jargon")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 1 April 2009, 12:02</span>\
+          		<span class="forum-post-number">#1</span></div>\
+        		<div class="forum-post-content">\
+it would be so easy to get some characters from City of Bone on the site as special edition pets. they're both owned by REV. why has no one done this already?
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-michellewashere")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 12:20</span>\
+          		<span class="forum-post-number">#2</span></div>\
+        		<div class="forum-post-content">\
+hang on this would be SO cool.  imagine getting Nova or Jawbreaker in the Scrapyard? only problem is if you made them lore accurate they would be WAY OP compared to regular pets.
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-jargon")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 12:26</span>\
+          		<span class="forum-post-number">#3</span></div>\
+        		<div class="forum-post-content">\
+Jawbreaker would turn Skunkina into roadkill lmao
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-hailtheorder")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 12:40</span>\
+          		<span class="forum-post-number">#4</span></div>\
+        		<div class="forum-post-content">\
+You cant just have everything you like in the game because you'd like it in the game. Have you considered the dev team actually cares about the sanctity of bin city?? not everything can just be mindless fan service
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-vivica")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 12:58</span>\
+          		<span class="forum-post-number">#5</span></div>\
+        		<div class="forum-post-content">\
+Nick G confirmed in an interview they are not planning on any Skunkpets/Battlemutts crossover because they different levels of violence. I agree this would be cool but best we can do if wait
+        		</div></div></div>\
+<!--POST END-->\
+	</div>\
+</div>
+
+:: Forum: Feeding [wiki fanwiki] {"position":"350,225","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<h1>Problem feeding my Sporgrin.</h1>\
+	<div class="forum-thread">\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-bruce1")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 6 June 2009, 16:10</span>\
+          		<span class="forum-post-number">#1</span></div>\
+        		<div class="forum-post-content">\
+Bruce here. I am having trouble getting my sporgrin to eat after he has tired himself out at the scrapyard. I am considering retiring him from fighting but he is high leveled and that's where I make most of my skunkpoints. Has anyone had this issue?
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-plainseeds")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 6 June 2009, 18:10</span>\
+          		<span class="forum-post-number">#2</span></div>\
+        		<div class="forum-post-content">\
+can you elaborate what is happening? what does it mean you're "having trouble" do you get an error message?
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-bruce1")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 6 June 2009, 18:20</span>\
+          		<span class="forum-post-number">#3</span></div>\
+        		<div class="forum-post-content">\
+Bruce here. Here is a screenshot when I tried to give him a Custom Cheese.<br>
+(display:"func-screenshot-bruce")
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-plainseeds")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 6 June 2009, 18:25</span>\
+          		<span class="forum-post-number">#4</span></div>\
+        		<div class="forum-post-content">\
+looks like the Exhausted condition. it doesn't always show up on your vitals but it can take effect if he's fought too much. i would try taking him to Sodapop Hot Springs for a total restore of his health and energy.
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-bruce1")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 21 May 2009, 13:20</span>\
+          		<span class="forum-post-number">#5</span></div>\
+        		<div class="forum-post-content">\
+Bruce here. That did it! Thank you so much!
+        		</div></div></div>\
+<!--POST END-->\
+	</div>\
+</div>
+
+:: Forum: Hacked [wiki fanwiki] {"position":"475,225","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<h1>Hacked Again?</h1>\
+	<div class="forum-thread">\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-konundrum")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 14 Oct 2008, 19:42</span>\
+          		<span class="forum-post-number">#1</span></div>\
+        		<div class="forum-post-content">\
+this is starting to get ridiculous!! third time this year I log in to see a bunch of my skunkpoints have brrn transferred? to some spam account. is site admin doing anything about this?
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-Peacemeal")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 14 Oct 2008, 20:01</span>\
+          		<span class="forum-post-number">#2</span></div>\
+        		<div class="forum-post-content">\
+Short answer: There are mods monitoring the situation with password security, yes. There are a lot of users. Keep your password updated and don't make your password hint something obvious. Hope this helps.
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-frankersore")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 14 Oct 2008, 20:20</span>\
+          		<span class="forum-post-number">#3</span></div>\
+        		<div class="forum-post-content">\
+not a spam account this is OoR activity obviously.
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-bruce1")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 14 Oct 2008, 20:22</span>\
+          		<span class="forum-post-number">#4</span></div>\
+        		<div class="forum-post-content">\
+Bruce here. The most reliable strategy is to change your password to something personal. I use my favorite folk tale (not telling, obviously)
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-unleash_nova")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 14 Oct 2008, 21:20</span>\
+          		<span class="forum-post-number">#5</span></div>\
+        		<div class="forum-post-content">\
+I agree with frankersore I had the same situation and it was right after I rejected offer to pay oor dues. it's getting out of control
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-Peacemeal")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 14 Oct 2008, 21:30</span>\
+          		<span class="forum-post-number">#6</span></div>\
+        		<div class="forum-post-content">\
+Not supposed to be discussed on the forums. Archiving this thread.
+        		</div></div></div>\
+<!--POST END-->\
+	</div>\
+</div>
+
+:: GameStart [startup]
+{(set: $imgroot to "https://tinypetgames.neocities.org/assets/img/")
+(set: $artroot to "https://tinypetgames.neocities.org/skunkpets/img/")
+(set: $openWindows to (a:))
+(set: $openPending to "")
+(set: $focusWin to "")
+(set: $focusSeq to 0)
+(set: $startOpen to false)
+(set: $navHistory to (a:))
+(set: $navForward to (a:))
+(set: $starbarOpen to false)
+(set: $uiBookmarks to (a: "Winkipedia", "Skunkpets.com"))
+(set: $navBlocked to (a: "devlink-userbase: logged in", "Winkipedia Search Result"))
+(set: $home to "New Tab")
+(set: $browserPage to $home)
+(set: $navPending to "")
+(set: $desktopItems to (a: "readme", "recycle"))
+(set: $trashItems to (a: "browser", "mail", "notes", "diskette"))
+(set: $disketteTopic to "")
+(set: $mailAll to (a:))
+(set: $mailRead to (a:))
+(set: $mailOpen to 0)
+(set: $mail4Sent to false)
+(set: $dialog to "")
+(set: $dialogTitle to "Alert")
+(set: $dialogIcon to "info")
+(set: $dialogOk to "OK")
+(set: $dialogAction to "")
+(set: $dialogCancel to false)}
+
+:: Henrietta Winetraub [wiki article] {"position":"725,225","size":"100,100"}
+<div class="wiki-article">\
+<h1>Henrietta Winetraub</h1>\
+Henrietta Winetraub is an American musician and media investor. She is known for being the Chairwoman of the Board of (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], a media investment firm, where she also led the Music and Audio Entertainment division. While at Recast, she was instrumental in the creation of the (link: "Songs for Family Learning")[(set: $navPending to "Songs for Family Learning")(display: "func-navigate")] album series.
+
+<h2>Early Career</h2>\
+Henrietta was a New York-based a songwriter and music producer for a number of public television programs aimed at children in the early 1980s. Her first lead songwriting credit was for a Polish-American musical puppet program called Crusty's Dad Hour. Her 8-song album for the first season was panned in The Musical American for being "didactic and hamfisted," while later seasons were better receieved, with Season 3 even recieving a Ditty Award.
+
+Winetraub met (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")] during a heated legal battle regarding a made-for-TV musical adaptation of The Shoemaker's Daughter. Winetraub and the rest of the production team were sued by Barry for the musical's alleged similarities to The Tinker's Daughter, a folk tale features in Barry-owned compilation (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")]. The lawsuit ended with Barry recieving an executive producer credit on the film, which aired on public access television in 1985.
+
+<h2>Recast Entertainment Ventures</h2>\
+Winetraub, Barry, and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] opened their joint media investment firm in 1987, with Winetraub serving as Chairwoman of the Board. The firm was incorporated chiefly to produce an animated film based on Witch and The Goldwoman, for which Winetraub would compose the soundtrack.
+
+In 1990, REV began production on a family-friendly album of songs, written by Winetraub and a number of guest musicians, which would eventually become (link: "Songs for Family Learning")[(set: $navPending to "Songs for Family Learning")(display: "func-navigate")]. After the broad commercial success of the first album among parents, teachers, and childrens party entertainers, REV went on to produce 3 follow-up albums in the same series, featuring musical guests such as Kris Kross and Gloria Estafan.
+
+<h2>Later Career</h2>\
+After the third SFFL album saw poor commercial returns in 2001, Winetraub was briefly committed to an inpatient mental health facility in Upstate New York.
+
+Her work at REV continued after she was discharged early the following year. A fourth SFFL album was released in 2006.
+
+Winetraub left REV in 2006 to retire in Upstate New York.
+</div>
+
+:: Lawrence Oregon [wiki article] {"position":"850,225","size":"100,100"}
+<div class="wiki-article">\
+<h1>Lawrence Oregon</h1>\
+Lawrence Oregon (born c. 1967) is a Canadian business executive. He was the president of (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], an American media investment firm, from 1994 to 2008. Before Recast, Oregon spent 16 years working in small business management for a series of commercial spiritual organizations.
+
+<h2>Early Life and Education</h2>\
+Lawrence Oregon grew up in Huntsville, Ontario, Canada. He received bachelor's degrees in computer science and religious studies from the University of Western Ontario, and an MS in business management from the Glen Cove School of Economics. As a member of the Glen Cove Investors Club, he met (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")] and (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")], with whom he would go on to found REV, with a stated intention to "show America what real entertainment looks like."
+
+<h2>Recast Entertainment Ventures</h2>\
+Oregon served as President of the Board of REV, where he spearheaded a number of early investments in toys and entertainment properties, including the (link: "Battlemutts")[(set: $navPending to "Battlemutts")(display: "func-navigate")] franchise. Starting in 2003, he became the head of REV's Entertainment Technologies division, which he used to invest in high-traffic entertainment websites that he could pair with advertising partners. After discovering (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")], he connected the game's creators (link: "Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")] and (link: "Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] with a number of other key investors, and helped them incorporate Skunkpets Inc, of which he owned a majority share. Online ads and a premium ad-free account were added to the game later that year.
+
+<h2>Skunkpets Creative Direction</h2>\
+After the founding members of the Skunkpets team left the project in 2009, Oregon became the lead creative director of the game for 3 months. Commonly known as "The Last Season," this period in the game's development was plagued with erratic updates and structural changes, and saw a steep drop in usership.
+
+//This section has been edited and is pending review.//
+
+The website was shut down in May 2009.
+
+<h2>Later Career</h2>\
+After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a prior career position as the spokesperson for a for-profit spiritual organization known as (link: "Saint Detritus Commercial Fellowship")[(set: $navPending to "Saint Detritus Commercial Fellowship")(display: "func-navigate")].
+</div>
+
+:: NetCon 2004 [wiki article] {"position":"975,225","size":"100,100"}
+<div class="wiki-article">\
+<h1>NetCon 2004</h1>\
+NetCon 2004 was the third occurance of NetCon, an annual convention for influencers, fans, executives, and online brands. The event primarily features prominent content creators from across the internet. It was founded by veteran YouTube creators Cole Ramsay and Lena Russel (TheSweetpeople), and was later acquired by Viacom (now Paramount) in 2018. Its offices remain in Montori, Montana, sharing a building with Thinkify. NetCon's international presence continues to expand with additional events planned in Singapore, Abu Dhabi, Mexico City, Australia, and São Paulo.
+
+<h2>Standout Presenters</h2>\
+Out of 460 panelists and presenters, notable NetCon 04 presences included:
+* (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.
+* (link: "Diskette.net")[(set: $navPending to "Diskette")(display: "func-navigate")], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
+* (link: "Skunkpets.com")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website where users could adopt creatures in the digital realm of Bin City, which had quadrupled its user base since its previous NetCon attendance in 2003.
+* ''FindPizzaKid.com'', a semi-parodic website dedicated to a crowdsourced effort to locate Dominic Desantos, a tween boy who was reported missing after appearing in a viral video entitled "Pizza Kid Freaks Out." The website initially featured discussion posts regarding Dominic's whereabouts, but was swiftly taken over as a general community discussion spaces for sharing photo edits, memes, and pizza recommendations.
+</div>
+
+:: New Tab [wiki] {"position":"1100,225","size":"100,100"}
+<div class="new-tab-page"></div>
+
+:: Nick Galveston [wiki article] {"position":"1225,225","size":"100,100"}
+<div class="wiki-article">\
+<h1>Nick Galveston (computer scientist)</h1>\
+Nickolas Galveston (born 1 April 1982) is an American computer programmer. He was the co-founder of (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website that was active online 2001-2009.
+
+<h3>Early Life and Education</h3>\
+Galveston attended Ellory College in Pennsylvania for 1998-2001, majoring in undergraduate computer science degree. He left college before graduating to work on the Skunkpets project.
+
+<h3>Career</h3>\
+Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing 'artistic differences'. Although it was widely speculated that this transition was due to conflicts with the project's leadership at (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], Galveston since commented that he 'simply moved on to other projects'.
+
+In 2010, Galveston became a regular lecturer in the Computer Science department at Ellory College, where he still teaches.
+</div>
+
+:: Order of Refuse [wiki article] {"position":"100,350","size":"100,100"}
+<div class="wiki-article">\
+<h1>Order of Refuse</h1>\
+Wiki does not have an article with this exact name, or the page has been ''deleted''.
+Please check for alternative titles or spellings.
+</div>
+
+:: PageHeader [header]
+<button class="fullscreen-toggle" type="button" title="Toggle fullscreen">&#91;⤢&#93;</button>
+
+:: REV (Recast Entertainment Ventures) [wiki article] {"position":"350,350","size":"100,100"}
+<div class="wiki-article">\
+<h1>REV (Recast Entertainment Ventures)</h1>\
+Recast Entertainment Ventures was an American media investment firm based in Glen Cove, New York. Originally formed by (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")], (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] out of a Glen Cove storefront in 1987, the company established a nationwide development team through a series of media property acquisitions in the late 1990s and early-to-mid 2000s.
+
+<h2>History</h2>\
+<h3>1987-1990: Founding</h3>\
+REV was incorporated in 1987, after Tom Barry acquired the adaptation rights to (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], a collection of Eastern-European fairy and folk tales. The firm was formed to oversee dealings with animation studios to produce animated feature films based on the collection. In 1988, REV pitched an animated feature titled Witch and The Goldwoman (based on the folk tale of the same name) to multiple leading animation houses in Hollywood, all of which declined to work on the project. Soon after, REV moved to acquire several more small media properties with an intent to grow their holdings and influence in the evolving media market. All the while, pre-production on Witch and the Goldwoman continued in-house, and Tom Barry stated in 1989 that REV planned to "launch their own animation studio" that would "be a force like nothing America had ever faced before."
+
+<h3>1990-2006: Success</h3>\
+In 1990, REV began a steady rollout of project divisions, including toys & games, television programs, and entertainment technologies. Each of these divisions made strategic investments and all-out purchases of upstart entertainment properties which contributed to REV's growth and national-scale expansion. Notable investments during this period included the (link: "Battlemutts")[(set: $navPending to "Battlemutts")(display: "func-navigate")] TV show and toy brand, the (link: "Songs for Family Learning")[(set: $navPending to "Songs for Family Learning")(display: "func-navigate")] CD series, and several home video game consoles. During this period, rumors consistently circulated about the opening of REV's fabled animation studio, with a team of classical animators continuing development on Witch and the Goldwoman, but the project never progressed past the pre-production stage.
+
+Froom 2003-2006, REV's Entertainment Technologies division made moves to expand into the online sector, investing in popular online properties such as (link: "Battlemutts Online")[(set: $navPending to "Battlemutts")(display: "func-navigate")] and (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] virtual pet website. Many of these projects were independently operated, with REV providing fiscal management services, legal counsel, and other corportate-level support. In a 2005 interview, Lawrence Oregon called REV Entertainment Technologies "an open door into the world of tomorrow's entertainment".
+
+<h3>2006-2009: Decline and bankruptcy</h3>\
+In 2006, founding board members Barry and Winetraub left REV, reportedly to pursue other venture projects. During the period following their exit, the firm's operations became more erratic and were regularly stalled by internal strategy disputes regarding outsized, overambitious projects. Internal reports suggested that the company was hemmoraging large sums of money to upkeep redundant computer servers. After poor financial returns in their 2008 fiscal year, REV filed for Chapter 7 bankruptcy. Properties owned by REV were subsequently auctioned off to various parties.
+</div>
+
+:: RenderBookmarks {"position":"475,350","size":"100,100"}
+<div class="bookmark-dropdown">
+
+(if: (passage: $browserPage)'s tags contains "wiki" and not ($navBlocked contains $browserPage))[
+  (if: $uiBookmarks contains $browserPage)[
+    |bookmark-toggle>[<a class="bookmark-link">Unstar this page</a>]
+    (click: ?bookmark-toggle)[(set: $uiBookmarks to $uiBookmarks - (a: $browserPage))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+  ](else:)[
+    |bookmark-toggle>[<a class="bookmark-link">Star this page</a>]
+    (click: ?bookmark-toggle)[(set: $uiBookmarks to $uiBookmarks + (a: $browserPage))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+  ]
+  <hr>
+]
+
+(if: $uiBookmarks's length is 0)[
+  <div class="bookmark-empty">No bookmarks yet.</div>
+](else:)[
+  (for: each _bm, ...$uiBookmarks)[
+    <div class="bookmark-row">(link: _bm)[(set: $navPending to _bm)(display: "func-navigate")]</div>
+  ]
+]
+
+</div>
+
+:: RenderBrowserChrome {"position":"600,350","size":"100,100"}
+<div class="browser-chrome">
+{
+(if: $navHistory's length > 0)[
+  |browser-back>[<button type="button" class="browser-btn" title="Back">◀</button>]
+  (click: ?browser-back)[(display: "func-back")]
+](else:)[
+  <button type="button" class="browser-btn browser-btn-disabled" disabled title="Back">◀</button>
+]
+
+(if: $navForward's length > 0)[
+  |browser-forward>[<button type="button" class="browser-btn" title="Forward">▶</button>]
+  (click: ?browser-forward)[(display: "func-forward")]
+](else:)[
+  <button type="button" class="browser-btn browser-btn-disabled" disabled title="Forward">▶</button>
+]
+
+(if: (passage: $browserPage)'s tags contains "wiki" and not ($navBlocked contains $browserPage))[
+  |browser-star>[<button type="button" class="browser-btn browser-star" title="Bookmarks">{(if: $uiBookmarks contains $browserPage)[★](else:)[☆]}</button>]
+  (click: ?browser-star)[(set: $starbarOpen to not $starbarOpen)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+](else:)[
+  <button type="button" class="browser-btn browser-btn-disabled" disabled title="Bookmarks">☆</button>
+]
+}
+</div>
+(if: $starbarOpen)[
+  |starbar-popup>[
+    |starbar-overlay>[<div class="starbar-overlay"></div>]
+    (click: ?starbar-overlay)[(set: $starbarOpen to false)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+    (display: "RenderBookmarks")
+  ]
+]
+
+:: RenderDesktop
+<div class="monitor"><div class="monitor-glow"></div><div class="playfield">
+<div class="wallpaper"></div>
+(print: '<span class="focus-request" hidden data-win="' + $focusWin + '" data-seq="' + (str: $focusSeq) + '"></span>')
+
+(if: $desktopItems contains "readme")[|icon-readme>[<div class="desktop-icon desktop-icon-file" data-window-template="readme" style="top: 22px; left: 26px;"><div class="txt-file-icon"></div><div class="desktop-icon-caption">READ&#95;ME.txt</div></div>]
+(click: ?icon-readme)[(set: $openPending to "readme")(display: "func-open")]]
+
+(if: $desktopItems contains "browser")[|icon-browser>[<div class="desktop-icon" data-window-template="browser" style="top: 116px; left: 26px;">(print: '<img src="' + $artroot + 'ui/browse.png" alt="">')<div class="desktop-icon-label">Browse</div></div>]
+(click: ?icon-browser)[(set: $openPending to "browser")(display: "func-open")]]
+
+(if: $desktopItems contains "mail")[|icon-mail>[<div class="desktop-icon" data-window-template="mail" style="top: 210px; left: 26px;">(if: $mailRead's length < $mailAll's length)[(print: '<img src="' + $artroot + 'ui/mail-1.png" alt="">')](else:)[(print: '<img src="' + $artroot + 'ui/mail.png" alt="">')]<div class="desktop-icon-label">Mail</div></div>]
+(click: ?icon-mail)[(set: $openPending to "mail")(display: "func-open")]]
+
+(if: $desktopItems contains "notes")[|icon-notes>[<div class="desktop-icon" data-window-template="notes" style="top: 304px; left: 26px;">(print: '<img src="' + $artroot + 'ui/notes.png" alt="">')<div class="desktop-icon-label">Notes</div></div>]
+(click: ?icon-notes)[(set: $openPending to "notes")(display: "func-open")]]
+
+(if: $desktopItems contains "diskette")[|icon-diskette>[<div class="desktop-icon desktop-icon-file" data-window-template="diskette" style="top: 398px; left: 26px;"><div class="diskette-icon"></div><div class="desktop-icon-caption">Diskette</div></div>]
+(click: ?icon-diskette)[(set: $disketteTopic to "")(set: $openPending to "diskette")(display: "func-open")]]
+
+|icon-recycle>[<div class="desktop-icon" data-window-template="recycle" style="top: 586px; left: 854px;">(print: '<img src="' + $artroot + 'ui/trash.png" alt="">')<div class="desktop-icon-label">Trash</div></div>]
+(click: ?icon-recycle)[(set: $openPending to "recycle")(display: "func-open")]
+
+(if: $openWindows contains "readme")[
+  <div class="panel" data-window-template="readme" data-title="READ&#95;ME.txt - Notepad" style="top: 90px; left: 180px; width: 420px; height: 260px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>READ&#95;ME.txt - Notepad</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-readme>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body notepad-body">
+      <div class="notepad-text">Thank you for purchasing this newly refurbished OverSoft Callister desktop computer. We've taken great pains to remove the previous user's data from this device, and it is now ready for your use. Your business is appreciated!</div>
+    </div>
+  </div>
+  (click: ?close-readme)[(set: $openWindows to $openWindows - (a:"readme"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "browser")[
+  <div class="panel" data-window-template="browser" data-title="Browse" style="top: 24px; left: 130px; width: 720px; height: 610px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>(print: $browserPage)</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-browser>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body browser-panel-body">
+      (display: "RenderBrowserChrome")
+      <div class="browser-page-content">(display: $browserPage)</div>
+    </div>
+  </div>
+  (click: ?close-browser)[(set: $openWindows to $openWindows - (a:"browser"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "mail")[
+  <div class="panel" data-window-template="mail" data-title="Mail Client" style="top: 80px; left: 220px; width: 540px; height: 380px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>Mail Client</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-mail>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body mail-panel-body">
+      (display: "RenderMailInbox")
+    </div>
+  </div>
+  (click: ?close-mail)[(set: $openWindows to $openWindows - (a:"mail"))(set: $mailOpen to 0)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "notes")[
+  <div class="panel" data-window-template="notes" data-title="Notes" style="top: 60px; left: 300px; width: 280px; height: 360px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>Notes</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-notes>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body">
+      <textarea class="notes-textarea" placeholder="Type your notes here..."></textarea>
+    </div>
+  </div>
+  (click: ?close-notes)[(set: $openWindows to $openWindows - (a:"notes"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "recycle")[
+  <div class="panel" data-window-template="recycle" data-title="Trash" style="top: 250px; left: 400px; width: 330px; height: 200px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>Trash</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-recycle>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body recycle-body">
+      <div class="recycle-icons">
+        (if: $trashItems contains "browser")[<div class="bin-icon" data-app="browser" title="Drag onto the desktop to restore">(print: '<img src="' + $artroot + 'ui/browse.png" alt="Browse">')</div>]
+        (if: $trashItems contains "mail")[<div class="bin-icon" data-app="mail" title="Drag onto the desktop to restore">(print: '<img src="' + $artroot + 'ui/mail.png" alt="Mail">')</div>]
+        (if: $trashItems contains "readme")[<div class="bin-icon bin-icon-file" data-app="readme" title="Drag onto the desktop to restore"><div class="txt-file-icon"></div><div class="desktop-icon-caption">READ&#95;ME.txt</div></div>]
+        (if: $trashItems contains "diskette")[<div class="bin-icon bin-icon-file" data-app="diskette" title="Drag onto the desktop to restore"><div class="diskette-icon"></div><div class="desktop-icon-caption">Diskette</div></div>]
+        (if: $trashItems contains "notes")[<div class="bin-icon" data-app="notes" title="Drag onto the desktop to restore">(print: '<img src="' + $artroot + 'ui/notes.png" alt="Notes">')</div>]
+        (if: $trashItems's length is 0)[<div class="recycle-empty">The Trash is empty.</div>]
+      </div>
+    </div>
+  </div>
+  (click: ?close-recycle)[(set: $openWindows to $openWindows - (a:"recycle"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $startOpen)[
+  |start-overlay>[<div class="start-overlay"></div>]
+  (click: ?start-overlay)[(set: $startOpen to false)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+  <div class="start-menu">
+    <div class="start-menu-head">Guest</div>
+    <div class="start-menu-items">
+      (if: $desktopItems contains "browser")[(link: '<img src="' + $artroot + 'ui/browse.png" alt="">Browse')[(set: $openPending to "browser")(display: "func-open")]]
+      (if: $desktopItems contains "mail")[(link: '<img src="' + $artroot + 'ui/mail.png" alt="">Mail')[(set: $openPending to "mail")(display: "func-open")]]
+      (if: $desktopItems contains "notes")[(link: '<img src="' + $artroot + 'ui/notes.png" alt="">Notes')[(set: $openPending to "notes")(display: "func-open")]]
+      (if: $desktopItems contains "diskette")[(link: '<span class="diskette-icon diskette-icon-small"></span>Diskette')[(set: $disketteTopic to "")(set: $openPending to "diskette")(display: "func-open")]]
+      (if: $desktopItems contains "readme")[(link: '<span class="txt-file-icon txt-file-icon-small"></span>READ&#95;ME.txt')[(set: $openPending to "readme")(display: "func-open")]]
+      (link: '<img src="' + $artroot + 'ui/trash.png" alt="">Trash')[(set: $openPending to "recycle")(display: "func-open")]
+    </div>
+    <div class="start-menu-foot"></div>
+  </div>
+]
+
+(if: $openWindows contains "diskette")[(display: "RenderDiskette")]
+
+<div class="taskbar">
+  |start-btn>[<button class="start-button" type="button" aria-label="Start"></button>]
+  (click: ?start-btn)[(set: $startOpen to not $startOpen)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+  <div class="taskbar-tasks"></div>
+  <div class="taskbar-tray"><span class="taskbar-clock"></span></div>
+</div>
+
+(unless: $dialog is "")[
+  <div class="xp-dialog-layer"><div class="xp-dialog">
+    <div class="panel-bar"><span class="panel-title">(print: $dialogTitle)</span></div>
+    <div class="xp-dialog-inner">
+      <div class="xp-dialog-body">(if: $dialogIcon is "mail")[(print: '<img class="xp-dialog-icon" src="' + $artroot + 'ui/mail-1.png" alt="">')](else:)[<span class="xp-dialog-icon xp-info">i</span>]<div class="xp-dialog-msg">(print: $dialog)</div></div>
+      <div class="xp-dialog-buttons">
+        (link: $dialogOk)[(display: "func-dialog-ok")]
+        (if: $dialogCancel)[(link: "Cancel")[(set: $dialog to "")(set: $dialogAction to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
+      </div>
+    </div>
+  </div></div>
+]
+
+<div class="crt"></div>
+</div></div>
+
+:: RenderMailInbox
+{<div class="mail-header">Inbox</div>
+<div class="mail-list">
+(if: $mailAll's length is 0)[<div class="mail-empty">Your inbox is empty</div>]
+(for: each _msg, ...$mailAll)[
+  <div class="mail-row">
+    (if: $mailOpen is _msg's id)[<span class="is-open" hidden></span>]
+    <div class="mail-summary">(unless: $mailRead contains _msg's id)[<span class="unread-bubble">!</span>](link: _msg's from + " | " + _msg's subject)[
+      (unless: $mailRead contains _msg's id)[(set: $mailRead to it + (a: _msg's id))]
+      (if: $mailOpen is _msg's id)[(set: $mailOpen to 0)](else:)[(set: $mailOpen to _msg's id)]
+      (replace: ?desktoproot)[(display: "RenderDesktop")]
+    ]</div>
+    (if: $mailOpen is _msg's id)[<div class="mail-body">(if: _msg's id is 4)[stop this now or its (link: "game over")[(go-to: "DemoEnd")]](else:)[(print: _msg's body)]</div>]
+  </div>
+]
+</div>}
+
+:: Saint Detritus Commercial Fellowship [wiki article] {"position":"975,350","size":"100,100"}
+<div class="wiki-article">\
+<h1>Saint Detritus Commercial Fellowship</h1>\
+Wiki does not have an article with this exact name, or the page has been ''deleted''.
+Please check for alternative titles or spellings.
+</div>
+
+:: Second Page [wiki] {"position":"1100,350","size":"100,100"}
+# Second Page
+
+This is a second wiki article, reached via a link from the
+(link: "Welcome Page")[(set: $navPending to "Welcome Page")(display: "func-navigate")].
+
+Bookmark this page with the Star button, then visit the
+(link: "Welcome Page")[(set: $navPending to "Welcome Page")(display: "func-navigate")] again and check the bookmark dropdown to jump straight
+back here.
+
+---
+
+Looking for something more substantial to read? Try the (link: "SkunkPets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] wiki article.
+
+:: Skunkpets Fan Wiki [wiki fanwiki] {"position":"1225,350","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")
+{<table class="library-grid">
+	<tr>
+		<td><a href="#overview">
+        (print: '<img src="' + $imgroot + 'ui/fanwikigrid/1.png">')Overview
+        </a></td>
+        <td>
+        (link:
+		'<img src="' + $imgroot + 'ui/fanwikigrid/2.png">Pet Types')				[(set: $navPending to "FanWiki: Skunkpet Types")(display: "func-navigate")]
+        </td>
+        <td>
+         (link:
+		'<img src="' + $imgroot + 'ui/fanwikigrid/3.png">Junkmates')				[(set: $navPending to "FanWiki: Junkmates")(display: "func-navigate")]
+        </td>
+	</tr>
+    <tr>
+        <td>
+        (link:
+		'<img src="' + $imgroot + 'ui/fanwikigrid/4.png">The World of Skunkpets')
+				[(set: $navPending to "FanWiki: The World of Skunkpets")(display: "func-navigate")]
+        </td>
+    	<td>
+        (link:
+		'<img src="' + $imgroot + 'ui/fanwikigrid/5.png">Forum')				[(set: $navPending to "FanWiki: Forum")(display: "func-navigate")]
+     	</td>
+	<td></td>
+     </tr>
+</table>}
+<h1 id="overview">Overview</h1>
+SkunkPets was a browser-based online game that allowed users to create and care for digital pets called "SkunkPets" and explore the virtual realm of Bin City. There was no set objective for the users, but they were expected to feed and care for their SkunkPets when they grew hungry or ill. SkunkPets would not die if neglected, but their health had in-game consequences.
+
+SkunkPets came in a (link: "variety of species and colors")[(set: $navPending to "FanWiki: Skunkpet Types")(display: "func-navigate")] and users could create or adopt their own. SkunkPets could be customised with clothing items, dye jobs, and accessories. Users could build a customisable Burrow for their pet and furnish it with furniture, wallpaper, and flooring. SkunkPets themselves could have mini-pets of their own called (link: "Junkmates")[(set: $navPending to "FanWiki: Junkmates")(display: "func-navigate")].
+
+Bin City was a virtual realm of junkyard-inspired neighborhoods, each of which have their own shops, games, and attractions. It had its own economy and stock market. Players could earn one of two virtual currencies. One currency, called Skunkpoints, could be obtained for free through on-site features like games, events, and contests. The other, SkunkCash (SC), was purchased with real-world money and could be exchanged for in-game souvenirs, including access to restricted game zones and wearable items for pets.
+
+Until 2009, the site was regularly updated with features like new games, items, and content.
+</div>
+
+:: Skunkpets [wiki article] {"position":"100,475","size":"100,100"}
+<div class="wiki-article">\
+<h1>SkunkPets™ (website)</h1>\
+SkunkPets is a now-defunct free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets ("SkunkPets") and explore a virtual realm called Bin City. Players could buy digital food, accessories, and customizations for their SkunkPets to keep them happy. Additionally, users could train their SkunkPets to fight in the "Scrapyard," winning titles and prizes. Players could interact with others through social features like message boards and guilds, or trading items with each other.
+
+SkunkPets was discontinued and the website taken down in 2009 following a controversy surrounding the (link: "Order of Refuse")[(set: $navPending to "Order of Refuse")(display: "func-navigate")].
+
+<h2>History and development</h2>\
+SkunkPets was conceived in 2000 by (link: "Anya Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")], a student studying computer programming at Ellory College. She shared the idea with several classmates including (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] and the small team started work on the site in January of 2001, with Galveston responsible for the programming and the database and Krysina the web design and art. The website was opened for public use on May 1, 2001, and the userbase began to grow through word of mouth.
+
+<h3>NetCon 2004</h3>\
+SkunkPets experienced a significant boost in player base following a successful outing at the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention in San Francisco, which featured up-and-coming internet companies with innovative online engagement strateiges. SkunkPets became the darling of the convention, nearly quadrupling its user count by the end of the weekend.
+
+<h3>Growth & Corporate Ownership (2004-2008)</h3>\
+By December 2004, SkunkPets was logging 400,000 page views daily and sought investors to cover the high cost of running the site. American businessman (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] was introduced to the creators of the site and, along with other investors, bought a majority share. SkunkPets, Inc. was incorporated in May 2005. In October, SkunkPets released a premium version and started showing advertisements on the basic site that were not shown to premium members.
+
+<h3>Financial Struggles & Discontinuation (2007-2009)</h3>\
+Beginning as early as December 2006, SkunkPets was plagued by user complaints regarding both functionality and added content(link: "^^1^^")[(set: $navPending to "Skunkpets Fan Wiki")(display: "func-navigate")]. Despite a steady influx of advertising income and premium memberships, there were reports of mismanagement in the corporation, as well as a widespread gridlock on game development stemming from internal disagreements. In March 2009, several core team members including Nick Galveston left the company, citing artistic differences. In May 2009, the game's official website was shut down.
+
+<h2>Controversy</h2>\
+Following its incorporation in May 2005, SkunkPets was continually linked with a midsized entertainment conglomerate called (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], which was co-owned by SkunkPets Inc. majority shareholder (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")]. REV never formally acquired SkunkPets but the website heavily relied on REV for fiscal management services, recruitment and onboarding, and business consulting.
+
+//This section has been edited and is pending review.//
+
+<h2>Merchandise</h2>\
+The popularity of SkunkPets spawned real-world merchandise including clothing, stickers, books and more, sold at mainstream outlets and online retailers. SkunkPets merchandise often contained a code which could be redeemed on the site for an in-game reward. In 2006, Lawrence Oregon said that SkunkPets had an opportunity to "bring the online and offline worlds together in a way never before seen".
+
+In 2008, news leaked that a SkunkPets animated television series was in production at a major kids television network (speculated to be Nickelodeon). The project was cancelled in production due to studio conflicts with REV.
+</div>
+
+:: Songs for Family Learning [wiki article] {"position":"225,475","size":"100,100"}
+<div class="wiki-article">\
+<h1>Songs for Family Learning</h1>\
+“Songs for Family Learning” is a series of albums released by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.
+
+The unofficial slogan of the series, “make being together a good time!” resurfaced as a viral internet meme and inspired a popular line of ironic T-shirts which led to an infamous contentious lawsuit.
+
+<h2>Discography</h2>\
+The release dates mentioned pertain to the date of release in the United States.\
+<table class="wikitable">
+  <thead>
+    <tr>
+      <th style="width: 55%;">Track Title</th>
+      <th style="width: 15%;">Volume</th>
+      <th style="width: 30%;">Release Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Hum and Whistle</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>The Best Way (With A Friend)</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>Everybody in the Neighborhood</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>I Do My Dishes Every Day</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>Don’t Itch!</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>The Real Alphabet Song</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>Magnet Fever</td>
+      <td>SFFL #1</td>
+      <td>June 1st, 1992</td>
+    </tr>
+    <tr>
+      <td>Using a Seatbelt (Do It)</td>
+      <td>SFFL #1<br>(special release)</td>
+      <td>July 30, 1992</td>
+    </tr>
+    <tr>
+      <td>Clean Up (Remix feat. Kris Kross)</td>
+      <td>SFFL #1<br>(special release)</td>
+      <td>July 30, 1992</td>
+    </tr>
+    <tr>
+      <td>We’re Back to Hum and Whistle</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>Get Mopping</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>Everybody’s Favorite Game</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>The Real Twinkle Twinkle</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>Flags And What They Represent</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>The Truth About Rain</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>Takin’ Dictation</td>
+      <td>SFFL #2</td>
+      <td>August 14th, 1995</td>
+    </tr>
+    <tr>
+      <td>Reverence for Objects</td>
+      <td>SFFL #3</td>
+      <td>September 11th, 2001</td>
+    </tr>
+    <tr>
+      <td>Vigilant Behaviors</td>
+      <td>SFFL #3</td>
+      <td>September 11th, 2001</td>
+    </tr>
+    <tr>
+      <td>I Will Attempt To Get Some (Peace of Mind)</td>
+      <td>SFFL #3</td>
+      <td>September 11th, 2001</td>
+    </tr>
+    <tr>
+      <td>These Are Ways To Improve</td>
+      <td>SFFL #3</td>
+      <td>September 11th, 2001</td>
+    </tr>
+    <tr>
+      <td>The Real Itsy Bitsy Spider</td>
+      <td>SFFL #3</td>
+      <td>September 11th, 2001</td>
+    </tr>
+    <tr>
+      <td>Clarity (feat. Gloria Estefan)</td>
+      <td>SFFL #3</td>
+      <td>September 11th, 2001</td>
+    </tr>
+    <tr>
+      <td>I Do Things For My Family</td>
+      <td>SFFL #4</td>
+      <td>June 16th, 2006</td>
+    </tr>
+    <tr>
+      <td>Here’s One</td>
+      <td>SFFL #4</td>
+      <td>June 16th, 2006</td>
+    </tr>
+    <tr>
+      <td>Song (pt. 1)</td>
+      <td>SFFL #4</td>
+      <td>June 16th, 2006</td>
+    </tr>
+    <tr>
+      <td>Song (pt. 2)</td>
+      <td>SFFL #4</td>
+      <td>June 16th, 2006</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+:: Tales of Prior Days [wiki article] {"position":"350,475","size":"100,100"}
+<div class="wiki-article">\
+<h1>Tales of Prior Days</h1>\
+Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Moldova, Latvia, and Serbia.
+
+Some of the tales included in these volumes:
+* The Wife of the Dead Soldier
+* The Tinker's Daughter
+* The Snake and the Hunter
+* Unlucky Princess
+* The House With Beaks
+* The Wicked Ass and the Broom
+* Simpleton
+* Witch and the Goldwoman
+* The Pin Keeper
+* The Mother on Fire
+* Tsarevich Igor and the Fat Wolf
+* Go, Go, Go, Go, Go, Go!
+* The Haughty Boy, the Golden Apple, and the Wicker Basket
+* Go I Know Not Whither and Fetch I Know Not What
+* The Girl of the Cliffs
+* Candle, Candle, Burn!
+* Great Old Radish
+* Sisters Morning, Noon, and Night
+* The Sleepy Murderer
+* The Language of the Pigs
+* Hot Milk
+* The Girl Who Spoke To Birch Trees
+* Salko-Balko
+* War Bear
+<h2>References</h2>\
+Silverman, Barbara R. (1997). Kononenko, Natalie O. (ed.). Tsarevich Ivan and the Fat Wolf, and other tales from Latvia. World folklore series. Englewood, Colo: Libr. Unlimited. pp. xxi. Halsin, Jack M. (2014). "Introduction: D.I. Kanisev His Life and Works". In Halsin, Jack M. (ed.). The Complete Folktales of D.I. Kanisev. Vol. I.: University Press of Michigan. pp. xxiv, xxvii. Barry Family Record (2001). Article XI, "Witch and the Goldwoman and Other Tales".
+</div>
+
+:: Tom Barry [wiki article] {"position":"475,475","size":"100,100"}
+<div class="wiki-article">\
+<h1>Tom Barry</h1>\
+Tom Barry //(born Thomas Melnyk)// is an American businessman and media moghul, known for his work with (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")] and his legacy in the legal side of fairy tale media adaptations. He grew up in Cleveland, Ohio, son of Elys Melnyk and Melina Barrarro, both copyright lawyers. When both parents were killed in an industrial accident, fourteen-year-old Thomas moved to Upstate New York to live with his cousins until he was of age to manage the family trust.
+
+<h2>Early life and career</h2>\
+At eighteen, Thomas (now Tom Barry) came into legal possession of all the intellectual property his parents had come to own throughout their careers, including the sole publishing and adaptation rights for several historic manuscripts, which formed the bulk of his early media investment portfolio. One of these books, (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], was a collection of eastern-European folktales published under unique names, but with many bearing similarities to other collected tales from the region.
+
+After getting his legal license from a correspondance school, Tom Barry spent the next two decades aggressively litigating the adaptation rights for  fairy tale similarities with a number of publishing houses, comics companies, and film & animation studios. Among these cases was Barry v. Miracle Motion Pictures, popularly called "The Fat Wolf Case." This suit established legal precedent that commercial media use of the term "fat wolf" constituted an intellectual property infringement, due to the term's appearance in the Barry-owned folk tale //Tsarevich Igor and the Fat Wolf//.
+
+<h2>Recast Entertaainment Ventures</h2>\
+Barry's many intellectual property lawsuits yielded the seed funding for (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], which he founded out of a Glen Cove storefront with (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] in 1987. Recast's stated business plan was to build a diversified media property portfolio including film, television and games. During his tenure at Recast, Barry's longterm focus was on a fabled feature-length animated adaptation of folk tale //Witch and the Goldwoman//, which he oversaw through various stages (including its failed Hollywood pitch circuit and its longtime in-house development). He continued to actively work on the Witch and Goldwoman project, which was in and out of pre-production, until he left Recast in 2006.
+
+<h2>Later career</h2>\
+After leaving Recast, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether "the animal guys over there `[were]` ready for something `[explative]` serious yet." Barry continues to work independently as a media investor and intellectual property lawyer at his firm Tom Barry Associates, which he manages with his two sons.
+</div>
+
+:: WIN
+<div class="win-screen"><div class="endcard"><div class="endcard-line endcard-line-1">THANK YOU FOR PLAYING<h2>//REMEMBER SKUNKPETS?//</h2></div><div class="endcard-line endcard-line-2">Please click here to fill out our <a href="https://forms.gle/xSDvMgE87h34RBjPA" target="_blank" rel="noopener">''playtest exit survey.''</a></div></div></div>
+
+:: Welcome Page [wiki] {"position":"725,475","size":"100,100"}
+# Welcome
+
+This is the home page of the in-game wiki, loaded inside the **Browser**
+window.
+
+Try following a link to the (link: "Second Page")[(set: $navPending to "Second Page")(display: "func-navigate")], then use the Back and
+Forward buttons in the browser's title area to navigate, and use the
+Star button to bookmark a page.
+
+:: devlink-userbase: logged in [wiki devlink]
+{<div class="skunkpets-loading">(print: '<img src="' + $artroot + 'ui/loading.gif" alt="Loading">')</div>
+(unless: $mail4Sent)[(live: 4s)[
+  (stop:)
+  (set: $mail4Sent to true)
+  (set: $mailAll to (a: (dm: "id", 4, "from", "noreply-anon@46fb8763-bce1-45bd-98sporgrin19-1f0eed469a56.net", "subject", "stop", "body", "stop this now or its game over")) + $mailAll)
+  (replace: ?sfx)[(display: "sound-email")]
+  (set: $dialog to "You have one new email message.")
+  (set: $dialogTitle to "Mail")
+  (set: $dialogIcon to "mail")
+  (set: $dialogOk to "Open Now")
+  (set: $dialogAction to "openmail")
+  (set: $dialogCancel to false)
+  (replace: ?desktoproot)[(display: "RenderDesktop")]
+]]}
+
+:: devlink-userbase: login [wiki devlink]
+{<div class="wiki-devlink">
+<div class="devlink-url">http://devlink-userbase.skunkpets.com/login</div>
+<div class="login-box">
+(print: '<img class="login-icon" src="' + $artroot + 'ui/login-icon.png" alt="">')
+<h1>LOG IN</h1>
+<label>USERNAME <input type="text" id="devlink-username" autocomplete="off" spellcheck="false"></label>
+<label>PASSWORD <input type="password" id="devlink-password" autocomplete="off"></label>
+<button type="button" class="login-button" id="devlink-submit">LOG IN</button>
+<div class="login-msg" id="devlink-msg"></div>
+<div id="devlink-forgot" hidden>
+<button type="button" class="login-link" id="devlink-forgot-btn">Forgot password?</button>
+<div class="login-security" id="devlink-security" hidden>
+<div>Security Question</div>
+<div>What was the name of your first pet?</div>
+<input type="text" id="devlink-answer" autocomplete="off" spellcheck="false">
+<button type="button" class="login-button" id="devlink-answer-btn">SUBMIT</button>
+<div class="login-msg" id="devlink-hint"></div>
+</div>
+</div>
+</div>
+<span class="devlink-nav-login" style="display:none">(link: "·")[(set: $navPending to "devlink-userbase: logged in")(display: "func-navigate")]</span>
+</div>}
+
+:: forum-user-Peacemeal {"position":"1225,475","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/6.png">')\
+        		<div class="forum-post-username">Peacemeal</div>\
+        		<div class="forum-post-meta">\
+          		★ Moderator
+				Joined: 2003<br>\
+          		Posts: 1211
+</div></div>
+
+:: forum-user-bruce1 {"position":"100,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/4.png">')\
+        		<div class="forum-post-username">bruce1</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2005<br>\
+          		Posts: 412
+</div></div>
+
+:: forum-user-frankersore {"position":"225,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/2.png">')\
+        		<div class="forum-post-username">frankersore</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2004<br>\
+          		Posts: 81
+</div></div>
+
+:: forum-user-hailtheorder {"position":"350,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/9.png">')\
+        		<div class="forum-post-username">hailtheorder</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2008<br>\
+          		Posts: 10
+</div></div>
+
+:: forum-user-jargon {"position":"475,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/5.png">')\
+        		<div class="forum-post-username">jargon</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2006<br>\
+          		Posts: 12
+</div></div>
+
+:: forum-user-kayG {"position":"600,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/11.png">')\
+        		<div class="forum-post-username">kayG</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2007<br>\
+          		Posts: 2
+</div></div>
+
+:: forum-user-konundrum {"position":"725,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/3.png">')\
+        		<div class="forum-post-username">konundrum</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2006<br>\
+          		Posts: 12
+</div></div>
+
+:: forum-user-michellewashere {"position":"850,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/1.png">')\
+        		<div class="forum-post-username">michellewashere</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2004<br>\
+          		Posts: 18
+</div></div>
+
+:: forum-user-plainseeds {"position":"975,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/13.png">')\
+        		<div class="forum-post-username">plainseeds</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2005<br>\
+          		Posts: 161
+</div></div>
+
+:: forum-user-unleash_nova {"position":"1100,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/10.png">')\
+        		<div class="forum-post-username">`unleash_nova`</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2007<br>\
+          		Posts: 30
+</div></div>
+
+:: forum-user-vivica {"position":"1225,600","size":"100,100"}
+<div class="forum-post-user">\
+        		(print:'<img class="forum-post-avatar"
+		src="'+$imgroot+'avatars/12.png">')\
+        		<div class="forum-post-username">vivica</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2005<br>\
+          		Posts: 101
+</div></div>
+
+:: func-back {"position":"100,725","size":"100,100"}
+{(if: $navHistory's length > 0)[
+(set: _navBack to $navHistory's last)
+(set: $navHistory to (subarray: $navHistory, 1, $navHistory's length - 1))
+(set: $navForward to (a: $browserPage) + $navForward)
+(set: $browserPage to _navBack)
+(set: $starbarOpen to false)
+(replace: ?desktoproot)[(display: "RenderDesktop")]
+]}
+
+:: func-forward {"position":"225,725","size":"100,100"}
+{(if: $navForward's length > 0)[
+(set: _navTarget to $navForward's 1st)
+(set: $navHistory to $navHistory + (a: $browserPage))
+(if: $navForward's length is 1)[(set: $navForward to (a:))](else:)[(set: $navForward to (subarray: $navForward, 2, $navForward's length))]
+(set: $browserPage to _navTarget)
+(set: $starbarOpen to false)
+(replace: ?desktoproot)[(display: "RenderDesktop")]
+]}
+
+:: func-navigate {"position":"350,725","size":"100,100"}
+{(if: $navPending is not $browserPage)[
+  (if: $navHistory's length is 0 or $navHistory's last is not $browserPage)[
+    (set: $navHistory to $navHistory + (a: $browserPage))
+  ]
+  (set: $navForward to (a:))
+  (set: $browserPage to $navPending)
+]
+(set: $starbarOpen to false)
+(replace: ?desktoproot)[(display: "RenderDesktop")]}
+
+:: func-screenshot-bruce {"position":"475,725","size":"100,100"}
+(link: '<img class="lightbox-thumb" data-full="' + $imgroot + 'misc/screenshot-bruce.png" src="' + $imgroot + 'misc/screenshot-bruce-thumb.png" width="100" style="display:block;margin-top:4px">')[
+]
+
+:: globalgamesarchive.co.uk [wiki gamesarchive]
+{<div class="wiki-gamesarchive">
+(display:"img-gamesarch")
+<div class="search-area">
+<input type="text" id="gga-search-input" autocomplete="off" spellcheck="false">
+<button type="button" id="gga-search-btn">SEARCH</button>
+<div class="gga-msg">|gga-msg>[]</div>
+</div>
+<span class="gga-nav-hidden" style="display:none">(link: "·")[(set: $navPending to "kraska1")(display: "func-navigate")]</span>
+</div>}
+
+:: img-fanwikibar {"position":"725,725","size":"100,100"}
+[(print: '<img src="' + $imgroot + 'ui/banner-fanwiki.jpg" width="100%">')]<fanwikibar|
+(click: ?fanwikibar)[(set: $navPending to "Skunkpets Fan Wiki")(display: "func-navigate")]
+
+:: img-gamesarch {"position":"850,725","size":"100,100"}
+(print: "<img src='" + $imgroot + "ui/banner-gamesarch.png' width='100%'>")
+
+:: img-kraskabar {"position":"975,725","size":"100,100"}
+(print: "<img src='" + $imgroot + "ui/banner-kraska1.png' width='100%'>")
+
+:: kraska1 [wiki gamesarchive] {"position":"1100,725","size":"100,100"}
+<div class="wiki-gamesarchive">\
+(display:"img-kraskabar")
+<div width="100%" style="text-align:center">\
+(text-style:"underline")[''ABOUT ME'']<br>\
+''my name is anya and these are<br>\
+some games i made. hope you like them''<br></div>\
+<hr><table class="library-grid">\
+	<tr><td>\
+    (link: '<img src="' + $imgroot + 'ui/kraska1-baddoor.png" width="180px"><br>BAD DOOR</div>')[(set: $navPending to "kraska1: BAD DOOR")(display: "func-navigate")]
+	</td>
+    <td>\
+    (link: '<img src="' + $imgroot + 'ui/kraska1-riddles.png" width="180px"><br>answer my riddles?</div>')[(set: $navPending to "kraska1: riddles")(display: "func-navigate")]
+    </td>
+	<td></td>
+</tr><table><hr>
+(text-style:"underline")[''AUTHOR NOTES:'']<br>
+you can check out more of my work on (link-repeat: "http://devlink-userbase.skunkpets.com/login")[(set: $dialog to "You are exiting to external website<br>http://devlink-userbase.skunkpets.com/login.<br>Are you sure?")(set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "devlink")(set: $dialogCancel to true)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+</div>
+
+:: kraska1: BAD DOOR [wiki gamesarchive] {"position":"1225,725","size":"100,100"}
+<div class="wiki-gamesarchive">\
+(display:"img-kraskabar")<hr>\
+<div style="width: 100%; height: 330px; background: black;">\
+  <iframe
+    src="https://tinypetgames.neocities.org/minigame_baddoor"
+    style="width: 100%; height: 330px; border: none;"
+    class="minigame-frame"
+    loading="lazy"
+  ></iframe>
+</div>\
+</div>
+
+:: kraska1: deal with the devil [wiki gamesarchive] {"position":"100,850","size":"100,100"}
+<div class="wiki-gamesarchive">\
+(display:"img-kraskabar")\
+<div class="minigame-devil-frame">\
+	[(print: '<img class="minigame-devil-img" src="' + $imgroot + 'devil/devil1.png">')]<gamebg|
+	<div class="minigame-devil-bar">\
+deal with the devil
+  </div>
+</div></div>
+
+:: kraska1: riddles [wiki gamesarchive] {"position":"225,850","size":"100,100"}
+<div class="wiki-gamesarchive">\
+(display:"img-kraskabar")<hr>\
+<div style="width: 100%; height: 330px; background: black;">\
+  <iframe
+    src="https://tinypetgames.neocities.org/minigame_riddles"
+    style="width: 100%; height: 330px; border: none;"
+    class="minigame-frame"
+    loading="lazy"
+  ></iframe>
+</div>\
+</div>
+
+:: sound-demo-end {"position":"350,850","size":"100,100"}
+{<audio src="https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/1b40d647-0d6c-4432-a679-7240a6e51893/demo-end.mp3" autoplay></audio>}
+
+:: sound-email {"position":"475,850","size":"100,100"}
+{<audio src="https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/fac56ba7-9c8f-414f-ab78-2376193e1985/email.mp3" autoplay></audio>}
+
+:: func-open
+{(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
+(set: $focusWin to $openPending)
+(set: $focusSeq to it + 1)
+(set: $startOpen to false)
+(replace: ?desktoproot)[(display: "RenderDesktop")]}
+
+:: func-dialog-ok
+{(set: _action to $dialogAction)
+(set: $dialog to "")
+(set: $dialogAction to "")
+(if: _action is "openmail")[
+  (set: $openPending to "mail")
+  (display: "func-open")
+](else-if: _action is "devlink")[
+  (unless: $openWindows contains "browser")[(set: $openWindows to it + (a: "browser"))]
+  (set: $navPending to "devlink-userbase: login")
+  (display: "func-navigate")
+](else:)[
+  (replace: ?desktoproot)[(display: "RenderDesktop")]
+]}
+
+:: DesktopActions
+<div class="js-actions" hidden>
+(link-repeat: "restore:browser")[(set: $restorePending to "browser")(display: "func-restore")]
+(link-repeat: "restore:mail")[(set: $restorePending to "mail")(display: "func-restore")]
+(link-repeat: "restore:notes")[(set: $restorePending to "notes")(display: "func-restore")]
+(link-repeat: "restore:diskette")[(set: $restorePending to "diskette")(display: "func-restore")]
+(link-repeat: "trash:diskette")[(set: $trashPending to "diskette")(display: "func-trash")]
+(link-repeat: "restore:readme")[(set: $restorePending to "readme")(display: "func-restore")]
+(link-repeat: "trash:browser")[(set: $trashPending to "browser")(display: "func-trash")]
+(link-repeat: "trash:mail")[(set: $trashPending to "mail")(display: "func-trash")]
+(link-repeat: "trash:notes")[(set: $trashPending to "notes")(display: "func-trash")]
+(link-repeat: "trash:readme")[(set: $trashPending to "readme")(display: "func-trash")]
+(link-repeat: "trash-hint")[(set: $dialog to "This item is in the Trash. To use it, drag it out onto the desktop first.")(set: $dialogTitle to "Trash")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "")(set: $dialogCancel to false)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+</div>
+
+:: func-restore
+{(set: $trashItems to it - (a: $restorePending))
+(unless: $desktopItems contains $restorePending)[(set: $desktopItems to it + (a: $restorePending))]
+(replace: ?desktoproot)[(display: "RenderDesktop")]}
+
+:: Winkipedia [wiki]
+{<div class="winki">
+<div class="winki-logo"><div class="winki-name">Winkipedia</div><div class="winki-tag">The Free Encyclopedia</div></div>
+<div class="winki-search"><input type="text" id="winki-search-input" autocomplete="off" spellcheck="false" placeholder="Search Winkipedia"><button type="button" id="winki-search-btn" class="xp-button">Search</button></div>
+<div class="winki-msg" id="winki-msg"></div>
+<span class="winki-nav" style="display:none">(link: "·")[(set: $navPending to "Skunkpets")(display: "func-navigate")]</span>
+<div class="winki-index" hidden>(display: "WinkiIndex")</div>
+<span class="winki-web-nav" style="display:none">(link: "·")[(set: $navPending to "Winkipedia Search Result")(display: "func-navigate")]</span>
+</div>}
+
+:: Skunkpets.com [wiki]
+{<div class="http-404">
+<h1>404 Not Found</h1>
+<p>The page you are looking for no longer exists.</p>
+<p>The requested URL http://www.skunkpets.com/ was not found on this server.</p>
+<hr>
+<address>Apache/2.2.14 (Unix) Server at www.skunkpets.com Port 80</address>
+</div>}
+
+:: func-trash
+{(set: $desktopItems to it - (a: $trashPending))
+(unless: $trashItems contains $trashPending)[(set: $trashItems to it + (a: $trashPending))]
+(set: $openWindows to it - (a: $trashPending))
+(replace: ?desktoproot)[(display: "RenderDesktop")]}
+
+:: Winkipedia Search Result [wiki]
+{<div class="winki-web">
+<div class="winki-web-bar"><span class="winki-web-brand">Winkipedia</span> <span class="winki-web-title" id="winki-web-title"></span></div>
+<iframe class="winki-web-frame" id="winki-web-frame" sandbox="allow-scripts allow-same-origin allow-popups" referrerpolicy="no-referrer"></iframe>
+</div>}
+
+:: RenderDiskette
+{<div class="diskette-assistant">
+<div class="diskette-bubble">
+|diskette-close>[<button class="diskette-close" type="button" aria-label="Close">&times;</button>]
+(click: ?diskette-close)[(set: $openWindows to it - (a: "diskette"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+(if: $disketteTopic is "")[
+<p>Hi there! I'm <b>Diskette</b>, Your Secretary. What would you like to know about?</p>
+<div class="diskette-options">
+(if: $desktopItems contains "browser")[(link: "Browse")[(set: $disketteTopic to "browser")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
+(if: $desktopItems contains "mail")[(link: "Mail")[(set: $disketteTopic to "mail")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
+(if: $desktopItems contains "notes")[(link: "Notes")[(set: $disketteTopic to "notes")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
+(if: $desktopItems contains "readme")[(link: "READ&#95;ME.txt")[(set: $disketteTopic to "readme")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
+(link: "Trash")[(set: $disketteTopic to "recycle")(replace: ?desktoproot)[(display: "RenderDesktop")]]
+(link: "Diskette")[(set: $disketteTopic to "diskette")(replace: ?desktoproot)[(display: "RenderDesktop")]]
+</div>
+(if: $trashItems's length > 0)[<p class="diskette-note">There's still something in your Trash! Drag it onto the desktop and I can tell you about it too.</p>]
+](else:)[
+<p>(display: "DisketteTopic")</p>
+<div class="diskette-options">
+(link: "Tell me about something else")[(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
+(link: "Thanks, Diskette!")[(set: $disketteTopic to "")(set: $openWindows to it - (a: "diskette"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+</div>
+]
+</div>
+<div class="diskette-character"></div>
+</div>}
+
+:: DisketteTopic
+{(if: $disketteTopic is "browser")[<b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks. You already have Winkipedia and Skunkpets.com saved!]
+(else-if: $disketteTopic is "mail")[<b>Mail</b> is where your email arrives. Click a message in your Inbox to read it. A red badge on the Mail icon means something new came in!]
+(else-if: $disketteTopic is "notes")[<b>Notes</b> is a handy notepad. Jot down anything you want to remember. Whatever you type stays put, even after you close it!]
+(else-if: $disketteTopic is "readme")[<b>READ&#95;ME.txt</b> is a note from the store that refurbished this computer. Double-click it to read it!]
+(else-if: $disketteTopic is "recycle")[The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
+(else-if: $disketteTopic is "diskette")[That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!]}
