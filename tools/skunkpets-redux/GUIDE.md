@@ -729,12 +729,15 @@ that points at a passage that no longer exists is dropped on its own.
 **Art that ships inside the page:** a few images live in `tools/skunkpets-redux/`
 and are embedded by `build.js` through `url("inline:...")` in the stylesheet, so
 they work on every copy of the game with nothing to upload: Diskette's two
-cut-outs and the Songs for Family Learning logo (`songs-for-family-learning.jpg`,
-shown by the `.album-cover-sffl` box at the top of that article). To add another
-article picture this way: put the file in that folder, add a CSS class with
-`background-image: url("inline:yourfile.jpg")` next to `.album-cover-sffl`, and
-drop `<div class="album-cover yourclass"></div>` into the article. Keep these
-small (under ~100 KB); every one makes the page itself bigger.
+cut-outs, the Songs for Family Learning logo, and REV's storefront and founders
+photo. In an article each one is a box like
+`<div class="article-art art-rev-storefront"></div>` (floats right; add
+`article-art-left` to float left), and its CSS class next to `.art-sffl` names
+the file and its aspect ratio. To add another: put the file in that folder,
+copy one of those classes with your file and its width / height, and drop the
+`<div>` where the picture should sit (right after a heading puts it beside
+that section). Keep these small (under ~100 KB); every one makes the page
+itself bigger.
 
 - `$artroot` = `https://tinypetgames.neocities.org/skunkpets/img/`: the
   **original game's art** (desktop icons, wallpaper, login mascot, loading GIF,
