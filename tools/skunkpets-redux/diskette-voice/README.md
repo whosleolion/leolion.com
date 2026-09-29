@@ -7,8 +7,8 @@ running). The script section `DISKETTE POP-UP` plays them; the clips are
 
 - `hmms-various.mp3`: the original recording ("hmms various 1" by freesound_community on
   Pixabay, under the Pixabay Content License: free to use, no credit needed).
-- `robotify.py`: cuts the eight hmms out, raises the pitch about six semitones,
+- `robotify.py`: cuts the eight hmms out, raises the pitch about fourteen semitones and speeds them up into squeaky chirps,
   and robotifies them (ring modulation, a short metallic echo, a lo-fi
-  bitcrush and a tinny-speaker filter). Change `PITCH`, `TEMPO` or `RING_HZ` and
+  bitcrush and a tinny-speaker filter). Change `PITCH`, `TEMPO`, `RING_HZ`, `BAND` or `COMB_MS` and
   rerun it to re-voice her; it overwrites the eight clips.
 - `diskette-hmms-all.mp3`: all eight processed clips in a row, for listening.

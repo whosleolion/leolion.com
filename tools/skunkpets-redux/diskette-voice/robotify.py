@@ -4,7 +4,7 @@
 # diskette-hmms-all.mp3 here, all eight in a row, for listening).
 #   pip install numpy scipy imageio-ffmpeg     (or have ffmpeg on your PATH)
 #   python3 tools/skunkpets-redux/diskette-voice/robotify.py
-# Tweak PITCH / TEMPO / RING_HZ below and rerun. SEGS are the start/end
+# Tweak PITCH / TEMPO / RING_HZ / BAND / COMB_MS below and rerun. SEGS are the start/end
 # seconds of each hmm in the original.
 import os, shutil, subprocess, tempfile, numpy as np
 from scipy.io import wavfile
@@ -20,9 +20,11 @@ T = lambda name: os.path.join(TMP, name)
 subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', os.path.join(HERE, 'hmms-various.mp3'),
                 '-ac', '1', '-ar', '44100', T('src.wav')], check=True)
 SEGS = [(0.92,1.64),(2.92,3.78),(4.42,5.14),(6.42,6.90),(8.14,8.84),(9.96,10.74),(11.76,12.54),(13.52,14.30)]
-PITCH = 1.42     # ~ +6 semitones
-TEMPO = 1.12     # a little quicker than the original
-RING_HZ = 95     # ring-mod carrier (the "robot")
+PITCH = 2.25     # ~ +14 semitones: squeaky
+TEMPO = 1.6      # much quicker than the original, so each hmm is a chirp
+RING_HZ = 160    # ring-mod carrier (the "robot")
+BAND = (450, 7000)  # tinny-speaker band-pass, Hz
+COMB_MS = 2.5    # metallic echo delay
 sr, x = wavfile.read(T('src.wav')); x = x.astype(np.float32) / 32768
 
 def ff_pitch(seg):
@@ -44,12 +46,12 @@ for i, (a, b) in enumerate(SEGS, 1):
     y = ff_pitch(fade(seg))
     t = np.arange(len(y)) / sr
     y = 0.55 * y * np.sin(2*np.pi*RING_HZ*t) + 0.45 * y                    # ring mod, part dry so the hmm stays readable
-    d = int(sr * 0.0045); z = y.copy()                                     # short comb = metallic resonance
+    d = int(sr * COMB_MS / 1000); z = y.copy()                                     # short comb = metallic resonance
     for k in range(d, len(z)): z[k] += 0.45 * z[k-d]
     y = z
     hold = 3; y = np.repeat(y[::hold], hold)[:len(y)]                      # sample-and-hold decimation
     y = np.round(y * 48) / 48                                             # ~6-bit crush (applied at unit scale below)
-    y = sosfilt(butter(4, [280, 4800], 'bp', fs=sr, output='sos'), y)      # tinny little speaker
+    y = sosfilt(butter(4, list(BAND), 'bp', fs=sr, output='sos'), y)      # tinny little speaker
     y = fade(y / (np.abs(y).max() + 1e-9) * 0.8, 0.005, 0.05)
     wavfile.write(T(f'robot-{i}.wav'), sr, (y * 32767).astype(np.int16))
     subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', T(f'robot-{i}.wav'), '-ac', '1', '-ar', '44100',

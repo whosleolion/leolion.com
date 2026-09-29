@@ -726,6 +726,16 @@ that points at a passage that no longer exists is dropped on its own.
 
 ## 8. Art and images
 
+**Art that ships inside the page:** a few images live in `tools/skunkpets-redux/`
+and are embedded by `build.js` through `url("inline:...")` in the stylesheet, so
+they work on every copy of the game with nothing to upload: Diskette's two
+cut-outs and the Songs for Family Learning logo (`songs-for-family-learning.jpg`,
+shown by the `.album-cover-sffl` box at the top of that article). To add another
+article picture this way: put the file in that folder, add a CSS class with
+`background-image: url("inline:yourfile.jpg")` next to `.album-cover-sffl`, and
+drop `<div class="album-cover yourclass"></div>` into the article. Keep these
+small (under ~100 KB); every one makes the page itself bigger.
+
 - `$artroot` = `https://tinypetgames.neocities.org/skunkpets/img/`: the
   **original game's art** (desktop icons, wallpaper, login mascot, loading GIF,
   cursors).

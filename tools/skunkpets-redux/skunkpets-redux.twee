@@ -1617,6 +1617,20 @@ span.xp-dialog-icon {
   line-height: 1.25;
 }
 
+/* Article art that ships inside the page (build.js inlines it), so it
+   shows on the live, preview and tinypetgames copies alike. */
+.browser-page-content .album-cover {
+  float: right;
+  width: 40%;
+  aspect-ratio: 480 / 391;
+  margin: 0 0 10px 15px;
+  background: center / contain no-repeat;
+}
+
+.browser-page-content .album-cover-sffl {
+  background-image: url("inline:songs-for-family-learning.jpg");
+}
+
 .browser-page-content .image-card {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -5101,6 +5115,7 @@ In 2008, news leaked that a SkunkPets animated television series was in producti
 :: Songs for Family Learning [wiki article] {"position":"225,475","size":"100,100"}
 <div class="wiki-article">\
 <h1>Songs for Family Learning</h1>\
+<div class="album-cover album-cover-sffl" role="img" aria-label="Songs for Family Learning logo"></div>\
 “Songs for Family Learning” is a series of albums released by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.
 
 The unofficial slogan of the series, “make being together a good time!” resurfaced as a viral internet meme and inspired a popular line of ironic T-shirts which led to an infamous contentious lawsuit.
