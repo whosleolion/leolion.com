@@ -610,6 +610,15 @@ answers), CSS `DISKETTE`.
 | **Every click** | A quiet click added by the script (`CLICK SOUND`) to links and buttons. |
 | **Dragging out of the Trash** | A pick-up tick and a set-down thunk, synthesized live in the browser (`UI SOUNDS`). To use recorded sounds instead, put their URLs in `UI_SOUND_FILES`. |
 | **Ending** | `sound-demo-end`, played by `DemoEnd`. |
+| **Skunkpets music** | "Comfortable Mystery" (Kevin MacLeod, CC BY 4.0), started by the Skunkpets zoom (below). The file is `src/building/skunkpets-redux/comfortable-mystery.mp3`; the tinypetgames copy streams it from leolion.com. CC BY requires the credit line on the ending card, so keep it. |
+
+**The Skunkpets zoom** (script section `THE SKUNKPETS ZOOM`). The monitor
+starts at 80% size (`ZOOM_START`). The first time the Skunkpets Winkipedia
+article appears (it carries a hidden `<span class="zoom-trigger">`), the song
+starts and the monitor grows to full size over `ZOOM_SECONDS` (60). Once per
+visit; the song fades out at the demo end. To trigger it from a different
+page, move the `zoom-trigger` span into that passage. The zoom multiplies
+into the monitor's scale through the `--monitor-zoom` CSS variable.
 
 ### 7.13 The ending
 

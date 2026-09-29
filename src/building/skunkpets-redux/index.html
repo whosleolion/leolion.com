@@ -131,7 +131,9 @@ tw-sidebar {
   top: 50%;
   width: 960px;
   height: 720px;
-  transform: translate(-50%, -50%) scale(var(--monitor-scale, 1));
+  /* --monitor-zoom is the Skunkpets zoom (StoryScript): below 1 until the
+     Skunkpets article is first opened, then it slowly grows to 1. */
+  transform: translate(-50%, -50%) scale(calc(var(--monitor-scale, 1) * var(--monitor-zoom, 1)));
   transform-origin: center;
 }
 
@@ -2215,6 +2217,16 @@ input[type="text"], input[type="password"], textarea {
 .endcard-line-1 { animation-delay: 1s; }
 .endcard-line-2 { animation-delay: 3s; }
 
+/* Music credit (CC BY requires it). */
+.endcard-credit {
+  margin-top: 1.4em;
+  font: 400 11px/1.5 Arial, sans-serif;
+  color: #aaa;
+  animation-delay: 4.5s;
+}
+
+.endcard .endcard-credit a { color: #aaa; }
+
 @keyframes endcardFade {
   to { opacity: 1; }
 }
@@ -3341,6 +3353,77 @@ document.addEventListener("click", function (e) {
 
 
 /* =========================================================
+   THE SKUNKPETS ZOOM
+   ---------------------------------------------------------
+   The whole monitor starts a little zoomed out (ZOOM_START).
+   The first time the Skunkpets article is shown (its passage
+   carries a hidden .zoom-trigger), "Comfortable Mystery"
+   starts and the monitor slowly grows to full size over
+   ZOOM_SECONDS while the song keeps playing. It happens once
+   per visit. The song fades out when the demo ends.
+
+   The zoom is driven from here, not a CSS transition, because
+   Harlowe rebuilds .monitor on every re-render and would
+   restart a transition each time.
+   ========================================================= */
+
+const ZOOM_START = 0.8;
+const ZOOM_SECONDS = 60;
+/* Hosted on leolion.com; the absolute URL keeps the tinypetgames copy
+   working too. */
+const ZOOM_SONG_PATH = "/building/skunkpets-redux/comfortable-mystery.mp3";
+const ZOOM_SONG = location.hostname.endsWith("leolion.com") || location.hostname === "localhost"
+  ? ZOOM_SONG_PATH
+  : "https://leolion.com" + ZOOM_SONG_PATH;
+
+let zoomSong = null;
+
+function setMonitorZoom(z) {
+  document.documentElement.style.setProperty("--monitor-zoom", z);
+}
+
+function startSkunkpetsZoom() {
+  zoomSong = new Audio(ZOOM_SONG);
+  zoomSong.volume = 0.6;
+  zoomSong.play().catch(function () {});
+
+  const t0 = performance.now();
+  (function step(now) {
+    const t = Math.min((now - t0) / (ZOOM_SECONDS * 1000), 1);
+    const eased = t * t * (3 - 2 * t); /* ease in and out */
+    setMonitorZoom(ZOOM_START + (1 - ZOOM_START) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function fadeOutZoomSong() {
+  const song = zoomSong;
+  zoomSong = null;
+  const fade = setInterval(function () {
+    song.volume = Math.max(0, song.volume - 0.05);
+    if (song.volume === 0) { clearInterval(fade); song.pause(); }
+  }, 100);
+}
+
+setMonitorZoom(ZOOM_START);
+
+(function () {
+  let started = false;
+  const watcher = new MutationObserver(function () {
+    if (!started && document.querySelector(".zoom-trigger")) {
+      started = true;
+      startSkunkpetsZoom();
+    }
+    if (zoomSong && document.querySelector(".end-flicker-overlay")) {
+      fadeOutZoomSong();
+      watcher.disconnect();
+    }
+  });
+  watcher.observe(document.body, { childList: true, subtree: true });
+})();
+
+
+/* =========================================================
    CLICK SOUND
    ========================================================= */
 
@@ -4328,7 +4411,7 @@ SkunkPets came in a (link: &quot;variety of species and colors&quot;)[(set: $nav
 Bin City was a virtual realm of junkyard-inspired neighborhoods, each of which have their own shops, games, and attractions. It had its own economy and stock market. Players could earn one of two virtual currencies. One currency, called Skunkpoints, could be obtained for free through on-site features like games, events, and contests. The other, SkunkCash (SC), was purchased with real-world money and could be exchanged for in-game souvenirs, including access to restricted game zones and wearable items for pets.
 
 Until 2009, the site was regularly updated with features like new games, items, and content.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="31" name="Skunkpets" tags="wiki article" position="100,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="31" name="Skunkpets" tags="wiki article" position="100,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;&lt;span class=&quot;zoom-trigger&quot; hidden&gt;&lt;/span&gt;\
 &lt;h1&gt;SkunkPets™ (website)&lt;/h1&gt;\
 SkunkPets is a now-defunct free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets (&quot;SkunkPets&quot;) and explore a virtual realm called Bin City. Players could buy digital food, accessories, and customizations for their SkunkPets to keep them happy. Additionally, users could train their SkunkPets to fight in the &quot;Scrapyard,&quot; winning titles and prizes. Players could interact with others through social features like message boards and guilds, or trading items with each other.
 
@@ -4549,7 +4632,7 @@ Barry&#39;s many intellectual property lawsuits yielded the seed funding for (li
 
 &lt;h2&gt;Later career&lt;/h2&gt;\
 After leaving Recast, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether &quot;the animal guys over there `[were]` ready for something `[explative]` serious yet.&quot; Barry continues to work independently as a media investor and intellectual property lawyer at his firm Tom Barry Associates, which he manages with his two sons.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="35" name="WIN" tags="" position="100,100" size="100,100">&lt;div class=&quot;win-screen&quot;&gt;&lt;div class=&quot;endcard&quot;&gt;&lt;div class=&quot;endcard-line endcard-line-1&quot;&gt;THANK YOU FOR PLAYING&lt;h2&gt;//REMEMBER SKUNKPETS?//&lt;/h2&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-line-2&quot;&gt;Please click here to fill out our &lt;a href=&quot;https://forms.gle/xSDvMgE87h34RBjPA&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&#39;&#39;playtest exit survey.&#39;&#39;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="36" name="Welcome Page" tags="wiki" position="725,475" size="100,100"># Welcome
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="35" name="WIN" tags="" position="100,100" size="100,100">&lt;div class=&quot;win-screen&quot;&gt;&lt;div class=&quot;endcard&quot;&gt;&lt;div class=&quot;endcard-line endcard-line-1&quot;&gt;THANK YOU FOR PLAYING&lt;h2&gt;//REMEMBER SKUNKPETS?//&lt;/h2&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-line-2&quot;&gt;Please click here to fill out our &lt;a href=&quot;https://forms.gle/xSDvMgE87h34RBjPA&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&#39;&#39;playtest exit survey.&#39;&#39;&lt;/a&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-credit&quot;&gt;&quot;Comfortable Mystery&quot; Kevin MacLeod (incompetech.com)&lt;br&gt;Licensed under Creative Commons: By Attribution 4.0 License&lt;br&gt;&lt;a href=&quot;https://creativecommons.org/licenses/by/4.0/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;creativecommons.org/licenses/by/4.0&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="36" name="Welcome Page" tags="wiki" position="725,475" size="100,100"># Welcome
 
 This is the home page of the in-game wiki, loaded inside the **Browser**
 window.

@@ -15,6 +15,8 @@ const b = await chromium.launch({
 const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
+const songLoads = [];
+p.on('response', (r) => { if (r.url().endsWith('comfortable-mystery.mp3')) songLoads.push(r.status()); });
 await p.goto(URL);
 
 const W = (ms) => p.waitForTimeout(ms);
@@ -35,12 +37,15 @@ const drag = async (from, to) => {
 // Click a link by its text, scrolled into view first (clicks its last line of text).
 const go = async (sel, text) => {
   const el = p.locator(sel).filter({ hasText: text }).first();
-  await el.scrollIntoViewIfNeeded();
+  // Plain scrollIntoView: Playwright's version waits for the element to stop
+  // moving, which never happens while the Skunkpets zoom is running.
+  await el.evaluate((e) => e.scrollIntoView({ block: 'nearest' }));
   const r = await el.evaluate((e) => { const rs = e.getClientRects(); const q = rs[rs.length - 1]; return { x: q.x + Math.min(12, q.width / 2), y: q.y + q.height / 2 }; });
   await p.mouse.click(r.x, r.y); await W(450);
 };
 const type = async (sel, text) => { await click(sel); await p.keyboard.type(text); };
 const text = (sel) => p.locator(sel).first().innerText().then((t) => t.replace(/\s+/g, ' ').trim()).catch(() => '');
+const zoom = () => p.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--monitor-zoom')));
 const pageTitle = () => text('.panel[data-window-template="browser"] .panel-title');
 
 let failures = 0;
@@ -56,6 +61,7 @@ await W(1800);
 const icons = await p.$$eval('.desktop-icon', (e) => e.map((i) => i.dataset.windowTemplate).join(','));
 check('boot: only READ_ME and Trash on the desktop', icons === 'readme,recycle', icons);
 check('boot: no popup', (await p.locator('.xp-dialog').count()) === 0);
+check('boot: monitor starts zoomed out', (await zoom()) === 0.8, String(await zoom()));
 await shot('01-boot');
 
 // READ_ME
@@ -104,11 +110,15 @@ check('search finds an article by exact name', (await pageTitle()) === 'Tom Barr
 await click('.browser-btn[title="Back"]');
 await type('#winki-search-input', 'Forum: Hacked');
 await p.keyboard.press('Enter'); await W(500);
+check('other pages leave the zoom alone', (await zoom()) === 0.8 && songLoads.length === 0, String(await zoom()));
 check('search skips non-article pages', (await text('#winki-msg')).includes('does not have an article'));
 await p.locator('#winki-search-input').fill('');
 await type('#winki-search-input', 'skunkpets.com');
 await p.keyboard.press('Enter'); await W(500);
 check('"skunkpets.com" opens the Skunkpets article', (await text('.browser-page-content h1')).includes('SkunkPets'));
+await W(3000);
+check('Skunkpets article starts the zoom', (await zoom()) > 0.8, String(await zoom()));
+check('Skunkpets article starts the song', songLoads.some((s) => s === 200 || s === 206), songLoads.join(','));
 
 // Story path to the ending
 await go('.browser-page-content tw-link', '2004 NetCon');
@@ -128,6 +138,7 @@ await go('.mail-summary tw-link', 'stop');
 await go('.mail-body tw-link', 'game over');
 await W(8000);
 check('ending card', (await text('.endcard')).includes('THANK YOU FOR PLAYING'));
+check('ending card credits the song', (await text('.endcard-credit')).includes('Kevin MacLeod'));
 await shot('04-ending');
 
 const twErrors = await p.$$eval('tw-error', (e) => e.map((x) => x.textContent.slice(0, 120)));

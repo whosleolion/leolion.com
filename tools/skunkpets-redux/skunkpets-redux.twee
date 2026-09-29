@@ -130,7 +130,9 @@ tw-sidebar {
   top: 50%;
   width: 960px;
   height: 720px;
-  transform: translate(-50%, -50%) scale(var(--monitor-scale, 1));
+  /* --monitor-zoom is the Skunkpets zoom (StoryScript): below 1 until the
+     Skunkpets article is first opened, then it slowly grows to 1. */
+  transform: translate(-50%, -50%) scale(calc(var(--monitor-scale, 1) * var(--monitor-zoom, 1)));
   transform-origin: center;
 }
 
@@ -2214,6 +2216,16 @@ input[type="text"], input[type="password"], textarea {
 .endcard-line-1 { animation-delay: 1s; }
 .endcard-line-2 { animation-delay: 3s; }
 
+/* Music credit (CC BY requires it). */
+.endcard-credit {
+  margin-top: 1.4em;
+  font: 400 11px/1.5 Arial, sans-serif;
+  color: #aaa;
+  animation-delay: 4.5s;
+}
+
+.endcard .endcard-credit a { color: #aaa; }
+
 @keyframes endcardFade {
   to { opacity: 1; }
 }
@@ -3343,6 +3355,77 @@ document.addEventListener("click", function (e) {
 
 
 /* =========================================================
+   THE SKUNKPETS ZOOM
+   ---------------------------------------------------------
+   The whole monitor starts a little zoomed out (ZOOM_START).
+   The first time the Skunkpets article is shown (its passage
+   carries a hidden .zoom-trigger), "Comfortable Mystery"
+   starts and the monitor slowly grows to full size over
+   ZOOM_SECONDS while the song keeps playing. It happens once
+   per visit. The song fades out when the demo ends.
+
+   The zoom is driven from here, not a CSS transition, because
+   Harlowe rebuilds .monitor on every re-render and would
+   restart a transition each time.
+   ========================================================= */
+
+const ZOOM_START = 0.8;
+const ZOOM_SECONDS = 60;
+/* Hosted on leolion.com; the absolute URL keeps the tinypetgames copy
+   working too. */
+const ZOOM_SONG_PATH = "/building/skunkpets-redux/comfortable-mystery.mp3";
+const ZOOM_SONG = location.hostname.endsWith("leolion.com") || location.hostname === "localhost"
+  ? ZOOM_SONG_PATH
+  : "https://leolion.com" + ZOOM_SONG_PATH;
+
+let zoomSong = null;
+
+function setMonitorZoom(z) {
+  document.documentElement.style.setProperty("--monitor-zoom", z);
+}
+
+function startSkunkpetsZoom() {
+  zoomSong = new Audio(ZOOM_SONG);
+  zoomSong.volume = 0.6;
+  zoomSong.play().catch(function () {});
+
+  const t0 = performance.now();
+  (function step(now) {
+    const t = Math.min((now - t0) / (ZOOM_SECONDS * 1000), 1);
+    const eased = t * t * (3 - 2 * t); /* ease in and out */
+    setMonitorZoom(ZOOM_START + (1 - ZOOM_START) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function fadeOutZoomSong() {
+  const song = zoomSong;
+  zoomSong = null;
+  const fade = setInterval(function () {
+    song.volume = Math.max(0, song.volume - 0.05);
+    if (song.volume === 0) { clearInterval(fade); song.pause(); }
+  }, 100);
+}
+
+setMonitorZoom(ZOOM_START);
+
+(function () {
+  let started = false;
+  const watcher = new MutationObserver(function () {
+    if (!started && document.querySelector(".zoom-trigger")) {
+      started = true;
+      startSkunkpetsZoom();
+    }
+    if (zoomSong && document.querySelector(".end-flicker-overlay")) {
+      fadeOutZoomSong();
+      watcher.disconnect();
+    }
+  });
+  watcher.observe(document.body, { childList: true, subtree: true });
+})();
+
+
+/* =========================================================
    CLICK SOUND
    ========================================================= */
 
@@ -4423,7 +4506,7 @@ Until 2009, the site was regularly updated with features like new games, items, 
 </div>
 
 :: Skunkpets [wiki article] {"position":"100,475","size":"100,100"}
-<div class="wiki-article">\
+<div class="wiki-article"><span class="zoom-trigger" hidden></span>\
 <h1>SkunkPets™ (website)</h1>\
 SkunkPets is a now-defunct free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets ("SkunkPets") and explore a virtual realm called Bin City. Players could buy digital food, accessories, and customizations for their SkunkPets to keep them happy. Additionally, users could train their SkunkPets to fight in the "Scrapyard," winning titles and prizes. Players could interact with others through social features like message boards and guilds, or trading items with each other.
 
@@ -4656,7 +4739,7 @@ After leaving Recast, Barry made several attempts to purchase small subsections 
 </div>
 
 :: WIN
-<div class="win-screen"><div class="endcard"><div class="endcard-line endcard-line-1">THANK YOU FOR PLAYING<h2>//REMEMBER SKUNKPETS?//</h2></div><div class="endcard-line endcard-line-2">Please click here to fill out our <a href="https://forms.gle/xSDvMgE87h34RBjPA" target="_blank" rel="noopener">''playtest exit survey.''</a></div></div></div>
+<div class="win-screen"><div class="endcard"><div class="endcard-line endcard-line-1">THANK YOU FOR PLAYING<h2>//REMEMBER SKUNKPETS?//</h2></div><div class="endcard-line endcard-line-2">Please click here to fill out our <a href="https://forms.gle/xSDvMgE87h34RBjPA" target="_blank" rel="noopener">''playtest exit survey.''</a></div><div class="endcard-line endcard-credit">"Comfortable Mystery" Kevin MacLeod (incompetech.com)<br>Licensed under Creative Commons: By Attribution 4.0 License<br><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">creativecommons.org/licenses/by/4.0</a></div></div></div>
 
 :: Welcome Page [wiki] {"position":"725,475","size":"100,100"}
 # Welcome
