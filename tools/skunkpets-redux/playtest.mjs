@@ -55,6 +55,7 @@ const check = (label, ok, detail = '') => {
 };
 
 // Boot
+const titleButtons = await p.$$eval('.splash-screen button', (e) => e.map((x) => x.textContent));
 await click('.startbutton');
 await p.locator('.monitor').waitFor();
 await W(1800);
@@ -62,6 +63,17 @@ const icons = await p.$$eval('.desktop-icon', (e) => e.map((i) => i.dataset.wind
 check('boot: only READ_ME and Trash on the desktop', icons === 'readme,recycle', icons);
 check('boot: no popup', (await p.locator('.xp-dialog').count()) === 0);
 check('boot: monitor starts zoomed out', (await zoom()) === 0.8, String(await zoom()));
+check('boot: title screen had no CONTINUE (no save yet)', !titleButtons.includes('CONTINUE'), titleButtons.join(','));
+
+// Volume popup in the tray
+await click('.tray-volume');
+check('tray speaker opens the volume popup', (await text('.volume-song-name')) === 'No music playing');
+await click('.volume-mute-box');
+check('mute all sound is remembered', (await p.evaluate(() => JSON.parse(localStorage.getItem('skunkpets-sound')).muted)) === true);
+check('tray speaker shows muted', (await p.locator('.tray-volume.muted').count()) === 1);
+await click('.volume-mute-box');
+await p.mouse.click(640, 300); await W(300);
+check('clicking away closes the popup', (await p.locator('.volume-popup').count()) === 0);
 await shot('01-boot');
 
 // READ_ME
@@ -120,6 +132,18 @@ await W(3000);
 check('Skunkpets article starts the zoom', (await zoom()) > 0.8, String(await zoom()));
 check('Skunkpets article starts the song', songLoads.some((s) => s === 200 || s === 206), songLoads.join(','));
 
+// Autosave: reload mid-game, CONTINUE, and carry on from the same spot
+await W(1500);
+check('game autosaves', await p.evaluate(() => !!localStorage.getItem('skunkpets-save')));
+const songsBefore = songLoads.length;
+await p.reload(); await W(1000);
+check('reload shows CONTINUE and NEW GAME', (await p.$$eval('.splash-screen button', (e) => e.map((x) => x.textContent))).join(',') === 'CONTINUE,NEW GAME');
+await click('.continuebutton');
+await p.locator('.monitor').waitFor(); await W(1800);
+check('CONTINUE restores the browser on the Skunkpets article', (await text('.browser-page-content h1')).includes('SkunkPets'));
+check('CONTINUE restores the full-size zoom', (await zoom()) === 1, String(await zoom()));
+check('CONTINUE brings the song back', songLoads.length > songsBefore, songLoads.join(','));
+
 // Story path to the ending
 await go('.browser-page-content tw-link', '2004 NetCon');
 await go('.browser-page-content tw-link', 'Global Games Archive');
@@ -139,6 +163,7 @@ await go('.mail-body tw-link', 'game over');
 await W(8000);
 check('ending card', (await text('.endcard')).includes('THANK YOU FOR PLAYING'));
 check('ending card credits the song', (await text('.endcard-credit')).includes('Kevin MacLeod'));
+check('the ending clears the save', await p.evaluate(() => !localStorage.getItem('skunkpets-save')));
 await shot('04-ending');
 
 const twErrors = await p.$$eval('tw-error', (e) => e.map((x) => x.textContent.slice(0, 120)));

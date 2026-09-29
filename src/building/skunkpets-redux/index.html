@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="0417838d62a1">
+<meta name="skunkpets-build" content="f1e0e42f043d">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "0417838d62a1";
+  var mine = "f1e0e42f043d";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -604,6 +604,75 @@ tw-sidebar {
   background: linear-gradient(to bottom, #0c9ae8 0%, #1290e8 12%, #0f82d7 88%, #0b67b3 100%);
   box-shadow: inset 1px 0 1px #5fc2f5;
   color: #fff;
+}
+
+/* Tray speaker (opens the volume popup; see SOUND SETTINGS in StoryScript). */
+.tray-volume {
+  width: 16px;
+  height: 16px;
+  margin-right: 10px;
+  cursor: pointer;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 6h3l4-3v10l-4-3H2z' fill='%23f4f4f4' stroke='%23333' stroke-width='.8'/%3E%3Cpath d='M11 5.5c1 .8 1 4.2 0 5M12.8 4c1.8 1.6 1.8 6.4 0 8' fill='none' stroke='%23fff' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.tray-volume.muted {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 6h3l4-3v10l-4-3H2z' fill='%23f4f4f4' stroke='%23333' stroke-width='.8'/%3E%3Ccircle cx='12.5' cy='8' r='3' fill='%23e03a1e' stroke='%23fff' stroke-width='.8'/%3E%3Cpath d='M10.7 10.2l3.6-4.4' stroke='%23fff' stroke-width='1.1'/%3E%3C/svg%3E");
+}
+
+.volume-popup {
+  position: absolute;
+  right: 6px;
+  bottom: 38px;
+  z-index: 95000;
+  width: 190px;
+  padding: 0 0 8px;
+  border: 1px solid #0b3dab;
+  border-radius: 4px;
+  background: #ece9d8;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.45);
+  font: 11px Tahoma, sans-serif;
+  color: #000;
+}
+
+.volume-title {
+  padding: 3px 8px;
+  margin-bottom: 8px;
+  background: linear-gradient(to bottom, #0a5fe0, #0b49c8);
+  color: #fff;
+  font-weight: bold;
+}
+
+.volume-song,
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+}
+
+.volume-playpause {
+  width: 26px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #fff, #e3e3db);
+  font: 9px Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.volume-playpause:disabled {
+  color: #aaa;
+  cursor: default;
+}
+
+.volume-song-name {
+  font-style: italic;
+}
+
+.volume-slider {
+  flex: 1;
+  min-width: 0;
 }
 
 /* Clicking anywhere outside the open menu closes it. */
@@ -1385,6 +1454,11 @@ span.xp-dialog-icon {
 }
 
 .startbutton:hover {
+  background: #fff;
+  color: #000;
+}
+
+.continuebutton {
   background: #fff;
   color: #000;
 }
@@ -2356,6 +2430,7 @@ function initDesktopUI() {
     initWinkiWebResult(playfield);
     initNotes(playfield);
     updateClock(playfield);
+    mountVolumePopup(playfield);
   });
 }
 
@@ -2885,6 +2960,7 @@ function getUiAudio() {
 }
 
 function playUiSound(name) {
+  if (soundSettings.muted) return;
   if (UI_SOUND_FILES[name]) {
     const a = new Audio(UI_SOUND_FILES[name]);
     a.volume = 0.4;
@@ -3403,15 +3479,25 @@ const ZOOM_SONG = location.hostname.endsWith("leolion.com") || location.hostname
   : "https://leolion.com" + ZOOM_SONG_PATH;
 
 let zoomSong = null;
+let zoomStarted = false;
 
 function setMonitorZoom(z) {
   document.documentElement.style.setProperty("--monitor-zoom", z);
 }
 
-function startSkunkpetsZoom() {
+function startZoomSong() {
   zoomSong = new Audio(ZOOM_SONG);
-  zoomSong.volume = 0.6;
+  zoomSong.volume = soundSettings.music;
+  zoomSong.muted = soundSettings.muted;
+  zoomSong.addEventListener("play", refreshVolumePopup);
+  zoomSong.addEventListener("pause", refreshVolumePopup);
   zoomSong.play().catch(function () {});
+  refreshVolumePopup();
+}
+
+function startSkunkpetsZoom() {
+  zoomStarted = true;
+  startZoomSong();
 
   const t0 = performance.now();
   (function step(now) {
@@ -3422,9 +3508,17 @@ function startSkunkpetsZoom() {
   })(t0);
 }
 
+/* A continued game that had already seen the zoom: full size, song again. */
+function resumeSkunkpetsZoom() {
+  zoomStarted = true;
+  setMonitorZoom(1);
+  startZoomSong();
+}
+
 function fadeOutZoomSong() {
   const song = zoomSong;
   zoomSong = null;
+  refreshVolumePopup();
   const fade = setInterval(function () {
     song.volume = Math.max(0, song.volume - 0.05);
     if (song.volume === 0) { clearInterval(fade); song.pause(); }
@@ -3434,19 +3528,297 @@ function fadeOutZoomSong() {
 setMonitorZoom(ZOOM_START);
 
 (function () {
-  let started = false;
   const watcher = new MutationObserver(function () {
-    if (!started && document.querySelector(".zoom-trigger")) {
-      started = true;
+    if (!zoomStarted && document.querySelector(".zoom-trigger")) {
       startSkunkpetsZoom();
     }
-    if (zoomSong && document.querySelector(".end-flicker-overlay")) {
-      fadeOutZoomSong();
+    if (document.querySelector(".end-flicker-overlay")) {
+      if (zoomSong) fadeOutZoomSong();
       watcher.disconnect();
     }
   });
   watcher.observe(document.body, { childList: true, subtree: true });
 })();
+
+
+/* =========================================================
+   SOUND SETTINGS + VOLUME POPUP
+   ---------------------------------------------------------
+   The speaker in the taskbar tray (.tray-volume, in
+   RenderDesktop) opens an XP-style volume popup: play/pause
+   for the Skunkpets song, a music volume slider, and "Mute
+   all sound" (music, clicks, email, Trash sounds, the ending
+   sound). Settings are kept in localStorage per browser,
+   separate from the save, so they carry across new games.
+
+   The popup element is built once and re-attached to the
+   playfield after each Harlowe re-render (mountVolumePopup,
+   called from initDesktopUI), so it stays open and keeps its
+   state while the desktop redraws around it.
+   ========================================================= */
+
+const SOUND_KEY = "skunkpets-sound";
+const soundSettings = { music: 0.6, muted: false };
+try { Object.assign(soundSettings, JSON.parse(localStorage.getItem(SOUND_KEY)) || {}); } catch (e) {}
+
+function saveSoundSettings() {
+  try { localStorage.setItem(SOUND_KEY, JSON.stringify(soundSettings)); } catch (e) {}
+}
+
+/* Every <audio> in the page (click, email, ending) obeys mute as it plays. */
+document.addEventListener("play", function (e) {
+  if (e.target instanceof HTMLMediaElement) e.target.muted = soundSettings.muted;
+}, true);
+
+function applySoundSettings() {
+  document.querySelectorAll("audio").forEach(function (a) { a.muted = soundSettings.muted; });
+  if (zoomSong) {
+    zoomSong.muted = soundSettings.muted;
+    zoomSong.volume = soundSettings.music;
+  }
+  document.querySelectorAll(".tray-volume").forEach(function (icon) {
+    icon.classList.toggle("muted", soundSettings.muted);
+  });
+  saveSoundSettings();
+  refreshVolumePopup();
+}
+
+let volumePopup = null;
+let volumePopupOpen = false;
+
+function buildVolumePopup() {
+  const el = document.createElement("div");
+  el.className = "volume-popup";
+  el.innerHTML =
+    '<div class="volume-title">Volume</div>' +
+    '<div class="volume-song">' +
+      '<button type="button" class="volume-playpause" aria-label="Play or pause the music"></button>' +
+      '<span class="volume-song-name"></span>' +
+    '</div>' +
+    '<label class="volume-row">Music <input type="range" class="volume-slider" min="0" max="1" step="0.05"></label>' +
+    '<label class="volume-row volume-mute"><input type="checkbox" class="volume-mute-box"> Mute all sound</label>';
+
+  /* Keep desktop drag-select and window dragging from seeing these presses. */
+  el.addEventListener("mousedown", function (e) { e.stopPropagation(); });
+
+  el.querySelector(".volume-playpause").addEventListener("click", function () {
+    if (!zoomSong) return;
+    if (zoomSong.paused) zoomSong.play().catch(function () {});
+    else zoomSong.pause();
+  });
+  el.querySelector(".volume-slider").addEventListener("input", function (e) {
+    soundSettings.music = parseFloat(e.target.value);
+    applySoundSettings();
+  });
+  el.querySelector(".volume-mute-box").addEventListener("change", function (e) {
+    soundSettings.muted = e.target.checked;
+    applySoundSettings();
+  });
+  return el;
+}
+
+/* Writes only what changed: initDesktopUI runs on every DOM mutation and
+   calls this, so an unconditional write would loop forever. */
+function refreshVolumePopup() {
+  if (!volumePopup) return;
+  const btn = volumePopup.querySelector(".volume-playpause");
+  const name = volumePopup.querySelector(".volume-song-name");
+  const label = zoomSong && !zoomSong.paused ? "\u275A\u275A" : "\u25B6";
+  const song = zoomSong ? "Comfortable Mystery" : "No music playing";
+  if (btn.disabled !== !zoomSong) btn.disabled = !zoomSong;
+  if (btn.textContent !== label) btn.textContent = label;
+  if (name.textContent !== song) name.textContent = song;
+  volumePopup.querySelector(".volume-slider").value = soundSettings.music;
+  volumePopup.querySelector(".volume-mute-box").checked = soundSettings.muted;
+}
+
+function mountVolumePopup(playfield) {
+  playfield.querySelectorAll(".tray-volume").forEach(function (icon) {
+    if (icon.classList.contains("muted") !== soundSettings.muted) icon.classList.toggle("muted", soundSettings.muted);
+  });
+  if (!volumePopupOpen) {
+    if (volumePopup && volumePopup.parentNode) volumePopup.parentNode.removeChild(volumePopup);
+    return;
+  }
+  if (!volumePopup) volumePopup = buildVolumePopup();
+  if (volumePopup.parentNode !== playfield) playfield.appendChild(volumePopup);
+  refreshVolumePopup();
+}
+
+function setVolumePopupOpen(open) {
+  volumePopupOpen = open;
+  document.querySelectorAll(".playfield").forEach(mountVolumePopup);
+}
+
+document.addEventListener("click", function (e) {
+  if (e.target.closest(".tray-volume")) setVolumePopupOpen(!volumePopupOpen);
+});
+
+/* Clicking anywhere else closes it. */
+document.addEventListener("mousedown", function (e) {
+  if (volumePopupOpen && !e.target.closest(".volume-popup, .tray-volume")) setVolumePopupOpen(false);
+}, true);
+
+
+/* =========================================================
+   SAVE / CONTINUE
+   ---------------------------------------------------------
+   The game autosaves to this browser's localStorage (key
+   SAVE_KEY) a second after any click or key press, and when
+   the tab is hidden or closed. A save holds Harlowe's state
+   (State.serialise, the passage history) plus a snapshot of
+   every variable as it is right now (serialise alone only
+   has them as of the last passage change, and this game
+   changes almost everything without changing passage), plus
+   the desktop layout that only lives in this script
+   (window and icon positions, stacking order, minimized
+   windows) and whether the Skunkpets zoom has happened.
+
+   With a save present, the title screen shows CONTINUE and
+   PLAY reads NEW GAME. Reloading the page returns to the
+   title screen. Reaching the demo end deletes the
+   save, so the next visit starts over. Notes are saved on
+   their own (NOTES_STORAGE_KEY) and aren't part of this.
+
+   Bump SAVE_VERSION when a change would break old saves
+   (a new variable in GameStart, a renamed passage): saves
+   with another version are ignored. A save whose passages
+   no longer exist is dropped on its own.
+   ========================================================= */
+
+const SAVE_KEY = "skunkpets-save";
+const SAVE_VERSION = 1;
+const HarloweState = require("state");
+const HarloweEngine = require("engine");
+
+/* Harlowe keeps its own copy of the game in sessionStorage and, on a
+   reload, jumps straight back into it (without the desktop layout). Drop
+   it so a reload always lands on the title screen and CONTINUE. This
+   script runs before Harlowe looks for it. */
+try { sessionStorage.removeItem("Saved Session"); } catch (e) {}
+
+let saveTimer = null;
+let gameOver = false;
+
+function readSave() {
+  try {
+    const save = JSON.parse(localStorage.getItem(SAVE_KEY));
+    return save && save.version === SAVE_VERSION ? save : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function deleteSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+}
+
+/* Variables are plain JSON except datamaps (Map) and datasets (Set). */
+function encodeValue(key, value) {
+  if (value instanceof Map) return { __map: Array.from(value) };
+  if (value instanceof Set) return { __set: Array.from(value) };
+  return value;
+}
+
+function decodeValue(key, value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (value.__map) return new Map(value.__map);
+    if (value.__set) return new Set(value.__set);
+  }
+  return value;
+}
+
+function liveVariables() {
+  const vars = HarloweState.variables;
+  const out = {};
+  for (const name in vars) {
+    if (typeof vars[name] !== "function" && name.indexOf("TwineScript") !== 0) out[name] = vars[name];
+  }
+  return JSON.stringify(out, encodeValue);
+}
+
+function writeSave() {
+  clearTimeout(saveTimer);
+  if (gameOver || !document.querySelector(".monitor")) return;
+  const story = HarloweState.serialise();
+  if (typeof story !== "string") return; /* Harlowe couldn't serialise this state */
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      version: SAVE_VERSION,
+      savedAt: Date.now(),
+      story: story,
+      variables: liveVariables(),
+      icons: iconPositions,
+      windows: windowPositions,
+      z: windowZIndices,
+      minimized: Array.from(minimizedWindows),
+      zoomed: zoomStarted,
+    }));
+  } catch (e) {}
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(writeSave, 1000);
+}
+
+document.addEventListener("pointerup", scheduleSave, true);
+document.addEventListener("keyup", scheduleSave, true);
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "hidden") writeSave();
+});
+window.addEventListener("pagehide", writeSave);
+
+/* Returns false (and forgets the save) if it can't be loaded. */
+function continueGame() {
+  const save = readSave();
+  if (!save || !save.variables || HarloweState.deserialise(save.story) !== true) {
+    deleteSave();
+    return false;
+  }
+  Object.assign(HarloweState.variables, JSON.parse(save.variables, decodeValue));
+  Object.assign(iconPositions, save.icons);
+  Object.assign(windowPositions, save.windows);
+  Object.assign(windowZIndices, save.z);
+  (save.minimized || []).forEach(function (id) { minimizedWindows.add(id); });
+  Object.keys(windowZIndices).forEach(function (id) {
+    topZ = Math.max(topZ, Number(windowZIndices[id]) || 0);
+  });
+  if (save.zoomed) resumeSkunkpetsZoom();
+  HarloweEngine.showPassage(HarloweState.passage);
+  return true;
+}
+
+/* Title screen: add CONTINUE when there's a save. Ending: drop the save. */
+new MutationObserver(function () {
+  const splash = document.querySelector(".splash-screen");
+  if (splash && !splash.dataset.saveChecked) {
+    splash.dataset.saveChecked = "1";
+    if (readSave()) {
+      const play = splash.querySelector(".startbutton");
+      const cont = document.createElement("button");
+      cont.type = "button";
+      cont.className = "startbutton continuebutton";
+      cont.textContent = "CONTINUE";
+      cont.addEventListener("click", function () {
+        if (continueGame()) return;
+        cont.remove();
+        if (play) play.textContent = "PLAY";
+      });
+      if (play) play.textContent = "NEW GAME";
+      /* Right above PLAY's hook, so the passage's stray line breaks
+         don't end up between the two buttons. */
+      let anchor = play || splash.firstChild;
+      while (anchor && anchor.parentNode !== splash) anchor = anchor.parentNode;
+      splash.insertBefore(cont, anchor || splash.firstChild);
+    }
+  }
+  if (!gameOver && document.querySelector(".end-flicker-overlay, .win-screen")) {
+    gameOver = true;
+    clearTimeout(saveTimer);
+    deleteSave();
+  }
+}).observe(document.body, { childList: true, subtree: true });
 
 
 /* =========================================================
@@ -4354,7 +4726,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
   |start-btn&gt;[&lt;button class=&quot;start-button&quot; type=&quot;button&quot; aria-label=&quot;Start&quot;&gt;&lt;/button&gt;]
   (click: ?start-btn)[(set: $startOpen to not $startOpen)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
   &lt;div class=&quot;taskbar-tasks&quot;&gt;&lt;/div&gt;
-  &lt;div class=&quot;taskbar-tray&quot;&gt;&lt;span class=&quot;taskbar-clock&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;div class=&quot;taskbar-tray&quot;&gt;&lt;span class=&quot;tray-volume&quot; title=&quot;Volume&quot;&gt;&lt;/span&gt;&lt;span class=&quot;taskbar-clock&quot;&gt;&lt;/span&gt;&lt;/div&gt;
 &lt;/div&gt;
 
 (unless: $dialog is &quot;&quot;)[

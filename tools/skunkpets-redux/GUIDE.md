@@ -30,6 +30,7 @@ own change.
    - 7.12 [Sounds](#712-sounds)
    - 7.13 [The ending](#713-the-ending)
    - 7.14 [Small polish systems](#714-small-polish-systems)
+   - 7.15 [Saving and CONTINUE](#715-saving-and-continue)
 8. [Art and images](#8-art-and-images)
 9. [Gotchas and troubleshooting](#9-gotchas-and-troubleshooting)
 10. [Glossary](#10-glossary)
@@ -626,6 +627,13 @@ visit; the song fades out at the demo end. To trigger it from a different
 page, move the `zoom-trigger` span into that passage. The zoom multiplies
 into the monitor's scale through the `--monitor-zoom` CSS variable.
 
+**Volume popup** (script section `SOUND SETTINGS + VOLUME POPUP`). The speaker
+in the taskbar tray (`.tray-volume` in `RenderDesktop`) opens an XP-style
+popup: play/pause for the song (greyed out until it has started), a music
+volume slider, and "Mute all sound", which silences everything: music, clicks,
+email, the Trash sounds and the ending. The settings are remembered per
+browser (`localStorage` key `skunkpets-sound`) and survive new games.
+
 ### 7.13 The ending
 
 Clicking "game over" in the "stop" email does `(go-to: "DemoEnd")`: a
@@ -645,6 +653,32 @@ card, which fades in with the playtest survey link.
   appears.
 - **Lightbox:** clicking a `.lightbox-thumb` image (like the screenshot in the
   forum) opens it full size.
+
+### 7.15 Saving and CONTINUE
+
+Script section `SAVE / CONTINUE`. The game **autosaves** to the browser
+(`localStorage` key `skunkpets-save`) a second after any click or key press,
+and when the tab is hidden or closed. If there's a save, the title screen
+shows **CONTINUE** and PLAY reads **NEW GAME**. Reaching the demo end deletes
+the save, so a finished player starts fresh next time.
+
+A save holds:
+- every Harlowe variable as it is right now, plus Harlowe's passage history;
+- the layout that only lives in the script: window and icon positions,
+  which window is on top, minimized windows;
+- whether the Skunkpets zoom has happened (CONTINUE then starts at full size
+  and plays the song again).
+
+Notes are saved separately (7.11) and aren't touched by NEW GAME.
+
+Reloading the page always goes back to the title screen. Harlowe normally
+jumps a reloaded tab straight back into the game, but that copy doesn't have
+the window layout, so the script turns it off.
+
+**When you change the game:** if a change would confuse an old save (a new
+variable in `GameStart`, a renamed passage or window), raise `SAVE_VERSION` by
+one. Saves from another version are ignored and the player starts over. A save
+that points at a passage that no longer exists is dropped on its own.
 
 ---
 
@@ -693,8 +727,9 @@ Search the `.twee` for the passage mentioned.
   on github.com; the deploy does it.)
 - Did the deploy finish? Check the repo's **Actions** tab; a red ✗ means the
   build or upload failed, and clicking it shows why.
-- Harlowe **remembers your last session** in the browser tab, so a reload can
-  drop you back mid-game with old variables. Open a new tab or window.
+- A reload returns to the title screen; **CONTINUE** loads the autosave,
+  which can hold variables from before your change. Use **NEW GAME** to test
+  from the start (or raise `SAVE_VERSION`, 7.15).
 - Test through a local web server rather than opening the HTML file straight
   from disk; browsers restrict some features for files opened from disk.
 
