@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="3bad0820431b">
+<meta name="skunkpets-build" content="3890115557f8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "3bad0820431b";
+  var mine = "3890115557f8";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -3646,8 +3646,13 @@ document.addEventListener("click", function (e) {
    ========================================================= */
 
 /* Files hosted next to the page on leolion.com (the song, Diskette's
-   voice). The tinypetgames copy loads them from leolion.com by full URL. */
+   voice). The tinypetgames copy loads them from leolion.com by full URL;
+   the preview copy (/building/skunkpets-redux-preview/) has its own set,
+   so new or changed files can be tried there before they go live. */
 function siteAsset(path) {
+  if (location.pathname.indexOf("/building/skunkpets-redux-preview/") === 0) {
+    return path.replace("/building/skunkpets-redux/", "/building/skunkpets-redux-preview/");
+  }
   return location.hostname.endsWith("leolion.com") || location.hostname === "localhost"
     ? path
     : "https://leolion.com" + path;

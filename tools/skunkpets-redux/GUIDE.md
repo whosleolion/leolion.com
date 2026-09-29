@@ -108,7 +108,7 @@ so you can work on it from any machine, or right in the browser on github.com.
 
 **Trying a change before it goes live (the preview):** commit to any branch
 *other than* `master` (on github.com, pick "Create a new branch" when
-committing). The preview workflow publishes just this game to
+committing). The preview workflow publishes just this game (and its sound files) to
 **leolion.com/building/skunkpets-redux-preview/** in about 20 seconds. A yellow
 PREVIEW badge in the corner shows which commit you're looking at, and the
 preview keeps its own save slot, so it never touches the live game's. When

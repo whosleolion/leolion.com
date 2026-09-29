@@ -3,9 +3,11 @@ name: Skunkpets Redux preview
 # Publishes the Skunkpets Redux build from any branch except master to
 # leolion.com/building/skunkpets-redux-preview/ (noindexed, unlinked), so
 # changes can be tried in a real browser without touching the live game.
-# Only that one page is uploaded; the live deploy (deploy-neocities.yml) still
-# runs only on master. The preview reuses the live copy's song file and the
-# tinypetgames art, and keeps its own save slot (see SAVE / CONTINUE).
+# Only this game's folder is uploaded (into the preview folder, skipping files
+# that haven't changed); the live deploy (deploy-neocities.yml) still runs
+# only on master. The preview loads its song and voice clips from its own
+# folder (siteAsset in the game's script), the art from tinypetgames, and
+# keeps its own save slot (see SAVE / CONTINUE).
 on:
   push:
     branches-ignore: ["master"]
@@ -48,10 +50,27 @@ jobs:
           NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_LEOLIONCOM }}
         run: |
           set -euo pipefail
-          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${NEOCITIES_API_KEY}" \
-            -F "building/skunkpets-redux-preview/index.html=@/tmp/preview.html" \
-            https://neocities.org/api/upload)
-          cat /tmp/response.json; echo
-          [ "$status" -eq 200 ]
-          echo "Preview: https://leolion.com/building/skunkpets-redux-preview/" >> "$GITHUB_STEP_SUMMARY"
+          dest=building/skunkpets-redux-preview
+          auth=(-H "Authorization: Bearer ${NEOCITIES_API_KEY}")
+          # What's already there, so unchanged files (like the 8MB song)
+          # aren't re-sent on every push.
+          curl -sS "${auth[@]}" "https://neocities.org/api/list?path=${dest}" > /tmp/list.json
+          upload() {  # $1 = destination path, $2 = local file
+            status=$(curl -sS -o /tmp/response.json -w "%{http_code}" "${auth[@]}" \
+              -F "$1=@$2" https://neocities.org/api/upload)
+            echo "$1: $status $(cat /tmp/response.json)"
+            [ "$status" -eq 200 ]
+          }
+          upload "${dest}/index.html" /tmp/preview.html
+          # The game's other files (song, Diskette's voice, ...) go into the
+          # preview's own folder; the page looks for them there (siteAsset).
+          cd src/building/skunkpets-redux
+          find . -type f ! -name index.html | sed 's#^\./##' | while read -r f; do
+            have=$(jq -r --arg p "${dest}/${f}" '.files[]? | select(.path == $p) | .sha1_hash' /tmp/list.json)
+            if [ "$have" = "$(sha1sum "$f" | cut -d' ' -f1)" ]; then
+              echo "${dest}/${f}: unchanged"
+            else
+              upload "${dest}/${f}" "$f"
+            fi
+          done
+          echo "Preview: https://leolion.com/${dest}/" >> "$GITHUB_STEP_SUMMARY"
