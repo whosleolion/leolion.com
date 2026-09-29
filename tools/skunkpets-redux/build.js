@@ -76,8 +76,48 @@ story.forEach((p, i) => {
 });
 block += `</tw-storydata>`;
 
-const html = fs.readFileSync(target, 'utf8');
+// Cache-buster. Neocities sends no Cache-Control header, so browsers keep
+// serving an old copy of the page for a while after a deploy. Each build gets
+// an id from its content; on load the page re-fetches itself uncached and, if
+// the live id differs, jumps to ?v=<live id> (a URL the browser can't have
+// cached). It only does this before PLAY, so it never interrupts a game (there
+// is no save). It lives in <head>, between the cache-buster comments, and is
+// rewritten on every build.
+const buildId = require('crypto').createHash('sha256').update(block).digest('hex').slice(0, 12);
+const cacheBuster = `<!-- cache-buster -->
+<meta name="skunkpets-build" content="${buildId}">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+(function () {
+  var mine = "${buildId}";
+  function check() {
+    fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : ""; })
+      .then(function (html) {
+        var m = html.match(/name="skunkpets-build" content="([0-9a-f]+)"/);
+        if (!m || m[1] === mine) return;
+        if (document.querySelector(".monitor")) return; /* game already started */
+        if (new URLSearchParams(location.search).get("v") === m[1]) return; /* no loops */
+        location.replace(location.pathname + "?v=" + m[1] + location.hash);
+      })
+      .catch(function () {});
+  }
+  check();
+  /* Coming back with the Back button can restore a frozen old copy. */
+  window.addEventListener("pageshow", function (e) { if (e.persisted) check(); });
+})();
+</script>
+<!-- /cache-buster -->`;
+
+let html = fs.readFileSync(target, 'utf8');
 const re = /<tw-storydata[\s\S]*?<\/tw-storydata>/;
 if (!re.test(html)) throw new Error('No <tw-storydata> in ' + target);
-fs.writeFileSync(target, html.replace(re, () => block));
-console.log(`built ${story.length} passages (start: ${data.start}) -> ${target}`);
+html = html.replace(re, () => block);
+const busterRe = /<!-- cache-buster -->[\s\S]*?<!-- \/cache-buster -->/;
+if (busterRe.test(html)) html = html.replace(busterRe, () => cacheBuster);
+else if (html.includes('</title>')) html = html.replace('</title>', () => '</title>\n' + cacheBuster);
+else throw new Error('No </title> to put the cache-buster after in ' + target);
+fs.writeFileSync(target, html);
+console.log(`built ${story.length} passages (start: ${data.start}, build ${buildId}) -> ${target}`);

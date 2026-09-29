@@ -114,12 +114,18 @@ so you can work on it from any machine, or right in the browser on github.com.
 The published HTML page contains the whole Harlowe engine plus a hidden
 `<tw-storydata>` block holding your passages. `build.js` only rewrites that
 block, which is why you don't need Twine or Tweego installed. While building it
-also does two helpful things:
+also does three helpful things:
 
 - **Embeds images** written as `url("inline:filename.png")` in the CSS, so the
   image travels inside the page (used for Diskette).
 - **Generates the search index** passage `WinkiIndex` (see
   [7.6](#76-winkipedia-and-search)), so you never maintain it by hand.
+- **Stamps a cache-buster** into `<head>` (between the `cache-buster`
+  comments). Neocities doesn't tell browsers when to stop caching, so they can
+  show an old build for a while after a deploy. Each build gets an id from its
+  content; on load the page re-checks the live copy and, if it's newer, jumps
+  to `?v=<id>`. It never does this after PLAY is pressed, so nobody loses a
+  game in progress. A normal reload is enough to pick up a new build.
 
 ### Publishing to tinypetgames too
 
