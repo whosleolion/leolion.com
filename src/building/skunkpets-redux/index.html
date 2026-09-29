@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="5ade27ce54d5">
+<meta name="skunkpets-build" content="b601c0ba3eb9">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "5ade27ce54d5";
+  var mine = "b601c0ba3eb9";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -1238,13 +1238,129 @@ img.xp-dialog-icon {
   font-size: 11px;
 }
 
+/* Coming up out of the tray (class added by the script's DISKETTE POP-UP). */
+.diskette-popping {
+  transform-origin: 85% 100%;
+  animation: disketteRise 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+@keyframes disketteRise {
+  from { opacity: 0; transform: translateY(40px) scale(0.3); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Her tray icon, and the balloon she speaks from while tucked away. */
+.tray-diskette {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin: 0 8px 0 0;
+  vertical-align: middle;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.taskbar-tray tw-hook,
+.taskbar-tray tw-expression {
+  display: flex;
+  align-items: center;
+}
+
+.diskette-balloon {
+  position: absolute;
+  right: 101px;
+  bottom: 44px;
+  z-index: 93000;
+  width: 220px;
+  padding: 8px 22px 8px 10px;
+  border: 1px solid #000;
+  border-radius: 7px;
+  background: #ffffe1;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.35);
+  color: #000;
+  font: 11px/1.4 Tahoma, Verdana, sans-serif;
+  cursor: pointer;
+  animation: disketteRise 0.3s ease-out both;
+  transform-origin: 90% 100%;
+}
+
+/* Tail pointing down at the tray icon. */
+.diskette-balloon::before,
+.diskette-balloon::after {
+  content: "";
+  position: absolute;
+  border-style: solid;
+}
+
+.diskette-balloon::before {
+  right: 14px;
+  bottom: -14px;
+  border-width: 14px 0 0 14px;
+  border-color: #000 transparent transparent transparent;
+}
+
+.diskette-balloon::after {
+  right: 15px;
+  bottom: -12px;
+  border-width: 12px 0 0 12px;
+  border-color: #ffffe1 transparent transparent transparent;
+}
+
+.diskette-balloon-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+  font-weight: bold;
+}
+
+.diskette-icon-balloon {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  filter: none;
+}
+
+.diskette-balloon p {
+  margin: 0;
+}
+
+/* The whole balloon is clickable; don't let Harlowe style it as a link. */
+.diskette-balloon .enchantment-link,
+.diskette-balloon .enchantment-link:hover {
+  color: #000;
+  font-weight: normal;
+}
+
+.diskette-balloon .diskette-balloon-title {
+  font-weight: bold;
+}
+
+.diskette-balloon-close {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  padding: 0 3px;
+  border: 0;
+  background: none;
+  color: #555;
+  font: 13px/1 Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.diskette-balloon-close:hover {
+  color: #000;
+}
+
 @keyframes disketteBob {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-4px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .diskette-character {
+  .diskette-character,
+  .diskette-popping,
+  .diskette-balloon {
     animation: none;
   }
 }
@@ -2431,6 +2547,7 @@ function initDesktopUI() {
     initNotes(playfield);
     updateClock(playfield);
     mountVolumePopup(playfield);
+    animateDisketteEntrance(playfield);
   });
 }
 
@@ -2488,6 +2605,24 @@ function handleFocusRequest(playfield) {
   panel.classList.remove("hidden");
   minimizedWindows.delete(panel.dataset.windowId);
   focusPanel(panel, playfield);
+}
+
+
+/* =========================================================
+   DISKETTE POP-UP
+   ---------------------------------------------------------
+   Diskette rises out of her tray icon when she appears, but
+   not on every redraw while she's up (Harlowe rebuilds her
+   each time you pick a topic), so the animation class is only
+   added when she wasn't on screen at the last scan.
+   ========================================================= */
+
+let disketteWasVisible = false;
+
+function animateDisketteEntrance(playfield) {
+  const assistant = playfield.querySelector(".diskette-assistant");
+  if (assistant && !disketteWasVisible) assistant.classList.add("diskette-popping");
+  disketteWasVisible = !!assistant;
 }
 
 
@@ -3702,7 +3837,7 @@ document.addEventListener("mousedown", function (e) {
 /* The preview copy (/building/skunkpets-redux-preview/) is on the same site,
    so it keeps its own save instead of overwriting the live game's. */
 const SAVE_KEY = location.pathname.indexOf("skunkpets-redux-preview") >= 0 ? "skunkpets-save-preview" : "skunkpets-save";
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 const HarloweState = require("state");
 const HarloweEngine = require("engine");
 
@@ -4469,6 +4604,9 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $desktopItems to (a: &quot;readme&quot;, &quot;recycle&quot;))
 (set: $trashItems to (a: &quot;browser&quot;, &quot;mail&quot;, &quot;notes&quot;, &quot;diskette&quot;))
 (set: $disketteTopic to &quot;&quot;)
+(set: $disketteShown to false)
+(set: $disketteNotice to &quot;&quot;)
+(set: $disketteToldTray to false)
 (set: $mailAll to (a:))
 (set: $mailRead to (a:))
 (set: $mailOpen to 0)
@@ -4735,13 +4873,15 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
   &lt;/div&gt;
 ]
 
-(if: $openWindows contains &quot;diskette&quot;)[(display: &quot;RenderDiskette&quot;)]
+(if: $openWindows contains &quot;diskette&quot; and $disketteShown)[(display: &quot;RenderDiskette&quot;)]
+(if: $openWindows contains &quot;diskette&quot; and not $disketteShown and $disketteNotice is not &quot;&quot;)[(display: &quot;RenderDisketteBalloon&quot;)]
 
 &lt;div class=&quot;taskbar&quot;&gt;
   |start-btn&gt;[&lt;button class=&quot;start-button&quot; type=&quot;button&quot; aria-label=&quot;Start&quot;&gt;&lt;/button&gt;]
   (click: ?start-btn)[(set: $startOpen to not $startOpen)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
   &lt;div class=&quot;taskbar-tasks&quot;&gt;&lt;/div&gt;
-  &lt;div class=&quot;taskbar-tray&quot;&gt;&lt;span class=&quot;tray-volume&quot; title=&quot;Volume&quot;&gt;&lt;/span&gt;&lt;span class=&quot;taskbar-clock&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;div class=&quot;taskbar-tray&quot;&gt;(if: $openWindows contains &quot;diskette&quot;)[|diskette-tray&gt;[&lt;span class=&quot;tray-diskette diskette-icon&quot; title=&quot;Diskette&quot;&gt;&lt;/span&gt;]
+(click: ?diskette-tray)[(if: $disketteShown)[(display: &quot;func-diskette-hide&quot;)](else:)[(display: &quot;func-diskette-show&quot;)]]]&lt;span class=&quot;tray-volume&quot; title=&quot;Volume&quot;&gt;&lt;/span&gt;&lt;span class=&quot;taskbar-clock&quot;&gt;&lt;/span&gt;&lt;/div&gt;
 &lt;/div&gt;
 
 (unless: $dialog is &quot;&quot;)[
@@ -5241,6 +5381,7 @@ deal with the devil
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="62" name="sound-demo-end" tags="" position="350,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/1b40d647-0d6c-4432-a679-7240a6e51893/demo-end.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="63" name="sound-email" tags="" position="475,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/fac56ba7-9c8f-414f-ab78-2376193e1985/email.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="64" name="func-open" tags="" position="100,100" size="100,100">{(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
+(if: $openPending is &quot;diskette&quot;)[(set: $disketteShown to true)(set: $disketteNotice to &quot;&quot;)]
 (set: $focusWin to $openPending)
 (set: $focusSeq to it + 1)
 (set: $startOpen to false)
@@ -5270,6 +5411,7 @@ deal with the devil
 (link-repeat: &quot;trash-hint&quot;)[(set: $dialog to &quot;This item is in the Trash. To use it, drag it out onto the desktop first.&quot;)(set: $dialogTitle to &quot;Trash&quot;)(set: $dialogIcon to &quot;info&quot;)(set: $dialogOk to &quot;OK&quot;)(set: $dialogAction to &quot;&quot;)(set: $dialogCancel to false)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="67" name="func-restore" tags="" position="100,100" size="100,100">{(set: $trashItems to it - (a: $restorePending))
 (unless: $desktopItems contains $restorePending)[(set: $desktopItems to it + (a: $restorePending))]
+(if: $openWindows contains &quot;diskette&quot; and not $disketteShown and (a: &quot;browser&quot;, &quot;mail&quot;, &quot;notes&quot;) contains $restorePending)[(set: $disketteNotice to $restorePending)]
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="68" name="Winkipedia" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki&quot;&gt;
 &lt;div class=&quot;winki-logo&quot;&gt;&lt;div class=&quot;winki-name&quot;&gt;Winkipedia&lt;/div&gt;&lt;div class=&quot;winki-tag&quot;&gt;The Free Encyclopedia&lt;/div&gt;&lt;/div&gt;
 &lt;div class=&quot;winki-search&quot;&gt;&lt;input type=&quot;text&quot; id=&quot;winki-search-input&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot; placeholder=&quot;Search Winkipedia&quot;&gt;&lt;button type=&quot;button&quot; id=&quot;winki-search-btn&quot; class=&quot;xp-button&quot;&gt;Search&lt;/button&gt;&lt;/div&gt;
@@ -5286,20 +5428,20 @@ deal with the devil
 &lt;/div&gt;}</tw-passagedata><tw-passagedata pid="70" name="func-trash" tags="" position="100,100" size="100,100">{(set: $desktopItems to it - (a: $trashPending))
 (unless: $trashItems contains $trashPending)[(set: $trashItems to it + (a: $trashPending))]
 (set: $openWindows to it - (a: $trashPending))
+(if: $trashPending is &quot;diskette&quot;)[(set: $disketteShown to false)(set: $disketteNotice to &quot;&quot;)]
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="71" name="Winkipedia Search Result" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki-web&quot;&gt;
 &lt;div class=&quot;winki-web-bar&quot;&gt;&lt;span class=&quot;winki-web-brand&quot;&gt;Winkipedia&lt;/span&gt; &lt;span class=&quot;winki-web-title&quot; id=&quot;winki-web-title&quot;&gt;&lt;/span&gt;&lt;/div&gt;
 &lt;iframe class=&quot;winki-web-frame&quot; id=&quot;winki-web-frame&quot; sandbox=&quot;allow-scripts allow-same-origin allow-popups&quot; referrerpolicy=&quot;no-referrer&quot;&gt;&lt;/iframe&gt;
 &lt;/div&gt;}</tw-passagedata><tw-passagedata pid="72" name="RenderDiskette" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-assistant&quot;&gt;
 &lt;div class=&quot;diskette-bubble&quot;&gt;
-|diskette-close&gt;[&lt;button class=&quot;diskette-close&quot; type=&quot;button&quot; aria-label=&quot;Close&quot;&gt;&amp;times;&lt;/button&gt;]
-(click: ?diskette-close)[(set: $openWindows to it - (a: &quot;diskette&quot;))(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
+|diskette-close&gt;[&lt;button class=&quot;diskette-close&quot; type=&quot;button&quot; aria-label=&quot;Hide&quot; title=&quot;Hide in the tray&quot;&gt;&amp;times;&lt;/button&gt;]
+(click: ?diskette-close)[(display: &quot;func-diskette-hide&quot;)]
 (if: $disketteTopic is &quot;&quot;)[
 &lt;p&gt;Hi there! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. What would you like to know about?&lt;/p&gt;
 &lt;div class=&quot;diskette-options&quot;&gt;
 (if: $desktopItems contains &quot;browser&quot;)[(link: &quot;Browse&quot;)[(set: $disketteTopic to &quot;browser&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
 (if: $desktopItems contains &quot;mail&quot;)[(link: &quot;Mail&quot;)[(set: $disketteTopic to &quot;mail&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
 (if: $desktopItems contains &quot;notes&quot;)[(link: &quot;Notes&quot;)[(set: $disketteTopic to &quot;notes&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
-(if: $desktopItems contains &quot;readme&quot;)[(link: &quot;READ&amp;#95;ME.txt&quot;)[(set: $disketteTopic to &quot;readme&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
 (link: &quot;Trash&quot;)[(set: $disketteTopic to &quot;recycle&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link: &quot;Diskette&quot;)[(set: $disketteTopic to &quot;diskette&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 &lt;/div&gt;
@@ -5308,7 +5450,7 @@ deal with the devil
 &lt;p&gt;(display: &quot;DisketteTopic&quot;)&lt;/p&gt;
 &lt;div class=&quot;diskette-options&quot;&gt;
 (link: &quot;Tell me about something else&quot;)[(set: $disketteTopic to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
-(link: &quot;Thanks, Diskette!&quot;)[(set: $disketteTopic to &quot;&quot;)(set: $openWindows to it - (a: &quot;diskette&quot;))(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
+(link: &quot;Dismiss&quot;)[(display: &quot;func-diskette-hide&quot;)]
 &lt;/div&gt;
 ]
 &lt;/div&gt;
@@ -5316,9 +5458,24 @@ deal with the devil
 &lt;/div&gt;}</tw-passagedata><tw-passagedata pid="73" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks. You already have Winkipedia and Skunkpets.com saved!]
 (else-if: $disketteTopic is &quot;mail&quot;)[&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it. A red badge on the Mail icon means something new came in!]
 (else-if: $disketteTopic is &quot;notes&quot;)[&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember. Whatever you type stays put, even after you close it!]
-(else-if: $disketteTopic is &quot;readme&quot;)[&lt;b&gt;READ&amp;#95;ME.txt&lt;/b&gt; is a note from the store that refurbished this computer. Double-click it to read it!]
 (else-if: $disketteTopic is &quot;recycle&quot;)[The &lt;b&gt;Trash&lt;/b&gt; holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
-(else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="74" name="WinkiIndex" tags="" position="100,100" size="100,100">(link-repeat: &quot;Anya Krysina&quot;)[(set: $navPending to &quot;Anya Krysina&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Battlemutts&quot;)[(set: $navPending to &quot;Battlemutts&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Nick Galveston&quot;)[(set: $navPending to &quot;Nick Galveston&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tales of Prior Days&quot;)[(set: $navPending to &quot;Tales of Prior Days&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata></tw-storydata>
+(else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="74" name="func-diskette-hide" tags="" position="100,100" size="100,100">{(set: $disketteTopic to &quot;&quot;)
+(set: $disketteShown to false)
+(unless: $disketteToldTray)[(set: $disketteNotice to &quot;hello&quot;)(set: $disketteToldTray to true)]
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="75" name="func-diskette-show" tags="" position="100,100" size="100,100">{(set: $disketteShown to true)
+(if: $disketteNotice is not &quot;&quot; and $disketteNotice is not &quot;hello&quot;)[(set: $disketteTopic to $disketteNotice)](else:)[(set: $disketteTopic to &quot;&quot;)]
+(set: $disketteNotice to &quot;&quot;)
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="76" name="RenderDisketteBalloon" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-balloon&quot;&gt;
+|balloon-close&gt;[&lt;button class=&quot;diskette-balloon-close&quot; type=&quot;button&quot; aria-label=&quot;Close&quot;&gt;&amp;times;&lt;/button&gt;]
+(click: ?balloon-close)[(set: $disketteNotice to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
+|balloon-body&gt;[&lt;div class=&quot;diskette-balloon-title&quot;&gt;&lt;span class=&quot;diskette-icon diskette-icon-balloon&quot;&gt;&lt;/span&gt;Diskette&lt;/div&gt;
+(if: $disketteNotice is &quot;hello&quot;)[&lt;p&gt;I&#39;ll be right down here in the tray! Click me whenever you need me.&lt;/p&gt;]
+(else-if: $disketteNotice is &quot;browser&quot;)[&lt;p&gt;Psst! I can tell you about &lt;b&gt;Browse&lt;/b&gt;.&lt;/p&gt;]
+(else-if: $disketteNotice is &quot;mail&quot;)[&lt;p&gt;Psst! I can tell you about &lt;b&gt;Mail&lt;/b&gt;.&lt;/p&gt;]
+(else-if: $disketteNotice is &quot;notes&quot;)[&lt;p&gt;Psst! I can tell you about &lt;b&gt;Notes&lt;/b&gt;.&lt;/p&gt;]
+(else:)[&lt;p&gt;Psst! Click me!&lt;/p&gt;]]
+(click: ?balloon-body)[(display: &quot;func-diskette-show&quot;)]
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="77" name="WinkiIndex" tags="" position="100,100" size="100,100">(link-repeat: &quot;Anya Krysina&quot;)[(set: $navPending to &quot;Anya Krysina&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Battlemutts&quot;)[(set: $navPending to &quot;Battlemutts&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Nick Galveston&quot;)[(set: $navPending to &quot;Nick Galveston&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tales of Prior Days&quot;)[(set: $navPending to &quot;Tales of Prior Days&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata></tw-storydata>
 
 <script title="Twine engine code" data-main="harlowe">"use strict";function _defineProperty(e,t,n){return t in e?Object.defineProperty(e,t,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[t]=n,e}function _toConsumableArray(e){if(Array.isArray(e)){for(var t=0,n=Array(e.length);t<e.length;t++)n[t]=e[t];return n}return Array.from(e)}var _slicedToArray=function(){function e(e,t){var n=[],r=!0,i=!1,o=void 0;try{for(var a,s=e[Symbol.iterator]();!(r=(a=s.next()).done)&&(n.push(a.value),!t||n.length!==t);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&s.return&&s.return()}finally{if(i)throw o}}return n}return function(t,n){if(Array.isArray(t))return t;if(Symbol.iterator in Object(t))return e(t,n);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),_typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};!function(){/**
  * @license almond 0.3.3 Copyright jQuery Foundation and other contributors.

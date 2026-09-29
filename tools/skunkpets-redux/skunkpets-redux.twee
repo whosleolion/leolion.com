@@ -1211,13 +1211,129 @@ img.xp-dialog-icon {
   font-size: 11px;
 }
 
+/* Coming up out of the tray (class added by the script's DISKETTE POP-UP). */
+.diskette-popping {
+  transform-origin: 85% 100%;
+  animation: disketteRise 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+@keyframes disketteRise {
+  from { opacity: 0; transform: translateY(40px) scale(0.3); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Her tray icon, and the balloon she speaks from while tucked away. */
+.tray-diskette {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin: 0 8px 0 0;
+  vertical-align: middle;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.taskbar-tray tw-hook,
+.taskbar-tray tw-expression {
+  display: flex;
+  align-items: center;
+}
+
+.diskette-balloon {
+  position: absolute;
+  right: 101px;
+  bottom: 44px;
+  z-index: 93000;
+  width: 220px;
+  padding: 8px 22px 8px 10px;
+  border: 1px solid #000;
+  border-radius: 7px;
+  background: #ffffe1;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.35);
+  color: #000;
+  font: 11px/1.4 Tahoma, Verdana, sans-serif;
+  cursor: pointer;
+  animation: disketteRise 0.3s ease-out both;
+  transform-origin: 90% 100%;
+}
+
+/* Tail pointing down at the tray icon. */
+.diskette-balloon::before,
+.diskette-balloon::after {
+  content: "";
+  position: absolute;
+  border-style: solid;
+}
+
+.diskette-balloon::before {
+  right: 14px;
+  bottom: -14px;
+  border-width: 14px 0 0 14px;
+  border-color: #000 transparent transparent transparent;
+}
+
+.diskette-balloon::after {
+  right: 15px;
+  bottom: -12px;
+  border-width: 12px 0 0 12px;
+  border-color: #ffffe1 transparent transparent transparent;
+}
+
+.diskette-balloon-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+  font-weight: bold;
+}
+
+.diskette-icon-balloon {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  filter: none;
+}
+
+.diskette-balloon p {
+  margin: 0;
+}
+
+/* The whole balloon is clickable; don't let Harlowe style it as a link. */
+.diskette-balloon .enchantment-link,
+.diskette-balloon .enchantment-link:hover {
+  color: #000;
+  font-weight: normal;
+}
+
+.diskette-balloon .diskette-balloon-title {
+  font-weight: bold;
+}
+
+.diskette-balloon-close {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  padding: 0 3px;
+  border: 0;
+  background: none;
+  color: #555;
+  font: 13px/1 Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.diskette-balloon-close:hover {
+  color: #000;
+}
+
 @keyframes disketteBob {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-4px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .diskette-character {
+  .diskette-character,
+  .diskette-popping,
+  .diskette-balloon {
     animation: none;
   }
 }
@@ -2407,6 +2523,7 @@ function initDesktopUI() {
     initNotes(playfield);
     updateClock(playfield);
     mountVolumePopup(playfield);
+    animateDisketteEntrance(playfield);
   });
 }
 
@@ -2464,6 +2581,24 @@ function handleFocusRequest(playfield) {
   panel.classList.remove("hidden");
   minimizedWindows.delete(panel.dataset.windowId);
   focusPanel(panel, playfield);
+}
+
+
+/* =========================================================
+   DISKETTE POP-UP
+   ---------------------------------------------------------
+   Diskette rises out of her tray icon when she appears, but
+   not on every redraw while she's up (Harlowe rebuilds her
+   each time you pick a topic), so the animation class is only
+   added when she wasn't on screen at the last scan.
+   ========================================================= */
+
+let disketteWasVisible = false;
+
+function animateDisketteEntrance(playfield) {
+  const assistant = playfield.querySelector(".diskette-assistant");
+  if (assistant && !disketteWasVisible) assistant.classList.add("diskette-popping");
+  disketteWasVisible = !!assistant;
 }
 
 
@@ -3678,7 +3813,7 @@ document.addEventListener("mousedown", function (e) {
 /* The preview copy (/building/skunkpets-redux-preview/) is on the same site,
    so it keeps its own save instead of overwriting the live game's. */
 const SAVE_KEY = location.pathname.indexOf("skunkpets-redux-preview") >= 0 ? "skunkpets-save-preview" : "skunkpets-save";
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 const HarloweState = require("state");
 const HarloweEngine = require("engine");
 
@@ -4490,6 +4625,9 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $desktopItems to (a: "readme", "recycle"))
 (set: $trashItems to (a: "browser", "mail", "notes", "diskette"))
 (set: $disketteTopic to "")
+(set: $disketteShown to false)
+(set: $disketteNotice to "")
+(set: $disketteToldTray to false)
 (set: $mailAll to (a:))
 (set: $mailRead to (a:))
 (set: $mailOpen to 0)
@@ -4789,13 +4927,15 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
   </div>
 ]
 
-(if: $openWindows contains "diskette")[(display: "RenderDiskette")]
+(if: $openWindows contains "diskette" and $disketteShown)[(display: "RenderDiskette")]
+(if: $openWindows contains "diskette" and not $disketteShown and $disketteNotice is not "")[(display: "RenderDisketteBalloon")]
 
 <div class="taskbar">
   |start-btn>[<button class="start-button" type="button" aria-label="Start"></button>]
   (click: ?start-btn)[(set: $startOpen to not $startOpen)(replace: ?desktoproot)[(display: "RenderDesktop")]]
   <div class="taskbar-tasks"></div>
-  <div class="taskbar-tray"><span class="tray-volume" title="Volume"></span><span class="taskbar-clock"></span></div>
+  <div class="taskbar-tray">(if: $openWindows contains "diskette")[|diskette-tray>[<span class="tray-diskette diskette-icon" title="Diskette"></span>]
+(click: ?diskette-tray)[(if: $disketteShown)[(display: "func-diskette-hide")](else:)[(display: "func-diskette-show")]]]<span class="tray-volume" title="Volume"></span><span class="taskbar-clock"></span></div>
 </div>
 
 (unless: $dialog is "")[
@@ -5409,6 +5549,7 @@ deal with the devil
 
 :: func-open
 {(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
+(if: $openPending is "diskette")[(set: $disketteShown to true)(set: $disketteNotice to "")]
 (set: $focusWin to $openPending)
 (set: $focusSeq to it + 1)
 (set: $startOpen to false)
@@ -5447,6 +5588,7 @@ deal with the devil
 :: func-restore
 {(set: $trashItems to it - (a: $restorePending))
 (unless: $desktopItems contains $restorePending)[(set: $desktopItems to it + (a: $restorePending))]
+(if: $openWindows contains "diskette" and not $disketteShown and (a: "browser", "mail", "notes") contains $restorePending)[(set: $disketteNotice to $restorePending)]
 (replace: ?desktoproot)[(display: "RenderDesktop")]}
 
 :: Winkipedia [wiki]
@@ -5472,6 +5614,7 @@ deal with the devil
 {(set: $desktopItems to it - (a: $trashPending))
 (unless: $trashItems contains $trashPending)[(set: $trashItems to it + (a: $trashPending))]
 (set: $openWindows to it - (a: $trashPending))
+(if: $trashPending is "diskette")[(set: $disketteShown to false)(set: $disketteNotice to "")]
 (replace: ?desktoproot)[(display: "RenderDesktop")]}
 
 :: Winkipedia Search Result [wiki]
@@ -5483,15 +5626,14 @@ deal with the devil
 :: RenderDiskette
 {<div class="diskette-assistant">
 <div class="diskette-bubble">
-|diskette-close>[<button class="diskette-close" type="button" aria-label="Close">&times;</button>]
-(click: ?diskette-close)[(set: $openWindows to it - (a: "diskette"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+|diskette-close>[<button class="diskette-close" type="button" aria-label="Hide" title="Hide in the tray">&times;</button>]
+(click: ?diskette-close)[(display: "func-diskette-hide")]
 (if: $disketteTopic is "")[
 <p>Hi there! I'm <b>Diskette</b>, Your Secretary. What would you like to know about?</p>
 <div class="diskette-options">
 (if: $desktopItems contains "browser")[(link: "Browse")[(set: $disketteTopic to "browser")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (if: $desktopItems contains "mail")[(link: "Mail")[(set: $disketteTopic to "mail")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (if: $desktopItems contains "notes")[(link: "Notes")[(set: $disketteTopic to "notes")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
-(if: $desktopItems contains "readme")[(link: "READ&#95;ME.txt")[(set: $disketteTopic to "readme")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (link: "Trash")[(set: $disketteTopic to "recycle")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (link: "Diskette")[(set: $disketteTopic to "diskette")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 </div>
@@ -5500,7 +5642,7 @@ deal with the devil
 <p>(display: "DisketteTopic")</p>
 <div class="diskette-options">
 (link: "Tell me about something else")[(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
-(link: "Thanks, Diskette!")[(set: $disketteTopic to "")(set: $openWindows to it - (a: "diskette"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+(link: "Dismiss")[(display: "func-diskette-hide")]
 </div>
 ]
 </div>
@@ -5511,6 +5653,30 @@ deal with the devil
 {(if: $disketteTopic is "browser")[<b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks. You already have Winkipedia and Skunkpets.com saved!]
 (else-if: $disketteTopic is "mail")[<b>Mail</b> is where your email arrives. Click a message in your Inbox to read it. A red badge on the Mail icon means something new came in!]
 (else-if: $disketteTopic is "notes")[<b>Notes</b> is a handy notepad. Jot down anything you want to remember. Whatever you type stays put, even after you close it!]
-(else-if: $disketteTopic is "readme")[<b>READ&#95;ME.txt</b> is a note from the store that refurbished this computer. Double-click it to read it!]
 (else-if: $disketteTopic is "recycle")[The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
 (else-if: $disketteTopic is "diskette")[That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!]}
+
+:: func-diskette-hide
+{(set: $disketteTopic to "")
+(set: $disketteShown to false)
+(unless: $disketteToldTray)[(set: $disketteNotice to "hello")(set: $disketteToldTray to true)]
+(replace: ?desktoproot)[(display: "RenderDesktop")]}
+
+:: func-diskette-show
+{(set: $disketteShown to true)
+(if: $disketteNotice is not "" and $disketteNotice is not "hello")[(set: $disketteTopic to $disketteNotice)](else:)[(set: $disketteTopic to "")]
+(set: $disketteNotice to "")
+(replace: ?desktoproot)[(display: "RenderDesktop")]}
+
+:: RenderDisketteBalloon
+{<div class="diskette-balloon">
+|balloon-close>[<button class="diskette-balloon-close" type="button" aria-label="Close">&times;</button>]
+(click: ?balloon-close)[(set: $disketteNotice to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
+|balloon-body>[<div class="diskette-balloon-title"><span class="diskette-icon diskette-icon-balloon"></span>Diskette</div>
+(if: $disketteNotice is "hello")[<p>I'll be right down here in the tray! Click me whenever you need me.</p>]
+(else-if: $disketteNotice is "browser")[<p>Psst! I can tell you about <b>Browse</b>.</p>]
+(else-if: $disketteNotice is "mail")[<p>Psst! I can tell you about <b>Mail</b>.</p>]
+(else-if: $disketteNotice is "notes")[<p>Psst! I can tell you about <b>Notes</b>.</p>]
+(else:)[<p>Psst! Click me!</p>]]
+(click: ?balloon-body)[(display: "func-diskette-show")]
+</div>}

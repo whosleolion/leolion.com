@@ -289,6 +289,7 @@ of X?", it's one of these.
 | `$mail4Sent` | Has the post-login "stop" email been sent yet? |
 | `$dialog`, `$dialogTitle`, `$dialogIcon`, `$dialogOk`, `$dialogAction`, `$dialogCancel` | The popup box (see [7.9](#79-popup-dialogs)). |
 | `$disketteTopic` | What Diskette is currently explaining (`""` = her main menu). |
+| `$disketteShown`, `$disketteNotice`, `$disketteToldTray` | Diskette up vs. tucked in the tray, and her tray balloon (7.10). |
 | `$imgroot`, `$artroot` | Base folders for images (see [8](#8-art-and-images)). |
 
 ---
@@ -594,23 +595,46 @@ else. Add your own actions there.
 
 ### 7.10 Diskette
 
-**What you see:** drag Diskette out of the Trash, double-click her, and she
-appears bottom-right like the old Office helper, with a pale-yellow speech
-bubble offering to explain the apps you have.
+**What you see:** drag Diskette out of the Trash and double-click her. She's
+a tray app: her little icon appears in the taskbar tray (left of the speaker)
+and she pops up out of it, bottom-right like the old Office helper, with a
+pale-yellow speech bubble offering to explain the apps you have.
+
+- **Dismiss** (or the ×) tucks her back into the tray. She keeps running.
+- **Clicking her tray icon** brings her back up, or tucks her away again.
+- **When she has something to say** while tucked away, an XP-style balloon
+  comes out of her tray icon. Clicking the balloon (or her icon) brings her
+  up to say it; the balloon's × just dismisses it.
+- **Dragging her icon into the Trash** quits her completely (the tray icon goes
+  too). Double-clicking her again starts her back up.
 
 **Where:** `RenderDiskette` (her bubble and menu), `DisketteTopic` (her
-answers), CSS `DISKETTE`.
+answers), `RenderDisketteBalloon` (the tray balloon), `func-diskette-show` /
+`func-diskette-hide`, the tray icon in `RenderDesktop`'s taskbar, CSS
+`DISKETTE`, and script `DISKETTE POP-UP` (the rise-out-of-the-tray animation).
 
-- She isn't a window. When `"diskette"` is in `$openWindows`,
-  `RenderDesktop` displays `RenderDiskette`, a floating character with no
-  taskbar button.
+**Her memory:**
+
+| Variable | Means |
+|---|---|
+| `"diskette"` in `$openWindows` | She's running (tray icon shows). |
+| `$disketteShown` | She's up on screen rather than tucked in the tray. |
+| `$disketteTopic` | What her bubble is explaining (`""` = main menu). |
+| `$disketteNotice` | What her tray balloon is about (`""` = no balloon). `"hello"` is the one-time "I'll be down here in the tray" note; an app name (`"mail"` etc.) offers to explain that app, and clicking opens her on that topic. |
+| `$disketteToldTray` | The "hello" balloon has been shown (it only appears on the first dismiss). |
+
 - Her menu only lists apps that are in `$desktopItems`, and adds a nudge if
   `$trashItems` isn't empty.
 - Choosing a topic sets `$disketteTopic`; `DisketteTopic` holds one answer per
   topic. Edit the text there to change what she says.
+- Today she pipes up (sets `$disketteNotice`) in `func-restore`, when Browse,
+  Mail or Notes comes out of the Trash while she's tucked away.
 
-**Try it:** give her something new to say about the browser by editing the
-`(if: $disketteTopic is "browser")[...]` line in `DisketteTopic`.
+**Try it:** make her pipe up about something new. Anywhere in the game, add
+`(if: $openWindows contains "diskette" and not $disketteShown)[(set: $disketteNotice to "mail")]`
+before the desktop redraws; then add a line for it in `RenderDisketteBalloon`
+(the balloon text) and make sure `DisketteTopic` has an answer for it. A brand
+new topic name needs an `(else-if:)` in both.
 
 ### 7.11 READ_ME and Notes
 

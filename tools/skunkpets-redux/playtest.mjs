@@ -109,7 +109,27 @@ check('Diskette greets', (await text('.diskette-bubble')).includes("I'm Diskette
 await go('.diskette-options tw-link', 'Browse');
 check('Diskette explains Browse', (await text('.diskette-bubble')).includes('web browser'));
 await shot('03-diskette');
-await go('.diskette-options tw-link', 'Thanks, Diskette!');
+check('Diskette has no READ_ME topic', !(await text('.diskette-options')).includes('READ'));
+await go('.diskette-options tw-link', 'Dismiss');
+check('Dismiss tucks Diskette into the tray', (await p.locator('.diskette-bubble').count()) === 0 && (await p.locator('.tray-diskette').count()) === 1);
+check('first dismiss: tray balloon explains the tray', (await text('.diskette-balloon')).includes('down here in the tray'));
+await click('.diskette-balloon p');
+check('clicking the balloon brings Diskette back', (await text('.diskette-bubble')).includes("I'm Diskette"));
+await click('.diskette-close');
+check('the x also tucks her away, without a second balloon', (await p.locator('.diskette-bubble').count()) === 0 && (await p.locator('.diskette-balloon').count()) === 0);
+await click('.tray-diskette');
+check('tray icon brings her back', (await p.locator('.diskette-bubble').count()) === 1);
+await click('.tray-diskette');
+check('tray icon tucks her away again', (await p.locator('.diskette-bubble').count()) === 0);
+// Something coming out of the Trash while she's tucked away: she pipes up.
+await drag(await center('.desktop-icon[data-window-template="notes"]'), await center('.desktop-icon[data-window-template="recycle"]'));
+await dbl('.desktop-icon[data-window-template="recycle"]');
+await drag(await center('.bin-icon[data-app="notes"]'), [460, 650]);
+await click('.panel[data-window-template="recycle"] .panel-close');
+check('restoring an app makes her balloon offer help', (await text('.diskette-balloon')).includes('Notes'));
+await click('.tray-diskette');
+check('clicking her answers about it', (await text('.diskette-bubble')).includes('notepad'));
+await go('.diskette-options tw-link', 'Dismiss');
 check('Diskette closes', (await p.locator('.diskette-bubble').count()) === 0);
 
 // Browser, bookmarks, Winkipedia search
