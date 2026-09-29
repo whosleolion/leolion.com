@@ -624,7 +624,12 @@ answers), `RenderDisketteBalloon` (the tray balloon), `func-diskette-show` /
 | `$disketteToldTray` | The "hello" balloon has been shown (it only appears on the first dismiss). |
 
 - Her menu only lists apps that are in `$desktopItems`, and adds a nudge if
-  `$trashItems` isn't empty.
+  there's anything in the Trash other than READ_ME (players are expected to
+  throw that away).
+- **Her voice:** each time she pops up or a balloon appears she says a random
+  robot "hmm" (one of eight, never the same twice running; silent when sound is
+  muted). The clips and the script that makes them are in
+  `tools/skunkpets-redux/diskette-voice/` (see its README to re-voice her).
 - Choosing a topic sets `$disketteTopic`; `DisketteTopic` holds one answer per
   topic. Edit the text there to change what she says.
 - Today she pipes up (sets `$disketteNotice`) in `func-restore`, when Browse,
@@ -653,6 +658,7 @@ new topic name needs an `(else-if:)` in both.
 | **Every click** | A quiet click added by the script (`CLICK SOUND`) to links and buttons. |
 | **Dragging out of the Trash** | A pick-up tick and a set-down thunk, synthesized live in the browser (`UI SOUNDS`). To use recorded sounds instead, put their URLs in `UI_SOUND_FILES`. |
 | **Ending** | `sound-demo-end`, played by `DemoEnd`. |
+| **Diskette's voice** | A random robot "hmm" when she pops up or a tray balloon appears (7.10). |
 | **Skunkpets music** | "Comfortable Mystery" (Kevin MacLeod, CC BY 4.0), started by the Skunkpets zoom (below). The file is `src/building/skunkpets-redux/comfortable-mystery.mp3`; the tinypetgames copy streams it from leolion.com. CC BY requires the credit line on the ending card, so keep it. |
 
 **The Skunkpets zoom** (script section `THE SKUNKPETS ZOOM`). The monitor

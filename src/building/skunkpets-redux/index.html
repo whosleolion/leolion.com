@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="b601c0ba3eb9">
+<meta name="skunkpets-build" content="3bad0820431b">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "b601c0ba3eb9";
+  var mine = "3bad0820431b";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -2618,11 +2618,39 @@ function handleFocusRequest(playfield) {
    ========================================================= */
 
 let disketteWasVisible = false;
+let balloonWasVisible = false;
 
 function animateDisketteEntrance(playfield) {
   const assistant = playfield.querySelector(".diskette-assistant");
-  if (assistant && !disketteWasVisible) assistant.classList.add("diskette-popping");
+  if (assistant && !disketteWasVisible) {
+    assistant.classList.add("diskette-popping");
+    playDisketteVoice();
+  }
   disketteWasVisible = !!assistant;
+
+  const balloon = playfield.querySelector(".diskette-balloon");
+  if (balloon && !balloonWasVisible) playDisketteVoice();
+  balloonWasVisible = !!balloon;
+}
+
+/* Her voice: a random robot "hmm" each time she pops up or a balloon
+   appears, never the same one twice running. The clips are made from
+   tools/skunkpets-redux/diskette-voice (see its README). */
+const DISKETTE_VOICE = [1, 2, 3, 4, 5, 6, 7, 8].map(function (n) {
+  return siteAsset("/building/skunkpets-redux/diskette/diskette-hmm-" + n + ".mp3");
+});
+let lastDisketteVoice = -1;
+
+function playDisketteVoice() {
+  if (soundSettings.muted) return;
+  let pick;
+  do {
+    pick = Math.floor(Math.random() * DISKETTE_VOICE.length);
+  } while (pick === lastDisketteVoice && DISKETTE_VOICE.length > 1);
+  lastDisketteVoice = pick;
+  const voice = new Audio(DISKETTE_VOICE[pick]);
+  voice.volume = 0.55;
+  voice.play().catch(function () {});
 }
 
 
@@ -3617,14 +3645,17 @@ document.addEventListener("click", function (e) {
    restart a transition each time.
    ========================================================= */
 
+/* Files hosted next to the page on leolion.com (the song, Diskette's
+   voice). The tinypetgames copy loads them from leolion.com by full URL. */
+function siteAsset(path) {
+  return location.hostname.endsWith("leolion.com") || location.hostname === "localhost"
+    ? path
+    : "https://leolion.com" + path;
+}
+
 const ZOOM_START = 0.8;
 const ZOOM_SECONDS = 60;
-/* Hosted on leolion.com; the absolute URL keeps the tinypetgames copy
-   working too. */
-const ZOOM_SONG_PATH = "/building/skunkpets-redux/comfortable-mystery.mp3";
-const ZOOM_SONG = location.hostname.endsWith("leolion.com") || location.hostname === "localhost"
-  ? ZOOM_SONG_PATH
-  : "https://leolion.com" + ZOOM_SONG_PATH;
+const ZOOM_SONG = siteAsset("/building/skunkpets-redux/comfortable-mystery.mp3");
 
 let zoomSong = null;
 let zoomStarted = false;
@@ -5445,7 +5476,7 @@ deal with the devil
 (link: &quot;Trash&quot;)[(set: $disketteTopic to &quot;recycle&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link: &quot;Diskette&quot;)[(set: $disketteTopic to &quot;diskette&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 &lt;/div&gt;
-(if: $trashItems&#39;s length &gt; 0)[&lt;p class=&quot;diskette-note&quot;&gt;There&#39;s still something in your Trash! Drag it onto the desktop and I can tell you about it too.&lt;/p&gt;]
+(if: ($trashItems - (a: &quot;readme&quot;))&#39;s length &gt; 0)[&lt;p class=&quot;diskette-note&quot;&gt;There&#39;s still something in your Trash! Drag it onto the desktop and I can tell you about it too.&lt;/p&gt;]
 ](else:)[
 &lt;p&gt;(display: &quot;DisketteTopic&quot;)&lt;/p&gt;
 &lt;div class=&quot;diskette-options&quot;&gt;

@@ -16,7 +16,11 @@ const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
 const songLoads = [];
-p.on('response', (r) => { if (r.url().endsWith('comfortable-mystery.mp3')) songLoads.push(r.status()); });
+const voiceLoads = [];
+p.on('response', (r) => {
+  if (r.url().endsWith('comfortable-mystery.mp3')) songLoads.push(r.status());
+  if (/diskette-hmm-\d\.mp3$/.test(r.url())) voiceLoads.push(r.status());
+});
 await p.goto(URL);
 
 const W = (ms) => p.waitForTimeout(ms);
@@ -103,9 +107,13 @@ await dbl('.desktop-icon[data-window-template="mail"]');
 check('inbox empty', (await text('.mail-list')) === 'Your inbox is empty');
 await click('.panel[data-window-template="mail"] .panel-close');
 
-// Diskette
+// Diskette (READ_ME thrown away first: it's expected to end up in the Trash)
+await drag(await center('.desktop-icon[data-window-template="readme"]'), await center('.desktop-icon[data-window-template="recycle"]'));
 await dbl('.desktop-icon[data-window-template="diskette"]');
 check('Diskette greets', (await text('.diskette-bubble')).includes("I'm Diskette"));
+check('Diskette ignores a READ_ME-only Trash', (await p.locator('.diskette-note').count()) === 0);
+await W(500);
+check('Diskette says a hmm when she pops up', voiceLoads.some((s) => s === 200 || s === 206), voiceLoads.join(','));
 await go('.diskette-options tw-link', 'Browse');
 check('Diskette explains Browse', (await text('.diskette-bubble')).includes('web browser'));
 await shot('03-diskette');
@@ -113,6 +121,8 @@ check('Diskette has no READ_ME topic', !(await text('.diskette-options')).includ
 await go('.diskette-options tw-link', 'Dismiss');
 check('Dismiss tucks Diskette into the tray', (await p.locator('.diskette-bubble').count()) === 0 && (await p.locator('.tray-diskette').count()) === 1);
 check('first dismiss: tray balloon explains the tray', (await text('.diskette-balloon')).includes('down here in the tray'));
+await W(500);
+check('the balloon says a hmm too', voiceLoads.length >= 2, voiceLoads.join(','));
 await click('.diskette-balloon p');
 check('clicking the balloon brings Diskette back', (await text('.diskette-bubble')).includes("I'm Diskette"));
 await click('.diskette-close');
