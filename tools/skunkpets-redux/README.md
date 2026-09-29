@@ -32,6 +32,12 @@ mouse clicks and drags and exits non-zero on any failure:
     (cd src && python3 -m http.server 8765)
     node tools/skunkpets-redux/playtest.mjs http://localhost:8765/building/skunkpets-redux/ /tmp/shots
 
+**Preview before it goes live.** Push the change to any branch other than
+`master` and `.github/workflows/preview-skunkpets.yml` publishes just this page
+to leolion.com/building/skunkpets-redux-preview/ (about 20 seconds; a yellow
+PREVIEW badge in the corner shows which commit it is, and it keeps its own save
+slot). Try it there; when it's right, merge or push to `master` to ship it.
+
 `extract.js` does the reverse of the build (published HTML → `.twee`); it was used
 once to recover the source and shouldn't normally be needed.
 

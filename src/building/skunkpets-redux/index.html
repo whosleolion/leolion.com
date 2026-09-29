@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="f1e0e42f043d">
+<meta name="skunkpets-build" content="5ade27ce54d5">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "f1e0e42f043d";
+  var mine = "5ade27ce54d5";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -2765,7 +2765,8 @@ function clearIconSelection(playfield) {
    ---------------------------------------------------------
    Icon positions live here (keyed by data-window-template)
    so they survive Harlowe re-renders. Items dragged out of
-   the Trash land in the nearest free grid cell; after that
+   the Trash land in the first free grid cell (down the first
+   column, then the next), wherever they're dropped; after that
    they can be dragged anywhere.
    ========================================================= */
 
@@ -2793,25 +2794,38 @@ function gridCells(playfield) {
   return cells;
 }
 
-/* Nearest grid cell (to x,y in playfield coordinates) that no other
-   desktop icon overlaps. `exclude` is the icon being moved, if any. */
-function nearestFreeCell(playfield, x, y, exclude) {
+/* Grid cells that no other desktop icon overlaps, in gridCells order
+   (down the first column, then the next). `exclude` is the icon being
+   moved, if any. */
+function freeCells(playfield, exclude) {
   const others = Array.from(playfield.querySelectorAll(".desktop-icon")).filter(function (icon) {
     return icon !== exclude;
   });
   const taken = others.map(function (icon) {
     return { left: icon.offsetLeft, top: icon.offsetTop, right: icon.offsetLeft + icon.offsetWidth, bottom: icon.offsetTop + icon.offsetHeight };
   });
-
-  let best = null;
-  let bestDistance = Infinity;
-  gridCells(playfield).forEach(function (cell) {
+  return gridCells(playfield).filter(function (cell) {
     const right = cell.left + GRID.iconWidth;
     const bottom = cell.top + GRID.iconHeight;
-    const overlaps = taken.some(function (t) {
+    return !taken.some(function (t) {
       return cell.left < t.right - 8 && right > t.left + 8 && cell.top < t.bottom - 8 && bottom > t.top + 8;
     });
-    if (overlaps) return;
+  });
+}
+
+/* First free cell, top to bottom, then left to right: where items dragged
+   out of the Trash land, wherever they're dropped, so they line up in the
+   first column. */
+function firstFreeCell(playfield) {
+  return freeCells(playfield)[0] || null;
+}
+
+/* Nearest free cell to x,y (playfield coordinates): where icons already on
+   the desktop snap when dragged. */
+function nearestFreeCell(playfield, x, y, exclude) {
+  let best = null;
+  let bestDistance = Infinity;
+  freeCells(playfield, exclude).forEach(function (cell) {
     const d = Math.hypot(cell.left + GRID.iconWidth / 2 - x, cell.top + GRID.iconHeight / 2 - y);
     if (d < bestDistance) {
       bestDistance = d;
@@ -2918,8 +2932,7 @@ function startBinDrag(e, icon, playfield) {
       !target.closest(".panel, .taskbar, .start-menu, .xp-dialog-layer");
     if (!onDesktop) return;
 
-    const p = toLocal(ev);
-    const cell = nearestFreeCell(playfield, p.x, p.y);
+    const cell = firstFreeCell(playfield);
     if (!cell) return;
 
     const app = icon.dataset.app;
@@ -3686,7 +3699,9 @@ document.addEventListener("mousedown", function (e) {
    no longer exist is dropped on its own.
    ========================================================= */
 
-const SAVE_KEY = "skunkpets-save";
+/* The preview copy (/building/skunkpets-redux-preview/) is on the same site,
+   so it keeps its own save instead of overwriting the live game's. */
+const SAVE_KEY = location.pathname.indexOf("skunkpets-redux-preview") >= 0 ? "skunkpets-save-preview" : "skunkpets-save";
 const SAVE_VERSION = 1;
 const HarloweState = require("state");
 const HarloweEngine = require("engine");

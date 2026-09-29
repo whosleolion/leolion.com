@@ -91,6 +91,9 @@ await drag(await center('.bin-icon[data-app="diskette"]'), [560, 650]);
 check('Trash emptied', (await p.locator('.recycle-empty').count()) === 1);
 const onGrid = await p.$$eval('.desktop-icon', (e) => e.every((i) => (parseFloat(i.style.left) - 26) % 92 === 0 && (parseFloat(i.style.top) - 22) % 94 === 0));
 check('icons snapped to the grid', onGrid);
+const column = await p.$$eval('.desktop-icon', (e) => e.map((i) => `${i.dataset.windowTemplate}@${parseFloat(i.style.left)},${parseFloat(i.style.top)}`).join(' '));
+check('Trash items line up down the first column, in drop order',
+  ['readme@26,22', 'browser@26,116', 'mail@26,210', 'notes@26,304', 'diskette@26,398'].every((x) => column.includes(x)), column);
 await click('.panel[data-window-template="recycle"] .panel-close');
 await click('.panel[data-window-template="readme"] .panel-close');
 await shot('02-restored');

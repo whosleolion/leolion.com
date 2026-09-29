@@ -106,6 +106,15 @@ so you can work on it from any machine, or right in the browser on github.com.
    `/building/skunkpets-redux/`, or run the playtest (see `README.md`).
 4. **Publish:** commit and push to `master`. Pushing deploys automatically.
 
+**Trying a change before it goes live (the preview):** commit to any branch
+*other than* `master` (on github.com, pick "Create a new branch" when
+committing). The preview workflow publishes just this game to
+**leolion.com/building/skunkpets-redux-preview/** in about 20 seconds. A yellow
+PREVIEW badge in the corner shows which commit you're looking at, and the
+preview keeps its own save slot, so it never touches the live game's. When
+it's right, merge the branch into `master` (or open a pull request and merge
+it) to ship it.
+
 > Pushing to `master` publishes **the whole site** (`src/`), not just this game.
 > That's how the repo already works; just avoid pushing half-finished edits to
 > other pages at the same time.
@@ -438,7 +447,10 @@ const GRID = { left: 26, top: 22, width: 92, height: 94, iconWidth: 82, iconHeig
 
 That makes 10 columns × 7 rows. `nearestFreeCell()` finds the closest cell
 nobody else is using. Dropping an icon anywhere snaps it there, and the spot is
-remembered in `iconPositions` so redraws don't undo it.
+remembered in `iconPositions` so redraws don't undo it. Items coming out of the
+Trash use `firstFreeCell()` instead: the first free cell counting down the
+first column, then the next, so they line up under READ_ME wherever they're
+dropped.
 
 **Talking to Harlowe from JavaScript (the hidden-link trick).** Dragging is
 JavaScript, but "move Mail out of the Trash" has to change Harlowe variables,
@@ -457,7 +469,7 @@ links survive every redraw.
 
 **Dragging out of the Trash** (`startBinDrag`): press on an item, a
 see-through "ghost" icon follows the mouse, and letting go over open desktop
-(not over a window or the taskbar) snaps to the nearest free cell and runs
+(not over a window or the taskbar) puts it in the first free cell and runs
 `restore:<item>`. **Dragging back in** is handled by the normal icon drag: if
 you let go over the Trash icon or the open Trash window, it runs
 `trash:<item>`, which also closes that app's window. `TRASHABLE` lists what

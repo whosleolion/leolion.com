@@ -1,0 +1,57 @@
+name: Skunkpets Redux preview
+
+# Publishes the Skunkpets Redux build from any branch except master to
+# leolion.com/building/skunkpets-redux-preview/ (noindexed, unlinked), so
+# changes can be tried in a real browser without touching the live game.
+# Only that one page is uploaded; the live deploy (deploy-neocities.yml) still
+# runs only on master. The preview reuses the live copy's song file and the
+# tinypetgames art, and keeps its own save slot (see SAVE / CONTINUE).
+on:
+  push:
+    branches-ignore: ["master"]
+    paths:
+      - "tools/skunkpets-redux/**"
+      - "src/building/skunkpets-redux/**"
+      - ".github/workflows/preview-skunkpets.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: skunkpets-preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build
+        run: node tools/skunkpets-redux/build.js
+
+      - name: Make the preview copy
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          sha="${GITHUB_SHA::7}"
+          # Title and a corner badge say which build this is.
+          sed -e "s#<title>[^<]*</title>#<title>PREVIEW: Skunkpets Redux (${sha})</title>#" \
+              -e "s#</body>#<div style=\"position:fixed;left:8px;bottom:8px;z-index:2147483647;padding:3px 7px;background:\#ff0;color:\#000;font:bold 11px monospace;pointer-events:none;opacity:.85\">PREVIEW ${sha}</div></body>#" \
+              src/building/skunkpets-redux/index.html > /tmp/preview.html
+          grep -q "PREVIEW ${sha}</div>" /tmp/preview.html
+
+      - name: Upload to Neocities
+        env:
+          NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_LEOLIONCOM }}
+        run: |
+          set -euo pipefail
+          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${NEOCITIES_API_KEY}" \
+            -F "building/skunkpets-redux-preview/index.html=@/tmp/preview.html" \
+            https://neocities.org/api/upload)
+          cat /tmp/response.json; echo
+          [ "$status" -eq 200 ]
+          echo "Preview: https://leolion.com/building/skunkpets-redux-preview/" >> "$GITHUB_STEP_SUMMARY"
