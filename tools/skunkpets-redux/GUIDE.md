@@ -541,6 +541,11 @@ Add `article` to its tags if it should be findable in Winkipedia.
 - **Skunkpets Fan Wiki** and its pages (`fanwiki` tag) share the banner
   `img-fanwikibar`. Forum posts reuse small `forum-user-…` passages for each
   poster's avatar and details.
+- **Scroll memory** (script `BROWSER SCROLL MEMORY`): Harlowe redraws the
+  whole desktop for things that don't change the page (bookmarks, dialogs,
+  other apps, Diskette), which used to throw the page back to the top. The
+  script remembers the scroll position as you scroll and puts it back when
+  the same page is redrawn. A different page still starts at the top.
 - **Leaving Winkipedia warns first.** Any link from a Winkipedia page to a
   page tagged `fanwiki` or `gamesarchive` shows "You are exiting to external
   website … Are you sure?" (OK / Cancel), like the devlink link on kraska1.

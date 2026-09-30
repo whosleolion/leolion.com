@@ -2952,6 +2952,7 @@ function initDesktopUI() {
     initBinIcons(playfield);
     initWinkiWebResult(playfield);
     initNotes(playfield);
+    restoreBrowserScroll(playfield);
     updateClock(playfield);
     mountVolumePopup(playfield);
     initFolderFiles(playfield);
@@ -3015,6 +3016,66 @@ function handleFocusRequest(playfield) {
   panel.classList.remove("hidden");
   minimizedWindows.delete(panel.dataset.windowId);
   focusPanel(panel, playfield);
+}
+
+
+/* =========================================================
+   BROWSER SCROLL MEMORY
+   ---------------------------------------------------------
+   Harlowe rebuilds the whole desktop for lots of things that
+   don't change the page (opening the bookmarks, a dialog,
+   another app, Diskette), and a rebuilt browser page starts
+   at the top. So the scroll position is remembered as you
+   scroll, and when the same page comes back after a rebuild
+   it's put back before anything is drawn. Going to a
+   different page still starts at the top.
+   ========================================================= */
+
+let browserScroll = { page: null, top: 0 };
+
+function browserPageName(content) {
+  const panel = content.closest(".panel");
+  const title = panel && panel.querySelector(".panel-title");
+  return title ? title.textContent.trim() : "";
+}
+
+/* Scroll events don't bubble, so listen in the capture phase. */
+document.addEventListener("scroll", function (e) {
+  const c = e.target;
+  if (!(c instanceof Element) || !c.classList.contains("browser-page-content")) return;
+  /* While restoring, pictures still loading can make the page briefly too
+     short to reach the old spot; don't mistake that for the reader
+     scrolling up. */
+  if (c.dataset.restoreTo && c.scrollTop < +c.dataset.restoreTo) return;
+  browserScroll = { page: browserPageName(c), top: c.scrollTop };
+}, true);
+
+function restoreBrowserScroll(playfield) {
+  const c = playfield.querySelector(".browser-page-content");
+  if (!c || c.dataset.scrollInit) return;
+  c.dataset.scrollInit = "1";
+  const page = browserPageName(c);
+  if (page !== browserScroll.page) {
+    browserScroll = { page: page, top: 0 };
+    return;
+  }
+  const top = browserScroll.top;
+  if (!top) return;
+  c.dataset.restoreTo = top;
+  c.scrollTop = top;
+  const done = function () { delete c.dataset.restoreTo; };
+  /* Keep trying as pictures arrive, until the reader takes over. */
+  c.querySelectorAll("img").forEach(function (img) {
+    if (img.complete) return;
+    img.addEventListener("load", function () {
+      if (c.dataset.restoreTo) c.scrollTop = top;
+      if (c.scrollTop >= top) done();
+    }, { once: true });
+  });
+  ["wheel", "mousedown", "keydown", "touchstart"].forEach(function (ev) {
+    c.addEventListener(ev, done, { once: true });
+  });
+  if (c.scrollTop >= top) done();
 }
 
 

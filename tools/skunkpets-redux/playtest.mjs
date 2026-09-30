@@ -179,6 +179,22 @@ await type('#winki-search-input', 'skunkpets.com');
 await p.keyboard.press('Enter'); await W(500);
 check('"skunkpets.com" opens the Skunkpets article', (await text('.browser-page-content h1')).includes('SkunkPets'));
 await W(3000);
+// Scroll memory: redraws that don't change the page keep the scroll position
+const scrollTo = (y) => p.evaluate((y) => { const c = document.querySelector('.browser-page-content'); c.scrollTop = y; c.dispatchEvent(new Event('scroll')); }, y);
+const scrollNow = () => p.evaluate(() => Math.round(document.querySelector('.browser-page-content').scrollTop));
+await scrollTo(300); await W(200);
+const scrolled = await scrollNow();
+await p.locator('.browser-star').evaluate((e) => e.click()); await W(500);
+check('opening the bookmarks keeps the page scrolled', scrolled > 100 && Math.abs((await scrollNow()) - scrolled) <= 2, `${scrolled} -> ${await scrollNow()}`);
+await p.locator('.browser-star').evaluate((e) => e.click()); await W(500);
+await p.locator('.start-button').evaluate((e) => e.click()); await W(500);
+check('opening the Start menu keeps it too', Math.abs((await scrollNow()) - scrolled) <= 2, `${scrolled} -> ${await scrollNow()}`);
+await p.locator('.start-button').evaluate((e) => e.click()); await W(400);
+// ...and so does a warning dialog (the footnote link to the fan wiki), after Cancel
+await p.locator('.browser-page-content tw-link sup').first().evaluate((e) => e.closest('tw-link').click()); await W(500);
+check('the fan wiki footnote warns before leaving', (await text('.xp-dialog-msg')).includes('skunkpets.fanwiki.net'));
+await p.locator('.xp-dialog-buttons tw-link').filter({ hasText: 'Cancel' }).evaluate((e) => e.click()); await W(500);
+check('...and Cancel keeps the page scrolled', Math.abs((await scrollNow()) - scrolled) <= 2, `${scrolled} -> ${await scrollNow()}`);
 check('Skunkpets article starts the zoom', (await zoom()) > ZOOM_START, String(await zoom()));
 check('Skunkpets article starts the song', songLoads.some((s) => s === 200 || s === 206), songLoads.join(','));
 
@@ -196,13 +212,14 @@ check('CONTINUE brings the song back', songLoads.length > songsBefore, songLoads
 
 // Story path to the ending
 await go('.browser-page-content tw-link', '2004 NetCon');
-await go('.browser-page-content tw-link', 'Global Games Archive');
+await p.locator('.browser-page-content tw-link').filter({ hasText: 'Global Games Archive' }).evaluate((e) => e.click()); await W(500);
 check('leaving Winkipedia for the games archive warns first', (await text('.xp-dialog-msg')).includes('exiting to external website') && (await text('.xp-dialog-msg')).includes('globalgamesarchive.co.uk'), await text('.xp-dialog-msg'));
 await go('.xp-dialog-buttons tw-link', 'Cancel');
 check('Cancel stays on Winkipedia', (await pageTitle()) === 'NetCon 2004', await pageTitle());
 await go('.browser-page-content tw-link', 'Global Games Archive');
 await go('.xp-dialog-buttons tw-link', 'OK');
 check('OK goes on to the games archive', (await pageTitle()) === 'globalgamesarchive.co.uk', await pageTitle());
+check('a new page starts at the top', (await p.evaluate(() => document.querySelector('.browser-page-content').scrollTop)) === 0);
 await type('#gga-search-input', 'skunkpets');
 await p.keyboard.press('Enter'); await W(500);
 check('games archive search for "skunkpets" finds nothing', (await pageTitle()) !== 'kraska1' && (await text('.browser-page-content')).includes('No results found'));
