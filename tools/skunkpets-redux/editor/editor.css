@@ -28,7 +28,7 @@
   display: none;
   flex-direction: column;
   gap: 8px;
-  width: 440px;
+  width: 460px;
   box-sizing: border-box;
   padding: 10px 12px;
   border-left: 1px solid #999;
@@ -95,21 +95,61 @@
   display: none;
 }
 
-.ske-text {
+/* The markup editor (CodeMirror). */
+.ske-cm {
+  display: flex;
   flex: 1;
   min-height: 200px;
-  padding: 8px;
   border: 1px solid #999;
   border-radius: 3px;
   background: #fff;
+  overflow: hidden;
+}
+
+.ske-cm .cm-editor {
+  flex: 1;
+  height: 100%;
   color: #111;
   font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
-  resize: none;
+}
+
+.ske-cm .cm-editor.cm-focused {
+  outline: 2px solid #9ab8f0;
+}
+
+.ske-cm .cm-scroller {
+  font-family: inherit;
   cursor: text;
 }
 
-.ske-text:disabled {
+.ske-cm .cm-content {
+  padding: 6px 0;
+  cursor: text;
+}
+
+.ske-cm .cm-line {
+  padding: 0 8px;
+}
+
+.ske-cm .cm-content[contenteditable="false"] {
   background: #eee;
+}
+
+.cm-ske-tag { color: #8a5a00; }
+.cm-ske-macro { color: #7a3fb0; }
+.cm-ske-dim { color: #aaa; }
+.cm-ske-photo { color: #1a7a3a; background: #eaf7ee; }
+.cm-ske-link { color: #1f55c8; }
+.cm-ske-redlink { color: #c62020; text-decoration: underline wavy #e88; }
+
+.cm-ske-comment {
+  background: #fff3a8;
+  border-bottom: 2px solid #e0c400;
+  cursor: pointer;
+}
+
+.cm-ske-comment-focus {
+  background: #ffd76a;
 }
 
 .ske-actions {
@@ -196,6 +236,11 @@
   overflow-y: auto;
 }
 
+/* Scroll the list instead of squashing the note box. */
+.ske-comments-body > * {
+  flex-shrink: 0;
+}
+
 .ske-comment {
   padding: 6px 8px;
   border: 1px solid #d8d4a8;
@@ -273,3 +318,220 @@
   font-size: 12px;
   font-weight: normal;
 }
+
+.ske-comment {
+  position: relative;
+  cursor: pointer;
+}
+
+.ske-comment-focus {
+  outline: 2px solid #e0a800;
+}
+
+.ske-comment-num {
+  float: right;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e0c400;
+  color: #000;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ske-comment-reply {
+  margin: 6px 0 0 10px;
+  padding-left: 8px;
+  border-left: 2px solid #d8d4a8;
+}
+
+.ske-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ske-orphan {
+  margin: 3px 0;
+  color: #9a5a00;
+  font-size: 11px;
+}
+
+.ske-hidden {
+  display: none !important;
+}
+
+.ske-last-edit:empty,
+.ske-missing:empty {
+  display: none;
+}
+
+.ske-redword {
+  color: #c62020;
+}
+
+/* Comment highlights and red links in the game (only while the panel is
+   open; closing it redraws the page without them). */
+.browser-page-content mark.ske-mark {
+  background: #fff3a8;
+  color: inherit;
+  box-shadow: 0 2px 0 #e0c400;
+  cursor: pointer;
+}
+
+.browser-page-content mark.ske-mark-focus {
+  background: #ffd76a;
+}
+
+.browser-page-content mark.ske-mark-flash {
+  animation: skeFlash 0.9s ease;
+}
+
+@keyframes skeFlash {
+  0%, 100% { background: #ffd76a; }
+  50% { background: #ff9d3a; }
+}
+
+.browser-page-content .ske-mark-badge {
+  margin-left: 2px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: #e0c400;
+  color: #000;
+  font: 700 9px/1.4 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.browser-page-content .ske-redlink {
+  color: #c62020;
+  text-decoration: underline wavy #e88;
+  cursor: pointer;
+}
+
+/* Windows: new page, review. */
+.ske-shade {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: auto;
+}
+
+.ske-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: #f4f4f1;
+  color: #111;
+  font: 13px/1.4 system-ui, sans-serif;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.ske-modal * {
+  cursor: auto;
+}
+
+.ske-modal button,
+.ske-modal label {
+  cursor: pointer;
+}
+
+.ske-modal-wide {
+  width: min(820px, calc(100vw - 32px));
+}
+
+.ske-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ske-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.ske-modal button {
+  padding: 4px 10px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  background: #fff;
+  font: 12px system-ui, sans-serif;
+}
+
+.ske-modal .ske-save {
+  border-color: #1a5c1a;
+  background: #2e8b2e;
+  color: #fff;
+  font-weight: 600;
+}
+
+.ske-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ske-input {
+  padding: 5px 7px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  font: 13px system-ui, sans-serif;
+  cursor: text !important;
+}
+
+.ske-templates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ske-template {
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+
+.ske-template:hover {
+  background: #e8eefc;
+}
+
+.ske-review-page {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.ske-review-name {
+  padding: 5px 8px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 700;
+}
+
+.ske-diff {
+  padding: 4px 0;
+  font: 11px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ske-diff > div {
+  padding: 0 8px;
+}
+
+.ske-diff-add { background: #e3f6e3; }
+.ske-diff-del { background: #fbe3e3; text-decoration: line-through; color: #8a2020; }
+.ske-diff-same { color: #666; }
+.ske-diff-gap { color: #999; text-align: center; }

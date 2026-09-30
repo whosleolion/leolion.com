@@ -1,0 +1,16 @@
+{
+  "name": "skunkpets-editor-codemirror",
+  "private": true,
+  "description": "Builds codemirror.bundle.js for the preview's article editor. Only needed to update CodeMirror: npm install && npm run build",
+  "scripts": {
+    "build": "esbuild entry.js --bundle --minify --format=iife --global-name=SkeCM --outfile=../codemirror.bundle.js --legal-comments=eof"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/commands": "^6.8.0",
+    "@codemirror/search": "^6.5.0",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.36.0",
+    "esbuild": "^0.25.0"
+  }
+}

@@ -6,9 +6,12 @@ beside the game; the game shrinks to make room.
 
 1. Open any Winkipedia page in the game's browser (Winkipedia articles, the
    fan wiki, the games archive: anything tagged `wiki`). Its text appears in
-   the panel. Follow links in the game and the panel follows along.
-2. Edit. The game shows your changes as you type. Links and photos use a short
-   form (the Cheat sheet in the panel has it):
+   the panel, and the panel follows along as you click links in the game.
+   Clicking words in the game jumps the text to them.
+2. Edit. The game shows your changes as you type. The text box is a small code
+   editor: links are blue, photos green, HTML tags brown, Harlowe code purple;
+   Ctrl/Cmd-F finds, Ctrl/Cmd-Z undoes, and typing `[[` suggests page names.
+   Links and photos use a short form (the Cheat sheet in the panel has it):
    - `[[Tom Barry]]` links to a page; `[[the founder->Tom Barry]]` links with
      other words.
    - `[[photo: file.jpg | right | description]]` is a photo;
@@ -18,10 +21,21 @@ beside the game; the game shrinks to make room.
    - **+ Photo** adds a picture from your computer (shrunk to 480 px wide and
      saved as JPEG) and puts its line where your cursor is.
    Unsaved edits are kept in this browser, so a reload doesn't lose them.
-3. **Save to preview** makes one commit on GitHub with every page you changed
-   and any new photos they use, on the branch this preview was built from. The
-   preview workflow rebuilds within about a minute. Your changes keep showing
-   in the meantime. From there they ship like any other change.
+3. **New pages.** A link to a page that doesn't exist yet is red (wavy in the
+   text, red words in the game) and listed under the text with **Create**
+   (or Ctrl/Cmd-click it, or click it in the game). **+ New page** makes one
+   from scratch. Pick a look: *Winkipedia article* (searchable in Winkipedia),
+   *Fan wiki page*, *Forum thread*, *Games archive page* or *Blank wiki page*.
+   The page appears in the game straight away, and articles are searchable
+   before you save. "Undo my changes" on an unsaved new page removes it.
+   Pages can't be renamed or deleted from here (on purpose, for now); if a
+   page isn't wanted, just remove the links to it.
+4. **Save to preview…** shows every changed and new page, green lines added
+   and red removed, then makes one commit on GitHub, credited to your name, on
+   the branch this preview was built from. The preview rebuilds within about a
+   minute; your changes keep showing in the meantime. From there they ship
+   like any other change. Under the page name, "Last saved by …" says who
+   last saved it from the editor.
 
 **GitHub access (once per browser).** Saving needs a fine-grained personal
 access token: GitHub → Settings → Developer settings → Fine-grained tokens →
@@ -33,15 +47,19 @@ you can fix it by editing the token's permissions on GitHub, no need to make a
 new one. Paste it under **GitHub access** in the panel. It's stored only in this
 browser's localStorage for leolion.com; **Forget** removes it.
 
-**Comments.** Under the text box, **Comments on this page** holds notes for
-whoever edits next; they never appear in the game. Select words in the article
-first and your comment quotes them. **Resolve** marks a note done (it folds
-into "Resolved"; **Reopen** brings it back); you can **Delete** your own. The
-first time you post, it asks your name (**My name…** changes it). Notes on
-other pages are listed with a **Go** button that opens that page in the game
-(Browse has to be out of the Trash). The ✎ button shows how many notes are
-open, and the list refreshes every minute while the panel is open (or press
-**Refresh**). Each comment is its own small commit to
+**Comments.** Select words in the text, write a note under **Comments on
+this page**, and **Post comment**: the note is pinned to those words, which are
+highlighted with a numbered tab in the text and in the game (only while the
+panel is open, so playtesting still looks like the real game). Click a
+highlight (in the game, click its number) to open the note; click a note to
+jump to its words. **Reply** threads an answer under it. **Resolve** folds it
+away (**Reopen** brings it back); you can **Delete** your own. If the pinned
+words are edited away, the note says so; select new words and **Re-pin**, or
+resolve it. The first time you post or save, it asks your name (**My name…**
+changes it). Notes on other pages are listed with **Go**, which opens that page
+at the note (Browse has to be out of the Trash). The ✎ button shows how many
+notes are open, and everything refreshes every minute while the panel is open
+(or press **Refresh**). Each comment is its own small commit to
 `tools/skunkpets-redux/editor/comments.json` on the same branch; it doesn't
 rebuild the preview. The repository is public, so so are the comments.
 
@@ -49,13 +67,21 @@ rebuild the preview. The repository is public, so so are the comments.
 push from Claude), saving asks before overwriting it. Other pages' changes are
 kept; only the pages you edited are replaced.
 
-What it can't do (yet): rename or create pages, or edit the game's other
+What it can't do (yet): rename or delete pages, or edit the game's other
 passages (desktop, mail, Diskette). Those are still edited in the `.twee`.
 
 ## Files
 
-- `editor.js`, `editor.css`: the editor. The preview workflow uploads them and
-  adds them to the preview page; the live game never loads them. It talks to
+- `editor.js`, `editor.css`: the editor. The preview workflow uploads them
+  (with `codemirror.bundle.js`) and adds them to the preview page; the live
+  game never loads them.
+- `codemirror.bundle.js`: the code editor library (CodeMirror 6), bundled to
+  one file from `codemirror/` (`npm install && npm run build` there to update
+  it).
+- `unit-test.js`: the editor's text logic (finding pinned words, adding pages
+  to the `.twee`, page-name rules, comment threads, the change list), and a
+  build of a new page from every template
+  (`node tools/skunkpets-redux/editor/unit-test.js`). It talks to
   the game through `window.SkunkpetsEditorHook` (script section
   `PREVIEW EDITOR HOOK`), which only exists on the preview.
 - `roundtrip-test.js`: checks the short link/photo form converts back exactly

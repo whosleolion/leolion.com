@@ -47,8 +47,8 @@ jobs:
           # The article editor (preview only): its files, and a tag that loads
           # it and tells it which branch to save to.
           mkdir -p /tmp/preview/editor
-          cp tools/skunkpets-redux/editor/editor.js tools/skunkpets-redux/editor/editor.css /tmp/preview/editor/
-          editor="<link rel=\"stylesheet\" href=\"/building/skunkpets-preview/editor/editor.css?v=${sha}\"><script src=\"/building/skunkpets-preview/editor/editor.js?v=${sha}\" data-repo=\"${GITHUB_REPOSITORY}\" data-branch=\"${branch}\"></script>"
+          cp tools/skunkpets-redux/editor/editor.js tools/skunkpets-redux/editor/editor.css tools/skunkpets-redux/editor/codemirror.bundle.js /tmp/preview/editor/
+          editor="<link rel=\"stylesheet\" href=\"/building/skunkpets-preview/editor/editor.css?v=${sha}\"><script src=\"/building/skunkpets-preview/editor/codemirror.bundle.js?v=${sha}\"></script><script src=\"/building/skunkpets-preview/editor/editor.js?v=${sha}\" data-repo=\"${GITHUB_REPOSITORY}\" data-branch=\"${branch}\"></script>"
           # Title and a corner badge say which build this is.
           sed -e "s#<title>[^<]*</title>#<title>PREVIEW: Skunkpets Redux (${sha})</title>#" \
               -e "s#</body>#<div style=\"position:fixed;left:8px;bottom:8px;z-index:2147483647;padding:3px 7px;background:\#ff0;color:\#000;font:bold 11px monospace;pointer-events:none;opacity:.85\">PREVIEW ${sha}</div>${editor}</body>#" \
