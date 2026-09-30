@@ -2033,6 +2033,14 @@ span.xp-dialog-icon {
   background: center / contain no-repeat;
 }
 
+/* A pet picture that lives in the game (art/) instead of on tinypetgames,
+   filling its grid cell or card like the <img> pets do. */
+.browser-page-content .pet-art {
+  float: none;
+  width: 100%;
+  margin: 0;
+}
+
 .browser-page-content .article-art-left {
   float: left;
   margin: 0 15px 10px 0;
@@ -4746,7 +4754,7 @@ Here are soem of the ways that they appear!
   </tr>
   <tr>
     <td><a href="#ren">(print: '<img src="' + $imgroot + 'pets/ren.png">')ren</a></td>
-    <td><a href="#gigor">(print: '<img src="' + $imgroot + 'pets/gigor.png">')gigor</a></td>
+    <td><a href="#gigor"><div class="article-art pet-art" data-art="gigor.png" role="img" aria-label="gigor"></div>gigor</a></td>
     <td><a href="#tulipy">(print: '<img src="' + $imgroot + 'pets/tulipy.png">')tulipy</a></td>
   </tr>
 </table>
@@ -4809,7 +4817,7 @@ Ren are mysterious, nocturnal Skunkpets, believed to be native to Bin City. Love
 <h2 id="gigor">gigor</h2>\
 <h6>(Last edited by Yen4All on 4/09/2010)</h6>\
 <div class="image-card">
-(print: '<img src="' + $imgroot + 'pets/gigor.png">')\
+<div class="article-art pet-art" data-art="gigor.png" role="img" aria-label="gigor"></div>\
 <p>The Gigor is a glum, mossy Skunkpet with a miserable history. Prior to the Interstellar Invasion plot which introduced the Garnet Moon in 2005, the Gigor was a proud, priestly species, ruling with a holy iron fist over Kerala Province in the south. After the plot's conclusion, the Gigor's faith was shaken and their guilt was heavy, leading them to abandon their temples and shrines in search of meaning elsewhere. Gigors are picky eaters: their diet consists of selected fruits, compotes, preserved meats, and their favorite "candy smokes" which can be purchased from Ren traders in Bin City.
 </p></div><hr>
 
