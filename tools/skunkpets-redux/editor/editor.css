@@ -1,0 +1,182 @@
+/* Skunkpets Redux article editor (preview only). A plain tool look, kept
+   apart from the game's XP styling; every class starts with ske-. */
+
+.ske-toggle {
+  position: fixed;
+  left: 8px;
+  bottom: 34px;
+  z-index: 2147483600;
+  padding: 5px 10px;
+  border: 1px solid #000;
+  border-radius: 4px;
+  background: #ff0;
+  color: #000;
+  font: bold 12px/1.2 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.ske-toggle-on {
+  background: #fff;
+}
+
+.ske-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483600;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  width: 440px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-left: 1px solid #999;
+  background: #f4f4f1;
+  color: #111;
+  font: 13px/1.4 system-ui, sans-serif;
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: auto;
+}
+
+.ske-panel * {
+  cursor: auto;
+}
+
+.ske-panel button,
+.ske-panel summary,
+.ske-panel a {
+  cursor: pointer;
+}
+
+.ske-open {
+  display: flex;
+}
+
+.ske-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.ske-close {
+  border: 0;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.ske-title {
+  font-weight: 600;
+}
+
+.ske-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ske-panel button {
+  padding: 3px 8px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  background: #fff;
+  color: #111;
+  font: 12px system-ui, sans-serif;
+}
+
+.ske-panel button:hover {
+  background: #e8eefc;
+}
+
+.ske-file {
+  display: none;
+}
+
+.ske-text {
+  flex: 1;
+  min-height: 200px;
+  padding: 8px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background: #fff;
+  color: #111;
+  font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  resize: none;
+  cursor: text;
+}
+
+.ske-text:disabled {
+  background: #eee;
+}
+
+.ske-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.ske-panel .ske-save {
+  border-color: #1a5c1a;
+  background: #2e8b2e;
+  color: #fff;
+  font-weight: 600;
+}
+
+.ske-panel .ske-save:hover {
+  background: #247024;
+}
+
+.ske-status:empty,
+.ske-pending:empty {
+  display: none;
+}
+
+.ske-status {
+  padding: 5px 7px;
+  border-radius: 3px;
+  background: #e6e6e0;
+}
+
+.ske-ok {
+  background: #dff3df;
+}
+
+.ske-error {
+  background: #fbe0e0;
+}
+
+.ske-pending {
+  color: #555;
+  font-size: 12px;
+  white-space: pre-line;
+}
+
+.ske-help summary {
+  font-weight: 600;
+}
+
+.ske-help pre {
+  margin: 6px 0 0;
+  font: 11px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+}
+
+.ske-help p {
+  margin: 6px 0;
+}
+
+.ske-token-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ske-token-input {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid #999;
+  font: 12px ui-monospace, monospace;
+}

@@ -36,11 +36,42 @@ const title = byName('StoryTitle').body.trim();
 // folder) as a data: URI, so small custom art ships inside the page with
 // nothing extra to upload.
 const mimeTypes = { '.png': 'image/png', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml' };
-const css = passages.filter(p => p.tags.includes('stylesheet')).map(p => p.body).join('\n')
+let css = passages.filter(p => p.tags.includes('stylesheet')).map(p => p.body).join('\n')
   .replace(/url\("inline:([^"]+)"\)/g, (_, file) => {
     const data = fs.readFileSync(path.join(__dirname, file)).toString('base64');
     return `url("data:${mimeTypes[path.extname(file).toLowerCase()] || 'application/octet-stream'};base64,${data}")`;
   });
+// Photo blocks: <div class="article-art" data-art="file.jpg" ...></div> in any
+// passage shows art/file.jpg. Each file used gets a generated CSS rule with the
+// image embedded and its aspect ratio, so adding a photo needs no CSS (the
+// preview's article editor relies on this).
+const artDir = path.join(__dirname, 'art');
+const artFiles = new Set();
+for (const p of passages) {
+  if (p.tags.includes('stylesheet') || p.tags.includes('script')) continue;
+  for (const m of p.body.matchAll(/data-art="([^"]+)"/g)) artFiles.add(m[1]);
+}
+for (const file of [...artFiles].sort()) {
+  const full = path.join(artDir, file);
+  if (!fs.existsSync(full)) throw new Error('Photo block uses art/' + file + ', which does not exist');
+  const bytes = fs.readFileSync(full);
+  const [w, h] = imageSize(bytes, file);
+  css += `\n.article-art[data-art="${file}"] { aspect-ratio: ${w} / ${h}; background-image: url("data:${mimeTypes[path.extname(file).toLowerCase()]};base64,${bytes.toString('base64')}"); }`;
+}
+
+// Width and height of a PNG or JPEG, read from its header.
+function imageSize(b, name) {
+  if (b.readUInt32BE(0) === 0x89504e47) return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  if (b[0] === 0xff && b[1] === 0xd8) {
+    for (let i = 2; i < b.length;) {
+      if (b[i] !== 0xff) { i++; continue; }
+      const marker = b[i + 1];
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) return [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5)];
+      i += 2 + b.readUInt16BE(i + 2);
+    }
+  }
+  throw new Error('Photo block art/' + name + ' must be a PNG or JPEG');
+}
 const js = passages.filter(p => p.tags.includes('script')).map(p => p.body).join('\n');
 const story = passages.filter(p => !['StoryTitle', 'StoryData'].includes(p.name) && !p.tags.includes('stylesheet') && !p.tags.includes('script'));
 

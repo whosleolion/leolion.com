@@ -126,7 +126,7 @@ tw-sidebar {
 
 .monitor {
   position: fixed;
-  left: 50%;
+  left: calc(50% - var(--reserve-right, 0px) / 2);
   top: 50%;
   width: 960px;
   height: 720px;
@@ -1617,10 +1617,11 @@ span.xp-dialog-icon {
   line-height: 1.25;
 }
 
-/* Article art that ships inside the page (build.js inlines it), so it
-   shows on the live, preview and tinypetgames copies alike. Floats right
-   by default; add .article-art-left for the other side. Each picture gets
-   a class with its image and aspect ratio (its pixel width / height). */
+/* Photo blocks: <div class="article-art" data-art="file.jpg" role="img"
+   aria-label="..."></div>. build.js embeds art/file.jpg and its aspect
+   ratio for each one, so they show on every copy of the game. Floats right
+   at 40% wide by default; add article-art-left for the other side, or
+   style="width: N%" for another width. */
 .browser-page-content .article-art {
   float: right;
   width: 40%;
@@ -1631,22 +1632,6 @@ span.xp-dialog-icon {
 .browser-page-content .article-art-left {
   float: left;
   margin: 0 15px 10px 0;
-}
-
-.browser-page-content .art-sffl {
-  aspect-ratio: 480 / 391;
-  background-image: url("inline:songs-for-family-learning.jpg");
-}
-
-.browser-page-content .art-rev-storefront {
-  aspect-ratio: 500 / 313;
-  background-image: url("inline:rev-storefront.jpg");
-}
-
-.browser-page-content .art-rev-founders {
-  width: 36%;
-  aspect-ratio: 480 / 369;
-  background-image: url("inline:rev-founders.jpg");
 }
 
 .browser-page-content .image-card {
@@ -2573,7 +2558,9 @@ function fitMonitor() {
   /* Leave a margin so the rounded glass and its light bleed never touch
      the viewport edge (and the taskbar corners aren't clipped). */
   const margin = 48;
-  const scale = Math.min((window.innerWidth - margin) / 960, (window.innerHeight - margin) / 720);
+  /* Room kept free on the right (the preview's article editor panel). */
+  const reserve = parseFloat(document.documentElement.style.getPropertyValue("--reserve-right")) || 0;
+  const scale = Math.min((window.innerWidth - reserve - margin) / 960, (window.innerHeight - margin) / 720);
   document.documentElement.style.setProperty("--monitor-scale", scale);
 }
 
@@ -3983,6 +3970,28 @@ function continueGame() {
   return true;
 }
 
+/* PREVIEW EDITOR HOOK. The preview copy loads an article editor
+   (tools/skunkpets-redux/editor/, added by the preview workflow; never on
+   the live game). It can't reach Harlowe itself, so this hands it what it
+   needs: passage sources, the page open in the browser, a redraw, and room
+   on the right for its panel. */
+if (location.pathname.indexOf("/building/skunkpets-redux-preview/") === 0) {
+  window.SkunkpetsEditorHook = {
+    passages: require("passages"),
+    currentPage: function () {
+      return document.querySelector(".monitor") ? HarloweState.variables.browserPage : null;
+    },
+    redraw: function () {
+      if (document.querySelector(".monitor")) HarloweEngine.showPassage(HarloweState.passage);
+    },
+    reserveRight: function (px) {
+      document.documentElement.style.setProperty("--reserve-right", px + "px");
+      fitMonitor();
+    },
+  };
+  window.dispatchEvent(new Event("skunkpets-editor-hook"));
+}
+
 /* Title screen: add CONTINUE when there's a save. Ending: drop the save. */
 new MutationObserver(function () {
   const splash = document.querySelector(".splash-screen");
@@ -4795,12 +4804,12 @@ Please check for alternative titles or spellings.
 :: REV (Recast Entertainment Ventures) [wiki article] {"position":"350,350","size":"100,100"}
 <div class="wiki-article">\
 <h1>REV (Recast Entertainment Ventures)</h1>\
-<div class="article-art art-rev-storefront" role="img" aria-label="Recast Entertainment Ventures storefront, Glen Cove"></div>\
+<div class="article-art" data-art="rev-storefront.jpg" role="img" aria-label="Recast Entertainment Ventures storefront, Glen Cove"></div>\
 Recast Entertainment Ventures was an American media investment firm based in Glen Cove, New York. Originally formed by (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")], (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] out of a Glen Cove storefront in 1987, the company established a nationwide development team through a series of media property acquisitions in the late 1990s and early-to-mid 2000s.
 
 <h2>History</h2>\
 <h3>1987-1990: Founding</h3>\
-<div class="article-art article-art-left art-rev-founders" role="img" aria-label="REV's founders"></div>\
+<div class="article-art article-art-left" data-art="rev-founders.jpg" style="width: 36%" role="img" aria-label="REV's founders"></div>\
 REV was incorporated in 1987, after Tom Barry acquired the adaptation rights to (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], a collection of Eastern-European fairy and folk tales. The firm was formed to oversee dealings with animation studios to produce animated feature films based on the collection. In 1988, REV pitched an animated feature titled Witch and The Goldwoman (based on the folk tale of the same name) to multiple leading animation houses in Hollywood, all of which declined to work on the project. Soon after, REV moved to acquire several more small media properties with an intent to grow their holdings and influence in the evolving media market. All the while, pre-production on Witch and the Goldwoman continued in-house, and Tom Barry stated in 1989 that REV planned to "launch their own animation studio" that would "be a force like nothing America had ever faced before."
 
 <h3>1990-2006: Success</h3>\
@@ -5135,7 +5144,7 @@ In 2008, news leaked that a SkunkPets animated television series was in producti
 :: Songs for Family Learning [wiki article] {"position":"225,475","size":"100,100"}
 <div class="wiki-article">\
 <h1>Songs for Family Learning</h1>\
-<div class="article-art art-sffl" role="img" aria-label="Songs for Family Learning logo"></div>\
+<div class="article-art" data-art="songs-for-family-learning.jpg" role="img" aria-label="Songs for Family Learning logo"></div>\
 “Songs for Family Learning” is a series of albums released by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.
 
 The unofficial slogan of the series, “make being together a good time!” resurfaced as a viral internet meme and inspired a popular line of ironic T-shirts which led to an infamous contentious lawsuit.

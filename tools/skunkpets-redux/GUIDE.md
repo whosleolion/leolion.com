@@ -115,6 +115,13 @@ preview keeps its own save slot, so it never touches the live game's. When
 it's right, merge the branch into `master` (or open a pull request and merge
 it) to ship it.
 
+**Editing Winkipedia pages in the browser (the preview's article editor):**
+on the preview, **✎ Edit articles** (bottom-left) opens an editor beside the
+game for whatever Winkipedia page the in-game browser shows: text changes
+appear as you type, **+ Photo** adds pictures, and **Save to preview** commits
+straight to GitHub and rebuilds the preview. Instructions, including the
+one-time GitHub token: `tools/skunkpets-redux/editor/README.md`.
+
 > Pushing to `master` publishes **the whole site** (`src/`), not just this game.
 > That's how the repo already works; just avoid pushing half-finished edits to
 > other pages at the same time.
@@ -726,18 +733,19 @@ that points at a passage that no longer exists is dropped on its own.
 
 ## 8. Art and images
 
-**Art that ships inside the page:** a few images live in `tools/skunkpets-redux/`
-and are embedded by `build.js` through `url("inline:...")` in the stylesheet, so
-they work on every copy of the game with nothing to upload: Diskette's two
-cut-outs, the Songs for Family Learning logo, and REV's storefront and founders
-photo. In an article each one is a box like
-`<div class="article-art art-rev-storefront"></div>` (floats right; add
-`article-art-left` to float left), and its CSS class next to `.art-sffl` names
-the file and its aspect ratio. To add another: put the file in that folder,
-copy one of those classes with your file and its width / height, and drop the
-`<div>` where the picture should sit (right after a heading puts it beside
-that section). Keep these small (under ~100 KB); every one makes the page
-itself bigger.
+**Photos in articles (photo blocks):** an article picture is one line,
+`<div class="article-art" data-art="rev-storefront.jpg" role="img" aria-label="description"></div>`,
+where the file lives in `tools/skunkpets-redux/art/`. `build.js` embeds every
+file used this way into the page with its shape, so it shows on every copy of
+the game with nothing to upload and no CSS to write. It floats right at 40%
+wide; add `article-art-left` to the class for the left side, or
+`style="width: 36%"` (right after `data-art="..."`) for another width. Put
+the line right after a heading to sit the photo beside that section. Keep
+files small (under ~100 KB; the preview's editor shrinks uploads to 480 px).
+The easiest way to add or move photos is the preview's article editor (below).
+
+**Other embedded art:** Diskette's two cut-outs are embedded through
+`url("inline:...")` in the stylesheet (CSS `DISKETTE`).
 
 - `$artroot` = `https://tinypetgames.neocities.org/skunkpets/img/`: the
   **original game's art** (desktop icons, wallpaper, login mascot, loading GIF,

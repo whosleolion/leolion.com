@@ -4,8 +4,9 @@ name: Skunkpets Redux preview
 # leolion.com/building/skunkpets-redux-preview/ (noindexed, unlinked), so
 # changes can be tried in a real browser without touching the live game.
 # Only this game's folder is uploaded (into the preview folder, skipping files
-# that haven't changed); the live deploy (deploy-neocities.yml) still runs
-# only on master. The preview loads its song and voice clips from its own
+# that haven't changed), plus the article editor (tools/skunkpets-redux/editor,
+# which the preview page loads and the live game never does). The live deploy
+# (deploy-neocities.yml) still runs only on master. The preview loads its song and voice clips from its own
 # folder (siteAsset in the game's script), the art from tinypetgames, and
 # keeps its own save slot (see SAVE / CONTINUE).
 on:
@@ -39,11 +40,19 @@ jobs:
           set -euo pipefail
           branch="${GITHUB_REF_NAME}"
           sha="${GITHUB_SHA::7}"
+          rm -rf /tmp/preview && mkdir -p /tmp/preview
+          cp -r src/building/skunkpets-redux/. /tmp/preview/
+          # The article editor (preview only): its files, and a tag that loads
+          # it and tells it which branch to save to.
+          mkdir -p /tmp/preview/editor
+          cp tools/skunkpets-redux/editor/editor.js tools/skunkpets-redux/editor/editor.css /tmp/preview/editor/
+          editor="<link rel=\"stylesheet\" href=\"/building/skunkpets-redux-preview/editor/editor.css?v=${sha}\"><script src=\"/building/skunkpets-redux-preview/editor/editor.js?v=${sha}\" data-repo=\"${GITHUB_REPOSITORY}\" data-branch=\"${branch}\"></script>"
           # Title and a corner badge say which build this is.
           sed -e "s#<title>[^<]*</title>#<title>PREVIEW: Skunkpets Redux (${sha})</title>#" \
-              -e "s#</body>#<div style=\"position:fixed;left:8px;bottom:8px;z-index:2147483647;padding:3px 7px;background:\#ff0;color:\#000;font:bold 11px monospace;pointer-events:none;opacity:.85\">PREVIEW ${sha}</div></body>#" \
-              src/building/skunkpets-redux/index.html > /tmp/preview.html
-          grep -q "PREVIEW ${sha}</div>" /tmp/preview.html
+              -e "s#</body>#<div style=\"position:fixed;left:8px;bottom:8px;z-index:2147483647;padding:3px 7px;background:\#ff0;color:\#000;font:bold 11px monospace;pointer-events:none;opacity:.85\">PREVIEW ${sha}</div>${editor}</body>#" \
+              src/building/skunkpets-redux/index.html > /tmp/preview/index.html
+          grep -q "PREVIEW ${sha}</div>" /tmp/preview/index.html
+          grep -q "editor/editor.js?v=${sha}" /tmp/preview/index.html
 
       - name: Upload to Neocities
         env:
@@ -61,11 +70,10 @@ jobs:
             echo "$1: $status $(cat /tmp/response.json)"
             [ "$status" -eq 200 ]
           }
-          upload "${dest}/index.html" /tmp/preview.html
-          # The game's other files (song, Diskette's voice, ...) go into the
-          # preview's own folder; the page looks for them there (siteAsset).
-          cd src/building/skunkpets-redux
-          find . -type f ! -name index.html | sed 's#^\./##' | while read -r f; do
+          # Everything but the page first (song, Diskette's voice, the editor),
+          # into the preview's own folder; the page loads them from there.
+          cd /tmp/preview
+          find . -type f ! -path ./index.html | sed 's#^\./##' | while read -r f; do
             have=$(jq -r --arg p "${dest}/${f}" '.files[]? | select(.path == $p) | .sha1_hash' /tmp/list.json)
             if [ "$have" = "$(sha1sum "$f" | cut -d' ' -f1)" ]; then
               echo "${dest}/${f}: unchanged"
@@ -73,4 +81,5 @@ jobs:
               upload "${dest}/${f}" "$f"
             fi
           done
+          upload "${dest}/index.html" index.html
           echo "Preview: https://leolion.com/${dest}/" >> "$GITHUB_STEP_SUMMARY"
