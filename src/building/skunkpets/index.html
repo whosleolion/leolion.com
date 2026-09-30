@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="71ad0d16234a">
+<meta name="skunkpets-build" content="9feb053c8c13">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "71ad0d16234a";
+  var mine = "9feb053c8c13";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -2709,6 +2709,8 @@ tw-expression, tw-story * {
 
 tw-link:hover, tw-hook:hover tw-link, .enchantment-link:hover,
 tw-expression tw-link:hover, details summary:hover, a:hover,
+/* ...and whatever is inside them (a footnote's superscript, an icon). */
+tw-link:hover *, .enchantment-link:hover *, a:hover *, button:hover *,
 button:hover, .desktop-icon:hover, .startbutton:hover,
 .taskbar-item:hover, .lightbox-thumb:hover, .start-button:hover,
 .bin-icon:hover, .panel-close:hover, .panel-minimize:hover {
@@ -5564,8 +5566,9 @@ Bin City was a virtual realm of junkyard-inspired neighborhoods, each of which h
 Until 2009, the site was regularly updated with features like new games, items, and content.
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="31" name="Skunkpets" tags="wiki article" position="100,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;&lt;span class=&quot;zoom-trigger&quot; hidden&gt;&lt;/span&gt;\
 &lt;h1&gt;SkunkPets™ (website)&lt;/h1&gt;\
-&lt;div class=&quot;article-art&quot; data-art=&quot;skunkpets-6-lw2v.jpg&quot; role=&quot;img&quot; aria-label=&quot;Skunkpets(6)&quot;&gt;&lt;/div&gt;
-SkunkPets™ is a now-defunct free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets (&quot;SkunkPets&quot;) in a virtual realm called Bin City. Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the &quot;Scrapyard,&quot; winning titles and prizes. 
+&lt;div class=&quot;article-art&quot; data-art=&quot;skunkpets-6-lw2v.jpg&quot; style=&quot;width: 34%&quot; role=&quot;img&quot; aria-label=&quot;Skunkpets(6)&quot;&gt;&lt;/div&gt;SkunkPets™ is a now-defunct free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets (&quot;SkunkPets&quot;) in a virtual realm called Bin City. 
+
+Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the &quot;Scrapyard,&quot; winning titles and prizes. 
 
 The SkunkPets website was taken down in 2009 following a controversy surrounding the (link: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)].
 
@@ -5944,8 +5947,7 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
 ]
 (set: $starbarOpen to false)
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="53" name="func-screenshot-bruce" tags="" position="475,725" size="100,100">(link: &#39;&lt;img class=&quot;lightbox-thumb&quot; data-full=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce.png&quot; src=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce-thumb.png&quot; width=&quot;100&quot; style=&quot;display:block;margin-top:4px&quot;&gt;&#39;)[
-]</tw-passagedata><tw-passagedata pid="54" name="globalgamesarchive.co.uk" tags="wiki gamesarchive" position="100,100" size="100,100">{&lt;div class=&quot;wiki-gamesarchive&quot;&gt;
+]}</tw-passagedata><tw-passagedata pid="53" name="func-screenshot-bruce" tags="" position="475,725" size="100,100">(print: &#39;&lt;img class=&quot;lightbox-thumb&quot; data-full=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce.png&quot; src=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce-thumb.png&quot; width=&quot;100&quot; style=&quot;display:block;margin-top:4px&quot;&gt;&#39;)</tw-passagedata><tw-passagedata pid="54" name="globalgamesarchive.co.uk" tags="wiki gamesarchive" position="100,100" size="100,100">{&lt;div class=&quot;wiki-gamesarchive&quot;&gt;
 (display:&quot;img-gamesarch&quot;)
 &lt;div class=&quot;search-area&quot;&gt;
 &lt;input type=&quot;text&quot; id=&quot;gga-search-input&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot;&gt;

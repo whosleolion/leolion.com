@@ -2682,6 +2682,8 @@ tw-expression, tw-story * {
 
 tw-link:hover, tw-hook:hover tw-link, .enchantment-link:hover,
 tw-expression tw-link:hover, details summary:hover, a:hover,
+/* ...and whatever is inside them (a footnote's superscript, an icon). */
+tw-link:hover *, .enchantment-link:hover *, a:hover *, button:hover *,
 button:hover, .desktop-icon:hover, .startbutton:hover,
 .taskbar-item:hover, .lightbox-thumb:hover, .start-button:hover,
 .bin-icon:hover, .panel-close:hover, .panel-minimize:hover {
@@ -6072,8 +6074,7 @@ Star button to bookmark a page.
 ]}
 
 :: func-screenshot-bruce {"position":"475,725","size":"100,100"}
-(link: '<img class="lightbox-thumb" data-full="' + $imgroot + 'misc/screenshot-bruce.png" src="' + $imgroot + 'misc/screenshot-bruce-thumb.png" width="100" style="display:block;margin-top:4px">')[
-]
+(print: '<img class="lightbox-thumb" data-full="' + $imgroot + 'misc/screenshot-bruce.png" src="' + $imgroot + 'misc/screenshot-bruce-thumb.png" width="100" style="display:block;margin-top:4px">')
 
 :: globalgamesarchive.co.uk [wiki gamesarchive]
 {<div class="wiki-gamesarchive">
