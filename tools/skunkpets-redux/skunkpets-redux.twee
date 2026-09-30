@@ -5120,7 +5120,7 @@ Players could interact with each other through social features like message boar
 SkunkPets was discontinued and the website taken down in 2009 following a controversy surrounding the (link: "Order of Refuse")[(set: $navPending to "Order of Refuse")(display: "func-navigate")].
 
 <h2>History and development</h2>\
-SkunkPets was conceived in 2000 by (link: "Anya Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")], a student studying computer programming at Ellory College. She shared the idea with several classmates including (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] and the small team started work on the site in January of 2001, with Galveston responsible for the programming and the database and Krysina the web design and art. The website was opened for public use on May 1, 2001, and the userbase began to grow through word of mouth.
+SkunkPets was conceived in 2000 by (link: "Anya Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")] and (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")], students at Ellory College. The website was opened for public use on May 1, 2001, and the userbase began to grow through word of mouth.
 
 <h3>NetCon 2004</h3>\
 SkunkPets experienced a significant boost in player base following a successful outing at the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention in San Francisco, which featured up-and-coming internet companies with innovative online engagement strateiges. SkunkPets became the darling of the convention, nearly quadrupling its user count by the end of the weekend.
