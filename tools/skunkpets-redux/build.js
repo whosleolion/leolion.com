@@ -1,13 +1,13 @@
 // Compile skunkpets-redux.twee back into the published HTML.
 // Only the <tw-storydata> block is replaced; the Harlowe engine already in the
 // HTML is left untouched, so no Tweego install is needed.
-//   node tools/skunkpets-redux/build.js              -> src/building/skunkpets-redux/index.html
+//   node tools/skunkpets-redux/build.js              -> src/building/skunkpets/index.html
 //   node tools/skunkpets-redux/build.js other.html   -> patches a different copy (e.g. the tinypetgames one)
 // The deploy workflow runs this before uploading, so pushing an edited .twee is enough.
 const fs = require('fs');
 const path = require('path');
 const tweePath = path.join(__dirname, 'skunkpets-redux.twee');
-const target = process.argv[2] || path.join(__dirname, '..', '..', 'src', 'building', 'skunkpets-redux', 'index.html');
+const target = process.argv[2] || path.join(__dirname, '..', '..', 'src', 'building', 'skunkpets', 'index.html');
 
 const twee = fs.readFileSync(tweePath, 'utf8').replace(/\r\n/g, '\n');
 const escHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');

@@ -2632,7 +2632,7 @@ function animateDisketteEntrance(playfield) {
    appears, never the same one twice running. The clips are made from
    tools/skunkpets-redux/diskette-voice (see its README). */
 const DISKETTE_VOICE = [1, 2, 3, 4, 5, 6, 7, 8].map(function (n) {
-  return siteAsset("/building/skunkpets-redux/diskette/diskette-hmm-" + n + ".mp3");
+  return siteAsset("/building/skunkpets/diskette/diskette-hmm-" + n + ".mp3");
 });
 let lastDisketteVoice = -1;
 
@@ -3642,11 +3642,11 @@ document.addEventListener("click", function (e) {
 
 /* Files hosted next to the page on leolion.com (the song, Diskette's
    voice). The tinypetgames copy loads them from leolion.com by full URL;
-   the preview copy (/building/skunkpets-redux-preview/) has its own set,
+   the preview copy (/building/skunkpets-preview/) has its own set,
    so new or changed files can be tried there before they go live. */
 function siteAsset(path) {
-  if (location.pathname.indexOf("/building/skunkpets-redux-preview/") === 0) {
-    return path.replace("/building/skunkpets-redux/", "/building/skunkpets-redux-preview/");
+  if (location.pathname.indexOf("/building/skunkpets-preview/") === 0) {
+    return path.replace("/building/skunkpets/", "/building/skunkpets-preview/");
   }
   return location.hostname.endsWith("leolion.com") || location.hostname === "localhost"
     ? path
@@ -3655,7 +3655,7 @@ function siteAsset(path) {
 
 const ZOOM_START = 0.86;
 const ZOOM_SECONDS = 40;
-const ZOOM_SONG = siteAsset("/building/skunkpets-redux/comfortable-mystery.mp3");
+const ZOOM_SONG = siteAsset("/building/skunkpets/comfortable-mystery.mp3");
 
 let zoomSong = null;
 let zoomStarted = false;
@@ -3865,9 +3865,9 @@ document.addEventListener("mousedown", function (e) {
    no longer exist is dropped on its own.
    ========================================================= */
 
-/* The preview copy (/building/skunkpets-redux-preview/) is on the same site,
+/* The preview copy (/building/skunkpets-preview/) is on the same site,
    so it keeps its own save instead of overwriting the live game's. */
-const SAVE_KEY = location.pathname.indexOf("skunkpets-redux-preview") >= 0 ? "skunkpets-save-preview" : "skunkpets-save";
+const SAVE_KEY = location.pathname.indexOf("skunkpets-preview") >= 0 ? "skunkpets-save-preview" : "skunkpets-save";
 const SAVE_VERSION = 2;
 const HarloweState = require("state");
 const HarloweEngine = require("engine");
@@ -3975,7 +3975,7 @@ function continueGame() {
    the live game). It can't reach Harlowe itself, so this hands it what it
    needs: passage sources, the page open in the browser, a redraw, and room
    on the right for its panel. */
-if (location.pathname.indexOf("/building/skunkpets-redux-preview/") === 0) {
+if (location.pathname.indexOf("/building/skunkpets-preview/") === 0) {
   window.SkunkpetsEditorHook = {
     passages: require("passages"),
     currentPage: function () {

@@ -1,7 +1,7 @@
 /* =========================================================
    SKUNKPETS REDUX: WINKIPEDIA ARTICLE EDITOR (preview only)
    ---------------------------------------------------------
-   Loaded only on leolion.com/building/skunkpets-redux-preview/
+   Loaded only on leolion.com/building/skunkpets-preview/
    (the preview workflow adds it; the live game never has it).
 
    "Edit articles" opens a panel beside the game. Open any

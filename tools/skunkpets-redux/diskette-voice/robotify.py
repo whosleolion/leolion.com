@@ -1,6 +1,6 @@
 # Makes Diskette's voice: cuts the eight "hmm"s out of hmms-various.mp3, pitches
 # them up and robotifies them, and writes
-# src/building/skunkpets-redux/diskette/diskette-hmm-1..8.mp3 (plus
+# src/building/skunkpets/diskette/diskette-hmm-1..8.mp3 (plus
 # diskette-hmms-all.mp3 here, all eight in a row, for listening).
 #   pip install numpy scipy imageio-ffmpeg     (or have ffmpeg on your PATH)
 #   python3 tools/skunkpets-redux/diskette-voice/robotify.py
@@ -10,7 +10,7 @@ import os, shutil, subprocess, tempfile, numpy as np
 from scipy.io import wavfile
 from scipy.signal import butter, sosfilt
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, '..', '..', '..', 'src', 'building', 'skunkpets-redux', 'diskette')
+OUT = os.path.join(HERE, '..', '..', '..', 'src', 'building', 'skunkpets', 'diskette')
 try:
     import imageio_ffmpeg; FF = imageio_ffmpeg.get_ffmpeg_exe()
 except ImportError:

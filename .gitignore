@@ -8,4 +8,4 @@ help me code dump.txt
 src/duat/*/bundle.json
 
 # Local copy of the Skunkpets preview for testing the editor (never commit: src/ is deployed)
-src/building/skunkpets-redux-preview/
+src/building/skunkpets-preview/

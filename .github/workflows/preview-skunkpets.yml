@@ -1,7 +1,7 @@
 name: Skunkpets Redux preview
 
 # Publishes the Skunkpets Redux build from any branch except master to
-# leolion.com/building/skunkpets-redux-preview/ (noindexed, unlinked), so
+# leolion.com/building/skunkpets-preview/ (noindexed, unlinked), so
 # changes can be tried in a real browser without touching the live game.
 # Only this game's folder is uploaded (into the preview folder, skipping files
 # that haven't changed), plus the article editor (tools/skunkpets-redux/editor,
@@ -14,7 +14,7 @@ on:
     branches-ignore: ["master"]
     paths:
       - "tools/skunkpets-redux/**"
-      - "src/building/skunkpets-redux/**"
+      - "src/building/skunkpets/**"
       - ".github/workflows/preview-skunkpets.yml"
   workflow_dispatch: {}
 
@@ -41,16 +41,16 @@ jobs:
           branch="${GITHUB_REF_NAME}"
           sha="${GITHUB_SHA::7}"
           rm -rf /tmp/preview && mkdir -p /tmp/preview
-          cp -r src/building/skunkpets-redux/. /tmp/preview/
+          cp -r src/building/skunkpets/. /tmp/preview/
           # The article editor (preview only): its files, and a tag that loads
           # it and tells it which branch to save to.
           mkdir -p /tmp/preview/editor
           cp tools/skunkpets-redux/editor/editor.js tools/skunkpets-redux/editor/editor.css /tmp/preview/editor/
-          editor="<link rel=\"stylesheet\" href=\"/building/skunkpets-redux-preview/editor/editor.css?v=${sha}\"><script src=\"/building/skunkpets-redux-preview/editor/editor.js?v=${sha}\" data-repo=\"${GITHUB_REPOSITORY}\" data-branch=\"${branch}\"></script>"
+          editor="<link rel=\"stylesheet\" href=\"/building/skunkpets-preview/editor/editor.css?v=${sha}\"><script src=\"/building/skunkpets-preview/editor/editor.js?v=${sha}\" data-repo=\"${GITHUB_REPOSITORY}\" data-branch=\"${branch}\"></script>"
           # Title and a corner badge say which build this is.
           sed -e "s#<title>[^<]*</title>#<title>PREVIEW: Skunkpets Redux (${sha})</title>#" \
               -e "s#</body>#<div style=\"position:fixed;left:8px;bottom:8px;z-index:2147483647;padding:3px 7px;background:\#ff0;color:\#000;font:bold 11px monospace;pointer-events:none;opacity:.85\">PREVIEW ${sha}</div>${editor}</body>#" \
-              src/building/skunkpets-redux/index.html > /tmp/preview/index.html
+              src/building/skunkpets/index.html > /tmp/preview/index.html
           grep -q "PREVIEW ${sha}</div>" /tmp/preview/index.html
           grep -q "editor/editor.js?v=${sha}" /tmp/preview/index.html
 
@@ -59,7 +59,7 @@ jobs:
           NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_LEOLIONCOM }}
         run: |
           set -euo pipefail
-          dest=building/skunkpets-redux-preview
+          dest=building/skunkpets-preview
           auth=(-H "Authorization: Bearer ${NEOCITIES_API_KEY}")
           # What's already there, so unchanged files (like the 8MB song)
           # aren't re-sent on every push.
@@ -82,4 +82,8 @@ jobs:
             fi
           done
           upload "${dest}/index.html" index.html
+          # The preview used to live at /building/skunkpets-redux-preview/;
+          # send anyone with the old address here.
+          printf '%s\n' '<!DOCTYPE html><meta charset="utf-8"><meta name="robots" content="noindex"><title>Moved</title><meta http-equiv="refresh" content="0; url=/building/skunkpets-preview/"><script>location.replace("/building/skunkpets-preview/")</script><p>The preview moved to <a href="/building/skunkpets-preview/">/building/skunkpets-preview/</a>.</p>' > /tmp/old-preview.html
+          upload building/skunkpets-redux-preview/index.html /tmp/old-preview.html
           echo "Preview: https://leolion.com/${dest}/" >> "$GITHUB_STEP_SUMMARY"

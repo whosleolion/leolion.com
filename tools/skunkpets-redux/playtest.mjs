@@ -3,10 +3,10 @@
 //   cd <dir with playwright installed> && node playtest.mjs [url] [shotsDir]
 // Serves nothing itself: build first, then point it at a running copy, e.g.
 //   node tools/skunkpets-redux/build.js
-//   (cd src && python3 -m http.server 8765)  then url = http://localhost:8765/building/skunkpets-redux/
+//   (cd src && python3 -m http.server 8765)  then url = http://localhost:8765/building/skunkpets/
 import { chromium } from 'playwright';
 
-const URL = process.argv[2] || 'http://localhost:8765/building/skunkpets-redux/';
+const URL = process.argv[2] || 'http://localhost:8765/building/skunkpets/';
 const SHOTS = process.argv[3] || null;
 const b = await chromium.launch({
   executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium',

@@ -1,7 +1,7 @@
 # Skunkpets Redux — source and build
 
-The game lives at `src/building/skunkpets-redux/index.html` (served at
-leolion.com/building/skunkpets-redux). It's a Twine / Harlowe 3.1 story that
+The game lives at `src/building/skunkpets/index.html` (served at
+leolion.com/building/skunkpets). It's a Twine / Harlowe 3.1 story that
 plays as a refurbished Windows XP desktop.
 
 **Edit `skunkpets-redux.twee`, not the HTML.** Every passage, the stylesheet and
@@ -9,7 +9,7 @@ the script are in that one file. Then rebuild:
 
     node tools/skunkpets-redux/build.js
 
-That rewrites only the story block inside `src/building/skunkpets-redux/index.html`
+That rewrites only the story block inside `src/building/skunkpets/index.html`
 (the Harlowe engine already in the page is reused, so no Twine/Tweego install is
 needed). The deploy workflow also runs this build before uploading, so pushing an
 edited `.twee` to `master` is enough; the build is picked up even from the GitHub
@@ -30,12 +30,12 @@ mouse clicks and drags and exits non-zero on any failure:
 
     node tools/skunkpets-redux/build.js
     (cd src && python3 -m http.server 8765)
-    node tools/skunkpets-redux/playtest.mjs http://localhost:8765/building/skunkpets-redux/ /tmp/shots
+    node tools/skunkpets-redux/playtest.mjs http://localhost:8765/building/skunkpets/ /tmp/shots
 
 **Preview before it goes live.** Push the change to any branch other than
 `master` and `.github/workflows/preview-skunkpets.yml` publishes this game's
 folder (page, song, Diskette's voice) to
-leolion.com/building/skunkpets-redux-preview/ (about 20 seconds; a yellow
+leolion.com/building/skunkpets-preview/ (about 20 seconds; a yellow
 PREVIEW badge in the corner shows which commit it is, and it keeps its own save
 slot). Try it there; when it's right, merge or push to `master` to ship it.
 

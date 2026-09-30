@@ -10,7 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 // REPO_ROOT if this file was copied elsewhere to run (next to playwright).
 const ROOT = process.env.REPO_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const URL_BASE = process.env.PREVIEW_URL || 'http://localhost:8765/building/skunkpets-redux-preview/';
+const URL_BASE = process.env.PREVIEW_URL || 'http://localhost:8765/building/skunkpets-preview/';
 const OUT = process.argv[2];
 const twee = fs.readFileSync(`${ROOT}/tools/skunkpets-redux/skunkpets-redux.twee`, 'utf8');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });

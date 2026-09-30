@@ -1,6 +1,6 @@
 # Winkipedia article editor (preview only)
 
-On the preview (leolion.com/building/skunkpets-redux-preview/) a yellow
+On the preview (leolion.com/building/skunkpets-preview/) a yellow
 **✎ Edit articles** button sits in the bottom-left corner. It opens a panel
 beside the game; the game shrinks to make room.
 
@@ -50,7 +50,7 @@ passages (desktop, mail, Diskette). Those are still edited in the `.twee`.
   for every page in the `.twee` (`node tools/skunkpets-redux/editor/roundtrip-test.js`).
 - `editor-test.mjs`: browser test with GitHub faked. Needs a local preview
   copy: build, run the workflow's "Make the preview copy" commands (or copy
-  `src/building/skunkpets-redux` to `src/building/skunkpets-redux-preview`
+  `src/building/skunkpets` to `src/building/skunkpets-preview`
   and add the editor tags by hand), serve `src/` on port 8765, then run it
   from a folder where `playwright` resolves, with `REPO_ROOT` set to the repo.
-  `src/building/skunkpets-redux-preview/` is git-ignored; never commit it.
+  `src/building/skunkpets-preview/` is git-ignored; never commit it.

@@ -82,7 +82,7 @@ so you can work on it from any machine, or right in the browser on github.com.
 | `tools/skunkpets-redux/extract.js` | The reverse of build: pulls a `.twee` back out of a published HTML page. (Used once, at the start. You shouldn't need it.) |
 | `tools/skunkpets-redux/diskette-cutout.png`, `diskette-icon.png` | Transparent cut-outs of Diskette, embedded into the page when you build. |
 | `tools/skunkpets-redux/GUIDE.md` | This guide. (`README.md` next to it is the short version.) |
-| `src/building/skunkpets-redux/index.html` | **The playable game** that the build writes, served at leolion.com/building/skunkpets-redux. |
+| `src/building/skunkpets/index.html` | **The playable game** that the build writes, served at leolion.com/building/skunkpets. |
 
 ### The loop
 
@@ -103,13 +103,13 @@ so you can work on it from any machine, or right in the browser on github.com.
    node tools/skunkpets-redux/build.js
    ```
 3. **Test:** serve `src/` with any local web server and open
-   `/building/skunkpets-redux/`, or run the playtest (see `README.md`).
+   `/building/skunkpets/`, or run the playtest (see `README.md`).
 4. **Publish:** commit and push to `master`. Pushing deploys automatically.
 
 **Trying a change before it goes live (the preview):** commit to any branch
 *other than* `master` (on github.com, pick "Create a new branch" when
 committing). The preview workflow publishes just this game (and its sound files) to
-**leolion.com/building/skunkpets-redux-preview/** in about 20 seconds. A yellow
+**leolion.com/building/skunkpets-preview/** in about 20 seconds. A yellow
 PREVIEW badge in the corner shows which commit you're looking at, and the
 preview keeps its own save slot, so it never touches the live game's. When
 it's right, merge the branch into `master` (or open a pull request and merge
@@ -666,7 +666,7 @@ new topic name needs an `(else-if:)` in both.
 | **Dragging out of the Trash** | A pick-up tick and a set-down thunk, synthesized live in the browser (`UI SOUNDS`). To use recorded sounds instead, put their URLs in `UI_SOUND_FILES`. |
 | **Ending** | `sound-demo-end`, played by `DemoEnd`. |
 | **Diskette's voice** | A random robot "hmm" when she pops up or a tray balloon appears (7.10). |
-| **Skunkpets music** | "Comfortable Mystery" (Kevin MacLeod, CC BY 4.0), started by the Skunkpets zoom (below). The file is `src/building/skunkpets-redux/comfortable-mystery.mp3`; the tinypetgames copy streams it from leolion.com. CC BY requires the credit line on the ending card, so keep it. |
+| **Skunkpets music** | "Comfortable Mystery" (Kevin MacLeod, CC BY 4.0), started by the Skunkpets zoom (below). The file is `src/building/skunkpets/comfortable-mystery.mp3`; the tinypetgames copy streams it from leolion.com. CC BY requires the credit line on the ending card, so keep it. |
 
 **The Skunkpets zoom** (script section `THE SKUNKPETS ZOOM`). The monitor
 starts at 86% size (`ZOOM_START`). The first time the Skunkpets Winkipedia
