@@ -6228,6 +6228,7 @@ deal with the devil
 (if: $desktopItems contains "downloads")[(link: "Downloads")[(set: $disketteTopic to "downloads")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (link: "Trash")[(set: $disketteTopic to "recycle")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (link: "Diskette")[(set: $disketteTopic to "diskette")(replace: ?desktoproot)[(display: "RenderDesktop")]]
+(link: "Dismiss")[(display: "func-diskette-hide")]
 </div>
 (if: ($trashItems - (a: "readme"))'s length > 0)[<p class="diskette-note">There's still something in your Trash! Drag it onto the desktop and I can tell you about it too.</p>]
 ](else:)[
@@ -6242,10 +6243,10 @@ deal with the devil
 </div>}
 
 :: DisketteTopic
-{(if: $disketteTopic is "browser")[<b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks. You already have Winkipedia and Skunkpets.com saved!]
-(else-if: $disketteTopic is "mail")[<b>Mail</b> is where your email arrives. Click a message in your Inbox to read it. A red badge on the Mail icon means something new came in!]
-(else-if: $disketteTopic is "downloads")[<b>Downloads</b> is a folder of files saved from the internet. Double-click one to open it. Hmm, I don't think these are yours!]
-(else-if: $disketteTopic is "notes")[<b>Notes</b> is a handy notepad. Jot down anything you want to remember. Whatever you type stays put, even after you close it!]
+{(if: $disketteTopic is "browser")[<b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.]
+(else-if: $disketteTopic is "mail")[<b>Mail</b> is where your email arrives. Click a message in your Inbox to read it.]
+(else-if: $disketteTopic is "downloads")[<b>Downloads</b> is a folder of files saved from the internet.]
+(else-if: $disketteTopic is "notes")[<b>Notes</b> is a handy notepad. Jot down anything you want to remember.]
 (else-if: $disketteTopic is "recycle")[The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
 (else-if: $disketteTopic is "diskette")[That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!]}
 

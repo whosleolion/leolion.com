@@ -141,6 +141,7 @@ await W(500);
 check('the balloon says a hmm too', voiceLoads.length >= 2, voiceLoads.join(','));
 await click('.diskette-balloon p');
 check('clicking the balloon brings Diskette back', (await text('.diskette-bubble')).includes("I'm Diskette"));
+check('her main menu has Dismiss too', (await text('.diskette-options')).includes('Dismiss'));
 await click('.diskette-close');
 check('the x also tucks her away, without a second balloon', (await p.locator('.diskette-bubble').count()) === 0 && (await p.locator('.diskette-balloon').count()) === 0);
 await click('.tray-diskette');

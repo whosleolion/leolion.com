@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="ee5a2d82c8e4">
+<meta name="skunkpets-build" content="9baae4a8e67f">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "ee5a2d82c8e4";
+  var mine = "9baae4a8e67f";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -6044,6 +6044,7 @@ deal with the devil
 (if: $desktopItems contains &quot;downloads&quot;)[(link: &quot;Downloads&quot;)[(set: $disketteTopic to &quot;downloads&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
 (link: &quot;Trash&quot;)[(set: $disketteTopic to &quot;recycle&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link: &quot;Diskette&quot;)[(set: $disketteTopic to &quot;diskette&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
+(link: &quot;Dismiss&quot;)[(display: &quot;func-diskette-hide&quot;)]
 &lt;/div&gt;
 (if: ($trashItems - (a: &quot;readme&quot;))&#39;s length &gt; 0)[&lt;p class=&quot;diskette-note&quot;&gt;There&#39;s still something in your Trash! Drag it onto the desktop and I can tell you about it too.&lt;/p&gt;]
 ](else:)[
@@ -6055,10 +6056,10 @@ deal with the devil
 ]
 &lt;/div&gt;
 &lt;div class=&quot;diskette-character&quot;&gt;&lt;/div&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="73" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks. You already have Winkipedia and Skunkpets.com saved!]
-(else-if: $disketteTopic is &quot;mail&quot;)[&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it. A red badge on the Mail icon means something new came in!]
-(else-if: $disketteTopic is &quot;downloads&quot;)[&lt;b&gt;Downloads&lt;/b&gt; is a folder of files saved from the internet. Double-click one to open it. Hmm, I don&#39;t think these are yours!]
-(else-if: $disketteTopic is &quot;notes&quot;)[&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember. Whatever you type stays put, even after you close it!]
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="73" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.]
+(else-if: $disketteTopic is &quot;mail&quot;)[&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it.]
+(else-if: $disketteTopic is &quot;downloads&quot;)[&lt;b&gt;Downloads&lt;/b&gt; is a folder of files saved from the internet.]
+(else-if: $disketteTopic is &quot;notes&quot;)[&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember.]
 (else-if: $disketteTopic is &quot;recycle&quot;)[The &lt;b&gt;Trash&lt;/b&gt; holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
 (else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="74" name="func-diskette-hide" tags="" position="100,100" size="100,100">{(set: $disketteTopic to &quot;&quot;)
 (set: $disketteShown to false)
