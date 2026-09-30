@@ -197,6 +197,10 @@ check('CONTINUE brings the song back', songLoads.length > songsBefore, songLoads
 // Story path to the ending
 await go('.browser-page-content tw-link', '2004 NetCon');
 await go('.browser-page-content tw-link', 'Global Games Archive');
+await type('#gga-search-input', 'skunkpets');
+await p.keyboard.press('Enter'); await W(500);
+check('games archive search for "skunkpets" finds nothing', (await pageTitle()) !== 'kraska1' && (await text('.browser-page-content')).includes('No results found'));
+await p.locator('#gga-search-input').fill('');
 await type('#gga-search-input', 'kraska');
 await p.keyboard.press('Enter'); await W(500);
 check('games archive search finds kraska1', (await pageTitle()) === 'kraska1');

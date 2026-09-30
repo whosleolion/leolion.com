@@ -543,7 +543,7 @@ Add `article` to its tags if it should be findable in Winkipedia.
   poster's avatar and details.
 - **Global Games Archive** (`globalgamesarchive.co.uk`) has a search box
   handled by the script (`GLOBAL GAMES ARCHIVE — SEARCH`). Searching "kraska",
-  "bad door", "skunkpets" (and a few others) presses a hidden link to `kraska1`.
+  "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`.
 - **kraska1** pages embed the minigames in `<iframe>`s from
   tinypetgames.neocities.org. The "devlink-userbase" link shows an "exiting to
   external website" popup first.

@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="9baae4a8e67f">
+<meta name="skunkpets-build" content="f150e18178c7">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "9baae4a8e67f";
+  var mine = "f150e18178c7";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -3838,7 +3838,7 @@ document.addEventListener("click", function (e) {
   const q = input.value.toLowerCase().trim();
   if (!q) return;
 
-  const terms = ["kraska", "kraska1", "bad door", "deal with the devil", "skunkpets"];
+  const terms = ["kraska", "kraska1", "bad door", "deal with the devil"];
   if (terms.some(function (t) { return q === t || q.includes(t); })) {
     const navSpan = document.querySelector(".gga-nav-hidden");
     const navLink = navSpan && navSpan.querySelector("tw-link");

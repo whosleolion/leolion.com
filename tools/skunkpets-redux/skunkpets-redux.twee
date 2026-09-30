@@ -3806,7 +3806,7 @@ document.addEventListener("click", function (e) {
   const q = input.value.toLowerCase().trim();
   if (!q) return;
 
-  const terms = ["kraska", "kraska1", "bad door", "deal with the devil", "skunkpets"];
+  const terms = ["kraska", "kraska1", "bad door", "deal with the devil"];
   if (terms.some(function (t) { return q === t || q.includes(t); })) {
     const navSpan = document.querySelector(".gga-nav-hidden");
     const navLink = navSpan && navSpan.querySelector("tw-link");
