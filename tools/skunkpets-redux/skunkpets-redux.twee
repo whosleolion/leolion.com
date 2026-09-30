@@ -5163,7 +5163,10 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $dialogIcon to "info")
 (set: $dialogOk to "OK")
 (set: $dialogAction to "")
-(set: $dialogCancel to false)}
+(set: $dialogCancel to false)
+(set: $exitPending to "")
+(set: $exitUrl to "")
+(set: $exitOk to false)}
 
 :: Henrietta Winetraub [wiki article] {"position":"725,225","size":"100,100"}
 <div class="wiki-article">\
@@ -6039,7 +6042,24 @@ Star button to bookmark a page.
 ]}
 
 :: func-navigate {"position":"350,725","size":"100,100"}
-{(if: $navPending is not $browserPage)[
+{(set: $exitUrl to "")
+(if: $exitOk is not true and $navPending is not $browserPage)[
+  (set: _fromTags to (passage: $browserPage)'s tags)
+  (set: _toTags to (passage: $navPending)'s tags)
+  (unless: _fromTags contains "fanwiki" or _fromTags contains "gamesarchive" or _fromTags contains "devlink")[
+    (if: _toTags contains "fanwiki")[(set: $exitUrl to "http://skunkpets.fanwiki.net")]
+    (else-if: _toTags contains "gamesarchive")[(set: $exitUrl to "http://www.globalgamesarchive.co.uk")]
+  ]
+]
+(set: $exitOk to false)
+(if: $exitUrl is not "")[
+  (set: $exitPending to $navPending)
+  (set: $dialog to "You are exiting to external website<br>" + $exitUrl + ".<br>Are you sure?")
+  (set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "exit")(set: $dialogCancel to true)
+  (set: $starbarOpen to false)
+  (replace: ?desktoproot)[(display: "RenderDesktop")]
+](else:)[
+(if: $navPending is not $browserPage)[
   (if: $navHistory's length is 0 or $navHistory's last is not $browserPage)[
     (set: $navHistory to $navHistory + (a: $browserPage))
   ]
@@ -6047,7 +6067,8 @@ Star button to bookmark a page.
   (set: $browserPage to $navPending)
 ]
 (set: $starbarOpen to false)
-(replace: ?desktoproot)[(display: "RenderDesktop")]}
+(replace: ?desktoproot)[(display: "RenderDesktop")]
+]}
 
 :: func-screenshot-bruce {"position":"475,725","size":"100,100"}
 (link: '<img class="lightbox-thumb" data-full="' + $imgroot + 'misc/screenshot-bruce.png" src="' + $imgroot + 'misc/screenshot-bruce-thumb.png" width="100" style="display:block;margin-top:4px">')[
@@ -6151,6 +6172,10 @@ deal with the devil
 (if: _action is "openmail")[
   (set: $openPending to "mail")
   (display: "func-open")
+](else-if: _action is "exit")[
+  (set: $exitOk to true)
+  (set: $navPending to $exitPending)
+  (display: "func-navigate")
 ](else-if: _action is "devlink")[
   (unless: $openWindows contains "browser")[(set: $openWindows to it + (a: "browser"))]
   (set: $navPending to "devlink-userbase: login")

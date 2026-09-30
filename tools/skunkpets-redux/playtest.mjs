@@ -197,6 +197,12 @@ check('CONTINUE brings the song back', songLoads.length > songsBefore, songLoads
 // Story path to the ending
 await go('.browser-page-content tw-link', '2004 NetCon');
 await go('.browser-page-content tw-link', 'Global Games Archive');
+check('leaving Winkipedia for the games archive warns first', (await text('.xp-dialog-msg')).includes('exiting to external website') && (await text('.xp-dialog-msg')).includes('globalgamesarchive.co.uk'), await text('.xp-dialog-msg'));
+await go('.xp-dialog-buttons tw-link', 'Cancel');
+check('Cancel stays on Winkipedia', (await pageTitle()) === 'NetCon 2004', await pageTitle());
+await go('.browser-page-content tw-link', 'Global Games Archive');
+await go('.xp-dialog-buttons tw-link', 'OK');
+check('OK goes on to the games archive', (await pageTitle()) === 'globalgamesarchive.co.uk', await pageTitle());
 await type('#gga-search-input', 'skunkpets');
 await p.keyboard.press('Enter'); await W(500);
 check('games archive search for "skunkpets" finds nothing', (await pageTitle()) !== 'kraska1' && (await text('.browser-page-content')).includes('No results found'));

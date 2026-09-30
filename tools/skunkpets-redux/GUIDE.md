@@ -541,6 +541,14 @@ Add `article` to its tags if it should be findable in Winkipedia.
 - **Skunkpets Fan Wiki** and its pages (`fanwiki` tag) share the banner
   `img-fanwikibar`. Forum posts reuse small `forum-user-…` passages for each
   poster's avatar and details.
+- **Leaving Winkipedia warns first.** Any link from a Winkipedia page to a
+  page tagged `fanwiki` or `gamesarchive` shows "You are exiting to external
+  website … Are you sure?" (OK / Cancel), like the devlink link on kraska1.
+  It's done once, in `func-navigate`, so links added later (or in the editor)
+  get it too; moving around inside the fan wiki or the archive, and the
+  Back/Forward buttons, don't warn. The addresses shown are
+  `http://skunkpets.fanwiki.net` and `http://www.globalgamesarchive.co.uk`
+  (set in `func-navigate`).
 - **Global Games Archive** (`globalgamesarchive.co.uk`) has a search box
   handled by the script (`GLOBAL GAMES ARCHIVE — SEARCH`). Searching "kraska",
   "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`.

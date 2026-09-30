@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="f150e18178c7">
+<meta name="skunkpets-build" content="71ad0d16234a">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "f150e18178c7";
+  var mine = "71ad0d16234a";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -5150,7 +5150,10 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $dialogIcon to &quot;info&quot;)
 (set: $dialogOk to &quot;OK&quot;)
 (set: $dialogAction to &quot;&quot;)
-(set: $dialogCancel to false)}</tw-passagedata><tw-passagedata pid="16" name="Henrietta Winetraub" tags="wiki article" position="725,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+(set: $dialogCancel to false)
+(set: $exitPending to &quot;&quot;)
+(set: $exitUrl to &quot;&quot;)
+(set: $exitOk to false)}</tw-passagedata><tw-passagedata pid="16" name="Henrietta Winetraub" tags="wiki article" position="725,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Henrietta Winetraub&lt;/h1&gt;\
 Henrietta Winetraub is an American musician and media investor. She is known for being the Chairwoman of the Board of (link: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)], a media investment firm, where she also led the Music and Audio Entertainment division. While at Recast, she was instrumental in the creation of the (link: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)] album series.
 
@@ -5915,7 +5918,24 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
 (set: $browserPage to _navTarget)
 (set: $starbarOpen to false)
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="52" name="func-navigate" tags="" position="350,725" size="100,100">{(if: $navPending is not $browserPage)[
+]}</tw-passagedata><tw-passagedata pid="52" name="func-navigate" tags="" position="350,725" size="100,100">{(set: $exitUrl to &quot;&quot;)
+(if: $exitOk is not true and $navPending is not $browserPage)[
+  (set: _fromTags to (passage: $browserPage)&#39;s tags)
+  (set: _toTags to (passage: $navPending)&#39;s tags)
+  (unless: _fromTags contains &quot;fanwiki&quot; or _fromTags contains &quot;gamesarchive&quot; or _fromTags contains &quot;devlink&quot;)[
+    (if: _toTags contains &quot;fanwiki&quot;)[(set: $exitUrl to &quot;http://skunkpets.fanwiki.net&quot;)]
+    (else-if: _toTags contains &quot;gamesarchive&quot;)[(set: $exitUrl to &quot;http://www.globalgamesarchive.co.uk&quot;)]
+  ]
+]
+(set: $exitOk to false)
+(if: $exitUrl is not &quot;&quot;)[
+  (set: $exitPending to $navPending)
+  (set: $dialog to &quot;You are exiting to external website&lt;br&gt;&quot; + $exitUrl + &quot;.&lt;br&gt;Are you sure?&quot;)
+  (set: $dialogTitle to &quot;Alert&quot;)(set: $dialogIcon to &quot;info&quot;)(set: $dialogOk to &quot;OK&quot;)(set: $dialogAction to &quot;exit&quot;)(set: $dialogCancel to true)
+  (set: $starbarOpen to false)
+  (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
+](else:)[
+(if: $navPending is not $browserPage)[
   (if: $navHistory&#39;s length is 0 or $navHistory&#39;s last is not $browserPage)[
     (set: $navHistory to $navHistory + (a: $browserPage))
   ]
@@ -5923,7 +5943,8 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
   (set: $browserPage to $navPending)
 ]
 (set: $starbarOpen to false)
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="53" name="func-screenshot-bruce" tags="" position="475,725" size="100,100">(link: &#39;&lt;img class=&quot;lightbox-thumb&quot; data-full=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce.png&quot; src=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce-thumb.png&quot; width=&quot;100&quot; style=&quot;display:block;margin-top:4px&quot;&gt;&#39;)[
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
+]}</tw-passagedata><tw-passagedata pid="53" name="func-screenshot-bruce" tags="" position="475,725" size="100,100">(link: &#39;&lt;img class=&quot;lightbox-thumb&quot; data-full=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce.png&quot; src=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce-thumb.png&quot; width=&quot;100&quot; style=&quot;display:block;margin-top:4px&quot;&gt;&#39;)[
 ]</tw-passagedata><tw-passagedata pid="54" name="globalgamesarchive.co.uk" tags="wiki gamesarchive" position="100,100" size="100,100">{&lt;div class=&quot;wiki-gamesarchive&quot;&gt;
 (display:&quot;img-gamesarch&quot;)
 &lt;div class=&quot;search-area&quot;&gt;
@@ -5988,6 +6009,10 @@ deal with the devil
 (if: _action is &quot;openmail&quot;)[
   (set: $openPending to &quot;mail&quot;)
   (display: &quot;func-open&quot;)
+](else-if: _action is &quot;exit&quot;)[
+  (set: $exitOk to true)
+  (set: $navPending to $exitPending)
+  (display: &quot;func-navigate&quot;)
 ](else-if: _action is &quot;devlink&quot;)[
   (unless: $openWindows contains &quot;browser&quot;)[(set: $openWindows to it + (a: &quot;browser&quot;))]
   (set: $navPending to &quot;devlink-userbase: login&quot;)
