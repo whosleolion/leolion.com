@@ -3653,8 +3653,8 @@ function siteAsset(path) {
     : "https://leolion.com" + path;
 }
 
-const ZOOM_START = 0.8;
-const ZOOM_SECONDS = 60;
+const ZOOM_START = 0.86;
+const ZOOM_SECONDS = 40;
 const ZOOM_SONG = siteAsset("/building/skunkpets-redux/comfortable-mystery.mp3");
 
 let zoomSong = null;

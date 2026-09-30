@@ -49,6 +49,7 @@ const go = async (sel, text) => {
 };
 const type = async (sel, text) => { await click(sel); await p.keyboard.type(text); };
 const text = (sel) => p.locator(sel).first().innerText().then((t) => t.replace(/\s+/g, ' ').trim()).catch(() => '');
+const ZOOM_START = 0.86; // matches ZOOM_START in the game's script
 const zoom = () => p.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--monitor-zoom')));
 const pageTitle = () => text('.panel[data-window-template="browser"] .panel-title');
 
@@ -66,7 +67,7 @@ await W(1800);
 const icons = await p.$$eval('.desktop-icon', (e) => e.map((i) => i.dataset.windowTemplate).join(','));
 check('boot: only READ_ME and Trash on the desktop', icons === 'readme,recycle', icons);
 check('boot: no popup', (await p.locator('.xp-dialog').count()) === 0);
-check('boot: monitor starts zoomed out', (await zoom()) === 0.8, String(await zoom()));
+check('boot: monitor starts zoomed out', (await zoom()) === ZOOM_START, String(await zoom()));
 check('boot: title screen had no CONTINUE (no save yet)', !titleButtons.includes('CONTINUE'), titleButtons.join(','));
 
 // Volume popup in the tray
@@ -155,14 +156,14 @@ check('search finds an article by exact name', (await pageTitle()) === 'Tom Barr
 await click('.browser-btn[title="Back"]');
 await type('#winki-search-input', 'Forum: Hacked');
 await p.keyboard.press('Enter'); await W(500);
-check('other pages leave the zoom alone', (await zoom()) === 0.8 && songLoads.length === 0, String(await zoom()));
+check('other pages leave the zoom alone', (await zoom()) === ZOOM_START && songLoads.length === 0, String(await zoom()));
 check('search skips non-article pages', (await text('#winki-msg')).includes('does not have an article'));
 await p.locator('#winki-search-input').fill('');
 await type('#winki-search-input', 'skunkpets.com');
 await p.keyboard.press('Enter'); await W(500);
 check('"skunkpets.com" opens the Skunkpets article', (await text('.browser-page-content h1')).includes('SkunkPets'));
 await W(3000);
-check('Skunkpets article starts the zoom', (await zoom()) > 0.8, String(await zoom()));
+check('Skunkpets article starts the zoom', (await zoom()) > ZOOM_START, String(await zoom()));
 check('Skunkpets article starts the song', songLoads.some((s) => s === 200 || s === 206), songLoads.join(','));
 
 // Autosave: reload mid-game, CONTINUE, and carry on from the same spot

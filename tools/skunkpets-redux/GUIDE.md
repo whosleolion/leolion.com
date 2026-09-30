@@ -669,9 +669,9 @@ new topic name needs an `(else-if:)` in both.
 | **Skunkpets music** | "Comfortable Mystery" (Kevin MacLeod, CC BY 4.0), started by the Skunkpets zoom (below). The file is `src/building/skunkpets-redux/comfortable-mystery.mp3`; the tinypetgames copy streams it from leolion.com. CC BY requires the credit line on the ending card, so keep it. |
 
 **The Skunkpets zoom** (script section `THE SKUNKPETS ZOOM`). The monitor
-starts at 80% size (`ZOOM_START`). The first time the Skunkpets Winkipedia
+starts at 86% size (`ZOOM_START`). The first time the Skunkpets Winkipedia
 article appears (it carries a hidden `<span class="zoom-trigger">`), the song
-starts and the monitor grows to full size over `ZOOM_SECONDS` (60). Once per
+starts and the monitor grows to full size over `ZOOM_SECONDS` (40). Once per
 visit; the song fades out at the demo end. To trigger it from a different
 page, move the `zoom-trigger` span into that passage. The zoom multiplies
 into the monitor's scale through the `--monitor-zoom` CSS variable.
