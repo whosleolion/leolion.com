@@ -657,6 +657,26 @@ new topic name needs an `(else-if:)` in both.
   the browser's local storage, so it survives closing the window and even
   reloading the page.
 
+### 7.11b Downloads
+
+A folder that starts in the Trash with the other apps (the previous owner's,
+judging by the path, `C:\Documents and Settings\Owner\Downloads`). Dragged
+out, it's a yellow folder icon; double-click it for a folder window with two
+files (one click selects, a double click opens, script `FOLDER WINDOWS`):
+
+- **granmas.jpg** opens a Picture Viewer. The photo is
+  `tools/skunkpets-redux/art/granmas.jpg`, shown as a photo block
+  (`data-art="granmas.jpg"`), so `build.js` embeds it like the article photos.
+- **netcontkts.pdf** opens a PDF Reader window with a NetCon 2004 ticket
+  receipt (passage `RenderNetconTicket`, CSS `DOWNLOADS`), laid out like a
+  Comic-Con confirmation email, in the Google font Anton.
+
+**Where:** `RenderDesktop` (desktop icon, Trash entry, the three windows,
+Start menu line), `DesktopActions` (`restore:downloads` / `trash:downloads`),
+`TRASHABLE` in the script. Diskette has a Downloads topic and pipes up when it
+comes out of the Trash. To add a file: copy one `|file-...>` block and its
+`(click:)` line in the Downloads window, and give it a window like `granmas`.
+
 ### 7.12 Sounds
 
 | Sound | How |

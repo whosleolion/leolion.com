@@ -88,19 +88,34 @@ check('READ_ME opens', (await text('.notepad-text')).includes('refurbished'));
 // Trash: restore everything
 await dbl('.desktop-icon[data-window-template="recycle"]');
 const trash = await p.$$eval('.bin-icon', (e) => e.map((x) => x.dataset.app).sort().join(','));
-check('Trash holds the apps', trash === 'browser,diskette,mail,notes', trash);
+check('Trash holds the apps', trash === 'browser,diskette,downloads,mail,notes', trash);
 await drag(await center('.bin-icon[data-app="browser"]'), [260, 650]);
 await drag(await center('.bin-icon[data-app="mail"]'), [360, 650]);
 await drag(await center('.bin-icon[data-app="notes"]'), [460, 650]);
 await drag(await center('.bin-icon[data-app="diskette"]'), [560, 650]);
+await drag(await center('.bin-icon[data-app="downloads"]'), [660, 650]);
 check('Trash emptied', (await p.locator('.recycle-empty').count()) === 1);
 const onGrid = await p.$$eval('.desktop-icon', (e) => e.every((i) => (parseFloat(i.style.left) - 26) % 92 === 0 && (parseFloat(i.style.top) - 22) % 94 === 0));
 check('icons snapped to the grid', onGrid);
 const column = await p.$$eval('.desktop-icon', (e) => e.map((i) => `${i.dataset.windowTemplate}@${parseFloat(i.style.left)},${parseFloat(i.style.top)}`).join(' '));
 check('Trash items line up down the first column, in drop order',
-  ['readme@26,22', 'browser@26,116', 'mail@26,210', 'notes@26,304', 'diskette@26,398'].every((x) => column.includes(x)), column);
+  ['readme@26,22', 'browser@26,116', 'mail@26,210', 'notes@26,304', 'diskette@26,398', 'downloads@26,492'].every((x) => column.includes(x)), column);
 await click('.panel[data-window-template="recycle"] .panel-close');
 await click('.panel[data-window-template="readme"] .panel-close');
+
+// Downloads: a photo and the NetCon 2004 ticket
+await dbl('.desktop-icon[data-window-template="downloads"]');
+check('Downloads lists two files', (await text('.folder-files')) === 'granmas.jpg netcontkts.pdf', await text('.folder-files'));
+await dbl('.folder-file[data-file="granmas"]');
+check('granmas.jpg opens in a picture viewer', await p.evaluate(() => { const e = document.querySelector('.panel[data-window-template="granmas"] .photo-viewer-image'); return !!e && getComputedStyle(e).backgroundImage.includes('data:image/jpeg') && e.offsetWidth > 300; }));
+await shot('03a-granmas');
+await click('.panel[data-window-template="granmas"] .panel-close');
+await dbl('.folder-file[data-file="netcontkts"]');
+const ticket = await text('.netcon-ticket');
+check('netcontkts.pdf opens the NetCon 2004 ticket', ticket.includes('NETCON 2004') && ticket.includes('NetCon 2004 Attendee Saturday') && ticket.includes('http://www.netcon04.com/tickets'), ticket.slice(0, 80));
+await shot('03b-ticket');
+await click('.panel[data-window-template="netcontkts"] .panel-close');
+await click('.panel[data-window-template="downloads"] .panel-close');
 await shot('02-restored');
 
 // Mail starts empty

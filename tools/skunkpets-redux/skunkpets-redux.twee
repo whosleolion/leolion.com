@@ -15,7 +15,7 @@ Skunkpets
    FONTS (same set as the original Skunkpets build)
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Dokdo&family=Goldman:wght@400;700&family=Press+Start+2P&family=Tiny5&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Dokdo&family=Goldman:wght@400;700&family=Press+Start+2P&family=Tiny5&display=swap');
 
 
 /* =========================================================
@@ -1012,6 +1012,410 @@ img.xp-dialog-icon {
   height: 74px;
 }
 
+
+/* =========================================================
+   DOWNLOADS (folder icon, folder window, picture viewer,
+   PDF viewer with the NetCon 2004 ticket)
+   ========================================================= */
+
+/* XP-style yellow folder, drawn in CSS like the text-file icon. */
+.folder-icon {
+  position: relative;
+  width: 50px;
+  height: 38px;
+  margin: 16px 0 6px;
+  border-radius: 2px 4px 4px 4px;
+  background: linear-gradient(to bottom, #f7d470, #e8b53a);
+  box-shadow: inset 0 0 0 1px #b9861f;
+  filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.45));
+}
+
+.folder-icon::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 20px;
+  height: 8px;
+  border-radius: 3px 3px 0 0;
+  background: #f0c85a;
+  box-shadow: inset 0 0 0 1px #b9861f;
+}
+
+.folder-icon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 80%;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #fff1b8, #f5cb52);
+  box-shadow: inset 0 0 0 1px #b9861f;
+}
+
+.folder-icon-small {
+  display: inline-block;
+  width: 24px;
+  height: 18px;
+  margin: 6px 4px 2px;
+  filter: none;
+}
+
+.folder-icon-small::before { top: -4px; width: 10px; height: 5px; }
+
+.folder-icon-tiny {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  margin: 3px 5px 0 0;
+  vertical-align: -1px;
+  filter: none;
+}
+
+.folder-icon-tiny::before { top: -3px; width: 6px; height: 4px; }
+
+.bin-icon-file .folder-icon {
+  margin: 14px 0 6px;
+}
+
+.panel[data-window-template="downloads"] .panel-icon {
+  flex: 0 0 15px;
+  height: 11px;
+  border-radius: 1px 2px 2px 2px;
+  background: linear-gradient(to bottom, #fff1b8, #f0c24a);
+  box-shadow: inset 0 0 0 1px #b9861f;
+}
+
+.panel[data-window-template="granmas"] .panel-icon {
+  flex: 0 0 14px;
+  height: 11px;
+  background: linear-gradient(to bottom, #8fc4ef 0 45%, #6aa84f 45%);
+  box-shadow: inset 0 0 0 1px #fff, 0 0 0 1px #555;
+}
+
+.panel[data-window-template="netcontkts"] .panel-icon {
+  flex: 0 0 12px;
+  height: 15px;
+  background: linear-gradient(to bottom, #fff 0 55%, #c8201e 55% 85%, #fff 85%);
+  box-shadow: inset 0 0 0 1px #777;
+}
+
+/* A PDF file: the text-file page with a red PDF band. */
+.pdf-file-icon::before {
+  content: "PDF";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 9px;
+  padding: 1px 0;
+  background: #c8201e;
+  color: #fff;
+  font: bold 10px/1.2 Tahoma, sans-serif;
+  text-align: center;
+}
+
+.folder-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #fff;
+  color: #000;
+  font: 11px Tahoma, sans-serif;
+}
+
+.folder-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-bottom: 1px solid #c5c2b2;
+  background: #ece9d8;
+}
+
+.folder-address-label {
+  color: #555;
+}
+
+.folder-address-path {
+  flex: 1;
+  padding: 1px 4px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-files {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px;
+  padding: 10px;
+}
+
+.folder-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 84px;
+  padding: 3px;
+  cursor: default;
+}
+
+.folder-file .txt-file-icon {
+  margin: 2px 0 4px;
+}
+
+.folder-files .folder-file-thumb {
+  width: 64px;
+  height: 48px;
+  margin: 5px 0 7px;
+  border: 2px solid #fff;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 0 1px #999, 1px 2px 2px rgba(0, 0, 0, 0.35);
+}
+
+.folder-file-name {
+  padding: 0 2px;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* The (click:) around each file would color its name like a link. */
+.folder-files .enchantment-link,
+.folder-files .enchantment-link:hover {
+  color: #000;
+  font-weight: normal;
+}
+
+.folder-file.selected .folder-file-name {
+  background: #316ac5;
+  color: #fff;
+}
+
+.folder-status {
+  padding: 2px 6px;
+  border-top: 1px solid #c5c2b2;
+  background: #ece9d8;
+  color: #444;
+}
+
+/* Picture viewer: the photo fitted to the window on dark gray. */
+.photo-viewer-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #2f2f2f;
+}
+
+.panel .photo-viewer-body .photo-viewer-image {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* PDF viewer: gray toolbar and backdrop, one white page. */
+.pdf-viewer-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #6d6d6d;
+}
+
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  border-bottom: 1px solid #999;
+  background: #ece9d8;
+  color: #333;
+  font: 11px Tahoma, sans-serif;
+}
+
+.pdf-tool {
+  color: #777;
+  font-size: 9px;
+}
+
+.pdf-zoom {
+  margin-left: auto;
+  padding: 0 6px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.pdf-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+.pdf-page {
+  width: 460px;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* The ticket receipt, after the Comic-Con confirmation email. */
+.netcon-ticket {
+  color: #111;
+  font: 13px/1.35 Arial, Helvetica, sans-serif;
+}
+
+.netcon-banner {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 10px 6px;
+  border-bottom: 2px solid #111;
+  background:
+    repeating-linear-gradient(-18deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 14px),
+    linear-gradient(to bottom, #e6e6e6, #cfcfcf);
+}
+
+.netcon-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 96px;
+  font-family: Anton, Impact, "Arial Narrow", sans-serif;
+}
+
+.netcon-logo-city {
+  letter-spacing: 3px;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.netcon-logo-mid {
+  display: flex;
+  align-items: stretch;
+  margin: 2px 0;
+}
+
+.netcon-logo-net {
+  padding: 2px 1px;
+  background: #ffe000;
+  color: #111;
+  font-size: 15px;
+  line-height: 1;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  box-shadow: inset 0 0 0 2px #111;
+}
+
+.netcon-logo-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 62px;
+  height: 56px;
+  background: #9aa3ad;
+  box-shadow: inset 0 0 0 2px #111;
+}
+
+.netcon-logo-con {
+  padding: 1px 4px;
+  background: #ffe000;
+  color: #111;
+  font-size: 19px;
+  line-height: 1;
+  box-shadow: inset 0 0 0 2px #111;
+}
+
+/* An arrow cursor where Comic-Con has its eye. */
+.netcon-logo-cursor {
+  position: absolute;
+  left: 22px;
+  top: 25px;
+  width: 0;
+  height: 0;
+  border-left: 11px solid #fff;
+  border-top: 0 solid transparent;
+  border-bottom: 18px solid transparent;
+  filter: drop-shadow(1px 0 0 #111) drop-shadow(-1px 0 0 #111) drop-shadow(0 1px 0 #111) drop-shadow(0 -1px 0 #111);
+}
+
+.netcon-logo-foot {
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.netcon-title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  font-family: Anton, Impact, "Arial Narrow", sans-serif;
+  line-height: 0.95;
+}
+
+.netcon-big {
+  font-size: 54px;
+  line-height: 1;
+}
+
+.netcon-sub {
+  margin-top: 4px;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+
+.netcon-body {
+  padding: 10px 16px 16px;
+}
+
+.netcon-body p {
+  margin: 0 0 12px;
+}
+
+.netcon-summary {
+  margin: 14px 0 10px;
+  font-weight: bold;
+}
+
+.netcon-table {
+  margin-bottom: 18px;
+  border-collapse: collapse;
+}
+
+.netcon-table th {
+  padding: 3px 12px 3px 0;
+  font-weight: bold;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.netcon-table td {
+  padding: 3px 0;
+}
+
+.netcon-redact {
+  display: inline-block;
+  width: 200px;
+  height: 12px;
+  border-radius: 6px;
+  background: #000;
+  vertical-align: middle;
+}
+
+.netcon-url {
+  color: #1a0dab;
+  text-decoration: underline;
+}
 
 /* =========================================================
    READ_ME.txt (desktop file + Notepad window)
@@ -2540,6 +2944,7 @@ function initDesktopUI() {
     initNotes(playfield);
     updateClock(playfield);
     mountVolumePopup(playfield);
+    initFolderFiles(playfield);
     animateDisketteEntrance(playfield);
   });
 }
@@ -2600,6 +3005,33 @@ function handleFocusRequest(playfield) {
   panel.classList.remove("hidden");
   minimizedWindows.delete(panel.dataset.windowId);
   focusPanel(panel, playfield);
+}
+
+
+/* =========================================================
+   FOLDER WINDOWS (Downloads)
+   ---------------------------------------------------------
+   Files inside a folder window behave like desktop icons: one
+   click selects, a double click opens (by clicking the Harlowe
+   (click: ?file-*) enchantment around the file, the same trick
+   the desktop icons use). They can't be dragged.
+   ========================================================= */
+
+function initFolderFiles(playfield) {
+  playfield.querySelectorAll(".folder-file").forEach(function (file) {
+    if (file.dataset.fileInit === "true") return;
+    file.dataset.fileInit = "true";
+    file.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const box = file.closest(".folder-files");
+      if (box) box.querySelectorAll(".folder-file.selected").forEach((f) => f.classList.remove("selected"));
+      file.classList.add("selected");
+    });
+    file.addEventListener("dblclick", function () {
+      const enchantment = file.closest("tw-enchantment");
+      if (enchantment) enchantment.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+  });
 }
 
 
@@ -3006,7 +3438,7 @@ function nearestFreeCell(playfield, x, y, exclude) {
    ========================================================= */
 
 /* Items that can go back in the Trash (the Trash itself can't). */
-const TRASHABLE = ["browser", "mail", "notes", "readme", "diskette"];
+const TRASHABLE = ["browser", "mail", "notes", "readme", "diskette", "downloads"];
 
 function isTrashable(icon) {
   return TRASHABLE.includes(icon.dataset.windowTemplate);
@@ -3868,7 +4300,7 @@ document.addEventListener("mousedown", function (e) {
 /* The preview copy (/building/skunkpets-preview/) is on the same site,
    so it keeps its own save instead of overwriting the live game's. */
 const SAVE_KEY = location.pathname.indexOf("skunkpets-preview") >= 0 ? "skunkpets-save-preview" : "skunkpets-save";
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 const HarloweState = require("state");
 const HarloweEngine = require("engine");
 
@@ -4717,7 +5149,7 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $browserPage to $home)
 (set: $navPending to "")
 (set: $desktopItems to (a: "readme", "recycle"))
-(set: $trashItems to (a: "browser", "mail", "notes", "diskette"))
+(set: $trashItems to (a: "browser", "mail", "notes", "diskette", "downloads"))
 (set: $disketteTopic to "")
 (set: $disketteShown to false)
 (set: $disketteNotice to "")
@@ -4913,6 +5345,8 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 (if: $desktopItems contains "notes")[|icon-notes>[<div class="desktop-icon" data-window-template="notes" style="top: 304px; left: 26px;">(print: '<img src="' + $artroot + 'ui/notes.png" alt="">')<div class="desktop-icon-label">Notes</div></div>]
 (click: ?icon-notes)[(set: $openPending to "notes")(display: "func-open")]]
 
+(if: $desktopItems contains "downloads")[|icon-downloads>[<div class="desktop-icon desktop-icon-file" data-window-template="downloads" style="top: 492px; left: 26px;"><div class="folder-icon"></div><div class="desktop-icon-caption">Downloads</div></div>]
+(click: ?icon-downloads)[(set: $openPending to "downloads")(display: "func-open")]]
 (if: $desktopItems contains "diskette")[|icon-diskette>[<div class="desktop-icon desktop-icon-file" data-window-template="diskette" style="top: 398px; left: 26px;"><div class="diskette-icon"></div><div class="desktop-icon-caption">Diskette</div></div>]
 (click: ?icon-diskette)[(set: $disketteTopic to "")(set: $openPending to "diskette")(display: "func-open")]]
 
@@ -4985,7 +5419,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 ]
 
 (if: $openWindows contains "recycle")[
-  <div class="panel" data-window-template="recycle" data-title="Trash" style="top: 250px; left: 400px; width: 330px; height: 200px;">
+  <div class="panel" data-window-template="recycle" data-title="Trash" style="top: 250px; left: 380px; width: 400px; height: 210px;">
     <div class="panel-bar">
       <span class="panel-title"><span class="panel-icon"></span>Trash</span>
       <div class="panel-controls">
@@ -5000,11 +5434,66 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
         (if: $trashItems contains "readme")[<div class="bin-icon bin-icon-file" data-app="readme" title="Drag onto the desktop to restore"><div class="txt-file-icon"></div><div class="desktop-icon-caption">READ&#95;ME.txt</div></div>]
         (if: $trashItems contains "diskette")[<div class="bin-icon bin-icon-file" data-app="diskette" title="Drag onto the desktop to restore"><div class="diskette-icon"></div><div class="desktop-icon-caption">Diskette</div></div>]
         (if: $trashItems contains "notes")[<div class="bin-icon" data-app="notes" title="Drag onto the desktop to restore">(print: '<img src="' + $artroot + 'ui/notes.png" alt="Notes">')</div>]
+        (if: $trashItems contains "downloads")[<div class="bin-icon bin-icon-file" data-app="downloads" title="Drag onto the desktop to restore"><div class="folder-icon"></div><div class="desktop-icon-caption">Downloads</div></div>]
         (if: $trashItems's length is 0)[<div class="recycle-empty">The Trash is empty.</div>]
       </div>
     </div>
   </div>
   (click: ?close-recycle)[(set: $openWindows to $openWindows - (a:"recycle"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "downloads")[
+  <div class="panel" data-window-template="downloads" data-title="Downloads" style="top: 140px; left: 250px; width: 380px; height: 230px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>Downloads</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-downloads>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body folder-body">
+      <div class="folder-address"><span class="folder-address-label">Address</span><span class="folder-address-path"><span class="folder-icon folder-icon-tiny"></span>C:\Documents and Settings\Owner\Downloads</span></div>
+      <div class="folder-files">
+        |file-granmas>[<div class="folder-file" data-file="granmas"><div class="folder-file-thumb article-art" data-art="granmas.jpg"></div><div class="folder-file-name">granmas.jpg</div></div>]
+        (click: ?file-granmas)[(set: $openPending to "granmas")(display: "func-open")]
+        |file-netcontkts>[<div class="folder-file" data-file="netcontkts"><div class="txt-file-icon pdf-file-icon"></div><div class="folder-file-name">netcontkts.pdf</div></div>]
+        (click: ?file-netcontkts)[(set: $openPending to "netcontkts")(display: "func-open")]
+      </div>
+      <div class="folder-status">2 objects</div>
+    </div>
+  </div>
+  (click: ?close-downloads)[(set: $openWindows to $openWindows - (a:"downloads"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "granmas")[
+  <div class="panel" data-window-template="granmas" data-title="granmas.jpg" style="top: 60px; left: 170px; width: 560px; height: 430px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>granmas.jpg - Picture Viewer</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-granmas>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body photo-viewer-body"><div class="article-art photo-viewer-image" data-art="granmas.jpg" role="img" aria-label="Three people in hats and suits by a lake"></div></div>
+  </div>
+  (click: ?close-granmas)[(set: $openWindows to $openWindows - (a:"granmas"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
+]
+
+(if: $openWindows contains "netcontkts")[
+  <div class="panel" data-window-template="netcontkts" data-title="netcontkts.pdf" style="top: 30px; left: 200px; width: 540px; height: 580px;">
+    <div class="panel-bar">
+      <span class="panel-title"><span class="panel-icon"></span>netcontkts.pdf - PDF Reader</span>
+      <div class="panel-controls">
+        <button class="panel-minimize" type="button" aria-label="Minimize"></button>
+        |close-netcontkts>[<button class="panel-close" type="button" aria-label="Close"></button>]
+      </div>
+    </div>
+    <div class="panel-body pdf-viewer-body">
+      <div class="pdf-toolbar"><span class="pdf-tool">&#9664;</span><span class="pdf-page-count">1 / 1</span><span class="pdf-tool">&#9654;</span><span class="pdf-zoom">100%</span></div>
+      <div class="pdf-scroll"><div class="pdf-page">(display: "RenderNetconTicket")</div></div>
+    </div>
+  </div>
+  (click: ?close-netcontkts)[(set: $openWindows to $openWindows - (a:"netcontkts"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
 ]
 
 (if: $startOpen)[
@@ -5017,6 +5506,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
       (if: $desktopItems contains "mail")[(link: '<img src="' + $artroot + 'ui/mail.png" alt="">Mail')[(set: $openPending to "mail")(display: "func-open")]]
       (if: $desktopItems contains "notes")[(link: '<img src="' + $artroot + 'ui/notes.png" alt="">Notes')[(set: $openPending to "notes")(display: "func-open")]]
       (if: $desktopItems contains "diskette")[(link: '<span class="diskette-icon diskette-icon-small"></span>Diskette')[(set: $disketteTopic to "")(set: $openPending to "diskette")(display: "func-open")]]
+      (if: $desktopItems contains "downloads")[(link: '<span class="folder-icon folder-icon-small"></span>Downloads')[(set: $openPending to "downloads")(display: "func-open")]]
       (if: $desktopItems contains "readme")[(link: '<span class="txt-file-icon txt-file-icon-small"></span>READ&#95;ME.txt')[(set: $openPending to "readme")(display: "func-open")]]
       (link: '<img src="' + $artroot + 'ui/trash.png" alt="">Trash')[(set: $openPending to "recycle")(display: "func-open")]
     </div>
@@ -5677,6 +6167,8 @@ deal with the devil
 (link-repeat: "restore:diskette")[(set: $restorePending to "diskette")(display: "func-restore")]
 (link-repeat: "trash:diskette")[(set: $trashPending to "diskette")(display: "func-trash")]
 (link-repeat: "restore:readme")[(set: $restorePending to "readme")(display: "func-restore")]
+(link-repeat: "restore:downloads")[(set: $restorePending to "downloads")(display: "func-restore")]
+(link-repeat: "trash:downloads")[(set: $trashPending to "downloads")(display: "func-trash")]
 (link-repeat: "trash:browser")[(set: $trashPending to "browser")(display: "func-trash")]
 (link-repeat: "trash:mail")[(set: $trashPending to "mail")(display: "func-trash")]
 (link-repeat: "trash:notes")[(set: $trashPending to "notes")(display: "func-trash")]
@@ -5687,7 +6179,7 @@ deal with the devil
 :: func-restore
 {(set: $trashItems to it - (a: $restorePending))
 (unless: $desktopItems contains $restorePending)[(set: $desktopItems to it + (a: $restorePending))]
-(if: $openWindows contains "diskette" and not $disketteShown and (a: "browser", "mail", "notes") contains $restorePending)[(set: $disketteNotice to $restorePending)]
+(if: $openWindows contains "diskette" and not $disketteShown and (a: "browser", "mail", "notes", "downloads") contains $restorePending)[(set: $disketteNotice to $restorePending)]
 (replace: ?desktoproot)[(display: "RenderDesktop")]}
 
 :: Winkipedia [wiki]
@@ -5733,6 +6225,7 @@ deal with the devil
 (if: $desktopItems contains "browser")[(link: "Browse")[(set: $disketteTopic to "browser")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (if: $desktopItems contains "mail")[(link: "Mail")[(set: $disketteTopic to "mail")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (if: $desktopItems contains "notes")[(link: "Notes")[(set: $disketteTopic to "notes")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
+(if: $desktopItems contains "downloads")[(link: "Downloads")[(set: $disketteTopic to "downloads")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
 (link: "Trash")[(set: $disketteTopic to "recycle")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (link: "Diskette")[(set: $disketteTopic to "diskette")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 </div>
@@ -5751,6 +6244,7 @@ deal with the devil
 :: DisketteTopic
 {(if: $disketteTopic is "browser")[<b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks. You already have Winkipedia and Skunkpets.com saved!]
 (else-if: $disketteTopic is "mail")[<b>Mail</b> is where your email arrives. Click a message in your Inbox to read it. A red badge on the Mail icon means something new came in!]
+(else-if: $disketteTopic is "downloads")[<b>Downloads</b> is a folder of files saved from the internet. Double-click one to open it. Hmm, I don't think these are yours!]
 (else-if: $disketteTopic is "notes")[<b>Notes</b> is a handy notepad. Jot down anything you want to remember. Whatever you type stays put, even after you close it!]
 (else-if: $disketteTopic is "recycle")[The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
 (else-if: $disketteTopic is "diskette")[That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!]}
@@ -5776,6 +6270,34 @@ deal with the devil
 (else-if: $disketteNotice is "browser")[<p>Psst! I can tell you about <b>Browse</b>.</p>]
 (else-if: $disketteNotice is "mail")[<p>Psst! I can tell you about <b>Mail</b>.</p>]
 (else-if: $disketteNotice is "notes")[<p>Psst! I can tell you about <b>Notes</b>.</p>]
+(else-if: $disketteNotice is "downloads")[<p>Psst! I can tell you about <b>Downloads</b>.</p>]
 (else:)[<p>Psst! Click me!</p>]]
 (click: ?balloon-body)[(display: "func-diskette-show")]
+</div>}
+
+:: RenderNetconTicket
+{<div class="netcon-ticket">
+<div class="netcon-banner">
+<div class="netcon-logo">
+<div class="netcon-logo-city">SAN FRANCISCO</div>
+<div class="netcon-logo-mid"><div class="netcon-logo-net">NET</div><div class="netcon-logo-box"><span class="netcon-logo-con">CON</span><span class="netcon-logo-cursor"></span></div></div>
+<div class="netcon-logo-foot">PIONEER&nbsp;&#8217;04</div>
+</div>
+<div class="netcon-title"><div class="netcon-big">NETCON&nbsp;2004</div><div class="netcon-sub">INTERNET CONVENTION: SAN FRANCISCO</div></div>
+</div>
+<div class="netcon-body">
+<p>Hello,</p>
+<p>Good news! Your payment to NetCon has been successfully processed. Your credit card has been charged for your recent purchase.</p>
+<p>The following information is for your convenience.</p>
+<div class="netcon-summary">Your Scheduled Recurring Charge Summary</div>
+<table class="netcon-table">
+<tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div>NetCon 2004 Attendee Saturday</div></td></tr>
+<tr><th>Amount</th><td>95.00</td></tr>
+<tr><th>Payment</th><td><span class="netcon-redact"></span></td></tr>
+<tr><th>Date Charged</th><td>2/9/2004</td></tr>
+<tr><th></th><td><span class="netcon-url">http:&#47;&#47;www.netcon04.com/tickets</span></td></tr>
+</table>
+<p>Thank you for your support!</p>
+<p>NetCon</p>
+</div>
 </div>}
