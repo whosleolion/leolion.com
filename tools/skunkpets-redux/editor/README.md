@@ -26,8 +26,11 @@ beside the game; the game shrinks to make room.
 **GitHub access (once per browser).** Saving needs a fine-grained personal
 access token: GitHub → Settings → Developer settings → Fine-grained tokens →
 Generate new token; Repository access: *Only select repositories* →
-`whosleolion/leolion.com`; Permissions → Repository → *Contents: Read and
-write*. Paste it under **GitHub access** in the panel. It's stored only in this
+`whosleolion/leolion.com`; Permissions → Repository permissions → add
+*Contents* and switch its dropdown from *Read-only* (the default) to
+*Read and write*. A read-only token gets as far as "Saving…" and then fails;
+you can fix it by editing the token's permissions on GitHub, no need to make a
+new one. Paste it under **GitHub access** in the panel. It's stored only in this
 browser's localStorage for leolion.com; **Forget** removes it.
 
 **If someone else changed the same page** since the preview was built (e.g. a

@@ -23,6 +23,7 @@ const check = (label, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'}
 
 // Fake GitHub
 const sent = { blobs: [], tree: null, commit: null, ref: null };
+let readOnlyToken = true; // the first save acts like a token without write access
 await p.route('https://api.github.com/**', async (route) => {
   const req = route.request(); const url = new URL(req.url()); const path = url.pathname.replace('/repos/whosleolion/leolion.com', '');
   const json = (o) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(o) });
@@ -30,6 +31,7 @@ await p.route('https://api.github.com/**', async (route) => {
   if (path === '/git/ref/heads/test-branch') return json({ object: { sha: 'HEAD1' } });
   if (path === '/git/commits/HEAD1') return json({ tree: { sha: 'TREE1' } });
   if (path.startsWith('/contents/tools/skunkpets-redux/skunkpets-redux.twee')) return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, body: twee });
+  if (req.method() !== 'GET' && readOnlyToken) return route.fulfill({ status: 403, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"Resource not accessible by personal access token"}' });
   if (path === '/git/blobs') { sent.blobs.push(req.postDataJSON()); return json({ sha: 'BLOB' + sent.blobs.length }); }
   if (path === '/git/trees') { sent.tree = req.postDataJSON(); return json({ sha: 'TREE2' }); }
   if (path === '/git/commits') { sent.commit = req.postDataJSON(); return json({ sha: 'c0ffee1234567' }); }
@@ -76,6 +78,10 @@ if (OUT) await p.screenshot({ path: `${OUT}/editor.png` });
 
 // Save
 await p.evaluate(() => localStorage.setItem('skunkpets-editor-token', 'test-token'));
+await p.click('.ske-save'); await W(1500);
+check('a read-only token gets a plain explanation', (await p.locator('.ske-status').innerText()).includes('Read and write'), await p.locator('.ske-status').innerText());
+check('...and nothing is marked saved', (await p.locator('.ske-pending').innerText()).includes('Not saved yet'));
+readOnlyToken = false;
 await p.click('.ske-save'); await W(1500);
 check('save reports success', (await p.locator('.ske-status').innerText()).includes('Saved (c0ffee1)'), await p.locator('.ske-status').innerText());
 const tweeEntry = sent.tree && sent.tree.tree.find((e) => e.path === 'tools/skunkpets-redux/skunkpets-redux.twee');

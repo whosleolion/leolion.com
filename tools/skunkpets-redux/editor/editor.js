@@ -225,7 +225,18 @@
       cache: "no-store",
     });
     if (!res.ok) {
-      const err = new Error("GitHub said " + res.status + " for " + path + ": " + (await res.text()).slice(0, 200));
+      const body = (await res.text()).slice(0, 200);
+      let text = "GitHub said " + res.status + " for " + path + ": " + body;
+      if (res.status === 401) {
+        text = "GitHub didn't accept the token (it may have expired or been mistyped). Paste a new one under GitHub access.";
+      } else if (res.status === 403 && (options.method || "GET") !== "GET") {
+        text = "Your token can read the repository but isn't allowed to change it. On GitHub, open the token " +
+          "(Settings \u2192 Developer settings \u2192 Fine-grained tokens), and under Permissions set " +
+          "Contents to \u201CRead and write\u201D (not Read-only), then Save to preview again. Nothing was saved.";
+      } else if (res.status === 403 || res.status === 404) {
+        text = "Your token can't see " + REPO + ". Make sure the token's Repository access includes it.";
+      }
+      const err = new Error(text);
       err.status = res.status;
       throw err;
     }
