@@ -4598,13 +4598,13 @@ document.addEventListener("click", function (e) {
 :: Anya Krysina [wiki article] {"position":"100,100","size":"100,100"}
 <div class="wiki-article">\
 <h1>Anya Krysina (game designer)</h1>\
-Anastasia "Anya" Krysina (born 12 July 1981) is a Russian-American computer programmer and game designer. She was the co-founder of (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website that was active online 2001-2009.
+Anastasia "Anya" Krysina (born 12 July 1981) is a Russian-American computer programmer, artist, and game designer. She was the co-founder of (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website that was active online 2001-2009.
 
 <h3>Early Career</h3>\
-Krysina attended St. Petersburg University in Russia 1997-1999 and transfered to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina (known online as "kraska1") published small HTML-based games such as "Bad Door".
+Krysina attended St. Petersburg University in Russia 1997-1999 and transfered to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina (known online as "kraska1")  published HTML-based games on the indie game website Global Games Archive. Her first game, "Bad Door", was an instant hit in indie game circles.
 
 <h3>SkunkPets</h3>\
-In 2001, she shared an idea with classmate (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] that would eventually become (link: "SkunkPets")[(set: $navPending to "SkunkPets")(display: "func-navigate")]. Krysina and Galveston started work on the site in January of 2001, with Galveston responsible for the programming and the database and Krysina the web design and art. 
+In 2001, she shared an idea with classmate (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] that would eventually become (link: "SkunkPets")[(set: $navPending to "Skunkpets.com")(display: "func-navigate")]. Krysina and Galveston started work on the site in January of 2001, with Galveston heading the programming and database, and Krysina the web design and art. 
 
 The site quickly grew to viral success, especially following the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention, where Krysina was celebrated as "an architect for the next wave of online gaming".
 
