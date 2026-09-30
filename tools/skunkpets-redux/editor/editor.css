@@ -180,3 +180,96 @@
   border: 1px solid #999;
   font: 12px ui-monospace, monospace;
 }
+
+/* Comments */
+
+.ske-comments summary {
+  font-weight: 600;
+}
+
+.ske-comments-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 34vh;
+  margin-top: 6px;
+  overflow-y: auto;
+}
+
+.ske-comment {
+  padding: 6px 8px;
+  border: 1px solid #d8d4a8;
+  border-radius: 4px;
+  background: #fffbe0;
+}
+
+.ske-comment-done {
+  border-color: #ddd;
+  background: #f7f7f5;
+  color: #666;
+}
+
+.ske-comment-meta {
+  color: #666;
+  font-size: 11px;
+}
+
+.ske-comment-quote {
+  margin: 3px 0;
+  padding-left: 6px;
+  border-left: 3px solid #c9c27a;
+  color: #555;
+  font-style: italic;
+}
+
+.ske-comment-text {
+  white-space: pre-wrap;
+}
+
+.ske-comment-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.ske-panel .ske-comment-actions button {
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
+.ske-comment-input {
+  padding: 6px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  font: 12px/1.4 system-ui, sans-serif;
+  resize: vertical;
+  cursor: text;
+}
+
+.ske-muted {
+  color: #666;
+  font-size: 12px;
+}
+
+.ske-comment-status:empty {
+  display: none;
+}
+
+.ske-other {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.ske-panel .ske-other button {
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+.ske-resolved summary {
+  color: #666;
+  font-size: 12px;
+  font-weight: normal;
+}

@@ -33,6 +33,18 @@ you can fix it by editing the token's permissions on GitHub, no need to make a
 new one. Paste it under **GitHub access** in the panel. It's stored only in this
 browser's localStorage for leolion.com; **Forget** removes it.
 
+**Comments.** Under the text box, **Comments on this page** holds notes for
+whoever edits next; they never appear in the game. Select words in the article
+first and your comment quotes them. **Resolve** marks a note done (it folds
+into "Resolved"; **Reopen** brings it back); you can **Delete** your own. The
+first time you post, it asks your name (**My name…** changes it). Notes on
+other pages are listed with a **Go** button that opens that page in the game
+(Browse has to be out of the Trash). The ✎ button shows how many notes are
+open, and the list refreshes every minute while the panel is open (or press
+**Refresh**). Each comment is its own small commit to
+`tools/skunkpets-redux/editor/comments.json` on the same branch; it doesn't
+rebuild the preview. The repository is public, so so are the comments.
+
 **If someone else changed the same page** since the preview was built (e.g. a
 push from Claude), saving asks before overwriting it. Other pages' changes are
 kept; only the pages you edited are replaced.

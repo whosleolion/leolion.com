@@ -14,6 +14,8 @@ on:
     branches-ignore: ["master"]
     paths:
       - "tools/skunkpets-redux/**"
+      # Editor comments don't change the game, so they don't rebuild it.
+      - "!tools/skunkpets-redux/editor/comments.json"
       - "src/building/skunkpets/**"
       - ".github/workflows/preview-skunkpets.yml"
   workflow_dispatch: {}

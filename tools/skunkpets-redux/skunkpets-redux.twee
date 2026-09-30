@@ -3984,6 +3984,21 @@ if (location.pathname.indexOf("/building/skunkpets-preview/") === 0) {
     redraw: function () {
       if (document.querySelector(".monitor")) HarloweEngine.showPassage(HarloweState.passage);
     },
+    /* Show a page in the game's browser (opening it if it's on the desktop),
+       like following a link. Returns false if there's no browser to use. */
+    goTo: function (name) {
+      if (!document.querySelector(".monitor")) return false;
+      const v = HarloweState.variables;
+      if (!v.desktopItems.includes("browser")) return false;
+      if (!v.openWindows.includes("browser")) v.openWindows = v.openWindows.concat(["browser"]);
+      if (v.browserPage !== name) {
+        v.navHistory = v.navHistory.concat([v.browserPage]);
+        v.navForward = [];
+        v.browserPage = name;
+      }
+      this.redraw();
+      return true;
+    },
     reserveRight: function (px) {
       document.documentElement.style.setProperty("--reserve-right", px + "px");
       fitMonitor();

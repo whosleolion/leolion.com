@@ -18,6 +18,10 @@
      [[photo: file.jpg | right | 40% | description]]
    Saving needs a GitHub token (asked for once, kept in this
    browser). See tools/skunkpets-redux/editor/README.md.
+
+   Comments: notes for the people editing, per page, kept in
+   tools/skunkpets-redux/editor/comments.json on the same
+   branch. They're never part of the game.
    ========================================================= */
 
 (function () {
@@ -98,8 +102,27 @@
     throw new Error('No passage named "' + name + '" in the .twee');
   }
 
+  /* ---------- Comments (pure) ---------- */
+
+  /* Applies one change to the comments file's data. Changes are replayed on
+     the newest copy if someone else saved in between, so two people
+     commenting at once never lose each other's notes. */
+  function applyCommentOp(data, op) {
+    const comments = (data && Array.isArray(data.comments) ? data.comments : []).slice();
+    if (op.type === "add") {
+      if (!comments.some((c) => c.id === op.comment.id)) comments.push(op.comment);
+    } else if (op.type === "resolve") {
+      comments.forEach(function (c, i) {
+        if (c.id === op.id) comments[i] = Object.assign({}, c, { resolved: op.resolved, resolvedBy: op.resolved ? op.by : undefined });
+      });
+    } else if (op.type === "delete") {
+      return { comments: comments.filter((c) => c.id !== op.id) };
+    }
+    return { comments: comments };
+  }
+
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { toFriendly, fromFriendly, replacePassage, photoFiles };
+    module.exports = { toFriendly, fromFriendly, replacePassage, photoFiles, applyCommentOp };
   }
   if (typeof document === "undefined") return;
 
@@ -112,6 +135,8 @@
   const ART_PATH = "tools/skunkpets-redux/art/";
   const STORE_KEY = "skunkpets-editor";
   const TOKEN_KEY = "skunkpets-editor-token";
+  const NAME_KEY = "skunkpets-editor-name";
+  const COMMENTS_PATH = "tools/skunkpets-redux/editor/comments.json";
   const PANEL_WIDTH = 440;
 
   const store = (function () {
@@ -130,6 +155,8 @@
 
   const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } };
   const setToken = (t) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch (e) {} };
+  const getName = () => { try { return localStorage.getItem(NAME_KEY) || ""; } catch (e) { return ""; } };
+  const setName = (n) => { try { localStorage.setItem(NAME_KEY, n); } catch (e) {} };
 
   let hook = null;
   const original = {}; /* name -> source as built into this page */
@@ -279,6 +306,169 @@
     throw new Error("The branch kept changing while saving. Try again in a minute.");
   }
 
+  /* ---------- Comments on GitHub ---------- */
+
+  let comments = [];        /* newest copy read from GitHub */
+  let commentsLoaded = false;
+
+  const b64ToText = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, "")), (ch) => ch.charCodeAt(0)));
+  function textToB64(text) {
+    const bytes = new TextEncoder().encode(text);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  async function readComments() {
+    try {
+      const file = await gh("/contents/" + COMMENTS_PATH + "?ref=" + encodeURIComponent(BRANCH));
+      return { data: JSON.parse(b64ToText(file.content)), sha: file.sha };
+    } catch (e) {
+      if (e.status === 404) return { data: { comments: [] }, sha: null };
+      throw e;
+    }
+  }
+
+  async function loadComments() {
+    if (!getToken() || !BRANCH) return;
+    try {
+      comments = (await readComments()).data.comments || [];
+      commentsLoaded = true;
+      renderComments();
+    } catch (e) {
+      ui.commentStatus.textContent = e.message;
+    }
+  }
+
+  /* One commit per change; retried on the newest copy if the file moved. */
+  async function changeComments(op, message) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const cur = await readComments();
+      const next = applyCommentOp(cur.data, op);
+      const body = { message: message, content: textToB64(JSON.stringify(next, null, 2) + "\n"), branch: BRANCH };
+      if (cur.sha) body.sha = cur.sha;
+      try {
+        await gh("/contents/" + COMMENTS_PATH, { method: "PUT", body: body });
+        comments = next.comments;
+        commentsLoaded = true;
+        renderComments();
+        return;
+      } catch (e) {
+        if (e.status !== 409 && e.status !== 422) throw e; /* someone else saved first: go again */
+      }
+    }
+    throw new Error("Couldn't save the comment (the file kept changing). Try again.");
+  }
+
+  function ago(iso) {
+    const s = (Date.now() - Date.parse(iso)) / 1000;
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.round(s / 60) + " min ago";
+    if (s < 86400) return Math.round(s / 3600) + " h ago";
+    return new Date(iso).toLocaleDateString();
+  }
+
+  function selectedQuote() {
+    const t = ui.text;
+    if (t.disabled) return "";
+    return t.value.slice(t.selectionStart, t.selectionEnd).trim().slice(0, 300);
+  }
+
+  function renderComments() {
+    const page = shownPage;
+    const open = comments.filter((c) => !c.resolved);
+    ui.toggle.textContent = "\u270E Edit articles" + (open.length ? " \u00B7 " + open.length + (open.length === 1 ? " note" : " notes") : "");
+    ui.commentList.textContent = "";
+    ui.commentOthers.textContent = "";
+    if (!getToken()) {
+      ui.commentStatus.textContent = "Add a GitHub token (under GitHub access) to see and leave comments.";
+      return;
+    }
+    if (!commentsLoaded) { ui.commentStatus.textContent = "Loading comments\u2026"; return; }
+    ui.commentStatus.textContent = "";
+    const here = page ? comments.filter((c) => c.page === page) : [];
+    const hereOpen = here.filter((c) => !c.resolved);
+    const hereDone = here.filter((c) => c.resolved);
+    ui.commentsTitle.textContent = "Comments" + (page ? " on this page" : "") + (hereOpen.length ? " (" + hereOpen.length + ")" : "");
+    if (page && !here.length) ui.commentList.appendChild(el("div", { class: "ske-muted", text: "No comments on this page yet." }));
+    hereOpen.forEach((c) => ui.commentList.appendChild(commentItem(c)));
+    if (hereDone.length) {
+      const d = el("details", { class: "ske-resolved" }, [el("summary", { text: "Resolved (" + hereDone.length + ")" })]);
+      hereDone.forEach((c) => d.appendChild(commentItem(c)));
+      ui.commentList.appendChild(d);
+    }
+    const elsewhere = {};
+    open.forEach(function (c) { if (c.page !== page) elsewhere[c.page] = (elsewhere[c.page] || 0) + 1; });
+    const pages = Object.keys(elsewhere).sort();
+    if (pages.length) {
+      ui.commentOthers.appendChild(el("div", { class: "ske-muted", text: "Open notes on other pages:" }));
+      pages.forEach(function (p) {
+        ui.commentOthers.appendChild(el("div", { class: "ske-other" }, [
+          el("span", { text: p + " (" + elsewhere[p] + ")" }),
+          el("button", { type: "button", text: "Go", onclick: function () {
+            if (!hook.goTo(p)) say("Get Browse out of the Trash first, then Go works.", "error");
+          } }),
+        ]));
+      });
+    }
+  }
+
+  function commentItem(c) {
+    const me = getName();
+    const actions = [
+      el("button", { type: "button", text: c.resolved ? "Reopen" : "Resolve", onclick: () => runComment({ type: "resolve", id: c.id, resolved: !c.resolved, by: me || "someone" }, (c.resolved ? "Reopen" : "Resolve") + " comment on " + c.page) }),
+    ];
+    if (me && c.author === me) {
+      actions.push(el("button", { type: "button", text: "Delete", onclick: function () {
+        if (confirm("Delete this comment?")) runComment({ type: "delete", id: c.id }, "Delete comment on " + c.page);
+      } }));
+    }
+    return el("div", { class: "ske-comment" + (c.resolved ? " ske-comment-done" : "") }, [
+      el("div", { class: "ske-comment-meta", text: c.author + " \u00B7 " + ago(c.at) + (c.resolved && c.resolvedBy ? " \u00B7 resolved by " + c.resolvedBy : "") }),
+      c.quote ? el("div", { class: "ske-comment-quote", text: "\u201C" + c.quote + "\u201D" }) : el("span"),
+      el("div", { class: "ske-comment-text", text: c.text }),
+      el("div", { class: "ske-comment-actions" }, actions),
+    ]);
+  }
+
+  async function runComment(op, message) {
+    ui.commentStatus.textContent = "Saving\u2026";
+    try {
+      await changeComments(op, message);
+      ui.commentStatus.textContent = "";
+    } catch (e) {
+      ui.commentStatus.textContent = e.message;
+    }
+  }
+
+  async function onPostComment() {
+    const text = ui.commentInput.value.trim();
+    if (!text || !shownPage) return;
+    if (!getToken()) { ui.commentStatus.textContent = "Add a GitHub token first (under GitHub access)."; return; }
+    let name = getName();
+    if (!name) {
+      name = (prompt("Your name, shown on your comments:") || "").trim();
+      if (!name) return;
+      setName(name);
+    }
+    const comment = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      page: shownPage,
+      author: name,
+      text: text,
+      quote: selectedQuote() || undefined,
+      at: new Date().toISOString(),
+      resolved: false,
+    };
+    ui.commentInput.value = "";
+    await runComment({ type: "add", comment: comment }, "Comment on " + shownPage + " (" + name + ")");
+  }
+
+  function updateQuoteHint() {
+    const q = selectedQuote();
+    ui.quoteHint.textContent = q ? "Quoting: \u201C" + (q.length > 60 ? q.slice(0, 60) + "\u2026" : q) + "\u201D" : "Tip: select words in the article first to quote them.";
+  }
+
   /* ---------- Panel ---------- */
 
   let ui = null;
@@ -305,6 +495,12 @@
     const tool = (label, tip, fn) => el("button", { type: "button", title: tip, text: label, onclick: fn });
     const fileInput = el("input", { type: "file", accept: "image/*", class: "ske-file", onchange: onPhotoChosen });
     const tokenInput = el("input", { type: "password", class: "ske-token-input", placeholder: "github_pat_...", autocomplete: "off" });
+    const commentsTitle = el("summary", { text: "Comments" });
+    const commentList = el("div", { class: "ske-comment-list" });
+    const commentOthers = el("div", { class: "ske-others" });
+    const commentStatus = el("div", { class: "ske-muted ske-comment-status" });
+    const commentInput = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "Leave a note for whoever edits next\u2026" });
+    const quoteHint = el("div", { class: "ske-muted ske-quote-hint" });
 
     const panel = el("div", { class: "ske-panel" }, [
       el("div", { class: "ske-head" }, [
@@ -327,6 +523,24 @@
       ]),
       status,
       pending,
+      el("details", { class: "ske-comments", open: "" }, [
+        commentsTitle,
+        el("div", { class: "ske-comments-body" }, [
+          commentStatus,
+          commentList,
+          commentInput,
+          quoteHint,
+          el("div", { class: "ske-actions" }, [
+            el("button", { type: "button", text: "Post comment", onclick: onPostComment }),
+            el("button", { type: "button", text: "Refresh", onclick: loadComments }),
+            el("button", { type: "button", title: "The name shown on your comments", text: "My name\u2026", onclick: function () {
+              const n = (prompt("Your name, shown on your comments:", getName()) || "").trim();
+              if (n) { setName(n); renderComments(); }
+            } }),
+          ]),
+          commentOthers,
+        ]),
+      ]),
       el("details", { class: "ske-help" }, [
         el("summary", { text: "Cheat sheet" }),
         el("pre", { text:
@@ -346,14 +560,16 @@
         el("a", { href: "https://github.com/settings/personal-access-tokens/new", target: "_blank", rel: "noopener", text: "Make a token on GitHub" }),
         el("div", { class: "ske-token-row" }, [
           tokenInput,
-          el("button", { type: "button", text: "Use", onclick: () => { setToken(tokenInput.value.trim()); tokenInput.value = ""; refresh(); } }),
-          el("button", { type: "button", text: "Forget", onclick: () => { setToken(""); refresh(); } }),
+          el("button", { type: "button", text: "Use", onclick: () => { setToken(tokenInput.value.trim()); tokenInput.value = ""; refresh(); loadComments(); } }),
+          el("button", { type: "button", text: "Forget", onclick: () => { setToken(""); comments = []; commentsLoaded = false; refresh(); renderComments(); } }),
         ]),
       ]),
     ]);
     document.body.appendChild(toggle);
     document.body.appendChild(panel);
-    ui = { toggle, panel, title, text, status, pending };
+    ui = { toggle, panel, title, text, status, pending, commentsTitle, commentList, commentOthers, commentStatus, commentInput, quoteHint };
+    ["select", "keyup", "mouseup"].forEach((ev) => text.addEventListener(ev, updateQuoteHint));
+    updateQuoteHint();
   }
 
   function setOpen(open) {
@@ -530,11 +746,19 @@
     photoStyles();
     buildUi();
     setOpen(store.data.open);
+    renderComments();
+    loadComments();
     setInterval(function () {
       if (!store.data.open) return;
       const page = hook.currentPage();
-      if (page !== (shownPage || null)) showPage(page || null);
+      if (page !== (shownPage || null)) {
+        showPage(page || null);
+        renderComments();
+        updateQuoteHint();
+      }
     }, 400);
+    /* Pick up the other person's comments while the panel is open. */
+    setInterval(function () { if (store.data.open) loadComments(); }, 60000);
   }
 
   if (window.SkunkpetsEditorHook) start();
