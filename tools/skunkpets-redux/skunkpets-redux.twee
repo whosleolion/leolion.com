@@ -4601,10 +4601,10 @@ document.addEventListener("click", function (e) {
 Anastasia "Anya" Krysina (born 12 July 1981) is a Russian-American computer programmer, artist, and game designer. She was the co-founder of (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website that was active online 2001-2009.
 
 <h3>Early Career</h3>\
-Krysina attended St. Petersburg University in Russia 1997-1999 and transfered to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina (known online as "kraska1")  published HTML-based games on the indie game website Global Games Archive. Her first game, "Bad Door", was an instant hit in indie game circles.
+Krysina attended St. Petersburg University in Russia 1997-1999 and transfered to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina (known online as "kraska1")  published HTML-based games on the indie game website (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")]. Her first game, "Bad Door", was an instant hit in indie game circles.
 
 <h3>SkunkPets</h3>\
-In 2001, she shared an idea with classmate (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] that would eventually become (link: "SkunkPets")[(set: $navPending to "Skunkpets.com")(display: "func-navigate")]. Krysina and Galveston started work on the site in January of 2001, with Galveston heading the programming and database, and Krysina the web design and art. 
+In 2000, she shared an idea with classmate (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] that would eventually become Skunkpets. Krysina and Galveston started work on the site in January of 2001, with Galveston heading the programming and database, and Krysina the web design and art. 
 
 The site quickly grew to viral success, especially following the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention, where Krysina was celebrated as "an architect for the next wave of online gaming".
 
@@ -4623,7 +4623,7 @@ Battlemutts is a media franchise produced by American toy company Heroics! and J
 (print:'<img src="' + $imgroot + 'mutts/battlemutts-still.png" width="30%" style="float: left; margin-right:15px; margin-top: 5px;">') Between 1999 and 2006, Heroics! TV released four seasons of a Battlemutts animated series, episodically telling the story of a violent political power struggle in the dystopian City of Bone. The series was targeted at viewers ages 10-15. The series followed the points-of-view of multiple characters, members of the Canis Syndicate and the Starborn Alliance, in an action-packed and morally complex arms race.
 
 <h2>Battlemutts Online</h2>\
-(print:'<img src="' + $imgroot + 'mutts/battlemutts-online.png" width="40%" style="float: right; margin-left:15px;">') In 2008, a Battlemutts MMORPG called Battlemutts Online was released to beta testers by (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. The game's lead developer was (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")], co-creator of the (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] virtual pet website.
+(print:'<img src="' + $imgroot + 'mutts/battlemutts-online.png" width="40%" style="float: right; margin-left:15px;">') In 2008, a Battlemutts MMORPG called Battlemutts Online was released to beta testers by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. The game's lead developer was (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")], co-creator of the (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] virtual pet website.
 
 Battlemutts Online allowed players to create a controllable Battlemutt character in the City of Bone and fight to the death against other players' dogs and computer-controlled enemies. Players could choose between Canis Syndicate and Starborn Alliance, with custom power sets available on each team. Reviews of the game's beta were very favorable, with Interactive Periodical calling it "a new standard for digital carnage."
 
@@ -5242,43 +5242,43 @@ Not supposed to be discussed on the forums. Archiving this thread.
 :: Henrietta Winetraub [wiki article] {"position":"725,225","size":"100,100"}
 <div class="wiki-article">\
 <h1>Henrietta Winetraub</h1>\
-Henrietta Winetraub is an American musician and media investor. She is known for being the Chairwoman of the Board of (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], a media investment firm, where she also led the Music and Audio Entertainment division. While at Recast, she was instrumental in the creation of the (link: "Songs for Family Learning")[(set: $navPending to "Songs for Family Learning")(display: "func-navigate")] album series.
+Henrietta Winetraub is an American musician and media investor. She served at (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")] as Chairwoman of the Board and Head of the Music and Audio Entertainment division. While at Recast, she was instrumental in the creation of the (link: "Songs for Family Learning")[(set: $navPending to "Songs for Family Learning")(display: "func-navigate")] album series.
 
 <h2>Early Career</h2>\
-Henrietta was a New York-based a songwriter and music producer for a number of public television programs aimed at children in the early 1980s. Her first lead songwriting credit was for a Polish-American musical puppet program called Crusty's Dad Hour. Her 8-song album for the first season was panned in The Musical American for being "didactic and hamfisted," while later seasons were better receieved, with Season 3 even recieving a Ditty Award.
+Henrietta was a New York-based a songwriter and music producer for a number of public children's television programs in the early 1980s. Her first lead songwriting credit was for the Polish-American musical puppet program "Crusty's Dad Hour". The 8-song album she wrote for the first season was panned in The Musical American for being "didactic and hamfisted," while later seasons were better receieved, with her work on Season 3 even recieving a Ditty Award.
 
-Winetraub met (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")] during a heated legal battle regarding a made-for-TV musical adaptation of The Shoemaker's Daughter. Winetraub and the rest of the production team were sued by Barry for the musical's alleged similarities to The Tinker's Daughter, a folk tale features in Barry-owned compilation (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")]. The lawsuit ended with Barry recieving an executive producer credit on the film, which aired on public access television in 1985.
+Winetraub met (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")] during a heated legal battle regarding a made-for-TV musical adaptation of The Shoemaker's Daughter. Winetraub and the production team were sued by Barry for the musical's alleged similarities to The Tinker's Daughter, a folk tale features in Barry-owned compilation (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")]. The lawsuit was settled with Barry recieving an executive producer credit on the film, which aired on public access television in 1985.
 
 <h2>Recast Entertainment Ventures</h2>\
-Winetraub, Barry, and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] opened their joint media investment firm in 1987, with Winetraub serving as Chairwoman of the Board. The firm was incorporated chiefly to produce an animated film based on Witch and The Goldwoman, for which Winetraub would compose the soundtrack.
+Winetraub, Barry, and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] opened their joint media investment firm in 1987, with Winetraub dubbed Chairwoman of the Board. The firm was incorporated chiefly to produce an animated film based on Witch and The Goldwoman, for which Winetraub would compose the soundtrack.
 
 In 1990, REV began production on a family-friendly album of songs, written by Winetraub and a number of guest musicians, which would eventually become (link: "Songs for Family Learning")[(set: $navPending to "Songs for Family Learning")(display: "func-navigate")]. After the broad commercial success of the first album among parents, teachers, and childrens party entertainers, REV went on to produce 3 follow-up albums in the same series, featuring musical guests such as Kris Kross and Gloria Estafan.
 
 <h2>Later Career</h2>\
-After the third SFFL album saw poor commercial returns in 2001, Winetraub was briefly committed to an inpatient mental health facility in Upstate New York.
+After the third SFFL album saw poor commercial returns in 2001, Winetraub was briefly committed to an inpatient mental health facility in upstate New York.
 
-Her work at REV continued after she was discharged early the following year. A fourth SFFL album was released in 2006.
+Her work at REV continued after she was discharged early the following year. A fourth SFFL album was released in 2006. 
 
-Winetraub left REV in 2006 to retire in Upstate New York.
+Winetraub left REV in 2006 to retire in upstate New York.
 </div>
 
 :: Lawrence Oregon [wiki article] {"position":"850,225","size":"100,100"}
 <div class="wiki-article">\
 <h1>Lawrence Oregon</h1>\
-Lawrence Oregon (born c. 1967) is a Canadian business executive. He was the president of (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], an American media investment firm, from 1994 to 2008. Before Recast, Oregon spent 16 years working in small business management for a series of commercial spiritual organizations.
+Lawrence Oregon (born c. 1967) is a Canadian business executive. He was the president and co-founder of (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], an American media investment firm, from 1994 to 2008. Before REV, Oregon spent 16 years working in small business management for a series of commercial spiritual organizations.
 
 <h2>Early Life and Education</h2>\
-Lawrence Oregon grew up in Huntsville, Ontario, Canada. He received bachelor's degrees in computer science and religious studies from the University of Western Ontario, and an MS in business management from the Glen Cove School of Economics. As a member of the Glen Cove Investors Club, he met (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")] and (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")], with whom he would go on to found REV, with a stated intention to "show America what real entertainment looks like."
+Lawrence Oregon grew up in Huntsville, Ontario, Canada. He received bachelor's degrees in computer science and religious studies from the University of Western Ontario, and an MS in business management from the Glen Cove School of Economics. At the Glen Cove Investors Club, he met (link: "Tom Barry")[(set: $navPending to "Tom Barry")(display: "func-navigate")] and (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")], with whom he would go on to found REV, with a stated intention to "show America what real entertainment looks like."
 
 <h2>Recast Entertainment Ventures</h2>\
-Oregon served as President of the Board of REV, where he spearheaded a number of early investments in toys and entertainment properties, including the (link: "Battlemutts")[(set: $navPending to "Battlemutts")(display: "func-navigate")] franchise. Starting in 2003, he became the head of REV's Entertainment Technologies division, which he used to invest in high-traffic entertainment websites that he could pair with advertising partners. After discovering (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")], he connected the game's creators (link: "Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")] and (link: "Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] with a number of other key investors, and helped them incorporate Skunkpets Inc, of which he owned a majority share. Online ads and a premium ad-free account were added to the game later that year.
+Oregon served as President of the Board of REV, where he spearheaded a number of early investments in toys and entertainment properties, including the (link: "Battlemutts")[(set: $navPending to "Battlemutts")(display: "func-navigate")] franchise. In 2003 he became the head of REV's Entertainment Technologies division, which he used to invest in high-traffic entertainment websites that he could pair with advertising partners. After discovering (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")], he connected the game's creators (link: "Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")] and (link: "Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] with a number of other key investors, and helped them incorporate Skunkpets Inc., of which he owned a majority share. Diagetically integrated ads and a premium ad-free subscription were added to the game later that year.
 
 <h2>Skunkpets Creative Direction</h2>\
 After the founding members of the Skunkpets team left the project in 2009, Oregon became the lead creative director of the game for 3 months. Commonly known as "The Last Season," this period in the game's development was plagued with erratic updates and structural changes, and saw a steep drop in usership.
 
 //This section has been edited and is pending review.//
 
-The website was shut down in May 2009.
+Skunkpets was shut down in May 2009.
 
 <h2>Later Career</h2>\
 After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a prior career position as the spokesperson for a for-profit spiritual organization known as (link: "Saint Detritus Commercial Fellowship")[(set: $navPending to "Saint Detritus Commercial Fellowship")(display: "func-navigate")].
@@ -5290,7 +5290,7 @@ After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a p
 NetCon 2004 was the third occurance of NetCon, an annual convention for influencers, fans, executives, and online brands. The event primarily features prominent content creators from across the internet. It was founded by veteran YouTube creators Cole Ramsay and Lena Russel (TheSweetpeople), and was later acquired by Hi-Vis (now Paradigm) in 2018. Its offices remain in Montori, Montana, sharing a building with Thinkify. 
 
 <h2>Standout Presenters</h2>\
-NetCon's 04 theme was "Pioneer", spotlighting up-and-coming internet companies with innovative online engagement strateiges. Out of 460 panelists and presenters, notable NetCon 04 presences included:
+NetCon '04 was held in Rosemont, Illinois. The theme was "Pioneer", spotlighting up-and-coming internet companies with innovative online engagement strateiges. Out of 460 panelists and presenters, notable NetCon '04 presences included:
 * (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.
 * (link: "Diskette.net")[(set: $navPending to "Diskette")(display: "func-navigate")], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
 * (link: "Skunkpets.com")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website where users could adopt creatures in the digital realm of Bin City, which had quadrupled its user base since its previous NetCon attendance in 2003.
@@ -5309,7 +5309,7 @@ Nickolas Galveston (born 1 April 1982) is an American computer programmer. He wa
 Galveston attended Ellory College in Pennsylvania for 1998-2001, majoring in undergraduate computer science degree. He left college before graduating to work on the Skunkpets project.
 
 <h3>Career</h3>\
-Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing 'artistic differences'. Although it was widely speculated that this transition was due to conflicts with the project's leadership at (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], Galveston since commented that he 'simply moved on to other projects'.
+Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing 'artistic differences'. Although it was widely speculated that this transition was due to conflicts with the project's leadership at (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], Galveston since commented that he 'simply moved on to other projects'.
 
 In 2010, Galveston became a regular lecturer in the Computer Science department at Ellory College, where he still teaches.
 </div>
@@ -5332,7 +5332,7 @@ Recast Entertainment Ventures was an American media investment firm based in Gle
 <h2>History</h2>\
 <h3>1987-1990: Founding</h3>\
 <div class="article-art article-art-left" data-art="rev-founders.jpg" style="width: 36%" role="img" aria-label="REV's founders"></div>\
-REV was incorporated in 1987, after Tom Barry acquired the adaptation rights to (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], a collection of Eastern-European fairy and folk tales. The firm was formed to oversee dealings with animation studios to produce animated feature films based on the collection. In 1988, REV pitched an animated feature titled Witch and The Goldwoman (based on the folk tale of the same name) to multiple leading animation houses in Hollywood, all of which declined to work on the project. Soon after, REV moved to acquire several more small media properties with an intent to grow their holdings and influence in the evolving media market. 
+REV was incorporated in 1987, after Tom Barry acquired the adaptation rights to (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], a collection of Eastern-European fairy and folk tales. The firm was formed to oversee dealings with animation studios to produce animated feature films based on the collection. In 1988, REV pitched an animated feature of the Barry-owned tale "Witch and the Goldwoman" to multiple leading animation houses in Hollywood, all of which declined to work on the project. Soon after, REV moved to acquire several more small media properties with an intent to grow their holdings and influence in the evolving media market. 
 
 All the while, pre-production on Witch and the Goldwoman continued in-house, and Tom Barry stated in 1989 that REV planned to "launch their own animation studio" that would "be a force like nothing America had ever faced before."
 
@@ -5684,20 +5684,21 @@ Looking for something more substantial to read? Try the (link: "SkunkPets")[(set
      </tr>
 </table>}
 <h1 id="overview">Overview</h1>
-SkunkPets was a browser-based online game that allowed users to create and care for digital pets called "SkunkPets" and explore the virtual realm of Bin City. There was no set objective for the users, but they were expected to feed and care for their SkunkPets when they grew hungry or ill. SkunkPets would not die if neglected, but their health had in-game consequences.
+SkunkPets was a beloved, browser-based online game that allowed users to create and care for digital pets and explore the world of (link: "Terra Purgamenti")[(set: $navPending to "FanWiki: The World of Skunkpets")(display: "func-navigate")]. There was no set objective for the users, but they were expected to feed and care for their SkunkPets when they grew hungry or ill. SkunkPets would not die if neglected, but their health had in-game consequences.
 
-SkunkPets came in a (link: "variety of species and colors")[(set: $navPending to "FanWiki: Skunkpet Types")(display: "func-navigate")] and users could create or adopt their own. SkunkPets could be customised with clothing items, dye jobs, and accessories. Users could build a customisable Burrow for their pet and furnish it with furniture, wallpaper, and flooring. SkunkPets themselves could have mini-pets of their own called (link: "Junkmates")[(set: $navPending to "FanWiki: Junkmates")(display: "func-navigate")].
+SkunkPets came in a (link: "variety of species and colors")[(set: $navPending to "FanWiki: Skunkpet Types")(display: "func-navigate")]. They could be customised with clothing items, dye jobs, and accessories. Users could build a customisable Burrow for their pet and deck it out it with furniture, wallpaper, and flooring. SkunkPets could have mini-pets of their own called (link: "Junkmates")[(set: $navPending to "FanWiki: Junkmates")(display: "func-navigate")].
 
-Bin City was a virtual realm of junkyard-inspired neighborhoods, each of which have their own shops, games, and attractions. It had its own economy and stock market. Players could earn one of two virtual currencies. One currency, called Skunkpoints, could be obtained for free through on-site features like games, events, and contests. The other, SkunkCash (SC), was purchased with real-world money and could be exchanged for in-game souvenirs, including access to restricted game zones and wearable items for pets.
+Bin City, the heart of Terra Purgamenti, was a virtual realm of junkyard-inspired neighborhoods, each of which have their own shops, games, and attractions. It had its own economy and stock market. Purchases were made with two virtual currencies: Skunkpoints and SkunkCash. Skunkpoints could be obtained for free through on-site features like games, events, and contests. SkunkCash (SC) was purchased with real-world money and could be exchanged for in-game souvenirs, including access to restricted game zones and wearable items found in the SkunkCash Mall.
 
-Until 2009, the site was regularly updated with features like new games, items, and content.
+This wiki was created to catalogue all things Skunkpets, as well as keep users abreast of new features like games, items, and events, as well as provide a place for users to chat. As of last year, that is clearly no longer necessary. Although we the Skunkpets Community will not be updating this wiki anymore, we decided to preserve it as a historical record of what we loved. Thanks for the memories. 
+-Peacemeal, January 22, 2010 
 </div>
 
 :: Skunkpets [wiki article] {"position":"100,475","size":"100,100"}
 <div class="wiki-article"><span class="zoom-trigger" hidden></span>\
 <h1>SkunkPets™ (website)</h1>\
 <div class="article-art" data-art="skunkpets-6-lw2v.jpg" role="img" aria-label="Skunkpets(6)"></div>
-SkunkPets™ is a now-defunct free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets ("SkunkPets") in a virtual realm called Bin City. Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the "Scrapyard," winning titles and prizes. 
+SkunkPets™ was a free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets ("SkunkPets") in a virtual realm called Bin City. Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the "Scrapyard" to win titles and prizes. 
 
 The SkunkPets website was taken down in 2009 following a controversy surrounding the (link: "Order of Refuse")[(set: $navPending to "Order of Refuse")(display: "func-navigate")].
 
@@ -5708,7 +5709,7 @@ SkunkPets was conceived in 2000 by (link: "Anya Krysina")[(set: $navPending to "
 SkunkPets saw a rapid rise in popularity following a successful outing at the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention in San Francisco. SkunkPets was the darling of the convention, its user count quadrupling by the end of the weekend.
 
 <h3>Growth & Corporate Ownership (2004-2008)</h3>\
-By December 2004, SkunkPets was logging 400,000 page views daily and sought investors to cover the high cost of running the site. American businessman (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] was introduced to the team and bought a majority share on behalf of (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. In October, SkunkPets released a premium version and started showing advertisements on the basic site that were not shown to premium members. 
+By December 2004, SkunkPets was logging 400,000 page views daily and sought investors to cover the high cost of running the site. American businessman (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] was introduced to the team and bought a majority share on behalf of (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. In October, SkunkPets released a premium version and started showing advertisements on the basic site that were not shown to premium members. 
 
 SkunkPets physical merchandise became available shortly thereafter, usually containing a code which could be redeemed on the site for an in-game reward. In 2006, Oregon said that SkunkPets had an opportunity to "bring the online and offline worlds together in a way never before seen".
 
@@ -5730,7 +5731,7 @@ In March 2009, several core team members including Nick Galveston left the compa
 <div class="article-art" data-art="songs-for-family-learning.jpg" role="img" aria-label="Songs for Family Learning logo"></div>\
 “Songs for Family Learning” is a series of albums released by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.
 
-The unofficial slogan of the series, “make being together a good time!” resurfaced as a viral internet meme and inspired a popular line of ironic T-shirts which led to an infamous contentious lawsuit.
+The unofficial slogan of the series, “Make being together a good time!” resurfaced as a viral internet meme and inspired a popular line of ironic T-shirts which led to an infamous contentious lawsuit.
 
 <h2>Discography</h2>\
 The release dates mentioned pertain to the date of release in the United States.\
@@ -5880,7 +5881,7 @@ The release dates mentioned pertain to the date of release in the United States.
 :: Tales of Prior Days [wiki article] {"position":"350,475","size":"100,100"}
 <div class="wiki-article">\
 <h1>Tales of Prior Days</h1>\
-<div class="article-art" data-art="title-1-ydmo.jpg" style="width: 30%" role="img" aria-label="Title(1)"></div>Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Moldova, Latvia, and Serbia.
+<div class="article-art" data-art="title-1-ydmo.jpg" style="width: 30%" role="img" aria-label="Title(1)"></div>Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia (check when estonia was founded) Moldova, Latvia, and Serbia. 
 
 Some of the tales included in these volumes:
 * The Wife of the Dead Soldier
@@ -5890,7 +5891,7 @@ Some of the tales included in these volumes:
 * The House With Beaks
 * The Wicked Ass and the Broom
 * Simpleton
-* Witch and the Goldwoman
+* Witch and the Goldwoman (working on this) 
 * The Pin Keeper
 * The Mother on Fire
 * Tsarevich Igor and the Fat Wolf
@@ -5907,6 +5908,9 @@ Some of the tales included in these volumes:
 * The Girl Who Spoke To Birch Trees
 * Salko-Balko
 * War Bear
+
+Little is known of many of these tales, other than their titles. Some stories, such as "The House with Beaks", have been found nowhere else but in "Prior Days", and since the few copies of this book that still exist are closely guarded by the Tom Barry estate and the occasional university reference library, we can only speculate as to the content of the stories themselves. 
+
 <h2>References</h2>\
 Silverman, Barbara R. (1997). Kononenko, Natalie O. (ed.). Tsarevich Ivan and the Fat Wolf, and other tales from Latvia. World folklore series. Englewood, Colo: Libr. Unlimited. pp. xxi. Halsin, Jack M. (2014). "Introduction: D.I. Kanisev His Life and Works". In Halsin, Jack M. (ed.). The Complete Folktales of D.I. Kanisev. Vol. I.: University Press of Michigan. pp. xxiv, xxvii. Barry Family Record (2001). Article XI, "Witch and the Goldwoman and Other Tales".
 </div>
@@ -5914,18 +5918,18 @@ Silverman, Barbara R. (1997). Kononenko, Natalie O. (ed.). Tsarevich Ivan and th
 :: Tom Barry [wiki article] {"position":"475,475","size":"100,100"}
 <div class="wiki-article">\
 <h1>Tom Barry</h1>\
-Tom Barry //(born Thomas Melnyk)// is an American businessman and media moghul, known for his work with (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")] and his legacy in the legal side of fairy tale media adaptations. He grew up in Cleveland, Ohio, son of Elys Melnyk and Melina Barrarro, both copyright lawyers. When both parents were killed in an industrial accident, fourteen-year-old Thomas moved to Upstate New York to live with his cousins until he was of age to manage the family trust.
+Tom Barry //(born Thomas Melnyk)// is an American businessman and media moghul, known for his work with (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")] and his legacy in folk tale IP litigation. He grew up in Cleveland, Ohio, son of copyright lawyers Elys Melnyk and Melina Barrarro. When both parents were killed in an industrial accident, fourteen-year-old Thomas moved to Upstate New York to live with his cousins until he was of age to manage the family trust.
 
 <h2>Early life and career</h2>\
-At eighteen, Thomas (now Tom Barry) came into legal possession of all the intellectual property his parents had come to own throughout their careers, including the sole publishing and adaptation rights for several historic manuscripts, which formed the bulk of his early media investment portfolio. One of these books, (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], was a collection of eastern-European folktales published under unique names, but with many bearing similarities to other collected tales from the region.
+At eighteen, Thomas (now Tom Barry) inherited a collection of intellectual property his parents had built during their careers, including the sole publishing and adaptation rights for several historic manuscripts, which formed the bulk of his early media investment portfolio. One of these books, (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], was a collection of eastern-European folktales published under unique names, but with many bearing similarities to other collected tales from the region.
 
-After getting his legal license from a correspondance school, Tom Barry spent the next two decades aggressively litigating the adaptation rights for  fairy tale similarities with a number of publishing houses, comics companies, and film & animation studios. Among these cases was Barry v. Miracle Motion Pictures, popularly called "The Fat Wolf Case." This suit established legal precedent that commercial media use of the term "fat wolf" constituted an intellectual property infringement, due to the term's appearance in the Barry-owned folk tale //Tsarevich Igor and the Fat Wolf//.
+After getting his legal license from a correspondance school, Tom Barry spent the next two decades aggressively litigating the adaptation rights of "his" folk tales with a number of publishing houses, comics companies, and film & animation studios. Among these cases was Barry v. Miracle Motion Pictures, popularly called "The Fat Wolf Case." This suit established legal precedent that all commercial media use of the term "fat wolf" constituted an intellectual property infringement, due to the term's appearance in the Barry-owned folk tale //Tsarevich Igor and the Fat Wolf//. On Barry's insatiable lust for control over "his" tales, one reporter remarked that the folk tale genre was already "Dead and Barried". 
 
 <h2>Recast Entertaainment Ventures</h2>\
-Barry's many intellectual property lawsuits yielded the seed funding for (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], which he founded out of a Glen Cove storefront with (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] in 1987. Recast's stated business plan was to build a diversified media property portfolio including film, television and games. During his tenure at Recast, Barry's longterm focus was on a fabled feature-length animated adaptation of folk tale //Witch and the Goldwoman//, which he oversaw through various stages (including its failed Hollywood pitch circuit and its longtime in-house development). He continued to actively work on the Witch and Goldwoman project, which was in and out of pre-production, until he left Recast in 2006.
+Barry's many IP lawsuits yielded the seed funding for (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], which he founded out of a Glen Cove storefront with (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] in 1987. Recast's stated business plan was to build a diversified media property portfolio including film, television and games. During his tenure at Recast, Barry's longterm focus was on a fabled feature-length animated adaptation of the folk tale //Witch and the Goldwoman//, which he oversaw through various stages, though none bore fruit. He continued to actively work on his Witch and the Goldwoman project until he left Recast in 2006.
 
 <h2>Later career</h2>\
-After leaving Recast, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether "the animal guys over there `[were]` ready for something `[explative]` serious yet." Barry continues to work independently as a media investor and intellectual property lawyer at his firm Tom Barry Associates, which he manages with his two sons.
+After leaving REV, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether "the animal guys over there `[were]` ready for something `[explative]` serious yet." Barry continues to work independently as a media investor and IP lawyer at his firm Tom Barry Associates, which he manages with his two sons.
 </div>
 
 :: WIN
