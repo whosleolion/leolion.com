@@ -565,10 +565,22 @@ Add `article` to its tags if it should be findable in Winkipedia.
   (set in `func-navigate`).
 - **Global Games Archive** (`globalgamesarchive.co.uk`) has a search box
   handled by the script (`GLOBAL GAMES ARCHIVE — SEARCH`). Searching "kraska",
-  "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`.
+  "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`;
+  "muzzy", "muzzythegrump", "grump" or "kill diskette" to `muzzythegrump`
+  (each creator: its terms and hidden link in the script's `creators` list).
 - **kraska1** pages embed the minigames in `<iframe>`s from
   tinypetgames.neocities.org. The "devlink-userbase" link shows an "exiting to
   external website" popup first.
+- **muzzythegrump** is another archive creator, with an almost empty profile
+  and one game, **KILL DISKETTE** (`muzzythegrump: KILL DISKETTE`): Diskette
+  pops out of one of nine holes, shoot her (crosshair, gunshot) before she
+  drops back and she shatters (glass), the kill counter goes up and she gets
+  faster. Our own minigames live next to the game,
+  `src/building/skunkpets/minigames/<name>/index.html` (self-contained; sound
+  made with Web Audio), and the page embeds them with
+  `<iframe data-site-src="/building/skunkpets/minigames/<name>/">`
+  (`initSiteFrames` sets the src through `siteAsset`, so the preview loads its
+  own copy).
 - **devlink-userbase login** is plain HTML inputs with the checking done in
   the script (`DEVLINK-USERBASE — LOGIN + PASSWORD RECOVERY`). The right
   details are **bruce1 / thegoldwoman**. With the right username but wrong

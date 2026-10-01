@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="ddf54416c6c3">
+<meta name="skunkpets-build" content="12dd207450e3">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "ddf54416c6c3";
+  var mine = "12dd207450e3";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -2373,6 +2373,32 @@ span.xp-dialog-icon {
   color: #4da4ff;
 }
 
+/* muzzythegrump's (mostly empty) creator page */
+.gga-user {
+  padding: 6px 0 2px;
+  font: bold 22px "Courier New", Courier, monospace;
+  color: #ddd;
+}
+
+.gga-empty {
+  color: #555;
+  font-style: italic;
+}
+
+.gga-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 120px;
+  margin: 0 auto 4px;
+  border: 2px solid #400;
+  background: radial-gradient(ellipse at 50% 120%, #2b1d10, #000 70%);
+  color: #e01b1b;
+  font: 900 26px/1 Impact, "Arial Black", sans-serif;
+  text-shadow: 2px 2px 0 #400;
+}
+
 /* Forum threads */
 .forum-thread {
   margin: 10px 0;
@@ -3168,6 +3194,7 @@ function initDesktopUI() {
     initDesktopIcons(playfield);
     initBinIcons(playfield);
     initWinkiWebResult(playfield);
+    initSiteFrames(playfield);
     initNotes(playfield);
     restoreBrowserScroll(playfield);
     updateClock(playfield);
@@ -4686,11 +4713,17 @@ document.addEventListener("click", function (e) {
   const q = input.value.toLowerCase().trim();
   if (!q) return;
 
-  const terms = ["kraska", "kraska1", "bad door", "deal with the devil"];
-  if (terms.some(function (t) { return q === t || q.includes(t); })) {
-    const navSpan = document.querySelector(".gga-nav-hidden");
-    const navLink = navSpan && navSpan.querySelector("tw-link");
-    if (navLink) { navLink.click(); return; }
+  /* Each creator: the search terms that find them, and their hidden link. */
+  const creators = [
+    [["kraska", "kraska1", "bad door", "deal with the devil"], ".gga-nav-hidden"],
+    [["muzzy", "muzzythegrump", "kill diskette", "grump"], ".gga-nav-muzzy"],
+  ];
+  for (const [terms, nav] of creators) {
+    if (terms.some(function (t) { return q === t || q.includes(t); })) {
+      const navSpan = document.querySelector(nav);
+      const navLink = navSpan && navSpan.querySelector("tw-link");
+      if (navLink) { navLink.click(); return; }
+    }
   }
 
   const msg = document.querySelector('tw-hook[name="ggamsg"]');
@@ -4945,6 +4978,17 @@ function searchRealWikipedia(query, msg) {
       if (nav) nav.click();
     })
     .catch(miss);
+}
+
+/* Minigames hosted next to the game on leolion.com (e.g. KILL DISKETTE):
+   <iframe data-site-src="/building/skunkpets/minigames/..."> gets its src
+   through siteAsset, so the preview loads the preview's copy and the
+   tinypetgames copy loads leolion.com's. */
+function initSiteFrames(playfield) {
+  playfield.querySelectorAll("iframe[data-site-src]").forEach(function (frame) {
+    if (frame.getAttribute("src")) return;
+    frame.src = siteAsset(frame.dataset.siteSrc);
+  });
 }
 
 /* Called from initDesktopUI: point a freshly rendered result iframe at the
@@ -6918,6 +6962,7 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
 &lt;div class=&quot;gga-msg&quot;&gt;|gga-msg&gt;[]&lt;/div&gt;
 &lt;/div&gt;
 &lt;span class=&quot;gga-nav-hidden&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;kraska1&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
+&lt;span class=&quot;gga-nav-muzzy&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;muzzythegrump&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
 &lt;/div&gt;}</tw-passagedata><tw-passagedata pid="55" name="img-fanwikibar" tags="" position="725,725" size="100,100">[(print: &#39;&lt;img src=&quot;&#39; + $imgroot + &#39;ui/banner-fanwiki.jpg&quot; width=&quot;100%&quot;&gt;&#39;)]&lt;fanwikibar|
 (click: ?fanwikibar)[(set: $navPending to &quot;Skunkpets Fan Wiki&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata><tw-passagedata pid="56" name="img-gamesarch" tags="" position="850,725" size="100,100">(print: &quot;&lt;img src=&#39;&quot; + $imgroot + &quot;ui/banner-gamesarch.png&#39; width=&#39;100%&#39;&gt;&quot;)</tw-passagedata><tw-passagedata pid="57" name="img-kraskabar" tags="" position="975,725" size="100,100">(print: &quot;&lt;img src=&#39;&quot; + $imgroot + &quot;ui/banner-kraska1.png&#39; width=&#39;100%&#39;&gt;&quot;)</tw-passagedata><tw-passagedata pid="58" name="kraska1" tags="wiki gamesarchive" position="1100,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)
@@ -6936,7 +6981,31 @@ some games i made. hope you like them&#39;&#39;&lt;br&gt;&lt;/div&gt;\
 &lt;/tr&gt;&lt;table&gt;&lt;hr&gt;
 (text-style:&quot;underline&quot;)[&#39;&#39;AUTHOR NOTES:&#39;&#39;]&lt;br&gt;
 you can check out more of my work on (link-repeat: &quot;http://devlink-userbase.skunkpets.com/login&quot;)[(set: $dialog to &quot;You are exiting to external website&lt;br&gt;http://devlink-userbase.skunkpets.com/login.&lt;br&gt;Are you sure?&quot;)(set: $dialogTitle to &quot;Alert&quot;)(set: $dialogIcon to &quot;info&quot;)(set: $dialogOk to &quot;OK&quot;)(set: $dialogAction to &quot;devlink&quot;)(set: $dialogCancel to true)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="59" name="kraska1: BAD DOOR" tags="wiki gamesarchive" position="1225,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="59" name="muzzythegrump" tags="wiki gamesarchive" position="1350,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;div class=&quot;gga-user&quot;&gt;muzzythegrump&lt;/div&gt;\
+&lt;div width=&quot;100%&quot; style=&quot;text-align:center&quot;&gt;\
+(text-style:&quot;underline&quot;)[&#39;&#39;ABOUT ME&#39;&#39;]&lt;br&gt;\
+&lt;span class=&quot;gga-empty&quot;&gt;this user hasn&#39;t written anything yet.&lt;/span&gt;&lt;br&gt;&lt;/div&gt;\
+&lt;hr&gt;&lt;table class=&quot;library-grid&quot;&gt;\
+	&lt;tr&gt;&lt;td&gt;\
+    (link: &#39;&lt;div class=&quot;gga-tile&quot;&gt;KILL&lt;br&gt;DISKETTE&lt;/div&gt;KILL DISKETTE&#39;)[(set: $navPending to &quot;muzzythegrump: KILL DISKETTE&quot;)(display: &quot;func-navigate&quot;)]
+	&lt;/td&gt;
+	&lt;td&gt;&lt;/td&gt;
+	&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;&lt;table&gt;&lt;hr&gt;
+(text-style:&quot;underline&quot;)[&#39;&#39;AUTHOR NOTES:&#39;&#39;]&lt;br&gt;
+&lt;span class=&quot;gga-empty&quot;&gt;none.&lt;/span&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="60" name="muzzythegrump: KILL DISKETTE" tags="wiki gamesarchive" position="1475,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;div class=&quot;gga-user&quot;&gt;muzzythegrump&lt;/div&gt;&lt;hr&gt;\
+&lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
+  &lt;iframe
+    data-site-src=&quot;/building/skunkpets/minigames/kill-diskette/&quot;
+    style=&quot;width: 100%; height: 330px; border: none;&quot;
+    class=&quot;minigame-frame&quot;
+    title=&quot;KILL DISKETTE&quot;
+  &gt;&lt;/iframe&gt;
+&lt;/div&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="61" name="kraska1: BAD DOOR" tags="wiki gamesarchive" position="1225,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)&lt;hr&gt;\
 &lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
   &lt;iframe
@@ -6946,14 +7015,14 @@ you can check out more of my work on (link-repeat: &quot;http://devlink-userbase
     loading=&quot;lazy&quot;
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="60" name="kraska1: deal with the devil" tags="wiki gamesarchive" position="100,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="62" name="kraska1: deal with the devil" tags="wiki gamesarchive" position="100,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)\
 &lt;div class=&quot;minigame-devil-frame&quot;&gt;\
 	[(print: &#39;&lt;img class=&quot;minigame-devil-img&quot; src=&quot;&#39; + $imgroot + &#39;devil/devil1.png&quot;&gt;&#39;)]&lt;gamebg|
 	&lt;div class=&quot;minigame-devil-bar&quot;&gt;\
 deal with the devil
   &lt;/div&gt;
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="61" name="kraska1: riddles" tags="wiki gamesarchive" position="225,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="63" name="kraska1: riddles" tags="wiki gamesarchive" position="225,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)&lt;hr&gt;\
 &lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
   &lt;iframe
@@ -6963,12 +7032,12 @@ deal with the devil
     loading=&quot;lazy&quot;
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="62" name="sound-demo-end" tags="" position="350,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/1b40d647-0d6c-4432-a679-7240a6e51893/demo-end.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="63" name="sound-email" tags="" position="475,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/fac56ba7-9c8f-414f-ab78-2376193e1985/email.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="64" name="func-open" tags="" position="100,100" size="100,100">{(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="64" name="sound-demo-end" tags="" position="350,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/1b40d647-0d6c-4432-a679-7240a6e51893/demo-end.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="65" name="sound-email" tags="" position="475,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/fac56ba7-9c8f-414f-ab78-2376193e1985/email.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="66" name="func-open" tags="" position="100,100" size="100,100">{(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
 (if: $openPending is &quot;diskette&quot;)[(set: $disketteShown to true)(set: $disketteQuiet to false)(set: $disketteNotice to &quot;&quot;)]
 (set: $focusWin to $openPending)
 (set: $focusSeq to it + 1)
 (set: $startOpen to false)
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="65" name="func-dialog-ok" tags="" position="100,100" size="100,100">{(set: _action to $dialogAction)
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="67" name="func-dialog-ok" tags="" position="100,100" size="100,100">{(set: _action to $dialogAction)
 (set: $dialog to &quot;&quot;)
 (set: $dialogAction to &quot;&quot;)
 (if: _action is &quot;openmail&quot;)[
@@ -6984,7 +7053,7 @@ deal with the devil
   (display: &quot;func-navigate&quot;)
 ](else:)[
   (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="66" name="DesktopActions" tags="" position="100,100" size="100,100">&lt;div class=&quot;js-actions&quot; hidden&gt;
+]}</tw-passagedata><tw-passagedata pid="68" name="DesktopActions" tags="" position="100,100" size="100,100">&lt;div class=&quot;js-actions&quot; hidden&gt;
 (link-repeat: &quot;restore:browser&quot;)[(set: $restorePending to &quot;browser&quot;)(display: &quot;func-restore&quot;)]
 (link-repeat: &quot;restore:mail&quot;)[(set: $restorePending to &quot;mail&quot;)(display: &quot;func-restore&quot;)]
 (link-repeat: &quot;restore:notes&quot;)[(set: $restorePending to &quot;notes&quot;)(display: &quot;func-restore&quot;)]
@@ -7001,30 +7070,30 @@ deal with the devil
 (link-repeat: &quot;diskette:hide&quot;)[(display: &quot;func-diskette-hide&quot;)]
 (link-repeat: &quot;diskette:talk&quot;)[(set: $disketteQuiet to false)(set: $disketteTopic to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link-repeat: &quot;trash-hint&quot;)[(set: $dialog to &quot;This item is in the Trash. To use it, drag it out onto the desktop first.&quot;)(set: $dialogTitle to &quot;Trash&quot;)(set: $dialogIcon to &quot;info&quot;)(set: $dialogOk to &quot;OK&quot;)(set: $dialogAction to &quot;&quot;)(set: $dialogCancel to false)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="67" name="func-restore" tags="" position="100,100" size="100,100">{(set: $trashItems to it - (a: $restorePending))
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="69" name="func-restore" tags="" position="100,100" size="100,100">{(set: $trashItems to it - (a: $restorePending))
 (unless: $desktopItems contains $restorePending)[(set: $desktopItems to it + (a: $restorePending))]
 (if: $openWindows contains &quot;diskette&quot; and not $disketteShown and (a: &quot;browser&quot;, &quot;mail&quot;, &quot;notes&quot;, &quot;downloads&quot;) contains $restorePending)[(set: $disketteNotice to $restorePending)]
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="68" name="Winkipedia" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki&quot;&gt;
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="70" name="Winkipedia" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki&quot;&gt;
 &lt;div class=&quot;winki-logo&quot;&gt;&lt;div class=&quot;winki-name&quot;&gt;Winkipedia&lt;/div&gt;&lt;div class=&quot;winki-tag&quot;&gt;The Free Encyclopedia&lt;/div&gt;&lt;/div&gt;
 &lt;div class=&quot;winki-search&quot;&gt;&lt;input type=&quot;text&quot; id=&quot;winki-search-input&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot; placeholder=&quot;Search Winkipedia&quot;&gt;&lt;button type=&quot;button&quot; id=&quot;winki-search-btn&quot; class=&quot;xp-button&quot;&gt;Search&lt;/button&gt;&lt;/div&gt;
 &lt;div class=&quot;winki-msg&quot; id=&quot;winki-msg&quot;&gt;&lt;/div&gt;
 &lt;span class=&quot;winki-nav&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
 &lt;div class=&quot;winki-index&quot; hidden&gt;(display: &quot;WinkiIndex&quot;)&lt;/div&gt;
 &lt;span class=&quot;winki-web-nav&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;Winkipedia Search Result&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="69" name="Skunkpets.com" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;http-404&quot;&gt;
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="71" name="Skunkpets.com" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;http-404&quot;&gt;
 &lt;h1&gt;404 Not Found&lt;/h1&gt;
 &lt;p&gt;The page you are looking for no longer exists.&lt;/p&gt;
 &lt;p&gt;The requested URL http://www.skunkpets.com/ was not found on this server.&lt;/p&gt;
 &lt;hr&gt;
 &lt;address&gt;Apache/2.2.14 (Unix) Server at www.skunkpets.com Port 80&lt;/address&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="70" name="func-trash" tags="" position="100,100" size="100,100">{(set: $desktopItems to it - (a: $trashPending))
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="72" name="func-trash" tags="" position="100,100" size="100,100">{(set: $desktopItems to it - (a: $trashPending))
 (unless: $trashItems contains $trashPending)[(set: $trashItems to it + (a: $trashPending))]
 (set: $openWindows to it - (a: $trashPending))
 (if: $trashPending is &quot;diskette&quot;)[(set: $disketteShown to false)(set: $disketteNotice to &quot;&quot;)]
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="71" name="Winkipedia Search Result" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki-web&quot;&gt;
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="73" name="Winkipedia Search Result" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki-web&quot;&gt;
 &lt;div class=&quot;winki-web-bar&quot;&gt;&lt;span class=&quot;winki-web-brand&quot;&gt;Winkipedia&lt;/span&gt; &lt;span class=&quot;winki-web-title&quot; id=&quot;winki-web-title&quot;&gt;&lt;/span&gt;&lt;/div&gt;
 &lt;iframe class=&quot;winki-web-frame&quot; id=&quot;winki-web-frame&quot; sandbox=&quot;allow-scripts allow-same-origin allow-popups&quot; referrerpolicy=&quot;no-referrer&quot;&gt;&lt;/iframe&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="72" name="RenderDiskette" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-assistant&quot;&gt;
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="74" name="RenderDiskette" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-assistant&quot;&gt;
 (unless: $disketteQuiet)[&lt;div class=&quot;diskette-bubble&quot;&gt;
 |diskette-close&gt;[&lt;button class=&quot;diskette-close&quot; type=&quot;button&quot; aria-label=&quot;Close&quot; title=&quot;Close (she stays; click her to talk again)&quot;&gt;&amp;times;&lt;/button&gt;]
 (click: ?diskette-close)[(set: $disketteQuiet to true)(set: $disketteTopic to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
@@ -7043,12 +7112,12 @@ deal with the devil
 ]
 &lt;/div&gt;]
 &lt;div class=&quot;diskette-character&quot; title=&quot;Click me to talk. Drag from my eyes to show me something.&quot;&gt;&lt;div class=&quot;diskette-eyes&quot;&gt;&lt;div class=&quot;diskette-pupil diskette-pupil-l&quot;&gt;&lt;/div&gt;&lt;div class=&quot;diskette-pupil diskette-pupil-r&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;diskette-eye-hit diskette-eye-hit-l&quot; title=&quot;Drag from my eyes to show me something&quot;&gt;&lt;/div&gt;&lt;div class=&quot;diskette-eye-hit diskette-eye-hit-r&quot; title=&quot;Drag from my eyes to show me something&quot;&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="73" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.]
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="75" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.]
 (else-if: $disketteTopic is &quot;mail&quot;)[&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it.]
 (else-if: $disketteTopic is &quot;downloads&quot;)[&lt;b&gt;Downloads&lt;/b&gt; is a folder of files saved from the internet.]
 (else-if: $disketteTopic is &quot;notes&quot;)[&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember.]
 (else-if: $disketteTopic is &quot;recycle&quot;)[The &lt;b&gt;Trash&lt;/b&gt; holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
-(else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="74" name="DisketteLooks" tags="" position="100,100" size="100,100">&lt;!-- What Diskette says when you drag from her eyes onto something
+(else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="76" name="DisketteLooks" tags="" position="100,100" size="100,100">&lt;!-- What Diskette says when you drag from her eyes onto something
      (her &quot;inspecting&quot; mode; the script&#39;s DISKETTE INSPECTING reads
      this, it&#39;s never shown as a page). Plain HTML only: Harlowe
      markup and variables don&#39;t work here, but &lt;b&gt; and &lt;i&gt; do.
@@ -7116,7 +7185,7 @@ deal with the devil
 &lt;p data-look=&quot;dialog&quot; data-mood=&quot;wide&quot;&gt;Ooh, a message! You should probably read that.&lt;/p&gt;
 &lt;p data-look=&quot;desktop&quot; data-mood=&quot;wide&quot;&gt;Such beautiful green hills...&lt;/p&gt;
 &lt;p data-look=&quot;outside monitor&quot; data-mood=&quot;shake&quot;&gt;Hmm? I can&#39;t see anything out there.&lt;/p&gt;
-&lt;p data-look=&quot;anything&quot;&gt;Hmm! I&#39;m not sure what that is.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="75" name="GameEvents" tags="" position="100,100" size="100,100">&lt;!-- The events that matter, in story order: shown (with which have
+&lt;p data-look=&quot;anything&quot;&gt;Hmm! I&#39;m not sure what that is.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="77" name="GameEvents" tags="" position="100,100" size="100,100">&lt;!-- The events that matter, in story order: shown (with which have
      happened) in the preview Backend Editor&#39;s Events tab. Read by the
      editor, never shown in the game. See the script&#39;s EVENTS section
      for what marks them; a new one is marked from Harlowe with
@@ -7152,21 +7221,22 @@ deal with the devil
 &lt;p data-event=&quot;visited:globalgamesarchive.co.uk&quot; data-after=&quot;visited:Skunkpets&quot;&gt;Left Winkipedia for the Global Games Archive.&lt;/p&gt;
 &lt;p data-event=&quot;archive-search-missed&quot; data-after=&quot;visited:globalgamesarchive.co.uk&quot;&gt;Searched the archive and found nothing.&lt;/p&gt;
 &lt;p data-event=&quot;visited:kraska1&quot; data-after=&quot;visited:globalgamesarchive.co.uk, visited:Anya Krysina&quot;&gt;Found kraska1 on the archive.&lt;/p&gt;
+&lt;p data-event=&quot;visited:muzzythegrump&quot; data-after=&quot;visited:globalgamesarchive.co.uk&quot;&gt;Found muzzythegrump (KILL DISKETTE) on the archive.&lt;/p&gt;
 &lt;p data-event=&quot;visited:devlink-userbase: login&quot; data-after=&quot;visited:kraska1&quot;&gt;Reached the devlink-userbase login.&lt;/p&gt;
 &lt;p data-event=&quot;login-failed&quot; data-after=&quot;visited:devlink-userbase: login&quot;&gt;A wrong username or password.&lt;/p&gt;
 &lt;p data-event=&quot;password-hint&quot; data-after=&quot;login-failed&quot;&gt;Answered the security question: hint &quot;witchand&quot;.&lt;/p&gt;
 &lt;p data-event=&quot;visited:devlink-userbase: logged in&quot; data-after=&quot;visited:devlink-userbase: login, visited:Forum: Hacked&quot;&gt;Logged in as bruce1.&lt;/p&gt;
 &lt;p data-event=&quot;email-arrived&quot; data-after=&quot;visited:devlink-userbase: logged in&quot;&gt;The &quot;stop&quot; email arrived.&lt;/p&gt;
 &lt;p data-event=&quot;stop-mail-opened&quot; data-after=&quot;email-arrived&quot;&gt;Opened the &quot;stop&quot; email.&lt;/p&gt;
-&lt;p data-event=&quot;ending&quot; data-after=&quot;stop-mail-opened&quot;&gt;Clicked &quot;game over&quot;: the ending.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="76" name="func-diskette-hide" tags="" position="100,100" size="100,100">{(set: $disketteTopic to &quot;&quot;)
+&lt;p data-event=&quot;ending&quot; data-after=&quot;stop-mail-opened&quot;&gt;Clicked &quot;game over&quot;: the ending.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="78" name="func-diskette-hide" tags="" position="100,100" size="100,100">{(set: $disketteTopic to &quot;&quot;)
 (set: $disketteShown to false)
 (set: $disketteQuiet to false)
 (unless: $disketteToldTray)[(set: $disketteNotice to &quot;hello&quot;)(set: $disketteToldTray to true)]
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="77" name="func-diskette-show" tags="" position="100,100" size="100,100">{(set: $disketteShown to true)
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="79" name="func-diskette-show" tags="" position="100,100" size="100,100">{(set: $disketteShown to true)
 (set: $disketteQuiet to false)
 (if: $disketteNotice is not &quot;&quot; and $disketteNotice is not &quot;hello&quot;)[(set: $disketteTopic to $disketteNotice)](else:)[(set: $disketteTopic to &quot;&quot;)]
 (set: $disketteNotice to &quot;&quot;)
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="78" name="RenderDisketteBalloon" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-balloon&quot;&gt;
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="80" name="RenderDisketteBalloon" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-balloon&quot;&gt;
 |balloon-close&gt;[&lt;button class=&quot;diskette-balloon-close&quot; type=&quot;button&quot; aria-label=&quot;Close&quot;&gt;&amp;times;&lt;/button&gt;]
 (click: ?balloon-close)[(set: $disketteNotice to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 |balloon-body&gt;[&lt;div class=&quot;diskette-balloon-title&quot;&gt;&lt;span class=&quot;diskette-icon diskette-icon-balloon&quot;&gt;&lt;/span&gt;Diskette&lt;/div&gt;
@@ -7177,7 +7247,7 @@ deal with the devil
 (else-if: $disketteNotice is &quot;downloads&quot;)[&lt;p&gt;Psst! I can tell you about &lt;b&gt;Downloads&lt;/b&gt;.&lt;/p&gt;]
 (else:)[&lt;p&gt;Psst! Click me!&lt;/p&gt;]]
 (click: ?balloon-body)[(display: &quot;func-diskette-show&quot;)]
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="79" name="RenderNetconTicket" tags="" position="100,100" size="100,100">{&lt;div class=&quot;netcon-ticket&quot;&gt;
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="81" name="RenderNetconTicket" tags="" position="100,100" size="100,100">{&lt;div class=&quot;netcon-ticket&quot;&gt;
 &lt;div class=&quot;netcon-banner&quot;&gt;
 &lt;div class=&quot;netcon-logo&quot;&gt;
 &lt;div class=&quot;netcon-logo-city&quot;&gt;ROSEMONT&lt;/div&gt;
@@ -7201,7 +7271,7 @@ deal with the devil
 &lt;p&gt;Thank you for your support!&lt;/p&gt;
 &lt;p&gt;NetCon&lt;/p&gt;
 &lt;/div&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="80" name="WinkiIndex" tags="" position="100,100" size="100,100">(link-repeat: &quot;Anya Krysina&quot;)[(set: $navPending to &quot;Anya Krysina&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Battlemutts&quot;)[(set: $navPending to &quot;Battlemutts&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Nick Galveston&quot;)[(set: $navPending to &quot;Nick Galveston&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tales of Prior Days&quot;)[(set: $navPending to &quot;Tales of Prior Days&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata></tw-storydata>
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="82" name="WinkiIndex" tags="" position="100,100" size="100,100">(link-repeat: &quot;Anya Krysina&quot;)[(set: $navPending to &quot;Anya Krysina&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Battlemutts&quot;)[(set: $navPending to &quot;Battlemutts&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Nick Galveston&quot;)[(set: $navPending to &quot;Nick Galveston&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tales of Prior Days&quot;)[(set: $navPending to &quot;Tales of Prior Days&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata></tw-storydata>
 
 <script title="Twine engine code" data-main="harlowe">"use strict";function _defineProperty(e,t,n){return t in e?Object.defineProperty(e,t,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[t]=n,e}function _toConsumableArray(e){if(Array.isArray(e)){for(var t=0,n=Array(e.length);t<e.length;t++)n[t]=e[t];return n}return Array.from(e)}var _slicedToArray=function(){function e(e,t){var n=[],r=!0,i=!1,o=void 0;try{for(var a,s=e[Symbol.iterator]();!(r=(a=s.next()).done)&&(n.push(a.value),!t||n.length!==t);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&s.return&&s.return()}finally{if(i)throw o}}return n}return function(t,n){if(Array.isArray(t))return t;if(Symbol.iterator in Object(t))return e(t,n);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),_typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};!function(){/**
  * @license almond 0.3.3 Copyright jQuery Foundation and other contributors.

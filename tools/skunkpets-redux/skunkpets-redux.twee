@@ -2346,6 +2346,32 @@ span.xp-dialog-icon {
   color: #4da4ff;
 }
 
+/* muzzythegrump's (mostly empty) creator page */
+.gga-user {
+  padding: 6px 0 2px;
+  font: bold 22px "Courier New", Courier, monospace;
+  color: #ddd;
+}
+
+.gga-empty {
+  color: #555;
+  font-style: italic;
+}
+
+.gga-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 120px;
+  margin: 0 auto 4px;
+  border: 2px solid #400;
+  background: radial-gradient(ellipse at 50% 120%, #2b1d10, #000 70%);
+  color: #e01b1b;
+  font: 900 26px/1 Impact, "Arial Black", sans-serif;
+  text-shadow: 2px 2px 0 #400;
+}
+
 /* Forum threads */
 .forum-thread {
   margin: 10px 0;
@@ -3135,6 +3161,7 @@ function initDesktopUI() {
     initDesktopIcons(playfield);
     initBinIcons(playfield);
     initWinkiWebResult(playfield);
+    initSiteFrames(playfield);
     initNotes(playfield);
     restoreBrowserScroll(playfield);
     updateClock(playfield);
@@ -4653,11 +4680,17 @@ document.addEventListener("click", function (e) {
   const q = input.value.toLowerCase().trim();
   if (!q) return;
 
-  const terms = ["kraska", "kraska1", "bad door", "deal with the devil"];
-  if (terms.some(function (t) { return q === t || q.includes(t); })) {
-    const navSpan = document.querySelector(".gga-nav-hidden");
-    const navLink = navSpan && navSpan.querySelector("tw-link");
-    if (navLink) { navLink.click(); return; }
+  /* Each creator: the search terms that find them, and their hidden link. */
+  const creators = [
+    [["kraska", "kraska1", "bad door", "deal with the devil"], ".gga-nav-hidden"],
+    [["muzzy", "muzzythegrump", "kill diskette", "grump"], ".gga-nav-muzzy"],
+  ];
+  for (const [terms, nav] of creators) {
+    if (terms.some(function (t) { return q === t || q.includes(t); })) {
+      const navSpan = document.querySelector(nav);
+      const navLink = navSpan && navSpan.querySelector("tw-link");
+      if (navLink) { navLink.click(); return; }
+    }
   }
 
   const msg = document.querySelector('tw-hook[name="ggamsg"]');
@@ -4912,6 +4945,17 @@ function searchRealWikipedia(query, msg) {
       if (nav) nav.click();
     })
     .catch(miss);
+}
+
+/* Minigames hosted next to the game on leolion.com (e.g. KILL DISKETTE):
+   <iframe data-site-src="/building/skunkpets/minigames/..."> gets its src
+   through siteAsset, so the preview loads the preview's copy and the
+   tinypetgames copy loads leolion.com's. */
+function initSiteFrames(playfield) {
+  playfield.querySelectorAll("iframe[data-site-src]").forEach(function (frame) {
+    if (frame.getAttribute("src")) return;
+    frame.src = siteAsset(frame.dataset.siteSrc);
+  });
 }
 
 /* Called from initDesktopUI: point a freshly rendered result iframe at the
@@ -7047,6 +7091,7 @@ Star button to bookmark a page.
 <div class="gga-msg">|gga-msg>[]</div>
 </div>
 <span class="gga-nav-hidden" style="display:none">(link: "·")[(set: $navPending to "kraska1")(display: "func-navigate")]</span>
+<span class="gga-nav-muzzy" style="display:none">(link: "·")[(set: $navPending to "muzzythegrump")(display: "func-navigate")]</span>
 </div>}
 
 :: img-fanwikibar {"position":"725,725","size":"100,100"}
@@ -7077,6 +7122,36 @@ some games i made. hope you like them''<br></div>\
 </tr><table><hr>
 (text-style:"underline")[''AUTHOR NOTES:'']<br>
 you can check out more of my work on (link-repeat: "http://devlink-userbase.skunkpets.com/login")[(set: $dialog to "You are exiting to external website<br>http://devlink-userbase.skunkpets.com/login.<br>Are you sure?")(set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "devlink")(set: $dialogCancel to true)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+</div>
+
+:: muzzythegrump [wiki gamesarchive] {"position":"1350,725","size":"100,100"}
+<div class="wiki-gamesarchive">\
+<div class="gga-user">muzzythegrump</div>\
+<div width="100%" style="text-align:center">\
+(text-style:"underline")[''ABOUT ME'']<br>\
+<span class="gga-empty">this user hasn't written anything yet.</span><br></div>\
+<hr><table class="library-grid">\
+	<tr><td>\
+    (link: '<div class="gga-tile">KILL<br>DISKETTE</div>KILL DISKETTE')[(set: $navPending to "muzzythegrump: KILL DISKETTE")(display: "func-navigate")]
+	</td>
+	<td></td>
+	<td></td>
+</tr><table><hr>
+(text-style:"underline")[''AUTHOR NOTES:'']<br>
+<span class="gga-empty">none.</span>
+</div>
+
+:: muzzythegrump: KILL DISKETTE [wiki gamesarchive] {"position":"1475,725","size":"100,100"}
+<div class="wiki-gamesarchive">\
+<div class="gga-user">muzzythegrump</div><hr>\
+<div style="width: 100%; height: 330px; background: black;">\
+  <iframe
+    data-site-src="/building/skunkpets/minigames/kill-diskette/"
+    style="width: 100%; height: 330px; border: none;"
+    class="minigame-frame"
+    title="KILL DISKETTE"
+  ></iframe>
+</div>\
 </div>
 
 :: kraska1: BAD DOOR [wiki gamesarchive] {"position":"1225,725","size":"100,100"}
@@ -7344,6 +7419,7 @@ deal with the devil
 <p data-event="visited:globalgamesarchive.co.uk" data-after="visited:Skunkpets">Left Winkipedia for the Global Games Archive.</p>
 <p data-event="archive-search-missed" data-after="visited:globalgamesarchive.co.uk">Searched the archive and found nothing.</p>
 <p data-event="visited:kraska1" data-after="visited:globalgamesarchive.co.uk, visited:Anya Krysina">Found kraska1 on the archive.</p>
+<p data-event="visited:muzzythegrump" data-after="visited:globalgamesarchive.co.uk">Found muzzythegrump (KILL DISKETTE) on the archive.</p>
 <p data-event="visited:devlink-userbase: login" data-after="visited:kraska1">Reached the devlink-userbase login.</p>
 <p data-event="login-failed" data-after="visited:devlink-userbase: login">A wrong username or password.</p>
 <p data-event="password-hint" data-after="login-failed">Answered the security question: hint "witchand".</p>

@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>KILL DISKETTE</title>
+<!--
+  KILL DISKETTE, by "muzzythegrump" (a Global Games Archive creator in
+  Skunkpets Redux). Embedded in the game's "muzzythegrump: KILL DISKETTE"
+  page by an iframe; also works on its own.
+
+  Diskette pops up out of one of nine holes and drops back down. Click her
+  while she's up: she shatters and the kill counter goes up. The more kills,
+  the shorter she stays up and the sooner she pops up again.
+  The gunshot and the glass are made with Web Audio (no sound files).
+-->
+<style>
+  :root {
+    --bg: #000;
+    --ink: #e8e8e8;
+    --red: #e01b1b;
+    --dirt: #3a2a1a;
+    --hole: #050302;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: bold 14px/1.2 "Courier New", Courier, monospace;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #game {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse at 50% 120%, #2b1d10 0%, #120c06 55%, #000 100%);
+    cursor: none;
+    touch-action: manipulation;
+  }
+  #game.shake { animation: shake 0.12s linear; }
+  @keyframes shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-3px, 2px); }
+    50% { transform: translate(3px, -2px); }
+    75% { transform: translate(-2px, -1px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  /* The kill counter */
+  #hud {
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    right: 10px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    text-shadow: 2px 2px 0 #000;
+  }
+  #kills { color: var(--red); font-size: 20px; letter-spacing: 1px; }
+  #kills.bump { animation: bump 0.25s ease-out; }
+  @keyframes bump { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+  #title-small { color: #777; font-size: 11px; align-self: center; }
+
+  /* The nine holes */
+  #field {
+    position: absolute;
+    left: 50%;
+    top: 34px;
+    bottom: 6px;
+    width: min(96%, calc((100vh - 40px) * 1.6));
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+  .cell { position: relative; }
+  /* the hole: a dark ellipse with a rim, at the bottom of each cell */
+  .hole, .lip {
+    position: absolute;
+    left: 50%;
+    bottom: 6%;
+    width: 62%;
+    height: 22%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+  }
+  .hole {
+    background: radial-gradient(ellipse at 50% 40%, #000 55%, var(--hole) 70%, #4a3520 100%);
+    box-shadow: 0 3px 0 #1c140b;
+  }
+  /* the front half of the rim, drawn over her so she comes out of it */
+  .lip {
+    z-index: 3;
+    clip-path: inset(50% 0 0 0);
+    border: 3px solid #5a4128;
+    border-top-color: transparent;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+  /* her window: she slides up into it from below the hole's middle */
+  .pop {
+    position: absolute;
+    left: 50%;
+    bottom: 17%;
+    width: 46%;
+    height: 120%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .dk {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    background: url("diskette.png") center bottom / contain no-repeat;
+    transform: translateY(105%);
+    transition: transform 0.12s ease-in;
+  }
+  .dk.up {
+    transform: translateY(8%);
+    transition: transform 0.1s ease-out;
+    pointer-events: auto;
+  }
+  .dk.dead { visibility: hidden; transition: none; }
+
+  /* glass shards when she's hit */
+  .shard {
+    position: absolute;
+    z-index: 10;
+    background: url("diskette.png") no-repeat;
+    pointer-events: none;
+    animation: fly 0.7s cubic-bezier(.2, .6, .4, 1) forwards;
+  }
+  @keyframes fly {
+    to {
+      transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+      opacity: 0;
+    }
+  }
+
+  /* muzzle flash where you shoot */
+  .flash {
+    position: absolute;
+    z-index: 15;
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, #ffd23a 35%, rgba(255, 120, 0, 0.6) 55%, rgba(255, 60, 0, 0) 72%);
+    pointer-events: none;
+    animation: flash 0.09s linear forwards;
+  }
+  @keyframes flash { to { transform: scale(1.6); opacity: 0; } }
+
+  /* the crosshair */
+  #xhair {
+    position: absolute;
+    z-index: 30;
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+    pointer-events: none;
+    display: none;
+  }
+  #xhair::before, #xhair::after {
+    content: "";
+    position: absolute;
+    background: var(--red);
+    box-shadow: 0 0 0 1px #000;
+  }
+  #xhair::before { left: 17px; top: 0; width: 2px; height: 36px; }
+  #xhair::after { top: 17px; left: 0; height: 2px; width: 36px; }
+  #xhair span {
+    position: absolute;
+    inset: 6px;
+    border: 2px solid var(--red);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  }
+
+  /* title screen */
+  #start {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.82);
+    text-align: center;
+  }
+  #start h1 {
+    margin: 0;
+    color: var(--red);
+    font: 900 clamp(28px, 9vw, 56px)/1 Impact, "Arial Black", sans-serif;
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 0 #400, 0 0 12px rgba(224, 27, 27, 0.5);
+  }
+  #start p { margin: 0; color: #bbb; }
+  #start .blink { color: #fff; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  #start .by { color: #666; font-size: 11px; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div id="kills">KILLS: 0</div>
+    <div id="title-small">KILL DISKETTE</div>
+  </div>
+  <div id="field"></div>
+  <div id="xhair"><span></span></div>
+  <div id="start">
+    <h1>KILL DISKETTE</h1>
+    <p>she won't stop popping up. make her stop.</p>
+    <p class="blink">CLICK TO START</p>
+    <p class="by">a game by muzzythegrump</p>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  const game = document.getElementById("game");
+  const field = document.getElementById("field");
+  const killsEl = document.getElementById("kills");
+  const xhair = document.getElementById("xhair");
+  const start = document.getElementById("start");
+
+  /* ---------- The nine holes ---------- */
+
+  const holes = [];
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="hole"></div><div class="pop"><div class="dk"></div></div><div class="lip"></div>';
+    field.appendChild(cell);
+    holes.push(cell.querySelector(".dk"));
+  }
+
+  /* ---------- Timing ---------- */
+
+  let kills = 0;
+  let running = false;
+  let current = null;      /* the Diskette that's up, or null */
+  let last = -1;           /* which hole she used last */
+  let downTimer = 0;
+  let nextTimer = 0;
+
+  /* She speeds up with every kill: shorter up, shorter wait. */
+  const upTime = () => Math.max(360, 1300 * Math.pow(0.93, kills));
+  const gapTime = () => Math.max(140, (450 + Math.random() * 500) * Math.pow(0.93, kills));
+
+  function popUp() {
+    if (!running) return;
+    let i;
+    do { i = Math.floor(Math.random() * 9); } while (i === last);
+    last = i;
+    current = holes[i];
+    current.classList.remove("dead");
+    current.classList.add("up");
+    clearTimeout(downTimer);
+    downTimer = setTimeout(popDown, upTime());
+  }
+
+  function popDown() {
+    if (current) current.classList.remove("up");
+    current = null;
+    clearTimeout(nextTimer);
+    nextTimer = setTimeout(popUp, gapTime());
+  }
+
+  /* ---------- Shooting ---------- */
+
+  function shoot(x, y, target) {
+    gunshot();
+    const r = game.getBoundingClientRect();
+    const f = document.createElement("div");
+    f.className = "flash";
+    f.style.left = x - r.left + "px";
+    f.style.top = y - r.top + "px";
+    game.appendChild(f);
+    setTimeout(() => f.remove(), 150);
+    game.classList.remove("shake");
+    void game.offsetWidth;
+    game.classList.add("shake");
+
+    const hit = target && target.closest && target.closest(".dk.up");
+    if (hit && hit === current) kill(hit);
+  }
+
+  function kill(dk) {
+    clearTimeout(downTimer);
+    shatter(dk);
+    glass();
+    dk.classList.remove("up");
+    dk.classList.add("dead");
+    current = null;
+    kills++;
+    killsEl.textContent = "KILLS: " + kills;
+    killsEl.classList.remove("bump");
+    void killsEl.offsetWidth;
+    killsEl.classList.add("bump");
+    clearTimeout(nextTimer);
+    nextTimer = setTimeout(popUp, gapTime());
+  }
+
+  /* Breaks her picture into triangles that fly apart. */
+  function shatter(dk) {
+    const g = game.getBoundingClientRect();
+    const b = dk.getBoundingClientRect();
+    /* where the picture actually sits inside the element (contain, bottom) */
+    const ratio = 260 / 341;
+    let w = b.width;
+    let h = w / ratio;
+    if (h > b.height) { h = b.height; w = h * ratio; }
+    const left = b.left - g.left + (b.width - w) / 2;
+    const top = b.top - g.top + (b.height - h);
+    const cx = 0.45 + Math.random() * 0.1;
+    const cy = 0.4 + Math.random() * 0.1;
+    const rim = [];
+    const n = 11;
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + Math.random() * 0.3;
+      rim.push([0.5 + Math.cos(a) * 0.75, 0.5 + Math.sin(a) * 0.75]);
+    }
+    for (let k = 0; k < n; k++) {
+      const p1 = rim[k];
+      const p2 = rim[(k + 1) % n];
+      const s = document.createElement("div");
+      s.className = "shard";
+      s.style.left = left + "px";
+      s.style.top = top + "px";
+      s.style.width = w + "px";
+      s.style.height = h + "px";
+      s.style.backgroundSize = w + "px " + h + "px";
+      const pct = (p) => (p[0] * 100).toFixed(1) + "% " + (p[1] * 100).toFixed(1) + "%";
+      s.style.clipPath = "polygon(" + pct([cx, cy]) + ", " + pct(p1) + ", " + pct(p2) + ")";
+      const mx = (p1[0] + p2[0]) / 2 - cx;
+      const my = (p1[1] + p2[1]) / 2 - cy;
+      const push = 60 + Math.random() * 90;
+      s.style.setProperty("--dx", (mx * push * 2).toFixed(0) + "px");
+      s.style.setProperty("--dy", (my * push * 2 + 40 + Math.random() * 60).toFixed(0) + "px");
+      s.style.setProperty("--rot", ((Math.random() - 0.5) * 220).toFixed(0) + "deg");
+      game.appendChild(s);
+      setTimeout(() => s.remove(), 800);
+    }
+  }
+
+  /* ---------- Sound (Web Audio, made on the spot) ---------- */
+
+  let ac = null;
+  function audio() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) ac = new AC();
+    }
+    if (ac && ac.state === "suspended") ac.resume();
+    return ac;
+  }
+
+  function noiseBuffer(seconds) {
+    const len = Math.floor(ac.sampleRate * seconds);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function gunshot() {
+    if (!audio()) return;
+    const t = ac.currentTime;
+    /* the crack */
+    const n = ac.createBufferSource();
+    n.buffer = noiseBuffer(0.4);
+    const lp = ac.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(5000, t);
+    lp.frequency.exponentialRampToValueAtTime(400, t + 0.25);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.9, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    n.connect(lp).connect(g).connect(ac.destination);
+    n.start(t);
+    n.stop(t + 0.4);
+    /* the thump */
+    const o = ac.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+    const og = ac.createGain();
+    og.gain.setValueAtTime(0.8, t);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    o.connect(og).connect(ac.destination);
+    o.start(t);
+    o.stop(t + 0.2);
+  }
+
+  function glass() {
+    if (!audio()) return;
+    const t = ac.currentTime + 0.02;
+    /* the smash */
+    const n = ac.createBufferSource();
+    n.buffer = noiseBuffer(0.6);
+    const hp = ac.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 2500;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    n.connect(hp).connect(g).connect(ac.destination);
+    n.start(t);
+    n.stop(t + 0.6);
+    /* the tinkles */
+    for (let i = 0; i < 9; i++) {
+      const at = t + Math.random() * 0.35;
+      const o = ac.createOscillator();
+      o.type = "sine";
+      o.frequency.value = 2200 + Math.random() * 4500;
+      const og = ac.createGain();
+      og.gain.setValueAtTime(0.0001, at);
+      og.gain.exponentialRampToValueAtTime(0.12 + Math.random() * 0.1, at + 0.005);
+      og.gain.exponentialRampToValueAtTime(0.0001, at + 0.15 + Math.random() * 0.35);
+      o.connect(og).connect(ac.destination);
+      o.start(at);
+      o.stop(at + 0.6);
+    }
+  }
+
+  /* ---------- Input ---------- */
+
+  function moveCrosshair(x, y) {
+    const r = game.getBoundingClientRect();
+    xhair.style.display = "block";
+    xhair.style.left = x - r.left + "px";
+    xhair.style.top = y - r.top + "px";
+  }
+
+  game.addEventListener("pointermove", (e) => moveCrosshair(e.clientX, e.clientY));
+  game.addEventListener("pointerleave", () => { xhair.style.display = "none"; });
+  game.addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    moveCrosshair(e.clientX, e.clientY);
+    if (!running) {
+      audio();
+      running = true;
+      start.style.display = "none";
+      nextTimer = setTimeout(popUp, 700);
+      return;
+    }
+    shoot(e.clientX, e.clientY, document.elementFromPoint(e.clientX, e.clientY));
+  });
+
+  /* For tests: window.killDiskette.state() */
+  window.killDiskette = { state: () => ({ kills: kills, running: running, up: current ? holes.indexOf(current) : -1, upTime: upTime() }) };
+})();
+</script>
+</body>
+</html>
