@@ -658,7 +658,7 @@
       const body = (await res.text()).slice(0, 200);
       let text = "GitHub said " + res.status + " for " + path + ": " + body;
       if (res.status === 401) {
-        text = "GitHub didn't accept the token (it may have expired or been mistyped). Paste a new one under GitHub access.";
+        text = "GitHub didn't accept the token (it may have expired or been mistyped). Paste a new one under GitHub (top of the panel).";
       } else if (res.status === 403 && (options.method || "GET") !== "GET") {
         text = "Your token can read the repository but isn't allowed to change it. On GitHub, open the token " +
           "(Settings → Developer settings → Fine-grained tokens), and under Permissions set " +
@@ -948,7 +948,6 @@
     const missing = el("div", { class: "ske-missing" });
     const tool = (label, tip, fn) => el("button", { type: "button", title: tip, text: label, onclick: fn });
     const fileInput = el("input", { type: "file", accept: "image/*", class: "ske-file", onchange: onPhotoChosen });
-    const tokenInput = el("input", { type: "password", class: "ske-token-input", placeholder: "github_pat_...", autocomplete: "off" });
     const commentsTitle = el("summary", { text: "Comments" });
     const commentList = el("div", { class: "ske-comment-list" });
     const commentOthers = el("div", { class: "ske-others" });
@@ -995,22 +994,14 @@
           commentOthers,
         ]),
       ]),
-      el("details", { class: "ske-help ske-github" }, [
-        el("summary", { text: "GitHub access" }),
-        el("p", { text: "Saving commits to " + REPO + " (branch " + (BRANCH || "?") + "). It needs a fine-grained token with " +
-          "Contents: Read and write on that one repository. It's kept only in this browser." }),
-        el("a", { href: "https://github.com/settings/personal-access-tokens/new", target: "_blank", rel: "noopener", text: "Make a token on GitHub" }),
-        el("div", { class: "ske-token-row" }, [
-          tokenInput,
-          el("button", { type: "button", text: "Use", onclick: () => { local.set(TOKEN_KEY, tokenInput.value.trim()); tokenInput.value = ""; refresh(); loadComments(); loadHistory(true); } }),
-          el("button", { type: "button", text: "Forget", onclick: () => { local.set(TOKEN_KEY, ""); comments = []; commentsLoaded = false; refresh(); commentsChanged(); } }),
-        ]),
-      ]),
     ]);
     const panel = el("div", { class: "ske-panel" }, [
       el("div", { class: "ske-head" }, [
         el("b", { text: "Winkipedia editor" }),
-        el("button", { type: "button", class: "ske-close", title: "Close the editor", text: "×", onclick: () => setOpen(false) }),
+        el("span", { class: "ske-head-tools" }, [
+          el("button", { type: "button", class: "ske-github-btn", title: "GitHub access (needed to save and comment)", text: "GitHub", onclick: () => openGithubDialog() }),
+          el("button", { type: "button", class: "ske-close", title: "Close the editor", text: "×", onclick: () => setOpen(false) }),
+        ]),
       ]),
       el("div", { class: "ske-tabs" }, [
         tabButton("article", "Article"),
@@ -1033,6 +1024,31 @@
     ui = { toggle, panel, title, lastEdit, status, pending, missing, commentsTitle, commentList, commentOthers, commentStatus, commentInput, quoteHint, disketteTab, statusTab };
     view = makeEditor(editorBox);
     setTab(store.data.tab);
+  }
+
+  /* GitHub access, in a popup: the token that lets this browser save. */
+  function openGithubDialog() {
+    const tokenInput = el("input", { type: "password", class: "ske-input ske-token-input", placeholder: "github_pat_...", autocomplete: "off" });
+    const has = !!getToken();
+    openModal("GitHub access", [
+      el("div", { class: has ? "ske-status ske-ok" : "ske-status", text: has ? "This browser has a token: saving and comments work." : "No token yet: saving and comments need one." }),
+      el("div", { class: "ske-help-text", text: "Saving commits to " + REPO + " (branch " + (BRANCH || "?") + "). It needs a fine-grained token with Contents: Read and write on that one repository. It's kept only in this browser." }),
+      el("a", { href: "https://github.com/settings/personal-access-tokens/new", target: "_blank", rel: "noopener", text: "Make a token on GitHub ↗" }),
+      el("label", { class: "ske-field" }, [el("span", { text: has ? "Replace it" : "Paste it here" }), tokenInput]),
+    ], [
+      el("button", { type: "button", class: "ske-save", text: "Use this token", onclick: function () {
+        if (!tokenInput.value.trim()) { tokenInput.focus(); return; }
+        local.set(TOKEN_KEY, tokenInput.value.trim());
+        closeModal(); refresh(); loadComments(); loadHistory(true);
+        say("Token saved in this browser.", "ok");
+      } }),
+      has ? el("button", { type: "button", text: "Forget it", onclick: function () {
+        local.set(TOKEN_KEY, ""); comments = []; commentsLoaded = false;
+        closeModal(); refresh(); commentsChanged();
+      } }) : null,
+      el("button", { type: "button", text: "Close", onclick: closeModal }),
+    ].filter(Boolean));
+    tokenInput.focus();
   }
 
   function setTab(id) {
@@ -1071,7 +1087,7 @@
     const lines = [];
     if (drafts.length || photos.length) lines.push("Not saved yet: " + drafts.map((n) => (isNewPage(n) ? n + " (new)" : n)).concat(photos.map((f) => "photo " + f)).join(", "));
     if (saved.length) lines.push("Saved, waiting for the preview to rebuild: " + saved.join(", "));
-    if (!getToken()) lines.push("Add a GitHub token under “GitHub access” to be able to save.");
+    if (!getToken()) lines.push("Add a GitHub token (GitHub, top of the panel) to be able to save.");
     ui.pending.textContent = lines.join("\n");
   }
 
@@ -1290,8 +1306,8 @@
 
   async function doSave(names, photos) {
     if (!getToken()) {
-      ui.panel.querySelector(".ske-github").open = true;
-      say("Add a GitHub token first (under GitHub access).", "error");
+      openGithubDialog();
+      say("Add a GitHub token first.", "error");
       return;
     }
     if (!BRANCH) { say("This preview doesn't know which branch it came from.", "error"); return; }
@@ -1366,7 +1382,7 @@
     ui.commentList.textContent = "";
     ui.commentOthers.textContent = "";
     if (!getToken()) {
-      ui.commentStatus.textContent = "Add a GitHub token (under GitHub access) to see and leave comments.";
+      ui.commentStatus.textContent = "Add a GitHub token (GitHub, top of the panel) to see and leave comments.";
       return;
     }
     if (!commentsLoaded) { ui.commentStatus.textContent = "Loading comments…"; return; }
@@ -1472,7 +1488,7 @@
   function postComment(text, extra) {
     text = (text || "").trim();
     if (!text || !shownPage) return;
-    if (!getToken()) { ui.commentStatus.textContent = "Add a GitHub token first (under GitHub access)."; return; }
+    if (!getToken()) { ui.commentStatus.textContent = "Add a GitHub token first (GitHub, top of the panel)."; return; }
     const name = ensureName();
     if (!name) return;
     const r = selection();

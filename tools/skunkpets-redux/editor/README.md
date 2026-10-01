@@ -86,14 +86,14 @@ has happened in this playthrough so far: ✓ happened, → next, ○ not yet,
 ⚠ out of order, and everything else that happened (pages visited, windows
 opened). Tick or untick one to fake it while testing (NEW GAME undoes it).
 
-**GitHub access (once per browser).** Saving needs a fine-grained personal
+**GitHub access (once per browser), from the GitHub button at the top of the panel.** Saving needs a fine-grained personal
 access token: GitHub → Settings → Developer settings → Fine-grained tokens →
 Generate new token; Repository access: *Only select repositories* →
 `whosleolion/leolion.com`; Permissions → Repository permissions → add
 *Contents* and switch its dropdown from *Read-only* (the default) to
 *Read and write*. A read-only token gets as far as "Saving…" and then fails;
 you can fix it by editing the token's permissions on GitHub, no need to make a
-new one. Paste it under **GitHub access** in the panel. It's stored only in this
+new one. Paste it in the **GitHub** popup (the button at the top of the panel). It's stored only in this
 browser's localStorage for leolion.com; **Forget** removes it.
 
 **Comments.** Select words in the text, write a note under **Comments on

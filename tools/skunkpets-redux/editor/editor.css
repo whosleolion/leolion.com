@@ -1025,3 +1025,28 @@ body.ske-picking .browser-page-content * {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Article tab scrolls instead of sliding under the save footer; its
+   markup box keeps a usable height. */
+.ske-tab-article {
+  overflow-y: auto;
+}
+
+.ske-tab-article .ske-cm {
+  flex: 1 0 260px;
+}
+
+.ske-head-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ske-panel .ske-github-btn {
+  padding: 1px 7px;
+  font-size: 11px;
+}
+
+.ske-modal .ske-token-input {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
