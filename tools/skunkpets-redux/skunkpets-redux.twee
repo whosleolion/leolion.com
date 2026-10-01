@@ -7130,7 +7130,7 @@ you can check out more of my work on (link-repeat: "http://devlink-userbase.skun
 <span class="gga-empty">this user hasn't written anything yet.</span><br></div>\
 <hr><table class="library-grid">\
 	<tr><td>\
-    (link: '<div class="gga-tile gga-tile-killdiskette" role="img" aria-label="KILL DISKETTE"></div>KILL DISKETTE')[(set: $navPending to "muzzythegrump: KILL DISKETTE")(display: "func-navigate")]
+<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="Uhhh...">    (link: '<div class="gga-tile gga-tile-killdiskette" role="img" aria-label="KILL DISKETTE"></div>KILL DISKETTE')[(set: $navPending to "muzzythegrump: KILL DISKETTE")(display: "func-navigate")]</span>
 	</td>
 	<td></td>
 	<td></td>
