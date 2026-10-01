@@ -5523,11 +5523,11 @@ The official release of the game was slated for July 2009, but the project enter
 :: Diskette [wiki article] {"position":"725,100","size":"100,100"}
 <div class="wiki-article">\
 <h1>Diskette //(virtual assistant)//</h1>\
-<span class="diskette-page" data-say="Hey, that's my page!"></span>Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
+Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
 
 <div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
-However, Diskette's Install CD was only in distribution for 6 months, after which she was <span class="diskette-zone" data-radius="10" data-mood="shake" data-say="Such an ugly word.">decommissioned</span>. Popular theories have circulated online that Diskette was shut off after she '<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="">attained sentience</span>,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned. Popular theories have circulated online that Diskette was shut off after she 'attained sentience,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
 
 <h2>"The Diskette Confession"</h2>\
@@ -6755,7 +6755,7 @@ The release dates mentioned pertain to the date of release in the United States.
 :: Tales of Prior Days [wiki article] {"position":"350,475","size":"100,100"}
 <div class="wiki-article">\
 <h1>Tales of Prior Days</h1>\
-<div class="article-art" data-art="title-1-ydmo.jpg" style="width: 30%" role="img" aria-label="Title(1)"></div><span class="diskette-zone" data-radius="10" data-on="[data-art='title-1-ydmo.jpg']" data-say="Nice wings..."></span>Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
+<div class="article-art" data-art="title-1-ydmo.jpg" style="width: 30%" role="img" aria-label="Title(1)"></div>Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
 
 Some of the tales included in these volumes:
 * The Wife of the Dead Soldier
@@ -7373,7 +7373,7 @@ deal with the devil
 <table class="netcon-table">
 <tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div>NetCon 2004 Attendee Saturday</div></td></tr>
 <tr><th>Amount</th><td>95.00</td></tr>
-<tr><th>Payment</th><td><span class="diskette-zone" data-radius="20" data-say="Somebody blacked that out."><span class="netcon-redact"></span></span></td></tr>
+<tr><th>Payment</th><td><span class="netcon-redact"></span></td></tr>
 <tr><th>Date Charged</th><td>2/9/2004</td></tr>
 <tr><th></th><td><span class="netcon-url">http:&#47;&#47;www.netcon04.com/tickets</span></td></tr>
 </table>
