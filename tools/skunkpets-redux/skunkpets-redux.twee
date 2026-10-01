@@ -7356,7 +7356,7 @@ deal with the devil
 <p data-look="self icon-diskette">That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!</p>
 <p data-look="poke" data-mood="shake" data-cycle="random">Ow! &gt;&gt; Hey! I need those to see!</p>
 <p data-look="page-winkipedia" data-cycle="random">Ooh, <b>{page}</b>! Winkipedia knows about everything. &gt;&gt; So many words! Want me to look at something in particular? Aim right at it.</p>
-<p data-look="page-fanwiki" data-cycle="random">A fan wiki! People wrote all of this about Skunkpets just because they loved it. &gt;&gt; Fan pages aren't always accurate, you know. But they're always <i>passionate</i>.</p>
+<p data-look="page-fanwiki" data-cycle="random">A fan wiki!</p>
 <p data-look="page-forum" data-cycle="random">A forum! Lots of people talking at once. Be nice to each other! &gt;&gt; I don't think I'm supposed to read other people's posts. ...Okay, just this once.</p>
 <p data-look="page-gamesarchive"><b>Global Games Archive</b>! Looks like a library for old games.</p>
 <p data-look="page-kraska1">A game designer's homepage.</p>
