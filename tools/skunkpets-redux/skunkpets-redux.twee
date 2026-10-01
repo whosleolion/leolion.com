@@ -3359,7 +3359,7 @@ function playDisketteVoice() {
      login-failed, password-hint, diskette-first-look and
      ending, where they happen in this script.
    The GameEvents passage lists the ones that matter, in story
-   order, for the preview editor's Game status panel.
+   order, for the preview Backend Editor's Events tab.
    ========================================================= */
 
 function gameEvents() {
@@ -5358,7 +5358,7 @@ if (location.pathname.indexOf("/building/skunkpets-preview/") === 0) {
       this.redraw();
       return true;
     },
-    /* Game status for the editor: what has happened, and a switch to fake
+    /* Events for the editor: what has happened, and a switch to fake
        an event for testing (it's undone by NEW GAME). */
     events: function () {
       return document.querySelector(".monitor") ? Array.from(gameEvents()) : null;
@@ -7284,7 +7284,7 @@ deal with the devil
 
 :: GameEvents
 <!-- The events that matter, in story order: shown (with which have
-     happened) in the preview editor's Game status panel. Read by the
+     happened) in the preview Backend Editor's Events tab. Read by the
      editor, never shown in the game. See the script's EVENTS section
      for what marks them; a new one is marked from Harlowe with
      (set: $events to it + (ds: "my-event")).

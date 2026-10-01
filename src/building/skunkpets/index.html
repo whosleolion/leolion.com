@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="163fbe9d5129">
+<meta name="skunkpets-build" content="7e73fd02d103">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "163fbe9d5129";
+  var mine = "7e73fd02d103";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -3392,7 +3392,7 @@ function playDisketteVoice() {
      login-failed, password-hint, diskette-first-look and
      ending, where they happen in this script.
    The GameEvents passage lists the ones that matter, in story
-   order, for the preview editor's Game status panel.
+   order, for the preview Backend Editor's Events tab.
    ========================================================= */
 
 function gameEvents() {
@@ -5391,7 +5391,7 @@ if (location.pathname.indexOf("/building/skunkpets-preview/") === 0) {
       this.redraw();
       return true;
     },
-    /* Game status for the editor: what has happened, and a switch to fake
+    /* Events for the editor: what has happened, and a switch to fake
        an event for testing (it's undone by NEW GAME). */
     events: function () {
       return document.querySelector(".monitor") ? Array.from(gameEvents()) : null;
@@ -7092,7 +7092,7 @@ deal with the devil
 &lt;p data-look=&quot;desktop&quot; data-mood=&quot;wide&quot;&gt;Such beautiful green hills...&lt;/p&gt;
 &lt;p data-look=&quot;outside monitor&quot; data-mood=&quot;shake&quot;&gt;Hmm? I can&#39;t see anything out there.&lt;/p&gt;
 &lt;p data-look=&quot;anything&quot;&gt;Hmm! I&#39;m not sure what that is.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="75" name="GameEvents" tags="" position="100,100" size="100,100">&lt;!-- The events that matter, in story order: shown (with which have
-     happened) in the preview editor&#39;s Game status panel. Read by the
+     happened) in the preview Backend Editor&#39;s Events tab. Read by the
      editor, never shown in the game. See the script&#39;s EVENTS section
      for what marks them; a new one is marked from Harlowe with
      (set: $events to it + (ds: &quot;my-event&quot;)).

@@ -117,8 +117,8 @@ preview keeps its own save slot, so it never touches the live game's. When
 it's right, merge the branch into `master` (or open a pull request and merge
 it) to ship it.
 
-**Editing Winkipedia pages in the browser (the preview's article editor):**
-on the preview, **✎ Edit articles** (bottom-left) opens an editor beside the
+**Editing in the browser (the preview's Backend Editor):**
+on the preview, **✎ Backend** (bottom-left) opens the Backend Editor beside the
 game for whatever Winkipedia page the in-game browser shows: text changes
 appear as you type, **+ Photo** adds pictures, and **Save to preview** commits
 straight to GitHub and rebuilds the preview. Instructions, including the
@@ -756,7 +756,7 @@ in the editor; in the passage it's one span around it all.
 `RenderDesktop` prints the popup's `$dialogAction` into a hidden
 `.xp-dialog-action` marker for this.
 
-**Editing them:** the preview editor's **Diskette** tab (see
+**Editing them:** the preview's Backend Editor, **Diskette** tab (see
 `editor/README.md`) lists every reaction (Zones & page comments, Drafts,
 Apps & things), edits any of them in place (including ones in Mail, the
 ticket or the desktop, which the Article tab can't open), adds zones (at the
@@ -911,8 +911,8 @@ dataset ignores repeats). From the script: `markGameEvent("my-event")`.
 
 **The catalog:** the `GameEvents` passage lists the ones that matter, in
 story order, one `<p data-event="id" data-after="a, b">what it is</p>`
-each; `data-after` says what it normally follows. The preview editor's
-**Game status** tab shows it live: ✓ happened, → next (everything it
+each; `data-after` says what it normally follows. The preview Backend Editor's
+**Events** tab shows it live: ✓ happened, → next (everything it
 follows has happened), ○ not yet, ⚠ happened out of order; every other
 event that happened is listed under it. Ticking or unticking one fakes it
 for testing (NEW GAME undoes it), e.g. to try a reaction with `if:`.

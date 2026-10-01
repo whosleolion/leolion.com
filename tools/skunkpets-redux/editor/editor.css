@@ -618,12 +618,18 @@
 }
 
 .ske-tab-diskette,
-.ske-tab-status {
+.ske-tab-events, .ske-tab-comments {
   overflow-y: auto;
 }
 
-.ske-tab-article .ske-comments-body {
-  max-height: 24vh;
+.ske-tab-comments .ske-comments-body {
+  max-height: none;
+  margin-top: 0;
+  overflow: visible;
+}
+
+.ske-section-title {
+  font-weight: 700;
 }
 
 .ske-footer {
@@ -1028,11 +1034,11 @@ body.ske-picking .browser-page-content * {
 
 /* Article tab scrolls instead of sliding under the save footer; its
    markup box keeps a usable height. */
-.ske-tab-article {
+.ske-tab-markup {
   overflow-y: auto;
 }
 
-.ske-tab-article .ske-cm {
+.ske-tab-markup .ske-cm {
   flex: 1 0 260px;
 }
 
@@ -1052,3 +1058,198 @@ body.ske-picking .browser-page-content * {
 }
 
 .ske-prio.ske-draft-badge { background: #888; }
+
+/* ---- Backend Editor: selection, popup, Edit mode ---- */
+.ske-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: #eef0fb;
+  font-size: 12px;
+}
+
+.ske-crumb {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ske-panel .ske-crumb-link {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #1f55c8;
+  text-decoration: underline;
+}
+
+.ske-crumb-sep {
+  color: #999;
+}
+
+.ske-panel .ske-crumb-x {
+  margin-left: auto;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  font-size: 15px;
+}
+
+.ske-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483500;
+  pointer-events: none;
+}
+
+.ske-rect {
+  position: fixed;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.ske-rect.ske-sel {
+  background: rgba(49, 106, 197, 0.16);
+  box-shadow: 0 0 0 2px #316ac5;
+}
+
+.ske-rect.ske-hover {
+  outline: 2px dashed #316ac5;
+  outline-offset: 1px;
+}
+
+.ske-pop {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #8a94b8;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  font: 12px/1.2 system-ui, sans-serif;
+  pointer-events: auto;
+  cursor: auto;
+}
+
+.ske-pop * {
+  cursor: pointer !important;
+}
+
+.ske-pop-btn,
+.ske-pop-x {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: #111;
+  font: inherit;
+  white-space: nowrap;
+}
+
+.ske-pop-btn:hover {
+  background: #eef0fb;
+}
+
+.ske-pop-btn:disabled {
+  color: #aaa;
+}
+
+.ske-pop-diskette {
+  color: #a0306a;
+}
+
+.ske-pop-x {
+  color: #777;
+}
+
+body.ske-aiming .playfield,
+body.ske-aiming .playfield * {
+  cursor: crosshair !important;
+}
+
+.ske-panel .ske-aim-btn {
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+.ske-panel .ske-aim-btn.ske-aim-on {
+  border-color: #316ac5;
+  background: #316ac5;
+  color: #fff;
+}
+
+.ske-rawview {
+  flex: 1 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.ske-rawpre {
+  flex: 1;
+  margin: 0;
+  padding: 6px 8px;
+  overflow: auto;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background: #f7f7f2;
+  font: 11px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ske-rawpre mark {
+  background: #cfdcf7;
+  box-shadow: 0 0 0 1px #316ac5;
+}
+
+.ske-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ske-group-title {
+  margin-top: 4px;
+  color: #555;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ske-group-drafts .ske-react {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.ske-search {
+  flex: 1;
+}
+
+.ske-event-sel {
+  outline: 2px solid #d0408a;
+}
+
+.ske-used {
+  flex: none;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: #fbeaf3;
+  color: #a0306a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ske-tab-markup.ske-raw-mode .ske-tools,
+.ske-tab-markup.ske-raw-mode .ske-actions,
+.ske-tab-markup.ske-raw-mode .ske-last-edit,
+.ske-tab-markup.ske-raw-mode .ske-missing {
+  display: none;
+}

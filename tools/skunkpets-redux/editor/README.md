@@ -1,121 +1,99 @@
-# Winkipedia article editor (preview only)
+# Backend Editor (preview only)
 
 On the preview (leolion.com/building/skunkpets-preview/) a yellow
-**✎ Edit articles** button sits in the bottom-left corner. It opens a panel
-beside the game; the game shrinks to make room.
+**✎ Backend** button sits in the bottom-left corner (with the number of open
+notes). It opens a panel beside the game; the game shrinks to make room.
 
-1. Open any Winkipedia page in the game's browser (Winkipedia articles, the
-   fan wiki, the games archive: anything tagged `wiki`). Its text appears in
-   the panel, and the panel follows along as you click links in the game.
-   Clicking words in the game jumps the text to them.
-2. Edit. The game shows your changes as you type. The text box is a small code
-   editor: links are blue, photos green, HTML tags brown, Harlowe code purple;
-   Ctrl/Cmd-F finds, Ctrl/Cmd-Z undoes, and typing `[[` suggests page names.
-   Links and photos use a short form (the Cheat sheet in the panel has it):
-   - `[[Tom Barry]]` links to a page; `[[the founder->Tom Barry]]` links with
-     other words.
-   - `[[photo: file.jpg | right | description]]` is a photo;
-     `[[photo: file.jpg | left | 36% | description]]` floats it left at 36%
-     wide. Move the line to move the photo; right after a heading puts it
-     beside that section. Delete the line to remove it.
-   - `[[diskette: 80 | what she says]]` is a spot Diskette reacts to when
-     the player drags from her eyes to within 80 pixels of it (add `shake`
-     or `wide` before the words for a different reaction), and
-     `[[diskette: page | what she says]]` is what she says about the whole
-     page. While the panel is open, zones show in the game as a pink dot
-     with a dashed circle of their reach. See GUIDE.md 7.10.
-   - **+ Photo** adds a picture from your computer (shrunk to 480 px wide and
-     saved as JPEG) and puts its line where your cursor is.
-   Unsaved edits are kept in this browser, so a reload doesn't lose them.
-3. **New pages.** A link to a page that doesn't exist yet is red (wavy in the
-   text, red words in the game) and listed under the text with **Create**
-   (or Ctrl/Cmd-click it, or click it in the game). **+ New page** makes one
-   from scratch. Pick a look: *Winkipedia article* (searchable in Winkipedia),
-   *Fan wiki page*, *Forum thread*, *Games archive page* or *Blank wiki page*.
-   The page appears in the game straight away, and articles are searchable
-   before you save. "Undo my changes" on an unsaved new page removes it.
-   Pages can't be renamed or deleted from here (on purpose, for now); if a
-   page isn't wanted, just remove the links to it.
-4. **Save to preview…** shows every changed and new page, green lines added
-   and red removed, then makes one commit on GitHub, credited to your name, on
-   the branch this preview was built from. The preview rebuilds within about a
-   minute; your changes keep showing in the meantime. From there they ship
-   like any other change. Under the page name, "Last saved by …" says who
-   last saved it from the editor.
+The panel has four editors as tabs, **Markup · Comments · Diskette ·
+Events**, which all follow one shared **selection**. **Save to preview…** at
+the bottom saves everything changed in any of them as one commit.
 
-**Tabs.** The panel has three: **Article** (the markup, above),
-**Diskette** and **Game status**. **Save to preview…** sits under all three
-and saves everything changed in any of them in one commit.
+## Selecting
 
-**Diskette tab: her reactions.** Everything Diskette says when the player
-drags from her eyes (GUIDE.md 7.10), in three lists:
-- **Zones**: zones and page comments, wherever they are.
-- **Apps & things**: her lines for windows, icons, the clock, herself...
-  (the `DisketteLooks` passage), plus the keys that have no line yet.
-- **Drafts**: reactions kept out of the game for now (**Make draft** on a
-  card; **Publish** puts one back). New ones are published straight away.
+- **Drag across words** in the game (any time the panel is open) to select
+  them.
+- **⌖ Edit** (top of the panel, or press **E**) turns on Edit mode: the
+  pointer becomes a crosshair, things outline as you hover, and a click
+  selects instead of acting (links don't fire, icons don't drag). Click a
+  **paragraph** of a page, a **photo**, or any **thing**: an icon, a window,
+  the clock, the Start button, Diskette herself. Dragging across words still
+  picks just those.
+- The **breadcrumb** under the tabs shows what's selected
+  (`Tom Barry › ¶ paragraph › “his two sons”`); click a step to widen the
+  selection (the page itself = her comment on the whole page). **Esc**
+  clears it; Esc again leaves Edit mode.
+- A small **popup** by the selection jumps to the right tab:
+  **✎ Markup**, **💬 Note** (with how many notes are on it), and **◉ Diskette**
+  (her line there, or **◉ Diskette +** to make one, in one click).
 
-Cards are one line each (priority, what it is, where); click one to open
-it. Open, it edits in place: her line (several lines = alternatives she
-goes through when asked again, per **repeats**), the reach or slack in
-pixels, her reaction (hop, shake her head, wide eyes), **only if** (event
-names from Game status, comma-separated; `!name` = only before it), and
-what she says **after "Thanks"**. Changes show in the game as you type.
-**Show me** takes the game there and flashes the zone. Cards also work for
-reactions in Mail, the NetCon ticket and the desktop, which the Article tab
-can't open. The **?** buttons (here, in Game status, and the Article tab's
-markup cheat sheet) open short explanations.
+## The four editors
 
-A zone covers **a point** with a reach, **words**, or **a photo or other
-element** (GUIDE.md 7.10). New ones (all under **+ New**): **+ Point zone at the cursor**, **+ Zone:
-click the game** (click words for a point at the end of that sentence, or a
-photo for a zone on it), **+ Zone on selected words** (select them in the
-markup or in the game first), **+ Zone on a photo / element**, **+ Page
-comment**, and **+ Line for an app or thing**. **How it works** in the tab is
-the short version of all this. While the panel is open, zones show in the
-game (points as a dot with a dashed circle of their reach, words underlined,
-elements outlined; pink when written, orange while still to write), and
-**clicking one** (its dot or words), **pressing and holding** anywhere in its
-reach, or **Alt-clicking** there opens its card. **Edit in markup** on a card
-selects the zone in the Article tab.
+**Markup.** The whole page's markup, always (the selection is selected and
+scrolled to in it). Links are blue, photos green, Diskette's zones pink, HTML
+tags brown; typing `[[` suggests page names; Ctrl/Cmd-F finds, Ctrl/Cmd-Z
+undoes. The game shows edits as you type. The **?** has the short-form cheat
+sheet: `[[Tom Barry]]`, `[[the founder->Tom Barry]]`,
+`[[photo: file.jpg | left | 36% | description]]`, and Diskette's
+`[[diskette: …]]` markers. **+ Photo** adds a picture (shrunk to 480 px,
+saved as JPEG). Links to missing pages are red and listed with **Create**;
+**+ New page** makes one from a template (Winkipedia article, fan wiki page,
+forum thread, games archive page, blank). Selecting something in game code
+(Mail, the NetCon ticket, READ_ME) shows that passage here read-only, with the
+selection marked. Unsaved edits are kept in this browser.
 
-**Game status tab: events.** The `GameEvents` list (GUIDE.md 7.16) with what
-has happened in this playthrough so far: ✓ happened, → next, ○ not yet,
-⚠ out of order, and everything else that happened (pages visited, windows
-opened). Tick or untick one to fake it while testing (NEW GAME undoes it).
+**Comments.** Notes for whoever edits next. With a selection, its notes come
+first and a new note is pinned to it (words, a photo, a thing, or game code);
+otherwise the open page's notes, and other pages' notes with **Go**. Notes
+highlight in the game while this tab is open; click one to open its thread.
+**Reply**, **Resolve**/**Reopen**, **Delete** your own; if the pinned words are
+edited away, select new ones and **Re-pin**. Each note is its own small
+commit to `comments.json` (the repository is public, so so are notes); the
+first time, it asks your name (**My name…** changes it).
 
-**GitHub access (once per browser), from the GitHub button at the top of the panel.** Saving needs a fine-grained personal
-access token: GitHub → Settings → Developer settings → Fine-grained tokens →
-Generate new token; Repository access: *Only select repositories* →
-`whosleolion/leolion.com`; Permissions → Repository permissions → add
-*Contents* and switch its dropdown from *Read-only* (the default) to
-*Read and write*. A read-only token gets as far as "Saving…" and then fails;
-you can fix it by editing the token's permissions on GitHub, no need to make a
-new one. Paste it in the **GitHub** popup (the button at the top of the panel). It's stored only in this
-browser's localStorage for leolion.com; **Forget** removes it.
+**Diskette.** What she says when the player drags from her eyes
+(GUIDE.md 7.10). With a selection: her response to it, edited in place, or
+**◉ Diskette reacts here**, which makes a zone shaped to the selection (the
+words, the paragraph, the photo, the page) or, for a thing on the desktop,
+her line for that thing. Without one: every reaction, the open page first,
+then *Desktop & apps* and the other pages, drafts last, with a search box and
+**+ Line for something you can't point at** (off the screen, a poke in the
+eye, any page...). A card holds her line (several lines = alternatives, per
+**repeats**), her reaction (hop, shake, wide eyes), the zone's slack or reach,
+**only if** (events; `!name` = only before), what she says **after
+"Thanks"**, and **Make draft** / **Publish**, **Show me**, **Edit in markup**,
+**Delete**. Zones show in the game while this tab is open; click one to open
+its card.
 
-**Comments.** Select words in the text, write a note under **Comments on
-this page**, and **Post comment**: the note is pinned to those words, which are
-highlighted with a numbered tab in the text and in the game (only while the
-panel is open, so playtesting still looks like the real game). Click a
-highlight (in the game, click its number) to open the note; click a note to
-jump to its words. **Reply** threads an answer under it. **Resolve** folds it
-away (**Reopen** brings it back); you can **Delete** your own. If the pinned
-words are edited away, the note says so; select new words and **Re-pin**, or
-resolve it. The first time you post or save, it asks your name (**My name…**
-changes it). Notes on other pages are listed with **Go**, which opens that page
-at the note (Browse has to be out of the Trash). The ✎ button shows how many
-notes are open, and everything refreshes every minute while the panel is open
-(or press **Refresh**). Each comment is its own small commit to
-`tools/skunkpets-redux/editor/comments.json` on the same branch; it doesn't
-rebuild the preview. The repository is public, so so are the comments.
+**Events.** The `GameEvents` list (GUIDE.md 7.16) with what has happened in
+this playthrough: ✓ happened, → next, ○ not yet, ⚠ out of order, plus every
+other event that happened. **◉ n** on an event = n of Diskette's reactions
+depend on it (hover to see which); those of the selection's reaction are
+outlined. Tick or untick one to fake it while testing (NEW GAME undoes it).
 
-**If someone else changed the same page** since the preview was built (e.g. a
-push from Claude), saving asks before overwriting it. Other pages' changes are
-kept; only the pages you edited are replaced.
+**What the game shows follows the tab:** notes in Comments, zones in
+Diskette, nothing extra in Markup and Events.
 
-What it can't do (yet): rename or delete pages, or edit the game's other
-passages (desktop, mail, Diskette). Those are still edited in the `.twee`.
+## Saving
+
+**Save to preview…** shows every changed passage (green added, red removed)
+and makes one commit, under your name, on the branch this preview was built
+from; the preview rebuilds within about a minute and your changes keep
+showing meanwhile. "Last saved by …" under a page's name says who last saved
+it from the editor. Your unsaved changes remember what they were based on: if
+the game moves on (someone else's save, a push from Claude), they're carried
+over onto the new version, or, if both changed the same lines, flagged with a
+warning before saving. If GitHub has something newer for a page you're
+saving, it asks before overwriting.
+
+**GitHub access (once per browser):** the **GitHub** button at the top of the
+panel. It needs a fine-grained personal access token: GitHub → Settings →
+Developer settings → Fine-grained tokens → Generate new token; Repository
+access: *Only select repositories* → `whosleolion/leolion.com`; Permissions →
+Repository permissions → *Contents*: *Read and write* (not the default
+Read-only). It's kept only in this browser; **Forget it** removes it.
+
+What it can't do (yet): rename or delete pages, or edit game code (it's
+read-only here; that's still done in the `.twee`).
 
 ## Files
 
