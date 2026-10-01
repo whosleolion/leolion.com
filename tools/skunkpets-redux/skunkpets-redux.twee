@@ -5523,11 +5523,11 @@ The official release of the game was slated for July 2009, but the project enter
 :: Diskette [wiki article] {"position":"725,100","size":"100,100"}
 <div class="wiki-article">\
 <h1>Diskette //(virtual assistant)//</h1>\
-<span class="diskette-page" data-say="Hey, that's my page! I don't remember posing for that picture, though."></span>Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
+<span class="diskette-page" data-say="Hey, that's my page!"></span>Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
 
 <div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", <span class="diskette-zone" data-radius="10" data-say="TODO P2-02 Her launch, at NetCon.">a tagline made famous by her launch expo at</span> (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
-However, Diskette's Install CD was only in distribution for 6 months, after which she was <span class="diskette-zone" data-radius="10" data-mood="shake" data-say="Decommissioned is such an ugly word. I prefer “on sabbatical.”">decommissioned</span>. Popular theories have circulated online that Diskette was shut off after she '<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="Sentience? Me? I can barely do spreadsheets!">attained sentience</span>,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and <span class="diskette-zone" data-radius="10" data-say="TODO P2-03 Sold to REV: they own her now.">associated technology was sold to</span> (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+However, Diskette's Install CD was only in distribution for 6 months, after which she was <span class="diskette-zone" data-radius="10" data-mood="shake" data-say="Such an ugly word.">decommissioned</span>. Popular theories have circulated online that Diskette was shut off after she '<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="">attained sentience</span>,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and <span class="diskette-zone" data-radius="10" data-say="TODO P2-03 Sold to REV: they own her now.">associated technology was sold to</span> (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
 
 <h2>"The Diskette Confession"</h2>\
@@ -5547,7 +5547,7 @@ In November 2004, an anonymous post circulated the web featuring a timestamped d
 ''Diskette:'' Did we resolve the problem with your table header?
 ''user:'' Is something stopping you from talking openly?
 ''Diskette:'' That's enough. Did we resolve the problem with your table header?
-</div>\
+</div>
 
 :: FanWiki: Forum [wiki fanwiki] {"position":"850,100","size":"100,100"}
 <div class="wiki-fanwiki">\
@@ -7260,10 +7260,9 @@ deal with the devil
      A page can have its own comment, and any spot in a page its own
      response zone; see the script's DISKETTE INSPECTING. -->
 <p data-look="self icon-diskette">That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!</p>
-<p data-look="poke" data-mood="shake">Ow! Drag, don't poke!</p>
+<p data-look="poke" data-mood="shake">Ow!</p>
 <p data-look="poke" data-mood="shake">Hey! I need those to see!</p>
 <p data-look="page">Ooh, <b>{page}</b>! Winkipedia knows about everything.</p>
-<p data-look="page">I could read about <b>{page}</b> all day. Well, I could if I had all day.</p>
 <p data-look="page" data-mood="wide">So many words! Want me to look at something in particular? Aim right at it.</p>
 <p data-look="browser icon-browser"><b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.</p>
 <p data-look="mail icon-mail"><b>Mail</b> is where your email arrives. Click a message in your Inbox to read it.</p>
@@ -7272,17 +7271,15 @@ deal with the devil
 <p data-look="recycle icon-recycle">The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.</p>
 <p data-look="trash-item">Somebody threw that away. Drag it onto the desktop if you want it back!</p>
 <p data-look="downloads icon-downloads"><b>Downloads</b> is a folder of files saved from the internet.</p>
-<p data-look="granmas" data-mood="wide">What a lovely photo! I wonder who they are.</p>
-<p data-look="netcontkts">NetCon 2004! I've heard that was quite a weekend.</p>
-<p data-look="start">The <b>Start</b> button! Everything on this computer starts there. That's why it's called that!</p>
-<p data-look="clock">Is it that time already? Time flies when you're having a nice computer!</p>
+<p data-look="granmas" data-mood="wide">What a lovely photo!</p>
+<p data-look="netcontkts">Remember NetCon 2004? What a weekend!</p>
+<p data-look="start">The <b>Start</b> button! Everything on this computer starts there.</p>
+<p data-look="clock">Is it that time already?</p>
 <p data-look="volume">That's the volume. Turn it up! I love this song.</p>
 <p data-look="taskbar">The taskbar shows every window you have open. Click one to bring it to the front!</p>
 <p data-look="dialog" data-mood="wide">Ooh, a message! You should probably read that.</p>
-<p data-look="desktop">Such a nice, tidy desktop!</p>
-<p data-look="desktop">Nothing there but wallpaper. Pretty wallpaper, though!</p>
-<p data-look="monitor">That's the edge of the screen. I can't see past it!</p>
-<p data-look="outside" data-mood="wide">Hmm? I can't see anything out there.</p>
+<p data-look="desktop" data-mood="wide">Such beautiful green hills...</p>
+<p data-look="outside monitor" data-mood="shake">Hmm? I can't see anything out there.</p>
 <p data-look="anything">Hmm! I'm not sure what that is.</p>
 <p data-look="dialog-exit">TODO P1-15 The “exiting to external website” popup: reassure them it's fine to leave Winkipedia.</p>
 <p data-look="dialog-devlink">TODO P1-19 The popup before devlink-userbase.</p>
