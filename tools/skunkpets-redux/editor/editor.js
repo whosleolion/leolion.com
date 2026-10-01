@@ -2797,7 +2797,9 @@
 
   /* What each DisketteLooks key is (the game's DISKETTE INSPECTING reads them). */
   const LOOK_KEYS = [
-    ["self", "Diskette herself"], ["poke", "a click on her eyes, no drag"], ["page", "any browser page without its own comment"],
+    ["self", "Diskette herself"], ["poke", "a click on her eyes, no drag"], ["page-winkipedia", "a Winkipedia page (no comment of its own)"], ["page-fanwiki", "a fan wiki page"], ["page-forum", "a fan wiki forum thread"],
+    ["page-gamesarchive", "the Global Games Archive"], ["page-kraska1", "Anya's kraska1 pages"], ["page-devlink", "the devlink pages"],
+    ["page-404", "the Skunkpets.com 404 page"], ["page-newtab", "a new tab"], ["page", "any browser page without a line of its own"],
     ["browser", "the Browse window's bars and buttons"], ["icon-browser", "the Browse icon"],
     ["mail", "the Mail window"], ["icon-mail", "the Mail icon"], ["notes", "the Notes window"], ["icon-notes", "the Notes icon"],
     ["readme", "the READ_ME window"], ["icon-readme", "the READ_ME icon"], ["recycle", "the Trash window"], ["icon-recycle", "the Trash icon"],

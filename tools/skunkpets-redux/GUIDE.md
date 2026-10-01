@@ -707,7 +707,7 @@ What she says, first match wins:
    `[[diskette: page | ...]]`).
 3. **The `DisketteLooks` passage**: one line per app or thing (Mail, a
    desktop icon, the Start button, the clock, the wallpaper, herself...). Its
-   comment lists every key. `{page}` is the page open in the browser. Plain HTML only there (it's
+   comment lists every key. A browser page without its own comment gets its site's line (`page-winkipedia`, `page-fanwiki`, `page-forum`, `page-gamesarchive`, `page-kraska1`, `page-devlink`, `page-404`, `page-newtab`; the script's `disketteSiteKey` decides), else the plain `page` line. `{page}` is the page open in the browser. Plain HTML only there (it's
    read by the script, never shown as a page).
 
 Any of them can add `data-mood="shake"` or `"wide"` (editor:

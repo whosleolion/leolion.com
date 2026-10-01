@@ -3753,6 +3753,25 @@ function findDisketteZone(playfield, hit, x, y) {
   return best;
 }
 
+/* Which site the browser's page belongs to, as a DisketteLooks key
+   (page-winkipedia, page-fanwiki, ...); "page" is the fallback. */
+function disketteSiteKey() {
+  const name = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
+  let tags = [];
+  try {
+    const passage = require("passages").get(name);
+    tags = (passage && passage.get("tags")) || [];
+  } catch (err) {}
+  if (name === "New Tab") return "page-newtab";
+  if (name === "Skunkpets.com") return "page-404";
+  if (/^(Forum:|FanWiki: Forum)/.test(name)) return "page-forum";
+  if (tags.indexOf("devlink") >= 0) return "page-devlink";
+  if (/^kraska1/.test(name)) return "page-kraska1";
+  if (tags.indexOf("gamesarchive") >= 0) return "page-gamesarchive";
+  if (tags.indexOf("fanwiki") >= 0) return "page-fanwiki";
+  return "page-winkipedia";
+}
+
 function findDisketteTarget(playfield, x, y) {
   const hit = document.elementFromPoint(x, y);
   if (!hit || !playfield.contains(hit)) {
@@ -3804,7 +3823,7 @@ function findDisketteTarget(playfield, x, y) {
       const page = Array.from(content.querySelectorAll(".diskette-page")).find(disketteUsable);
       const box = playfieldBox(playfield, content);
       if (page) return { say: page.dataset.say || "", mood: page.dataset.mood, cycle: page.dataset.cycle, then: page.dataset.then, box: box };
-      return { keys: ["page"], box: box };
+      return { keys: [disketteSiteKey(), "page"], box: box };
     }
     return { keys: [kind], box: playfieldBox(playfield, panel) };
   }
@@ -7229,7 +7248,10 @@ deal with the devil
      (default: a little hop). {page} is the page open in the browser.
 
      Keys: self (herself), poke (a click on her eyes without a drag),
-     page (any browser page with no comment of its own), browser
+     page-winkipedia, page-fanwiki, page-forum, page-gamesarchive,
+     page-kraska1, page-devlink, page-404 (the Skunkpets.com 404),
+     page-newtab (a browser page with no comment of its own, by site),
+     page (any of those without a line of its own), browser
      (the browser's buttons and bars), mail, notes, readme, recycle,
      downloads, granmas, netcontkts (the open windows), icon-browser,
      icon-mail, icon-notes, icon-readme, icon-downloads, icon-diskette,
@@ -7258,7 +7280,15 @@ deal with the devil
      response zone; see the script's DISKETTE INSPECTING. -->
 <p data-look="self icon-diskette">That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!</p>
 <p data-look="poke" data-mood="shake" data-cycle="random">Ow! &gt;&gt; Hey! I need those to see!</p>
-<p data-look="page" data-cycle="random">Ooh, <b>{page}</b>! Winkipedia knows about everything. &gt;&gt; So many words! Want me to look at something in particular? Aim right at it.</p>
+<p data-look="page-winkipedia" data-cycle="random">Ooh, <b>{page}</b>! Winkipedia knows about everything. &gt;&gt; So many words! Want me to look at something in particular? Aim right at it.</p>
+<p data-look="page-fanwiki" data-cycle="random">A fan wiki! People wrote all of this about Skunkpets just because they loved it. &gt;&gt; Fan pages aren't always accurate, you know. But they're always <i>passionate</i>.</p>
+<p data-look="page-forum" data-cycle="random">A forum! Lots of people talking at once. Be nice to each other! &gt;&gt; I don't think I'm supposed to read other people's posts. ...Okay, just this once.</p>
+<p data-look="page-gamesarchive">The <b>Global Games Archive</b>! Old games go here so they don't get lost.</p>
+<p data-look="page-kraska1">Someone's very own homepage! It looks handmade. I like it.</p>
+<p data-look="page-devlink" data-mood="wide">This page is for developers. I don't think we're supposed to be here...</p>
+<p data-look="page-404" data-mood="shake">Hmm, this page isn't there anymore. Websites don't last forever, you know.</p>
+<p data-look="page-newtab">A blank new tab! Where should we go? The ★ has your bookmarks.</p>
+<p data-look="page">Ooh, <b>{page}</b>! Want me to look at something in particular? Aim right at it.</p>
 <p data-look="browser icon-browser"><b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.</p>
 <p data-look="mail icon-mail"><b>Mail</b> is where your email arrives. Click a message in your Inbox to read it.</p>
 <p data-look="notes icon-notes"><b>Notes</b> is a handy notepad. Jot down anything you want to remember.</p>
