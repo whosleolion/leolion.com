@@ -21,17 +21,20 @@ A plain click always plays the game. Selecting is one of:
   becomes a crosshair, things outline as you hover, and a bar over the game
   says you're in Edit mode. Click a **paragraph** of a page, a **photo**, or
   any **thing**: an icon, a window, the clock, the Start button, Diskette
-  herself. That one click selects it and Edit mode ends; **Shift-click** to
-  keep picking. Doing anything from the popup ends it too.
+  herself. That one click selects it and Edit mode ends (press E again for
+  another). Doing anything from the popup ends it too.
 - **Click something the editor is showing**: a comment's highlight (Comments
   tab) or one of Diskette's zones (Diskette tab) selects it and opens it.
 - The **breadcrumb** under the tabs shows what's selected
   (`Tom Barry › ¶ paragraph › “his two sons”`); click a step to widen the
   selection (the page itself = her comment on the whole page). **Esc**
   leaves Edit mode, then clears the selection.
-- A small **popup** by the selection jumps to the right tab:
-  **✎ Markup**, **💬 Comment** (with how many comments are on it), and **◉ Diskette**
-  (her line there, or **◉ Diskette +** to make one, in one click).
+- A bar over the game says what's selected (**Esc to deselect**).
+- A small **popup** by the selection: **✎ Markup** (straight to editing it:
+  its text selected in the markup, the game's selection let go), **💬
+  Comment** (with how many comments are on it), and **◉ Diskette** (her line
+  there, or **◉ Diskette +** to make one, in one click). Clicking into the
+  markup to edit also lets go of the selection.
 
 ## The four editors
 
@@ -69,7 +72,11 @@ first time, it asks your name (**My name…** changes it).
 (GUIDE.md 7.10). With a selection: her response to it, edited in place, or
 **◉ Diskette reacts here**, which makes a zone shaped to the selection (the
 words, the paragraph, the photo, the page) or, for a thing on the desktop,
-her line for that thing. Without one: every reaction, the open page first,
+her line for that thing. **+ Another response here** adds another response
+for the same spot that she says depending on what's happened (after or
+before an event, or "otherwise"): several responses for a spot are a
+numbered list, and she says the first one whose **only if** fits (▶ = what
+she'd say now; ↑ ↓ reorder; ⚠ never = one above always wins). Without one: every reaction, the open page first,
 then *Desktop & apps* and the other pages, drafts last, with a search box and
 **+ Line for something you can't point at** (off the screen, a poke in the
 eye, any page...). A card holds her line (**+ Another line**, or Enter, adds something

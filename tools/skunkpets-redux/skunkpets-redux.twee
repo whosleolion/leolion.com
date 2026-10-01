@@ -3442,7 +3442,6 @@ let disketteGazeFrame = 0;
 let disketteReaction = null;    /* { html, mood } while her answer is up */
 let disketteLook = null;        /* the drag in progress */
 let disketteLookLines = null;   /* key -> [{ html, mood }], from DisketteLooks */
-const disketteLastLine = {};
 
 function mountDisketteInspect(playfield) {
   const assistant = playfield.querySelector(".diskette-assistant");
@@ -3846,11 +3845,9 @@ function pickDisketteLine(keys) {
   });
   const key = keys.concat(["anything"]).find(function (k) { return lines[k] && lines[k].length; });
   if (!key) return { html: "Hmm!" };
-  const options = lines[key];
-  let i = Math.floor(Math.random() * options.length);
-  if (options.length > 1 && options[i].html === disketteLastLine[key]) i = (i + 1) % options.length;
-  disketteLastLine[key] = options[i].html;
-  return options[i];
+  /* Several lines for a key: the first one whose condition fits, like
+     zones (conditional lines go before the plain one). */
+  return lines[key][0];
 }
 
 let disketteReactionSeq = 0;
@@ -7226,8 +7223,9 @@ deal with the devil
      this, it's never shown as a page). Plain HTML only: Harlowe
      markup and variables don't work here, but <b> and <i> do.
 
-     One <p data-look="key"> per line. A key with several lines picks
-     one at random. data-mood="shake" or "wide" changes how she reacts
+     One <p data-look="key"> per line. A key with several lines says
+     the first one whose data-if fits (so put conditional lines before
+     the plain one). data-mood="shake" or "wide" changes how she reacts
      (default: a little hop). {page} is the page open in the browser.
 
      Keys: self (herself), poke (a click on her eyes without a drag),
@@ -7246,11 +7244,10 @@ deal with the devil
      data-if="event, !other-event" makes a line count only when those
      events have (or, with !, haven't) happened; see GameEvents.
 
-     Repeats: several lines for the same key are picked at random (never
-     the same twice running). One line can also hold alternatives
-     separated by &gt;&gt; ("Hi! &gt;&gt; You again?"): she goes through
-     them in order and then keeps saying the last one; data-cycle="loop"
-     goes round and round, data-cycle="random" picks one.
+     Repeats: one line can hold alternatives separated by &gt;&gt;
+     ("Hi! &gt;&gt; You again?"): she goes through them in order and
+     then keeps saying the last one; data-cycle="loop" goes round and
+     round, data-cycle="random" picks one (never the same twice running).
 
      data-then="..." is her follow-up after "Thanks, Diskette!" for that
      line (default: "Need me to look at anything else?"). A line
@@ -7260,10 +7257,8 @@ deal with the devil
      A page can have its own comment, and any spot in a page its own
      response zone; see the script's DISKETTE INSPECTING. -->
 <p data-look="self icon-diskette">That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!</p>
-<p data-look="poke" data-mood="shake">Ow!</p>
-<p data-look="poke" data-mood="shake">Hey! I need those to see!</p>
-<p data-look="page">Ooh, <b>{page}</b>! Winkipedia knows about everything.</p>
-<p data-look="page" data-mood="wide">So many words! Want me to look at something in particular? Aim right at it.</p>
+<p data-look="poke" data-mood="shake" data-cycle="random">Ow! &gt;&gt; Hey! I need those to see!</p>
+<p data-look="page" data-cycle="random">Ooh, <b>{page}</b>! Winkipedia knows about everything. &gt;&gt; So many words! Want me to look at something in particular? Aim right at it.</p>
 <p data-look="browser icon-browser"><b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.</p>
 <p data-look="mail icon-mail"><b>Mail</b> is where your email arrives. Click a message in your Inbox to read it.</p>
 <p data-look="notes icon-notes"><b>Notes</b> is a handy notepad. Jot down anything you want to remember.</p>

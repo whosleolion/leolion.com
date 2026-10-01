@@ -1085,10 +1085,12 @@
           CM.EditorView.updateListener.of(function (u) {
             if (u.docChanged && !settingText) onInput();
             if (u.selectionSet || u.docChanged) updateQuoteHint();
-            if (u.selectionSet && u.transactions.some((t) => t.isUserEvent("select"))) selectionFromMarkupSoon();
           }),
           CM.EditorView.domEventHandlers({
+            /* Clicking into the markup to edit lets go of the game's selection. */
+            focus: function () { releaseSelection(); },
             mousedown: function (e) {
+              releaseSelection();
               const red = e.target.closest(".cm-ske-redlink");
               if (red && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openNewPageDialog(red.dataset.page); return true; }
               const mark = e.target.closest("[data-cid]");
@@ -1109,26 +1111,11 @@
   }
   const redecorate = () => view && view.dispatch({ effects: refreshDecorations.of(null) });
   function selectRange(from, to, focus) {
+    const len = view.state.doc.length;
+    from = Math.max(0, Math.min(from, len));
+    to = Math.max(0, Math.min(to, len));
     view.dispatch({ selection: { anchor: from, head: to }, effects: CM.EditorView.scrollIntoView(from, { y: "center" }) });
     if (focus) view.focus();
-  }
-  /* Words selected in the markup become the shared selection too. */
-  let markupSelTimer = 0;
-  function selectionFromMarkupSoon() {
-    clearTimeout(markupSelTimer);
-    markupSelTimer = setTimeout(function () {
-      const r = selection();
-      if (!shownPage || r.to <= r.from) return;
-      if (sel && !sel.raw && sel.passage === shownPage && sel.from === r.from && sel.to === r.to) return;
-      sel = { kind: "words", passage: shownPage, from: r.from, to: r.to };
-      indexOpen = false;
-      renderCrumbs();
-      drawSelection();
-      const tab = store.data.tab;
-      if (tab === "comments") renderComments();
-      if (tab === "diskette") renderDiskette(true);
-      if (tab === "events") renderStatus(true);
-    }, 250);
   }
   function selection() {
     const r = view.state.selection.main;
@@ -1318,7 +1305,7 @@
 
   function setOpen(open) {
     store.data.open = open;
-    if (!open) { setAiming(false); sel = null; if (overlay) overlay.textContent = ""; }
+    if (!open) { setAiming(false); sel = null; topBar(); if (overlay) overlay.textContent = ""; }
     store.write();
     ui.panel.classList.toggle("ske-open", open);
     ui.toggle.classList.toggle("ske-toggle-on", open);
@@ -2149,8 +2136,12 @@
     const src = currentSource(item.passage);
     const text = friendlyOf(item.passage);
     const from = toFriendly(src.slice(0, item.from)).length;
-    const end = text.startsWith("[[diskette:", from) ? text.indexOf("]]", from) + 2 : -1;
-    if (item.shape === "words" && end > from && /\|\s*on:/.test(text.slice(from, end))) return { kind: "words", passage: item.passage, from: from, to: end };
+    /* Words (also an "around" zone, or one stacked around another): from
+       its marker to its end. */
+    if (item.shape === "words") {
+      const end = toFriendly(src.slice(0, zoneEnd(src, item))).length;
+      if (end > from) return { kind: "words", passage: item.passage, from: from, to: end };
+    }
     const line = lineAround(text, from);
     return { kind: "paragraph", passage: item.passage, from: line.from, to: line.to };
   }
@@ -2210,8 +2201,8 @@
       const fromDrag = selectionFromGame();
       const t = fromDrag || aimTarget(e.clientX, e.clientY);
       if (t) setSelection(t);
-      /* One pick per Edit; Shift-click keeps it on to pick again. */
-      if (t && !e.shiftKey) setAiming(false);
+      /* One pick per Edit. */
+      if (t) setAiming(false);
       return;
     }
     if (store.data.tab === "diskette" && e.target.closest(".playfield") && !e.target.closest(".diskette-assistant")) {
@@ -2280,22 +2271,32 @@
     const btn = ui && ui.panel.querySelector(".ske-aim-btn");
     if (btn) btn.classList.toggle("ske-aim-on", aiming);
     drawHover(null);
-    aimBar(aiming);
+    topBar();
   }
 
-  /* While Edit mode is on, a slim bar over the game says so. */
-  function aimBar(on) {
+  /* A slim bar over the game: Edit mode while it's on, otherwise what's
+     selected (and that Esc lets go of it). */
+  function topBar() {
     let bar = document.querySelector(".ske-aimbar");
-    if (!on) { if (bar) bar.remove(); return; }
+    const show = store.data.open && (aiming || sel);
+    if (!show) { if (bar) bar.remove(); return; }
     if (!bar) {
-      bar = el("div", { class: "ske-aimbar" }, [
-        el("span", { text: "⌖ Click something in the game to select it · Shift-click to keep picking" }),
-        el("button", { type: "button", text: "Done (Esc)", onclick: () => setAiming(false) }),
-      ]);
+      bar = el("div", { class: "ske-aimbar" });
       document.body.appendChild(bar);
+    }
+    bar.textContent = "";
+    bar.classList.toggle("ske-selbar", !aiming);
+    if (aiming) {
+      bar.appendChild(el("span", { text: "⌖ Click something in the game to select it" }));
+      bar.appendChild(el("button", { type: "button", text: "Done (Esc)", onclick: () => setAiming(false) }));
+    } else {
+      const label = selectionLabel(sel);
+      bar.appendChild(el("span", { class: "ske-selbar-label", text: "Selected: " + (label.length > 50 ? label.slice(0, 50) + "…" : label) }));
+      bar.appendChild(el("button", { type: "button", title: "Let go of the selection", text: "Esc to deselect", onclick: () => setSelection(null) }));
     }
     bar.style.left = Math.round((window.innerWidth - (store.data.open ? PANEL_WIDTH : 0)) / 2) + "px";
   }
+
 
   /* The short-form text of a passage as it is now. */
   function friendlyOf(name) {
@@ -2486,6 +2487,7 @@
     const box = ui.crumbs;
     box.textContent = "";
     box.classList.toggle("ske-hidden", !sel);
+    topBar();
     if (!sel) return;
     const crumb = (label, s, current) => el(current ? "b" : "button", current ? { class: "ske-crumb", text: label } : { type: "button", class: "ske-crumb ske-crumb-link", text: label, title: "Select this instead", onclick: () => setSelection(s) });
     const parts = [];
@@ -2598,7 +2600,7 @@
     const line = first ? gameText((first.say || first.text || "").replace(/\s*(>>|&gt;&gt;)\s*/g, " / ")) : "";
     const canMarkup = sel.kind !== "app" || !!sel.passage;
     const pop = el("div", { class: "ske-pop" }, [
-      el("button", { type: "button", class: "ske-pop-btn", title: canMarkup ? "Show it in the page's markup" : "No markup for this", text: "✎ Markup", onclick: () => setTab("markup") }),
+      el("button", { type: "button", class: "ske-pop-btn", title: canMarkup ? "Show it in the page's markup" : "No markup for this", text: "✎ Markup", onclick: () => editSelectionInMarkup() }),
       el("button", { type: "button", class: "ske-pop-btn", title: notes.length ? "Its comments" : "Leave a comment on it", text: "💬 " + (notes.length ? notes.length + (notes.length === 1 ? " comment" : " comments") : "Comment") , onclick: () => { setTab("comments"); ui.commentInput.focus(); } }),
       el("button", { type: "button", class: "ske-pop-btn ske-pop-diskette", title: first ? "Her response here" : "Make Diskette react to this", text: first ? "◉ “" + (line.length > 26 ? line.slice(0, 26) + "…" : line || "…") + "”" + (reactions.length > 1 ? " +" + (reactions.length - 1) : "") : "◉ Diskette +", onclick: function () {
         if (!first) createReactionFor(sel);
@@ -2612,6 +2614,40 @@
     pop.addEventListener("click", (e) => { if (e.target.closest("button")) setAiming(false); });
     pop.addEventListener("mousedown", (e) => e.stopPropagation());
     return pop;
+  }
+
+  /* Drops the shared selection without moving the markup (for editing). */
+  function releaseSelection() {
+    if (!sel || sel.raw || (sel.kind === "app" && sel.passage)) return;
+    sel = null;
+    renderCrumbs();
+    drawSelection();
+    const tab = store.data.tab;
+    if (tab === "comments") { renderComments(); updateQuoteHint(); }
+    if (tab === "diskette") renderDiskette(true);
+    if (tab === "events") renderStatus(true);
+  }
+
+  /* ✎ Markup: straight to editing it there, its text selected; the game's
+     selection goes (game code stays selected: it's read-only there). */
+  function editSelectionInMarkup() {
+    const s = sel;
+    if (!s) return;
+    if (s.raw || s.kind === "app" || s.passage !== shownPage) { setTab("markup"); return; }
+    const text = getText();
+    let r = null;
+    if (s.kind === "words" || s.kind === "paragraph") r = expandRange(text, s.from, Math.min(s.to, text.length));
+    else if (s.kind === "photo") {
+      const i = text.indexOf("[[photo: " + s.file);
+      if (i >= 0) r = { from: i, to: text.indexOf("]]", i) + 2 };
+    }
+    sel = null;
+    indexOpen = false;
+    renderCrumbs();
+    drawSelection();
+    setTab("markup");
+    if (r) selectRange(r.from, r.to, true);
+    else view.focus();
   }
 
   /* ---------- Changing it ---------- */
@@ -2945,7 +2981,9 @@
     } catch (err) { return item; }
   }
 
-  function reactionCard(item) {
+  /* alt (optional): { rank, total, now, never, move(dir) } when it's one of
+     several responses for the same spot. */
+  function reactionCard(item, alt) {
     const isLook = item.type === "look";
     const cardKey = item.passage + "#" + item.index;
     const card = el("div", { class: "ske-react" + (item.todo ? " ske-react-todo" : "") });
@@ -2960,6 +2998,12 @@
     const head = el("div", { class: "ske-react-head", title: "Click to " + (expandedCards.has(cardKey) ? "fold" : "edit") });
     if (item.draft) head.appendChild(el("span", { class: "ske-prio ske-draft-badge", title: "A draft: she doesn't say it until it's published", text: "draft" }));
     if (item.todo) head.appendChild(el("span", { class: "ske-prio ske-prio-" + item.todo.prio, title: "P1: needed to solve the demo. P2: story. P3: flavor.", text: item.todo.prio < 9 ? "P" + item.todo.prio + (item.todo.num < 999 ? "-" + String(item.todo.num).padStart(2, "0") : "") : "TODO" }));
+    if (alt) {
+      head.appendChild(el("span", { class: "ske-alt-rank" + (alt.now ? " ske-alt-now" : ""), title: alt.now ? "What she says here now, in this playthrough" : "Number " + alt.rank + " of " + alt.total + ": she says the first one whose “only if” fits", text: (alt.now ? "▶ " : "") + alt.rank }));
+    }
+    if (item.cond) head.appendChild(el("span", { class: "ske-cond-chip", title: "Only if: " + item.cond, text: "if " + item.cond.replace(/\s*,\s*/g, ", ").replace(/(^|, )!/g, "$1not ") }));
+    else if (alt) head.appendChild(el("span", { class: "ske-cond-chip ske-cond-else", title: "No condition: she says it whenever the ones above don't fit", text: "otherwise" }));
+    if (alt && alt.never) head.appendChild(el("span", { class: "ske-alt-never", title: "Never said: a response above has no condition, so it always wins. Give that one a condition, or move this one up.", text: "⚠ never" }));
     head.appendChild(el("span", { class: "ske-react-title", text: title }));
     const altCount = (was || "").split(ALT_SPLIT).filter((x) => x.trim()).length;
     if (altCount > 1 && !item.todo) head.appendChild(el("span", { class: "ske-alt-badge", title: altCount + " lines, " + (CYCLES.find((c) => c[0] === (item.cycle || "order")) || CYCLES[0])[2].toLowerCase(), text: (item.cycle === "random" ? "⤮ " : item.cycle === "loop" ? "↻ " : "") + altCount + " lines" }));
@@ -2967,7 +3011,7 @@
     head.addEventListener("click", function () {
       if (expandedCards.has(cardKey)) expandedCards.delete(cardKey);
       else expandedCards.add(cardKey);
-      card.replaceWith(reactionCard(freshItem(item)));
+      card.replaceWith(reactionCard(freshItem(item), alt));
     });
     card.appendChild(head);
     if (!expandedCards.has(cardKey)) return card;
@@ -3027,6 +3071,8 @@
     card.appendChild(condNote);
     const iconBtn = (label, tip, fn) => el("button", { type: "button", class: "ske-icon-btn", title: tip, text: label, onclick: fn });
     card.appendChild(el("div", { class: "ske-react-row ske-react-actions" }, [
+      alt && alt.rank > 1 ? iconBtn("↑", "Move up: she checks it before the one above", () => alt.move(-1)) : null,
+      alt && alt.rank < alt.total ? iconBtn("↓", "Move down: she checks it after the one below", () => alt.move(1)) : null,
       isLook ? null : iconBtn("Show me", "Take the game there and flash it", () => showReaction(item)),
       isLook || !isWikiPage(item.passage) ? null : iconBtn("Edit in markup", "Select it in the Article tab", () => editInMarkup(item)),
       iconBtn(item.draft ? "Publish" : "Make draft", item.draft ? "Put it in the game" : "Take it out of the game (she won't say it) but keep it here", function () {
@@ -3135,6 +3181,7 @@
     ["What she says", "Drag from Diskette's eyes to anything in the game and she reacts. First match wins: a zone where you let go, then the page's comment (browser pages), then her line for the thing under the arrow (a window, an icon, the clock, herself...)."],
     ["Making one", "Select something in the game: drag across words, or turn on ⌖ Edit (or press E) and click a paragraph, a photo or a thing. Then ◉ in the little popup (or “Diskette reacts here” in this tab). The zone takes the shape of what you selected; for things on the desktop it's her line for that thing. Selecting the page itself (the first step of the breadcrumb) gives her comment on the whole page."],
     ["Several lines", "“+ Another line” (or Enter at the end of one) gives her something else to say when she's asked about the same spot again. With more than one, “Asked again” picks which: In order (then she keeps saying the last), Loop, or Random. The card's header shows how many (e.g. ↻ 3 lines). In the markup they're separated by >>."],
+    ["Several responses", "One spot can have several responses, each with its own “only if”: she says the first one that fits (one without a condition always fits, so it goes last, as the “otherwise”). “+ Another response here” asks when she should say it and puts it in place; the cards are numbered, ▶ marks what she'd say now in this playthrough, ↑ ↓ reorder them, and ⚠ never means one above always wins first."],
     ["Only if (events)", "Event names from the Events tab, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
     ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks brings her follow-up: the reaction's own (the “after Thanks” box), otherwise “Need me to look at anything else?”, offering “Sure!” and “No, that's all.”."],
@@ -3163,22 +3210,201 @@
     }
   }
 
-  /* With a selection: her response to it, or one button to make one. */
+  /* With a selection: her responses to it, grouped by spot. Several
+     responses for one spot are a numbered list: she says the first one
+     whose "only if" fits. */
   function renderDisketteForSelection(tab) {
     const items = reactionsFor(sel);
+    const groups = spotGroups(items);
     tab.appendChild(el("div", { class: "ske-bar" }, [
       el("span", { class: "ske-muted", text: items.length ? "Her response to the selection:" : "She has nothing to say about this yet." }),
       helpButton("How Diskette's reactions work", DISKETTE_HELP),
     ]));
     if (focusAfterRender) expandedCards.add(focusAfterRender.passage + "#" + focusAfterRender.index);
-    items.forEach(function (item) {
-      expandedCards.add(item.passage + "#" + item.index);
-      tab.appendChild(reactionCard(item));
+    groups.forEach(function (group) {
+      const box = el("div", { class: "ske-spot" + (group.length > 1 ? " ske-spot-many" : "") });
+      if (group.length > 1) box.appendChild(el("div", { class: "ske-spot-head ske-muted ske-tiny", text: group.length + " responses here: she says the first one whose “only if” fits" }));
+      const info = altInfo(group);
+      group.forEach(function (item, i) {
+        expandedCards.add(item.passage + "#" + item.index);
+        box.appendChild(reactionCard(item, group.length > 1 ? Object.assign(info[i], { move: (dir) => moveAlternate(group, i, dir) }) : null));
+      });
+      box.appendChild(el("button", { type: "button", class: "ske-link-btn ske-tiny ske-add-alt", title: "Something else she says here, depending on what's happened in the game", text: "+ Another response here", onclick: () => openAlternateDialog(group) }));
+      tab.appendChild(box);
     });
     tab.appendChild(el("div", { class: "ske-actions" }, [
-      el("button", { type: "button", class: items.length ? "" : "ske-save", text: items.length ? "◉ Another response here" : "◉ Diskette reacts here", onclick: () => createReactionFor(sel) }),
+      selIsOneSpot(groups) ? null : el("button", { type: "button", class: items.length ? "" : "ske-save", text: items.length ? "◉ New response on the selection" : "◉ Diskette reacts here", onclick: () => createReactionFor(sel) }),
       el("button", { type: "button", text: "See all her reactions", onclick: () => setSelection(null) }),
     ]));
+  }
+
+  /* ---------- Alternate responses for one spot ---------- */
+
+  /* Where a zone ends (after its </span>). */
+  function zoneEnd(src, item) {
+    const close = matchingClose(src, item.from);
+    return close >= 0 ? close + 7 : item.to;
+  }
+  const plainWords = (html) => gameText((html || "").replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim();
+
+  /* Does it answer for the same spot as last (the latest one in its group)? */
+  function sameSpot(first, last, it) {
+    if (first.passage !== it.passage || first.type !== it.type) return false;
+    if (it.type === "look") return first.keys.slice().sort().join(" ") === it.keys.slice().sort().join(" ");
+    if (it.type === "page") return true;
+    if (first.shape !== it.shape) return false;
+    if (it.shape === "element") return first.on === it.on;
+    const src = currentSource(it.passage);
+    if (it.shape === "point") return src.slice(zoneEnd(src, last), it.from).trim() === "";
+    return it.from >= last.to && it.from < matchingClose(src, last.from) && plainWords(it.words) === plainWords(last.words);
+  }
+
+  function spotGroups(items) {
+    const groups = [];
+    items.slice().sort((a, b) => (a.passage === b.passage ? a.from - b.from : a.passage.localeCompare(b.passage))).forEach(function (it) {
+      const g = groups.find((x) => sameSpot(x[0], x[x.length - 1], it));
+      if (g) g.push(it);
+      else groups.push([it]);
+    });
+    return groups;
+  }
+
+  /* Is the selection exactly one group's spot (so a new response there is
+     an alternate, not a new zone)? */
+  function selIsOneSpot(groups) {
+    if (groups.length !== 1) return false;
+    if (sel.kind === "app" || sel.kind === "photo" || sel.kind === "page") return true;
+    const g = groups[0][0];
+    if (g.shape !== "words") return false;
+    const full = sel.raw ? currentSource(sel.passage) : friendlyOf(sel.passage);
+    const r = sel.raw ? sel : expandRange(full, sel.from, Math.min(sel.to, full.length));
+    const vis = (sel.raw ? plainWords(full.slice(r.from, r.to)) : visibleMap(full.slice(r.from, r.to)).vis).replace(/\s+/g, " ").trim();
+    const words = plainWords(g.words);
+    /* (allowing for a stray character of punctuation at either end) */
+    return !!words && vis.indexOf(words) >= 0 && vis.length - words.length <= 2;
+  }
+
+  /* For each response in a group: its rank, whether it's what she'd say now,
+     and whether it can never be said (an unconditional one is above it). */
+  function altInfo(group) {
+    let nowFound = false;
+    let blocked = false;
+    return group.map(function (item, i) {
+      const said = item.type === "look" ? item.text : item.say;
+      const live = !item.draft && (said || "").trim() !== "" && !item.todo;
+      const now = live && !nowFound && !conditionNow(item.cond);
+      if (now) nowFound = true;
+      const info = { rank: i + 1, total: group.length, now: now, never: blocked && live };
+      if (live && !item.cond) blocked = true;
+      return info;
+    });
+  }
+
+  /* The shared selection keeps covering the spot after its source changes. */
+  function keepSelection(passage, before) {
+    if (!sel || sel.passage !== passage || sel.from === undefined) return;
+    const after = sel.raw ? currentSource(passage).length : friendlyOf(passage).length;
+    sel = Object.assign({}, sel, { to: Math.max(sel.from, sel.to + after - before) });
+  }
+  const selLength = (passage) => (sel && sel.raw ? currentSource(passage).length : isWikiPage(passage) ? friendlyOf(passage).length : 0);
+
+  /* Asks when she should say it, then adds it to the spot. */
+  function openAlternateDialog(group) {
+    const defs = findEvents(currentSource("GameEvents"));
+    const happened = new Set((hook.events && hook.events()) || []);
+    const when = el("select", { class: "ske-input ske-alt-when" });
+    when.appendChild(el("option", { value: "?", text: "Choose when…" }));
+    const after = el("optgroup", { label: "Once this has happened" });
+    const before = el("optgroup", { label: "Until this happens" });
+    defs.forEach(function (d) {
+      const desc = d.text.replace(/<[^>]*>/g, "").replace(/&#95;/g, "_");
+      const short = d.id + " — " + (desc.length > 50 ? desc.slice(0, 50) + "…" : desc) + (happened.has(d.id) ? " ✓" : "");
+      after.appendChild(el("option", { value: d.id, text: "after " + short }));
+      before.appendChild(el("option", { value: "!" + d.id, text: "before " + short }));
+    });
+    when.appendChild(after);
+    when.appendChild(before);
+    when.appendChild(el("option", { value: "", text: "Otherwise (no condition; goes last)" }));
+    const text = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "What she says then (you can write it later)" });
+    const hint = el("div", { class: "ske-muted ske-tiny", text: "A response with a condition goes first, so it wins when it fits; the others are what she says otherwise. Reorder with ↑ ↓ on the cards; more conditions (a, !b) in its “only if” box." });
+    openModal("Another response here", [
+      el("label", { class: "ske-field" }, [el("span", { text: "She says it" }), when]),
+      el("label", { class: "ske-field" }, [el("span", { text: "Her line" }), text]),
+      hint,
+    ], [
+      el("button", { type: "button", class: "ske-save", text: "Add it", onclick: function () {
+        if (when.value === "?") { when.focus(); say("Choose when she says it.", "error"); return; }
+        closeModal();
+        addAlternate(group, when.value, text.value.trim());
+      } }),
+      el("button", { type: "button", text: "Cancel", onclick: closeModal }),
+    ]);
+    when.focus();
+  }
+
+  /* Adds a response to a spot: with a condition, first (it wins when it
+     fits); without, last (the "otherwise"). */
+  function addAlternate(group, cond, line) {
+    const first = group[0];
+    const last = group[group.length - 1];
+    const passage = first.passage;
+    const before = selLength(passage);
+    const src = currentSource(passage);
+    let out;
+    let at;
+    if (first.type === "look") {
+      const row = lookLine({ keys: first.keys, cond: cond, text: line.replace(/\n+/g, " &gt;&gt; ") });
+      if (cond) { at = first.from; out = src.slice(0, at) + row + "\n" + src.slice(at); }
+      else { at = last.to + 1; out = src.slice(0, last.to) + "\n" + row + src.slice(last.to); }
+      setSource(passage, out);
+      focusAfterRender = { passage: passage, index: findLooks(out).findIndex((l) => l.from === at) };
+    } else {
+      const tag = zoneTag({ kind: first.kind, radius: first.radius, on: first.on, cond: cond, say: line.replace(/\n+/g, " >> ") });
+      if (first.shape === "words") {
+        if (cond) {
+          at = first.from;
+          const end = zoneEnd(src, first);
+          out = src.slice(0, at) + tag + src.slice(at, end) + "</span>" + src.slice(end);
+        } else {
+          at = last.to;
+          const close = matchingClose(src, last.from);
+          out = src.slice(0, at) + tag + src.slice(at, close) + "</span>" + src.slice(close);
+        }
+      } else {
+        at = cond ? first.from : zoneEnd(src, last);
+        out = src.slice(0, at) + tag + "</span>" + src.slice(at);
+      }
+      setSource(passage, out);
+      focusAfterRender = { passage: passage, index: findReactions(out).findIndex((r) => r.from === at) };
+    }
+    keepSelection(passage, before);
+    renderCrumbs();
+    drawSelection();
+    renderDiskette(true);
+    say(cond ? "Added: she says it " + (cond.charAt(0) === "!" ? "until " + cond.slice(1) : "once " + cond) + " (it's first, so it wins then)." : "Added as the otherwise, last.", "ok");
+  }
+
+  /* Swaps a response with the one above (-1) or below (+1) it. */
+  function moveAlternate(group, i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= group.length) return;
+    const a = group[Math.min(i, j)];
+    const b = group[Math.max(i, j)];
+    const passage = a.passage;
+    const before = selLength(passage);
+    const src = currentSource(passage);
+    /* Zones: swap their opening tags (nesting stays); lines: swap lines. */
+    const A = src.slice(a.from, a.to);
+    const B = src.slice(b.from, b.to);
+    setSource(passage, src.slice(0, a.from) + B + src.slice(a.to, b.from) + A + src.slice(b.to));
+    keepSelection(passage, before);
+    const moved = group[i];
+    const newFrom = dir < 0 ? a.from : a.from + (b.to - b.from) + (b.from - a.to);
+    const list = moved.type === "look" ? findLooks(currentSource(passage)) : findReactions(currentSource(passage));
+    focusAfterRender = { passage: passage, index: list.findIndex((r) => r.from === newFrom) };
+    renderCrumbs();
+    drawSelection();
+    renderDiskette(true);
   }
 
   /* No selection: everything she says, this page first, then by place; drafts last. */
@@ -3304,7 +3530,7 @@
     document.addEventListener("mouseup", onGameMouseUp, true);
     document.addEventListener("keydown", onKey, true);
     document.addEventListener("scroll", redrawSoon, true);
-    window.addEventListener("resize", function () { redrawSoon(); if (aiming) aimBar(true); });
+    window.addEventListener("resize", function () { redrawSoon(); topBar(); });
     new MutationObserver(function () {
       if (store.data.open) requestAnimationFrame(() => markGame(false));
       requestAnimationFrame(showZones);
@@ -3321,7 +3547,7 @@
     }, 400);
     /* Pick up the other person's comments and saves while the panel is open. */
     setInterval(function () { if (store.data.open) { loadComments(); loadHistory(); } }, 60000);
-    window.SkunkpetsEditorDebug = { getText: getText, setText: (t) => { setText(t); onInput(); }, select: (a, b) => { view.dispatch({ selection: { anchor: a, head: b }, userEvent: "select" }); view.focus(); }, cursor: () => view.state.selection.main.head };
+    window.SkunkpetsEditorDebug = { getText: getText, setText: (t) => { setText(t); onInput(); }, select: (a, b) => { releaseSelection(); selectRange(a, b, true); }, cursor: () => view.state.selection.main.head };
   }
 
   if (window.SkunkpetsEditorHook) start();

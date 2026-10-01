@@ -699,16 +699,15 @@ What she says, first match wins:
      `<span class="diskette-zone" data-radius="10" data-on="[data-art='x.jpg']" data-say="Ooh!"></span>`.
      Editor: `[[diskette: 10 | on photo: x.jpg | Ooh!]]` or
      `[[diskette: 10 | on element: .forum-user-pic | Ooh!]]`.
-   While the editor is open: points show as a dot with a dashed circle of
-   their reach, words underlined, elements outlined; click one (or press and
-   hold anywhere in its reach, or Alt-click) to open its card.
+   While the editor's Diskette tab is open: points show as a dot with a
+   dashed circle of their reach, words outlined, elements outlined; click
+   one to select it and open its card.
 2. **The page's own comment**, if you dropped on a browser page that has one:
    `<span class="diskette-page" data-say="..."></span>` (editor:
    `[[diskette: page | ...]]`).
 3. **The `DisketteLooks` passage**: one line per app or thing (Mail, a
    desktop icon, the Start button, the clock, the wallpaper, herself...). Its
-   comment lists every key. Several lines for one key are picked at random;
-   `{page}` is the page open in the browser. Plain HTML only there (it's
+   comment lists every key. `{page}` is the page open in the browser. Plain HTML only there (it's
    read by the script, never shown as a page).
 
 Any of them can add `data-mood="shake"` or `"wide"` (editor:
@@ -722,8 +721,18 @@ editor's cards, one box per line: **+ Another line**, and **Asked again** picks 
 next: `data-cycle` absent = in order, then keep saying the last one;
 `"loop"` = round and round; `"random"` = at random, never the same twice
 running (friendly form: `[[diskette: 80 | loop | ...]]`). The counts are in
-`$disketteSeen`, so they're saved. Several DisketteLooks lines for the same
-key are still picked at random.
+`$disketteSeen`, so they're saved.
+
+**Alternate responses (conditions):** one spot can have several
+responses, each with its own `data-if`, and she says **the first one
+whose condition fits** (one without `data-if` always fits, so it goes
+last, as the "otherwise"). Same-spot zones are stacked: points side by
+side (`[[diskette: 80 | if: zoom-started | Now?]][[diskette: 80 | Hm.]]`),
+words zones nested (`[[diskette: 10 | if: x | around | Later.]][[diskette: 10 | on: these words | First.]][[/diskette]]`),
+photo/element zones and page comments one after another; DisketteLooks
+lines for the same key, in order. The editor's Diskette tab shows them as a
+numbered list (▶ = what she'd say now in this playthrough) with ↑/↓ to
+reorder, and **+ Another response here** asks when she should say it.
 
 **Thanks / That's enough:** every answer offers **Thanks, Diskette!** and
 **That's enough, Diskette.** (tucks her into the tray). Thanks brings her

@@ -1476,3 +1476,68 @@ body.ske-aiming .playfield * {
   font-size: 12px;
 }
 .ske-panel .ske-back { margin-right: 4px; font-size: 12px; }
+
+/* Alternate responses for one spot: a numbered list, first fit wins. */
+.ske-spot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ske-spot-many {
+  padding: 6px;
+  border: 1px dashed #d9a3c0;
+  border-radius: 5px;
+  background: #fdf7fa;
+}
+.ske-spot + .ske-spot { margin-top: 8px; }
+.ske-panel .ske-add-alt { align-self: flex-start; }
+.ske-alt-rank {
+  flex: none;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e6e6e6;
+  color: #555;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+.ske-alt-rank.ske-alt-now {
+  background: #2e8b57;
+  color: #fff;
+}
+.ske-cond-chip {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: #e8eefc;
+  color: #2a4a8a;
+  font: 10px/16px ui-monospace, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ske-cond-chip.ske-cond-else {
+  background: #f0f0f0;
+  color: #777;
+  font-family: system-ui, sans-serif;
+  font-style: italic;
+}
+.ske-alt-never {
+  flex: none;
+  color: #c0392b;
+  font-size: 10px;
+  font-weight: 600;
+}
+.ske-alt-when { width: 100%; }
+.ske-aimbar.ske-selbar {
+  background: #333;
+}
+.ske-aimbar.ske-selbar button { color: #333; }
+.ske-selbar-label {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

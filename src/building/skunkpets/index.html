@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="7e73fd02d103">
+<meta name="skunkpets-build" content="ca4375b2566f">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "7e73fd02d103";
+  var mine = "ca4375b2566f";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -3475,7 +3475,6 @@ let disketteGazeFrame = 0;
 let disketteReaction = null;    /* { html, mood } while her answer is up */
 let disketteLook = null;        /* the drag in progress */
 let disketteLookLines = null;   /* key -> [{ html, mood }], from DisketteLooks */
-const disketteLastLine = {};
 
 function mountDisketteInspect(playfield) {
   const assistant = playfield.querySelector(".diskette-assistant");
@@ -3879,11 +3878,9 @@ function pickDisketteLine(keys) {
   });
   const key = keys.concat(["anything"]).find(function (k) { return lines[k] && lines[k].length; });
   if (!key) return { html: "Hmm!" };
-  const options = lines[key];
-  let i = Math.floor(Math.random() * options.length);
-  if (options.length > 1 && options[i].html === disketteLastLine[key]) i = (i + 1) % options.length;
-  disketteLastLine[key] = options[i].html;
-  return options[i];
+  /* Several lines for a key: the first one whose condition fits, like
+     zones (conditional lines go before the plain one). */
+  return lines[key][0];
 }
 
 let disketteReactionSeq = 0;
@@ -5538,11 +5535,11 @@ The official release of the game was slated for July 2009, but the project enter
 &lt;div class=&quot;splash-hint&quot;&gt;best played on a computer, in fullscreen, with sound on&lt;/div&gt;
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="6" name="Diskette" tags="wiki article" position="725,100" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Diskette //(virtual assistant)//&lt;/h1&gt;\
-&lt;span class=&quot;diskette-page&quot; data-say=&quot;Hey, that&#39;s my page!&quot;&gt;&lt;/span&gt;Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user&#39;s preference.
+Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user&#39;s preference.
 
 &lt;div class=&quot;article-art article-art-left&quot; data-art=&quot;diskette-chyt.jpg&quot; style=&quot;width: 28%&quot; role=&quot;img&quot; aria-label=&quot;diskette&quot;&gt;&lt;/div&gt;&lt;p&gt;Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as &quot;//Your Secretary//&quot;, a tagline made famous by her launch expo at (link: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)]. 
 
-However, Diskette&#39;s Install CD was only in distribution for 6 months, after which she was &lt;span class=&quot;diskette-zone&quot; data-radius=&quot;10&quot; data-mood=&quot;shake&quot; data-say=&quot;Such an ugly word.&quot;&gt;decommissioned&lt;/span&gt;. Popular theories have circulated online that Diskette was shut off after she &#39;&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;10&quot; data-mood=&quot;wide&quot; data-say=&quot;&quot;&gt;attained sentience&lt;/span&gt;,&#39; with many users citing a viral dialogue posted online in November 2004 (//&quot;The Diskette Confession&quot;//) as evidence that she had &#39;gone rogue&#39;.&lt;/p&gt;&lt;/div&gt;OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)].
+However, Diskette&#39;s Install CD was only in distribution for 6 months, after which she was decommissioned. Popular theories have circulated online that Diskette was shut off after she &#39;attained sentience,&#39; with many users citing a viral dialogue posted online in November 2004 (//&quot;The Diskette Confession&quot;//) as evidence that she had &#39;gone rogue&#39;.&lt;/p&gt;&lt;/div&gt;OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)].
 &lt;/div&gt;
 
 &lt;h2&gt;&quot;The Diskette Confession&quot;&lt;/h2&gt;\
@@ -6689,7 +6686,7 @@ The release dates mentioned pertain to the date of release in the United States.
 &lt;/table&gt;
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="33" name="Tales of Prior Days" tags="wiki article" position="350,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Tales of Prior Days&lt;/h1&gt;\
-&lt;div class=&quot;article-art&quot; data-art=&quot;title-1-ydmo.jpg&quot; style=&quot;width: 30%&quot; role=&quot;img&quot; aria-label=&quot;Title(1)&quot;&gt;&lt;/div&gt;&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;10&quot; data-on=&quot;[data-art=&#39;title-1-ydmo.jpg&#39;]&quot; data-say=&quot;Nice wings...&quot;&gt;&lt;/span&gt;Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
+&lt;div class=&quot;article-art&quot; data-art=&quot;title-1-ydmo.jpg&quot; style=&quot;width: 30%&quot; role=&quot;img&quot; aria-label=&quot;Title(1)&quot;&gt;&lt;/div&gt;Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
 
 Some of the tales included in these volumes:
 * The Wife of the Dead Soldier
@@ -7037,8 +7034,9 @@ deal with the devil
      this, it&#39;s never shown as a page). Plain HTML only: Harlowe
      markup and variables don&#39;t work here, but &lt;b&gt; and &lt;i&gt; do.
 
-     One &lt;p data-look=&quot;key&quot;&gt; per line. A key with several lines picks
-     one at random. data-mood=&quot;shake&quot; or &quot;wide&quot; changes how she reacts
+     One &lt;p data-look=&quot;key&quot;&gt; per line. A key with several lines says
+     the first one whose data-if fits (so put conditional lines before
+     the plain one). data-mood=&quot;shake&quot; or &quot;wide&quot; changes how she reacts
      (default: a little hop). {page} is the page open in the browser.
 
      Keys: self (herself), poke (a click on her eyes without a drag),
@@ -7057,11 +7055,10 @@ deal with the devil
      data-if=&quot;event, !other-event&quot; makes a line count only when those
      events have (or, with !, haven&#39;t) happened; see GameEvents.
 
-     Repeats: several lines for the same key are picked at random (never
-     the same twice running). One line can also hold alternatives
-     separated by &amp;gt;&amp;gt; (&quot;Hi! &amp;gt;&amp;gt; You again?&quot;): she goes through
-     them in order and then keeps saying the last one; data-cycle=&quot;loop&quot;
-     goes round and round, data-cycle=&quot;random&quot; picks one.
+     Repeats: one line can hold alternatives separated by &amp;gt;&amp;gt;
+     (&quot;Hi! &amp;gt;&amp;gt; You again?&quot;): she goes through them in order and
+     then keeps saying the last one; data-cycle=&quot;loop&quot; goes round and
+     round, data-cycle=&quot;random&quot; picks one (never the same twice running).
 
      data-then=&quot;...&quot; is her follow-up after &quot;Thanks, Diskette!&quot; for that
      line (default: &quot;Need me to look at anything else?&quot;). A line
@@ -7071,10 +7068,8 @@ deal with the devil
      A page can have its own comment, and any spot in a page its own
      response zone; see the script&#39;s DISKETTE INSPECTING. --&gt;
 &lt;p data-look=&quot;self icon-diskette&quot;&gt;That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!&lt;/p&gt;
-&lt;p data-look=&quot;poke&quot; data-mood=&quot;shake&quot;&gt;Ow!&lt;/p&gt;
-&lt;p data-look=&quot;poke&quot; data-mood=&quot;shake&quot;&gt;Hey! I need those to see!&lt;/p&gt;
-&lt;p data-look=&quot;page&quot;&gt;Ooh, &lt;b&gt;{page}&lt;/b&gt;! Winkipedia knows about everything.&lt;/p&gt;
-&lt;p data-look=&quot;page&quot; data-mood=&quot;wide&quot;&gt;So many words! Want me to look at something in particular? Aim right at it.&lt;/p&gt;
+&lt;p data-look=&quot;poke&quot; data-mood=&quot;shake&quot; data-cycle=&quot;random&quot;&gt;Ow! &amp;gt;&amp;gt; Hey! I need those to see!&lt;/p&gt;
+&lt;p data-look=&quot;page&quot; data-cycle=&quot;random&quot;&gt;Ooh, &lt;b&gt;{page}&lt;/b&gt;! Winkipedia knows about everything. &amp;gt;&amp;gt; So many words! Want me to look at something in particular? Aim right at it.&lt;/p&gt;
 &lt;p data-look=&quot;browser icon-browser&quot;&gt;&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.&lt;/p&gt;
 &lt;p data-look=&quot;mail icon-mail&quot;&gt;&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it.&lt;/p&gt;
 &lt;p data-look=&quot;notes icon-notes&quot;&gt;&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember.&lt;/p&gt;
@@ -7169,7 +7164,7 @@ deal with the devil
 &lt;table class=&quot;netcon-table&quot;&gt;
 &lt;tr&gt;&lt;th&gt;Product(s)&lt;/th&gt;&lt;td&gt;&lt;div&gt;NetCon 2004 Attendee Friday,&lt;/div&gt;&lt;div&gt;NetCon 2004 Attendee Saturday&lt;/div&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;&lt;th&gt;Amount&lt;/th&gt;&lt;td&gt;95.00&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;th&gt;Payment&lt;/th&gt;&lt;td&gt;&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;20&quot; data-say=&quot;Somebody blacked that out.&quot;&gt;&lt;span class=&quot;netcon-redact&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;th&gt;Payment&lt;/th&gt;&lt;td&gt;&lt;span class=&quot;netcon-redact&quot;&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;&lt;th&gt;Date Charged&lt;/th&gt;&lt;td&gt;2/9/2004&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;&lt;th&gt;&lt;/th&gt;&lt;td&gt;&lt;span class=&quot;netcon-url&quot;&gt;http:&amp;#47;&amp;#47;www.netcon04.com/tickets&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;/table&gt;

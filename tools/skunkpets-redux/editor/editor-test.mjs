@@ -175,6 +175,7 @@ const txt = await ed.get();
 const q = txt.indexOf('media conglomerate');
 await ed.select(q, q + 'media conglomerate'.length); await W(200);
 check('selected words show as the quote', (await text('.ske-quote-hint')).includes('media conglomerate'));
+check('selecting in the markup lets go of the game selection', (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);
 await p.locator('.ske-comment-input').first().fill('Should this say conglomerate?');
 failNextCommentPut = true;
 await p.locator('.ske-post').click(); await W(1500);
@@ -197,7 +198,7 @@ await p.locator('.ske-comment').filter({ hasText: 'Should this say conglomerate?
 check('Re-pin moves it to the new words', commentsFile.data.comments.find((c) => c.id === mine.id).quote === 'media empire');
 if (OUT) await p.screenshot({ path: `${OUT}/comments.png` });
 await p.locator('.ske-comment').filter({ hasText: 'Should this say conglomerate?' }).locator('button').filter({ hasText: 'Resolve' }).click(); await W(1000);
-check('resolved comments fold away and stop highlighting', (await text('.ske-resolved summary')).includes('Resolved (1)') && (await p.locator('.browser-page-content mark.ske-mark').filter({ hasText: 'media empire' }).count()) === 0);
+check('resolved comments leave the Open list and stop highlighting', (await p.locator('.ske-comment').filter({ hasText: 'Should this say conglomerate?' }).count()) === 0 && (await p.locator('.browser-page-content mark.ske-mark').filter({ hasText: 'media empire' }).count()) === 0);
 
 // A plain click in the game just plays it (no selection, no cursor jump)
 await p.keyboard.press('Escape'); await W(200);
@@ -276,38 +277,60 @@ await p.locator('.ske-react-open .ske-cycle-btn', { hasText: 'In order' }).click
 await p.locator('.ske-react-open textarea').nth(1).fill(''); await p.locator('.ske-react-open textarea').nth(1).press('Backspace'); await W(1300);
 check('...Backspace in an empty line removes it', (await p.locator('.ske-react-open textarea').count()) === 1 && (await ed.get()).includes('[[diskette: 10 | on: his two sons | Two sons? Bruce, is that you?]]') && (await p.locator('.ske-react-open .ske-cycle:not([hidden])').count()) === 0);
 check('...and the popup shows it', (await text('.ske-pop')).includes('Two sons?'), await text('.ske-pop'));
+// Another response for the same words, only after an event
+await p.locator('.ske-add-alt').first().click(); await W(300);
+await p.locator('.ske-alt-when').selectOption('zoom-started');
+await p.locator('.ske-modal textarea').fill('Bruce again?');
+await p.locator('.ske-modal .ske-save').click(); await W(900);
+check('+ Another response here adds a conditional one first, nested around the words', (await ed.get()).includes('[[diskette: 10 | if: zoom-started | around | Bruce again?]][[diskette: 10 | on: his two sons | Two sons? Bruce, is that you?]][[/diskette]]'), (await ed.get()).match(/\[\[diskette[^\n]*his two sons[^\n]*?\[\[\/diskette\]\]/)?.[0]);
+check('...for the same spot (no separate "new response" button)', (await p.locator('.ske-tab-diskette button', { hasText: 'New response on the selection' }).count()) === 0);
+check('...listed as 1 (if zoom-started) and 2 (otherwise, said now)', (await p.locator('.ske-spot-many .ske-react').count()) === 2 && (await p.locator('.ske-spot-many .ske-cond-chip').first().innerText()) === 'if zoom-started' && (await p.locator('.ske-spot-many .ske-react').nth(1).locator('.ske-alt-now').count()) === 1 && (await p.locator('.ske-spot-many .ske-cond-else').count()) === 1, await p.locator('.ske-spot-many').innerText().catch(() => ''));
+await p.locator('.ske-spot-many .ske-react').first().locator('.ske-icon-btn', { hasText: '↓' }).click(); await W(800);
+check('↓ moves it after the otherwise, which then shadows it (⚠ never)', (await ed.get()).includes('[[diskette: 10 | around | Two sons? Bruce, is that you?]][[diskette: 10 | if: zoom-started | on: his two sons | Bruce again?]][[/diskette]]') && (await p.locator('.ske-spot-many .ske-alt-never').count()) === 1, (await ed.get()).match(/\[\[diskette[^\n]*his two sons[^\n]*?\[\[\/diskette\]\]/)?.[0]);
+await p.locator('.ske-spot-many .ske-react').nth(1).locator('.ske-icon-btn', { hasText: '↑' }).click(); await W(800);
+check('↑ puts it back first', (await ed.get()).includes('[[diskette: 10 | if: zoom-started | around | Bruce again?]][[diskette: 10 | on: his two sons | Two sons? Bruce, is that you?]][[/diskette]]') && (await p.locator('.ske-spot-many .ske-alt-never').count()) === 0);
+await p.evaluate(() => window.SkunkpetsEditorHook.setEvent('zoom-started', true)); await W(400);
+await p.locator('.ske-tab-btn[data-tab="diskette"]').click(); await W(500);
+check('...and once zoom-started has happened, ▶ moves to it', (await p.locator('.ske-spot-many .ske-react').first().locator('.ske-alt-now').count()) === 1);
+await p.evaluate(() => window.SkunkpetsEditorHook.setEvent('zoom-started', false)); await W(300);
 await p.keyboard.press('Escape'); await W(200);
 check('Esc clears the selection', (await p.locator('.ske-pop').count()) === 0 && (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);
+// ✎ Markup in the popup: straight to editing those words, selection cleared
+await p.locator('.ske-tab-btn[data-tab="comments"]').click(); await W(300);
+const drag2 = await wordsAt('his two sons');
+await p.mouse.move(drag2[0], drag2[1]); await p.mouse.down(); await p.mouse.move(drag2[2], drag2[3], { steps: 8 }); await p.mouse.up(); await W(600);
+await p.locator('.ske-pop-btn', { hasText: 'Markup' }).click(); await W(500);
+const picked = await p.evaluate(() => { const v = document.querySelector('.ske-cm .cm-editor'); return window.getSelection().toString(); });
+check('✎ Markup opens Markup with the words selected and clears the selection', (await text('.ske-tab-btn.ske-tab-on')).startsWith('Markup') && (await p.locator('.ske-crumbs.ske-hidden').count()) === 1 && (await p.locator('.ske-pop').count()) === 0 && picked.includes('his two sons'), picked);
 // Edit mode: click a thing
 await p.locator('.ske-aim-btn').click(); await W(200);
 check('Edit mode shows its bar over the game', (await p.locator('.ske-aimbar').count()) === 1);
 await p.mouse.click(...await box('.taskbar-clock')); await W(500);
 check('Edit mode: clicking the clock selects it', (await text('.ske-crumbs')).includes('the clock'), await text('.ske-crumbs'));
 check('...and the popup shows her clock line', (await text('.ske-pop-diskette')).includes('“'), await text('.ske-pop-diskette'));
-check('...and Edit mode ends after one pick', (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 0 && (await p.locator('.ske-aimbar').count()) === 0);
+check('...and Edit mode ends after one pick', (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 0 && (await p.locator('.ske-aimbar:not(.ske-selbar)').count()) === 0);
+check('...and the bar now says what is selected, Esc to deselect', (await text('.ske-selbar')).includes('the clock') && (await text('.ske-selbar')).includes('Esc to deselect'), await text('.ske-selbar'));
 await p.keyboard.press('e'); await W(200);
-await p.keyboard.down('Shift'); await p.mouse.click(...await box('.start-button')); await p.keyboard.up('Shift'); await W(400);
-check('Shift-click picks and stays in Edit mode', (await text('.ske-crumbs')).includes('the Start button') && (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 1, await text('.ske-crumbs'));
 await p.keyboard.press('Escape'); await W(200);
 check('Esc leaves Edit mode first...', (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 0 && (await p.locator('.ske-crumbs.ske-hidden').count()) === 0);
 await p.keyboard.press('Escape'); await W(200);
-check('...then clears the selection', (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);
+check('...then clears the selection (and its bar)', (await p.locator('.ske-crumbs.ske-hidden').count()) === 1 && (await p.locator('.ske-aimbar').count()) === 0);
 
 // ---------- Diskette tab overview: drafts, lines, and saving ----------
 await p.locator('.ske-tab-btn[data-tab="diskette"]').click(); await W(500);
-const ticketCard = p.locator('.ske-react').filter({ hasText: 'blacked that out' });
+const ticketCard = p.locator('.ske-react').filter({ hasText: 'Is it that time already?' }).first();
 check('the overview groups reactions by place', (await text('.ske-tab-diskette')).includes('DESKTOP & APPS') || (await p.locator('.ske-group-title').filter({ hasText: 'Desktop & apps' }).count()) === 1);
 const sons = await wordsAt('his two sons');
 await p.mouse.click(sons[0] + 4, sons[1]); await W(600);
-check('clicking a zone in the game (Diskette tab) selects it and opens its card', (await text('.ske-crumbs')).includes('his two sons') && (await p.locator('.ske-react-open').filter({ hasText: 'Bruce' }).count()) === 1, await text('.ske-crumbs'));
+check('clicking a zone in the game (Diskette tab) selects it and opens its card', (await text('.ske-crumbs')).includes('his two sons') && (await p.locator('.ske-react-open').filter({ hasText: 'Bruce' }).count()) >= 1, await text('.ske-crumbs'));
 await p.keyboard.press('Escape'); await W(400);
 await ticketCard.locator('.ske-react-head').click(); await W(200);
-await ticketCard.locator('textarea').fill('A ticket to NetCon 2004! Somebody had fun.'); await W(1200);
+await ticketCard.locator('textarea').first().fill('Tick tock, it\'s clock o\'clock.'); await W(1200);
 await p.locator('.ske-react-open .ske-icon-btn', { hasText: 'Make draft' }).first().click(); await W(800);
 check('Make draft moves it to Drafts, last', (await text('.ske-tab-btn[data-tab="diskette"] .ske-tab-badge')) === '1 draft' && (await p.locator('.ske-group-drafts .ske-react').count()) === 1, await text('.ske-tab-btn[data-tab="diskette"]'));
 await p.locator('.ske-group-drafts .ske-icon-btn', { hasText: 'Publish' }).click(); await W(800);
 check('Publish puts it back', (await p.locator('.ske-tab-btn[data-tab="diskette"] .ske-tab-badge.ske-hidden').count()) === 1);
-check('editing a reaction outside the articles edits that passage', (await text('.ske-pending')).includes('RenderNetconTicket'), await text('.ske-pending'));
+check('editing a reaction outside the articles edits that passage', (await text('.ske-pending')).includes('DisketteLooks'), await text('.ske-pending'));
 await p.locator('.ske-tab-diskette .ske-icon-btn', { hasText: 'Line for something you can' }).click();
 await p.locator('.ske-modal select').first().selectOption('outside');
 await p.locator('.ske-modal textarea').fill('Out there? Nothing!');
@@ -316,7 +339,7 @@ check('a line for something you can\'t point at', (await p.$$eval('.ske-tab-disk
 await p.locator('.ske-save').first().click(); await W(500);
 await p.locator('.ske-review-save').click(); await W(1500);
 const savedTwee = sent.tree && sent.tree.tree.find((e) => e.path === 'tools/skunkpets-redux/skunkpets-redux.twee');
-check('saving commits reactions with everything else', !!savedTwee && savedTwee.content.includes('data-say="A ticket to NetCon 2004! Somebody had fun."') && savedTwee.content.includes('<p data-look="outside">Out there? Nothing!</p>') && savedTwee.content.includes('data-say="Two sons? Bruce, is that you?">his two sons</span>'));
+check('saving commits reactions with everything else', !!savedTwee && savedTwee.content.includes('>Tick tock, it\'s clock o\'clock.</p>') && savedTwee.content.includes('<p data-look="outside">Out there? Nothing!</p>') && savedTwee.content.includes('data-say="Two sons? Bruce, is that you?">his two sons</span>'));
 await p.locator('.ske-tab-btn[data-tab="events"]').click(); await W(1500);
 check('Events lists events, ticked when they happened', (await p.locator('.ske-event-done').filter({ hasText: 'game-started' }).count()) === 1 && (await p.locator('.ske-event').count()) > 20);
 await p.locator('.ske-tab-btn[data-tab="markup"]').click(); await W(300);
