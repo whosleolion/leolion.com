@@ -57,20 +57,29 @@ drags from her eyes (GUIDE.md 7.10), in three lists:
 - **Apps & things**: her lines for windows, icons, the clock, herself...
   (the `DisketteLooks` passage), plus the keys that have no line yet.
 
-Each card shows where it is (for zones, the words just before it), and
-edits in place: her line, the zone's reach in pixels, her reaction (hop,
-shake her head, wide eyes) and an **if** (event names from Game status,
-comma-separated; `!name` = only before it). Changes show in the game as you
-type. **Show me** takes the game there and flashes the zone. Cards also work
-for reactions in Mail, the NetCon ticket and the desktop, which the Article
-tab can't open.
+Cards are one line each (priority, what it is, where); click one to open
+it. Open, it edits in place: her line (several lines = alternatives she
+goes through when asked again, per **repeats**), the reach or slack in
+pixels, her reaction (hop, shake her head, wide eyes), **only if** (event
+names from Game status, comma-separated; `!name` = only before it), and
+what she says **after "Thanks"**. Changes show in the game as you type.
+**Show me** takes the game there and flashes the zone. Cards also work for
+reactions in Mail, the NetCon ticket and the desktop, which the Article tab
+can't open. The **?** buttons (here, in Game status, and the Article tab's
+markup cheat sheet) open short explanations.
 
-New ones: **+ Zone at the cursor** (where the markup cursor is), **+ Zone:
-click the game** (then click a spot in the page; it goes at the end of that
-sentence), **+ Page comment**, and **+ Line for an app or thing**. **How it
-works** in the tab is the short version of all this. While the panel is open,
-zones show in the game as a dot with a dashed circle of their reach: pink when
-written, orange while still to write.
+A zone covers **a point** with a reach, **words**, or **a photo or other
+element** (GUIDE.md 7.10). New ones (all under **+ New**): **+ Point zone at the cursor**, **+ Zone:
+click the game** (click words for a point at the end of that sentence, or a
+photo for a zone on it), **+ Zone on selected words** (select them in the
+markup or in the game first), **+ Zone on a photo / element**, **+ Page
+comment**, and **+ Line for an app or thing**. **How it works** in the tab is
+the short version of all this. While the panel is open, zones show in the
+game (points as a dot with a dashed circle of their reach, words underlined,
+elements outlined; pink when written, orange while still to write), and
+**clicking one** (its dot or words), **pressing and holding** anywhere in its
+reach, or **Alt-clicking** there opens its card. **Edit in markup** on a card
+selects the zone in the Article tab.
 
 **Game status tab: events.** The `GameEvents` list (GUIDE.md 7.16) with what
 has happened in this playthrough so far: ✓ happened, → next, ○ not yet,

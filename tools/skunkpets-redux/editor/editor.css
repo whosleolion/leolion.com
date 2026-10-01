@@ -807,3 +807,221 @@ body.ske-picking .browser-page-content * {
   flex-wrap: wrap;
   gap: 4px 8px;
 }
+
+/* Zones on words and on elements (panel open). */
+.playfield .diskette-zone.ske-zone-words::before,
+.playfield .diskette-zone.ske-zone-el::before {
+  display: none;
+}
+
+.playfield .diskette-zone.ske-zone-words::after {
+  display: none;
+}
+
+.playfield .diskette-zone.ske-zone-words {
+  outline: 1.5px dashed #d0408a;
+  outline-offset: 1px;
+  background: rgba(208, 64, 138, 0.07);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  cursor: pointer !important;
+}
+
+.playfield .diskette-zone.ske-zone-words.ske-zone-todo {
+  outline-color: #e08a00;
+  background: rgba(224, 138, 0, 0.07);
+}
+
+.playfield .ske-zone-target {
+  outline: 2px dashed #d0408a;
+  outline-offset: 2px;
+}
+
+.playfield .diskette-zone.ske-zone::after,
+.playfield .diskette-page.ske-zone::after {
+  cursor: pointer !important;
+}
+
+.diskette-zone.ske-zone-words.ske-zone-flash {
+  animation: skeWordsFlash 1.2s ease 2;
+}
+
+@keyframes skeWordsFlash {
+  0%, 100% { background: rgba(208, 64, 138, 0.1); }
+  50% { background: rgba(208, 64, 138, 0.45); }
+}
+
+/* ---- Tighter panel: bars, ? popups, + New menu, folded cards ---- */
+.ske-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ske-bar .ske-filters {
+  flex: 1;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.ske-panel .ske-help-btn {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border-color: #999;
+  color: #555;
+  font: 700 12px/1 system-ui, sans-serif;
+}
+
+.ske-help-sec + .ske-help-sec {
+  margin-top: 10px;
+}
+
+.ske-help-head {
+  font-weight: 700;
+}
+
+.ske-help-text {
+  color: #333;
+  white-space: pre-line;
+}
+
+.ske-new-wrap {
+  position: relative;
+  flex: none;
+}
+
+.ske-panel .ske-new-btn {
+  border-color: #a0306a;
+  color: #a0306a;
+  font-weight: 600;
+}
+
+.ske-panel .ske-new-btn.ske-picking-on {
+  background: #fbeaf3;
+}
+
+.ske-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  padding: 4px;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.ske-panel .ske-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  text-align: left;
+}
+
+.ske-panel .ske-menu-item:hover {
+  background: #fbeaf3;
+}
+
+.ske-tiny {
+  font-size: 11px;
+}
+
+.ske-count {
+  display: inline-block;
+  min-width: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: #e6e6e0;
+  font-size: 10px;
+  text-align: center;
+}
+
+.ske-react-list {
+  gap: 3px;
+}
+
+.ske-react {
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.ske-react-head {
+  align-items: center;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.ske-react-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ske-react-where {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  color: #777;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ske-react-open {
+  padding: 6px 7px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ske-react-open .ske-react-title {
+  white-space: normal;
+}
+
+.ske-react-actions {
+  justify-content: flex-end;
+}
+
+.ske-panel .ske-icon-btn {
+  padding: 1px 7px;
+  font-size: 11px;
+}
+
+.ske-cond-note {
+  font-size: 11px;
+}
+
+.ske-event {
+  align-items: center;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+.ske-event code {
+  flex: none;
+}
+
+.ske-event-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #666;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

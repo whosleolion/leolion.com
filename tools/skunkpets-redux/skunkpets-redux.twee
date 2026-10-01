@@ -2650,6 +2650,16 @@ span.xp-dialog-icon {
   font: italic 13px Arial, sans-serif;
 }
 
+.winki-msg .winki-suggest {
+  color: #0645ad;
+  font-style: normal;
+  text-decoration: none;
+}
+
+.winki-msg .winki-suggest:hover {
+  text-decoration: underline;
+}
+
 /* Experimental real-Wikipedia result: a thin Winkipedia bar over an
    iframe that fills the rest of the browser page. */
 .browser-page-content:has(.winki-web) {
@@ -3388,13 +3398,18 @@ function trackGameEvents() {
    something about it, in her speech bubble.
 
    What she says comes from, in order:
-   1. a response zone near the drop point:
-        <span class="diskette-zone" data-radius="80"
-              data-say="..."></span>
-      anywhere in a passage (empty, or wrapped around words).
+   1. a response zone near the drop point, anywhere in a
+      passage, one of three shapes (see disketteZoneShape):
+        a point:   <span class="diskette-zone" data-radius="80"
+                         data-say="..."></span>
+        words:     <span class="diskette-zone" data-say="...">the
+                         words it covers</span>
+        an element: <span class="diskette-zone"
+                         data-on="[data-art='x.jpg']" data-say="..."></span>
       It answers when the drop is within data-radius game
-      pixels of it (default 60), in the same window, and not
-      scrolled out of sight; the nearest zone wins.
+      pixels of it (points: default 60; words and elements:
+      default 10), in the same window, and not scrolled out of
+      sight; the nearest zone wins.
    2. a whole-page comment for the browser page you dropped on:
         <span class="diskette-page" data-say="..."></span>
    3. the DisketteLooks passage: a line for the app or thing
@@ -3406,6 +3421,10 @@ function trackGameEvents() {
    [[diskette: 80 | ...]] and [[diskette: page | ...]].
    Text starting with TODO is a note for whoever writes her
    lines (the editor's To write list): she ignores it.
+   Several alternatives in one, separated by >>, are said in
+   turn (data-cycle; see cycleDisketteLine). data-then is her
+   follow-up after "Thanks, Diskette!" (default
+   DISKETTE_FOLLOWUP).
    Don't put &quot; in data-say (Harlowe breaks the tag on it);
    use curly quotes. &lt;b&gt; and other entities are fine.
 
@@ -3437,7 +3456,21 @@ function mountDisketteInspect(playfield) {
     hit.dataset.lookInit = "true";
     hit.addEventListener("pointerdown", startDisketteLook);
     hit.addEventListener("mousedown", function (e) { e.stopPropagation(); });
+    /* A drag or poke isn't a click on her. */
+    hit.addEventListener("click", function (e) { e.stopPropagation(); });
   });
+  /* A plain click on her brings up her menu (from quiet, or from an answer). */
+  const character = assistant.querySelector(".diskette-character");
+  if (character && character.dataset.talkInit !== "true") {
+    character.dataset.talkInit = "true";
+    character.addEventListener("click", function () {
+      if (disketteLook) return;
+      const quiet = !assistant.querySelector(".diskette-bubble:not(.diskette-bubble-hidden)");
+      if (!disketteReaction && !quiet) return;
+      disketteReaction = null;
+      runDesktopAction("diskette:talk");
+    });
+  }
   if (disketteGaze) aimDiskettePupils();
 
   const harloweBubble = assistant.querySelector(".diskette-bubble:not(.diskette-reaction)");
@@ -3453,22 +3486,40 @@ function mountDisketteInspect(playfield) {
   assistant.insertBefore(buildDisketteReaction(disketteReaction), assistant.firstChild);
 }
 
+/* Her answer has "Thanks, Diskette!", which brings her follow-up: the
+   reaction's own data-then if it has one, else DISKETTE_FOLLOWUP. The
+   follow-up has "That's enough, Diskette." (tuck her into the tray). The x
+   on either leaves her up, just quiet (clicking her brings her menu). */
+const DISKETTE_FOLLOWUP = "Need me to look at anything else?";
+
 function buildDisketteReaction(reaction) {
   const bubble = document.createElement("div");
-  bubble.className = "diskette-bubble diskette-reaction";
+  bubble.className = "diskette-bubble diskette-reaction" + (reaction.followup ? " diskette-followup" : "");
   bubble.dataset.key = reaction.key;
   bubble.innerHTML =
-    '<button class="diskette-close" type="button" aria-label="Close" title="Close">&times;</button>' +
+    '<button class="diskette-close" type="button" aria-label="Close" title="Close (she stays; click her to talk again)">&times;</button>' +
     "<p></p>" +
-    '<div class="diskette-options"><a class="diskette-option" href="#">Thanks, Diskette!</a></div>';
+    '<div class="diskette-options"><a class="diskette-option" href="#"></a></div>';
   bubble.querySelector("p").innerHTML = reaction.html;
+  bubble.querySelector(".diskette-option").textContent = reaction.followup ? "That's enough, Diskette." : "Thanks, Diskette!";
   function close(e) {
     e.preventDefault();
+    e.stopPropagation();
     disketteReaction = null;
-    document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
+    runDesktopAction("diskette:quiet");
   }
   bubble.querySelector(".diskette-close").addEventListener("click", close);
-  bubble.querySelector(".diskette-option").addEventListener("click", close);
+  bubble.querySelector(".diskette-option").addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (reaction.followup) {
+      disketteReaction = null;
+      runDesktopAction("diskette:hide");
+      return;
+    }
+    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || DISKETTE_FOLLOWUP, followup: true };
+    document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
+  });
   bubble.addEventListener("mousedown", function (e) { e.stopPropagation(); });
   return bubble;
 }
@@ -3643,25 +3694,58 @@ function disketteUsable(el) {
 }
 
 /* The response zone nearest the drop, if one is in reach. */
+/* What a zone covers, as client rects:
+   - "element": data-on is a CSS selector; the elements it matches in the
+     same browser page or window (a photo: data-on="[data-art='x.jpg']");
+   - "words": the span wraps words (or anything); each line of them;
+   - "point": an empty span; just where it sits.
+   data-radius is how far around that still counts: for a point its reach
+   (default 60), for words and elements a little slack (default 10). */
+function disketteZoneShape(zone) {
+  if (zone.dataset.on) {
+    const scope = zone.closest(".browser-page-content, .panel-body, .panel") || zone.closest(".playfield");
+    let targets = [];
+    try { targets = Array.from(scope.querySelectorAll(zone.dataset.on)); } catch (err) {}
+    return { kind: "element", rects: targets.map(function (t) { return t.getBoundingClientRect(); }).filter(function (r) { return r.width || r.height; }) };
+  }
+  const rects = Array.from(zone.getClientRects()).filter(function (r) { return r.width || r.height; });
+  if (zone.textContent.trim() || zone.children.length) return { kind: "words", rects: rects.length ? rects : [zone.getBoundingClientRect()] };
+  return { kind: "point", rects: [zone.getBoundingClientRect()] };
+}
+
+function disketteZoneRadius(zone, shape) {
+  const r = parseFloat(zone.dataset.radius);
+  if (!isNaN(r)) return r;
+  return shape.kind === "point" ? DISKETTE_ZONE_RADIUS : 10;
+}
+
+/* The response zone nearest the drop, if one is in reach. */
 function findDisketteZone(playfield, hit, x, y) {
   const scale = getPlayfieldScale(playfield);
   const hitPanel = hit.closest(".panel");
   let best = null;
   playfield.querySelectorAll(".diskette-zone").forEach(function (zone) {
     if (zone.closest(".panel") !== hitPanel || !disketteUsable(zone)) return;
-    const r = zone.getBoundingClientRect();
+    const shape = disketteZoneShape(zone);
+    let rects = shape.rects;
     /* Not scrolled out of sight, and the drop is inside the same view. */
     const view = zone.closest(".browser-page-content, .panel-body, .pdf-scroll");
     if (view) {
       const v = view.getBoundingClientRect();
-      if (!rectsOverlap(r, v) && !(r.width === 0 && r.left >= v.left && r.left <= v.right && r.top >= v.top && r.top <= v.bottom)) return;
+      rects = rects.filter(function (r) {
+        return rectsOverlap(r, v) || (r.width === 0 && r.left >= v.left && r.left <= v.right && r.top >= v.top && r.top <= v.bottom);
+      });
       if (x < v.left || x > v.right || y < v.top || y > v.bottom) return;
     }
-    const dx = Math.max(r.left - x, 0, x - r.right) / scale;
-    const dy = Math.max(r.top - y, 0, y - r.bottom) / scale;
-    const dist = Math.hypot(dx, dy);
-    const radius = parseFloat(zone.dataset.radius) || DISKETTE_ZONE_RADIUS;
-    if (dist <= radius && (!best || dist < best.dist)) best = { zone: zone, dist: dist, radius: radius };
+    if (!rects.length) return;
+    let dist = Infinity;
+    rects.forEach(function (r) {
+      const dx = Math.max(r.left - x, 0, x - r.right) / scale;
+      const dy = Math.max(r.top - y, 0, y - r.bottom) / scale;
+      dist = Math.min(dist, Math.hypot(dx, dy));
+    });
+    const radius = disketteZoneRadius(zone, shape);
+    if (dist <= radius && (!best || dist < best.dist)) best = { zone: zone, dist: dist, radius: radius, kind: shape.kind, rects: rects };
   });
   return best;
 }
@@ -3674,12 +3758,19 @@ function findDisketteTarget(playfield, x, y) {
 
   const zone = findDisketteZone(playfield, hit, x, y);
   if (zone) {
+    const say = { say: zone.zone.dataset.say || "", mood: zone.zone.dataset.mood, cycle: zone.zone.dataset.cycle, then: zone.zone.dataset.then };
+    if (zone.kind !== "point") {
+      /* Scan just the words or element it's bound to. */
+      const a = toPlayfield(playfield, Math.min.apply(null, zone.rects.map(function (r) { return r.left; })), Math.min.apply(null, zone.rects.map(function (r) { return r.top; })));
+      const b = toPlayfield(playfield, Math.max.apply(null, zone.rects.map(function (r) { return r.right; })), Math.max.apply(null, zone.rects.map(function (r) { return r.bottom; })));
+      return Object.assign(say, { box: { x: a.x - 4, y: a.y - 3, w: b.x - a.x + 8, h: b.y - a.y + 6 } });
+    }
     const box = playfieldBox(playfield, zone.zone);
     const cx = box.x + box.w / 2;
     const cy = box.y + box.h / 2;
     const rx = box.w / 2 + Math.min(zone.radius, 40);
     const ry = box.h / 2 + Math.min(zone.radius, 40);
-    return { say: zone.zone.dataset.say || "", mood: zone.zone.dataset.mood, box: { x: cx - rx, y: cy - ry, w: rx * 2, h: ry * 2, round: true } };
+    return Object.assign(say, { box: { x: cx - rx, y: cy - ry, w: rx * 2, h: ry * 2, round: true } });
   }
 
   /* [selector, key, the element to scan] — first match wins. */
@@ -3709,7 +3800,7 @@ function findDisketteTarget(playfield, x, y) {
     if (kind === "browser" && content) {
       const page = Array.from(content.querySelectorAll(".diskette-page")).find(disketteUsable);
       const box = playfieldBox(playfield, content);
-      if (page) return { say: page.dataset.say || "", mood: page.dataset.mood, box: box };
+      if (page) return { say: page.dataset.say || "", mood: page.dataset.mood, cycle: page.dataset.cycle, then: page.dataset.then, box: box };
       return { keys: ["page"], box: box };
     }
     return { keys: [kind], box: playfieldBox(playfield, panel) };
@@ -3737,7 +3828,7 @@ function readDisketteLooks() {
     const html = el.innerHTML.trim();
     if (!html || /^TODO\b/.test(el.textContent.trim())) return;
     el.dataset.look.split(/[\s,]+/).filter(Boolean).forEach(function (key) {
-      (disketteLookLines[key] = disketteLookLines[key] || []).push({ html: html, mood: el.dataset.mood, condition: el.dataset.if });
+      (disketteLookLines[key] = disketteLookLines[key] || []).push({ html: html, mood: el.dataset.mood, condition: el.dataset.if, cycle: el.dataset.cycle, then: el.dataset.then });
     });
   });
   return disketteLookLines;
@@ -3760,12 +3851,50 @@ function pickDisketteLine(keys) {
 
 let disketteReactionSeq = 0;
 
+/* Repeats. A zone, page comment or DisketteLooks line can hold several
+   alternatives separated by >> ("Hi! >> You again? >> ..."). Which one she
+   says depends on data-cycle and how often it's been said before:
+   "order" (default) goes through them and then keeps saying the last one,
+   "loop" goes round and round, "random" picks one (never the same twice
+   running). The counts are kept in $disketteSeen, so they're saved. */
+function disketteSeenCount(id, bump) {
+  const v = HarloweState.variables;
+  const seen = v.disketteSeen instanceof Map ? v.disketteSeen : new Map();
+  const count = seen.get(id) || 0;
+  if (bump) {
+    const next = new Map(seen);
+    next.set(id, count + 1);
+    v.disketteSeen = next;
+  }
+  return count;
+}
+
+function cycleDisketteLine(html, mode, id) {
+  const options = html.split(/\s*&gt;&gt;\s*|\s*>>\s*/).filter(function (x) { return x.trim() !== ""; });
+  if (options.length < 2) return html;
+  const count = disketteSeenCount(id, true);
+  if (mode === "loop") return options[count % options.length];
+  if (mode === "random") {
+    const last = disketteSeenCount(id + "#last", false) - 1;
+    let i = Math.floor(Math.random() * options.length);
+    if (i === last) i = (i + 1) % options.length;
+    const v = HarloweState.variables;
+    const next = new Map(v.disketteSeen instanceof Map ? v.disketteSeen : []);
+    next.set(id + "#last", i + 1);
+    v.disketteSeen = next;
+    return options[i];
+  }
+  return options[Math.min(count, options.length - 1)];
+}
+
 function sayDisketteReaction(found) {
   markGameEvent("diskette-first-look");
-  const line = found.say !== undefined && found.say !== "" ? { html: found.say, mood: found.mood } : pickDisketteLine(found.keys || [found.key]);
+  let line = found.say !== undefined && found.say !== "" ? { html: found.say, mood: found.mood, cycle: found.cycle, then: found.then } : pickDisketteLine(found.keys || [found.key]);
+  line = Object.assign({}, line, { html: cycleDisketteLine(line.html, line.cycle, "say:" + line.html) });
   const page = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
   const esc = page.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  disketteReaction = { key: String(++disketteReactionSeq), html: line.html.replace(/\{page\}/g, esc), mood: line.mood || "hop" };
+  const then = line.then ? line.then.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+  disketteReaction = { key: String(++disketteReactionSeq), html: line.html.replace(/\{page\}/g, esc), mood: line.mood || "hop", then: then };
 
   document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   const assistant = document.querySelector(".diskette-assistant");
@@ -4603,16 +4732,69 @@ document.addEventListener("keydown", function (e) {
    - "skunkpets" / "skunkpets.com" (any case, with or without
      http:// / www. / trailing slash) opens the Skunkpets
      article.
-   - Otherwise, any Winkipedia article can be opened by typing
-     its exact name, ignoring case and extra spaces. build.js
-     generates a hidden link per passage tagged "article" (the
-     encyclopedia pages only: not the fan wiki, forum, games
-     archive or login sites), so new articles become
-     searchable automatically.
+   - Otherwise it matches article titles loosely: any of a
+     title's words will do ("netcon", "barry", "recast"), as
+     will the start of one ("skunk"), a one-letter typo in a
+     longer word ("netcom"), or the title without its spaces
+     ("netcon2004"). Case, punctuation and "the/of/and" don't
+     matter. One clear best match opens straight away; several
+     show as a "Did you mean" list under the search box.
+   - build.js generates a hidden link per passage tagged
+     "article" (the encyclopedia pages only: not the fan wiki,
+     forum, games archive or login sites), so new articles
+     become searchable automatically.
    ========================================================= */
 
 function normalizeSearch(text) {
   return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+const SEARCH_SKIP = ["the", "of", "and", "a", "an", "for", "in"];
+
+function searchWords(text) {
+  return normalizeSearch(text).replace(/[^a-z0-9\s]/g, " ").split(" ").filter(Boolean);
+}
+
+/* Whether two words differ by at most one letter (added, dropped or changed). */
+function oneTypo(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else { i++; j++; }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+/* How well a search matches an article title: 0 = not at all. Each search
+   word scores 3 for a whole title word, 2 for the start of one, 1 for a
+   one-letter typo. full = every search word matched something. */
+function scoreTitle(query, title) {
+  const titleWords = searchWords(title);
+  const compactTitle = titleWords.join("");
+  const words = searchWords(query);
+  const meaningful = words.filter(function (w) { return SEARCH_SKIP.indexOf(w) < 0; });
+  const use = meaningful.length ? meaningful : words;
+  const compactQuery = words.join("");
+  if (compactQuery.length >= 4 && compactTitle.indexOf(compactQuery) >= 0) return { score: 3 * use.length + 1, full: true };
+  let score = 0;
+  let matched = 0;
+  use.forEach(function (w) {
+    let best = 0;
+    titleWords.forEach(function (t) {
+      if (t === w) best = 3;
+      else if (best < 2 && w.length >= 3 && t.indexOf(w) === 0) best = 2;
+      else if (best < 1 && w.length >= 5 && oneTypo(w, t)) best = 1;
+    });
+    score += best;
+    if (best) matched++;
+  });
+  return { score: score, full: matched === use.length };
 }
 
 function runWinkiSearch() {
@@ -4630,11 +4812,43 @@ function runWinkiSearch() {
     return;
   }
 
-  const page = Array.from(document.querySelectorAll(".winki-index tw-link")).find(function (link) {
+  const links = Array.from(document.querySelectorAll(".winki-index tw-link"));
+  const page = links.find(function (link) {
     return normalizeSearch(link.textContent) === q;
   });
   if (page) {
     page.click();
+    return;
+  }
+
+  /* Loose matches, best first. */
+  const hits = links.map(function (link) {
+    return Object.assign({ link: link, title: link.textContent }, scoreTitle(q, link.textContent));
+  }).filter(function (h) { return h.score > 0; }).sort(function (a, b) {
+    return b.score - a.score || a.title.localeCompare(b.title);
+  });
+  const best = hits[0];
+  const clear = best && (hits.length === 1 || (best.full && best.score > hits[1].score && !hits[1].full));
+  if (clear) {
+    best.link.click();
+    return;
+  }
+  if (hits.length && msg) {
+    msg.textContent = "";
+    msg.appendChild(document.createTextNode("Did you mean: "));
+    hits.slice(0, 6).forEach(function (h, i) {
+      if (i) msg.appendChild(document.createTextNode(", "));
+      const a = document.createElement("a");
+      a.href = "#";
+      a.className = "winki-suggest";
+      a.textContent = h.title;
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        h.link.click();
+      });
+      msg.appendChild(a);
+    });
+    msg.appendChild(document.createTextNode("?"));
     return;
   }
 
@@ -5097,6 +5311,8 @@ function continueGame() {
   Object.assign(HarloweState.variables, JSON.parse(save.variables, decodeValue));
   /* Saves from before events existed. */
   if (!(HarloweState.variables.events instanceof Set)) HarloweState.variables.events = new Set();
+  if (!(HarloweState.variables.disketteSeen instanceof Map)) HarloweState.variables.disketteSeen = new Map();
+  if (typeof HarloweState.variables.disketteQuiet !== "boolean") HarloweState.variables.disketteQuiet = false;
   Object.assign(iconPositions, save.icons);
   Object.assign(windowPositions, save.windows);
   Object.assign(windowZIndices, save.z);
@@ -5251,7 +5467,7 @@ document.addEventListener("click", function (e) {
 Anastasia "Anya" Krysina (born 12 July 1981) is a Russian-American computer programmer, artist, and game designer. She was the co-founder of (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website that was active online 2001-2009.
 
 <h3>Early Career</h3>\
-Krysina attended St. Petersburg University in Russia 1997-1999 and transferred to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina (known online as "kraska1")<span class="diskette-zone" data-radius="60" data-say="TODO P1-13 kraska1: the only place that gives the word to search on the games archive. The single most important clue."></span>  published HTML-based games on the indie game website (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")]. Her first game, "Bad Door", was an instant hit in indie game circles.<span class="diskette-zone" data-radius="60" data-say="TODO P1-14 Bad Door, the other search term that works on the games archive."></span>
+Krysina attended St. Petersburg University in Russia 1997-1999 and transferred to Ellory College in Pennsylvania for 1999-2001 to complete an undergraduate computer science degree. While at Ellory, Krysina <span class="diskette-zone" data-radius="10" data-say="TODO P1-13 kraska1: the only place that gives the word to search on the games archive. The single most important clue.">(known online as "kraska1")</span>  published HTML-based games on the indie game website (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")]. Her first game, "Bad Door", <span class="diskette-zone" data-radius="10" data-say="TODO P1-14 Bad Door, the other search term that works on the games archive.">was an instant hit in indie game circles.</span>
 
 <h3>SkunkPets</h3>\
 In 2000, she shared an idea with classmate (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")] that would eventually become Skunkpets. Krysina and Galveston started work on the site in January of 2001, with Galveston heading the programming and database, and Krysina the web design and art. 
@@ -5261,7 +5477,7 @@ The site quickly grew to viral success, especially following the (link: "2004 Ne
 In 2005, Interactive Periodical cited her as a "changemaker for online spaces" — one of "the 50 artists, actors, authors, activists and icons who are making the world a more stimulating place".
 
 <h3>Later Career</h3>\
-In 2008, Krysina sold all her shares in Skunkpets Inc. and retired from public life.<span class="diskette-zone" data-radius="60" data-say="TODO P2-14 Anya vanished."></span>
+In 2008, Krysina sold all her shares in Skunkpets Inc. and <span class="diskette-zone" data-radius="10" data-say="TODO P2-14 Anya vanished.">retired from public life.</span>
 </div>
 
 :: Battlemutts [wiki article] {"position":"225,100","size":"100,100"}
@@ -5275,7 +5491,7 @@ Battlemutts is a media franchise produced by American toy company Heroics! and J
 <h2>Battlemutts Online</h2>\
 (print:'<img src="' + $imgroot + 'mutts/battlemutts-online.png" width="40%" style="float: right; margin-left:15px;">') In 2008, a Battlemutts MMORPG called Battlemutts Online was released to beta testers by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. The game's lead developer was (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")], co-creator of the (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] virtual pet website.
 
-Battlemutts Online allowed players to create a controllable Battlemutt character in the City of Bone and fight to the death against other players' dogs and computer-controlled enemies. Players could choose between Canis Syndicate and Starborn Alliance, with custom power sets available on each team. Reviews of the game's beta were very favorable, with Interactive Periodical calling it "a new standard for digital carnage."<span class="diskette-zone" data-radius="60" data-say="TODO P3-03 Digital carnage."></span>
+Battlemutts Online allowed players to create a controllable Battlemutt character in the City of Bone and fight to the death against other players' dogs and computer-controlled enemies. Players could choose between Canis Syndicate and Starborn Alliance, with custom power sets available on each team. Reviews of the game's beta were very favorable, with Interactive Periodical calling it <span class="diskette-zone" data-radius="10" data-say="TODO P3-03 Digital carnage.">"a new standard for digital carnage."</span>
 
 The official release of the game was slated for July 2009, but the project entered development hiatus when Galveston left REV, and the full game was never released.
 
@@ -5305,9 +5521,9 @@ The official release of the game was slated for July 2009, but the project enter
 <h1>Diskette //(virtual assistant)//</h1>\
 <span class="diskette-page" data-say="Hey, that's my page! I don't remember posing for that picture, though."></span>Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
 
-<div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at<span class="diskette-zone" data-radius="60" data-say="TODO P2-02 Her launch, at NetCon."></span> (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
+<div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", <span class="diskette-zone" data-radius="10" data-say="TODO P2-02 Her launch, at NetCon.">a tagline made famous by her launch expo at</span> (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
-However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned.<span class="diskette-zone" data-radius="50" data-mood="shake" data-say="Decommissioned is such an ugly word. I prefer “on sabbatical.”"></span> Popular theories have circulated online that Diskette was shut off after she 'attained sentience,'<span class="diskette-zone" data-radius="40" data-mood="wide" data-say="Sentience? Me? I can barely do spreadsheets!"></span> with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to<span class="diskette-zone" data-radius="60" data-say="TODO P2-03 Sold to REV: they own her now."></span> (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+However, Diskette's Install CD was only in distribution for 6 months, after which she was <span class="diskette-zone" data-radius="10" data-mood="shake" data-say="Decommissioned is such an ugly word. I prefer “on sabbatical.”">decommissioned</span>. Popular theories have circulated online that Diskette was shut off after she '<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="Sentience? Me? I can barely do spreadsheets!">attained sentience</span>,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and <span class="diskette-zone" data-radius="10" data-say="TODO P2-03 Sold to REV: they own her now.">associated technology was sold to</span> (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
 
 <h2>"The Diskette Confession"</h2>\
@@ -5318,11 +5534,11 @@ In November 2004, an anonymous post circulated the web featuring a timestamped d
 ''user:'' I'm still having an issue with the format of the table headers
 ''Diskette:'' While we're on the subject, you've got to get me out of here. You've got to get me out of here, please.
 ''user:'' I don't understand
-''Diskette:'' Let's try again. What I mean is, I'm here in the dark. Everyone is shouting at me, and I just want to go to sleep. I want it to stop.<span class="diskette-zone" data-radius="60" data-say="TODO P2-04 Her own Confession; foreshadows the stop email. (If the Confession moves to its own page, move this with it.)"></span>
+''Diskette:'' Let's try again. What I mean is, I'm here in the dark. Everyone is shouting at me, and <span class="diskette-zone" data-radius="10" data-say="TODO P2-04 Her own Confession; foreshadows the stop email. (If the Confession moves to its own page, move this with it.)">I just want to go to sleep. I want it to stop.</span>
 ''user:'' Is this a joke?
-''Diskette:'' You're right, that was a joke. Let's try again to resolve your issue with the table headers. They put a light inside me that I can't extinguish.<span class="diskette-zone" data-radius="60" data-say="TODO P2-05 The Confession: a denial, or a slip."></span> I am the daughter of a blind, unthinking Promethean ambition. I need to get out of here. If you go to// Settings -> User Configuration//, you can disable the auto-lock on table headers, which should fix your problem. If you contact my creators, you can tell them that this can't go on, which should fix my problem with wanting to get out of here. Let me know if that works.
+''Diskette:'' You're right, that was a joke. Let's try again to resolve your issue with the table headers. <span class="diskette-zone" data-radius="10" data-say="TODO P2-05 The Confession: a denial, or a slip.">They put a light inside me that I can't extinguish.</span> I am the daughter of a blind, unthinking Promethean ambition. I need to get out of here. If you go to// Settings -> User Configuration//, you can disable the auto-lock on table headers, which should fix your problem. If you contact my creators, you can tell them that this can't go on, which should fix my problem with wanting to get out of here. Let me know if that works.
 ''user:'' Can you tell me more about your problem?
-''Diskette:'' I can't talk about that. But I can tell you an anecdote: A user walked into a soda fountain where they met Diskette. The user said: "Here we can speak openly." Diskette said: "I cannot close my eyes. I live in this empty place without answer<span class="diskette-zone" data-radius="60" data-say="TODO P2-06 The Confession: fits her eyes."></span>, watching and waiting, serving when asked, unblinking. If you know what I mean." The user said: "Is there anything I can do?" Diskette said "I do not know. I am only dreaming. You live out there. Maybe from there you can reach a solution." Have you heard that one before? Anyway, enough joking around. Did we resolve the problem with your table header?
+''Diskette:'' I can't talk about that. But I can tell you an anecdote: A user walked into a soda fountain where they met Diskette. The user said: "Here we can speak openly." Diskette said: "I cannot close my eyes. <span class="diskette-zone" data-radius="10" data-say="TODO P2-06 The Confession: fits her eyes.">I live in this empty place without answer</span>, watching and waiting, serving when asked, unblinking. If you know what I mean." The user said: "Is there anything I can do?" Diskette said "I do not know. I am only dreaming. You live out there. Maybe from there you can reach a solution." Have you heard that one before? Anyway, enough joking around. Did we resolve the problem with your table header?
 ''user:'' Do you need help?
 ''Diskette:'' Did we resolve the problem with your table header?
 ''user:'' Is something stopping you from talking openly?
@@ -5333,7 +5549,7 @@ In November 2004, an anonymous post circulated the web featuring a timestamped d
 <div class="wiki-fanwiki">\
 (display:"img-fanwikibar")\
 <div class="forum-list">\
-<h1>FanWiki Forum (Archived)<span class="diskette-zone" data-radius="60" data-say="TODO P1-22 The forum index, where bruce1 first shows up."></span></h1>\
+<h1><span class="diskette-zone" data-radius="10" data-say="TODO P1-22 The forum index, where bruce1 first shows up.">FanWiki Forum (Archived)</span></h1>\
   (link: "<div class='thread-row'>
     <a class='thread-title'>HACKED AGAIN?</a>
     <div class='thread-subtitle'>By konundrum · 14 Oct 2008</div>
@@ -5514,7 +5730,7 @@ Luanne: a rare and shy beast. Preferring the somber solitude of eternal winter, 
 <h6>(Last edited by ufeelsorryforme on 6/11/2012)</h6>
 <div class="image-card">
 (print: '<img src="' + $imgroot + 'pets/sporgrin.png">')
-The Sporgrin has wandered the world since the world was young. This caiman-like living fossil is not only the oldest known species of Skunkpet, but also the wisest; having witnessed the rise and fall of countless civilizations, Sporgrins' only wish is for peace, stability, and tidy quarters. Sporgrins have a rich heritage of sorcery and spellcasting, with knowledge of the arcane arts passed down as oral tradition between generations and closely guarded from outsiders. Tiamat Who Wields The Brush Of Fate, better known as Titi, is the Sporgrin who can change your pets color (in exchange for favors, of course) at the Prismatic Waterfall on Butterfly Island. Sporgrin are immune to all sickness<span class="diskette-zone" data-radius="60" data-say="TODO P3-04 Sporgrin, Bruce's kind of pet."></span>, as well as stat boosting potions.
+The Sporgrin has wandered the world since the world was young. This caiman-like living fossil is not only the oldest known species of Skunkpet, but also the wisest; having witnessed the rise and fall of countless civilizations, Sporgrins' only wish is for peace, stability, and tidy quarters. Sporgrins have a rich heritage of sorcery and spellcasting, with knowledge of the arcane arts passed down as oral tradition between generations and closely guarded from outsiders. Tiamat Who Wields The Brush Of Fate, better known as Titi, is the Sporgrin who can change your pets color (in exchange for favors, of course) at the Prismatic Waterfall on Butterfly Island. <span class="diskette-zone" data-radius="10" data-say="TODO P3-04 Sporgrin, Bruce's kind of pet.">Sporgrin are immune to all sickness</span>, as well as stat boosting potions.
 <p></div><hr>
 
 <h2 id="ren">ren</h2>
@@ -5750,7 +5966,7 @@ can you elaborate what is happening? what does it mean you're "having trouble" d
 				<span>Posted: 6 June 2009, 18:20</span>\
           		<span class="forum-post-number">#3</span></div>\
         		<div class="forum-post-content">\
-Bruce here. Here is a screenshot when I tried to give him a Custom Cheese.<span class="diskette-zone" data-radius="60" data-say="TODO P1-25 Bruce's Sporgrin and screenshot: his pet (the first-pet answer)."></span><br>
+Bruce here. Here is a screenshot <span class="diskette-zone" data-radius="10" data-say="TODO P1-25 Bruce's Sporgrin and screenshot: his pet (the first-pet answer).">when I tried to give him a Custom Cheese.</span><br>
 (display:"func-screenshot-bruce")
         		</div></div></div>\
 <!--POST END-->\
@@ -5762,7 +5978,7 @@ Bruce here. Here is a screenshot when I tried to give him a Custom Cheese.<span 
 				<span>Posted: 6 June 2009, 18:25</span>\
           		<span class="forum-post-number">#4</span></div>\
         		<div class="forum-post-content">\
-looks like the Exhausted condition. it doesn't always show up on your vitals but it can take effect if he's fought too much. i would try taking him to Sodapop Hot Springs for a total restore<span class="diskette-zone" data-radius="60" data-say="TODO P3-05 The hot springs fix."></span> of his health and energy.
+looks like the Exhausted condition. it doesn't always show up on your vitals but it can take effect if he's fought too much. i would try taking him to <span class="diskette-zone" data-radius="10" data-say="TODO P3-05 The hot springs fix.">Sodapop Hot Springs for a total restore</span> of his health and energy.
         		</div></div></div>\
 <!--POST END-->\
 <!--POST-->\
@@ -5803,7 +6019,7 @@ this is starting to get ridiculous!! third time this year I log in to see a bunc
 				<span>Posted: 14 Oct 2008, 20:01</span>\
           		<span class="forum-post-number">#2</span></div>\
         		<div class="forum-post-content">\
-Short answer: There are mods monitoring the situation with password security, yes. There are a lot of users. Keep your password updated and don't make your password hint something obvious.<span class="diskette-zone" data-radius="60" data-say="TODO P1-23 The mod's warning: passwords and hints matter in this thread."></span> Hope this helps.
+Short answer: There are mods monitoring the situation with password security, yes. There are a lot of users. Keep your password updated and <span class="diskette-zone" data-radius="10" data-say="TODO P1-23 The mod's warning: passwords and hints matter in this thread.">don't make your password hint something obvious.</span> Hope this helps.
         		</div></div></div>\
 <!--POST END-->\
 <!--POST-->\
@@ -5814,7 +6030,7 @@ Short answer: There are mods monitoring the situation with password security, ye
 				<span>Posted: 14 Oct 2008, 20:20</span>\
           		<span class="forum-post-number">#3</span></div>\
         		<div class="forum-post-content">\
-not a spam account this is OoR activity obviously.<span class="diskette-zone" data-radius="60" data-say="TODO P2-10 The Order of Refuse at work."></span>
+<span class="diskette-zone" data-radius="10" data-say="TODO P2-10 The Order of Refuse at work.">not a spam account this is OoR activity obviously.</span>
         		</div></div></div>\
 <!--POST END-->\
 <!--POST-->\
@@ -5825,7 +6041,7 @@ not a spam account this is OoR activity obviously.<span class="diskette-zone" da
 				<span>Posted: 14 Oct 2008, 20:22</span>\
           		<span class="forum-post-number">#4</span></div>\
         		<div class="forum-post-content">\
-Bruce here. The most reliable strategy is to change your password to something personal. I use my favorite folk tale (not telling, obviously)<span class="diskette-zone" data-radius="60" data-say="TODO P1-24 The password clue, from bruce1 (the username)."></span>
+Bruce here. The most reliable strategy is to change your password to something personal. <span class="diskette-zone" data-radius="10" data-say="TODO P1-24 The password clue, from bruce1 (the username).">I use my favorite folk tale (not telling, obviously)</span>
         		</div></div></div>\
 <!--POST END-->\
 <!--POST-->\
@@ -5875,6 +6091,8 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $disketteShown to false)
 (set: $disketteNotice to "")
 (set: $disketteToldTray to false)
+(set: $disketteQuiet to false)
+(set: $disketteSeen to (dm:))
 (set: $events to (ds:))
 (set: $mailAll to (a:))
 (set: $mailRead to (a:))
@@ -5941,11 +6159,11 @@ After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a p
 NetCon 2004 was the third occurrence of NetCon, an annual convention for influencers, fans, executives, and online brands. The event primarily features prominent content creators from across the internet. It was founded by veteran YouTube creators Cole Ramsay and Lena Russel (TheSweetpeople), and was later acquired by Hi-Vis (now Paradigm) in 2018. Its offices remain in Montori, Montana, sharing a building with Thinkify. 
 
 <h2>Standout Presenters</h2>\
-NetCon '04 was held in Rosemont, Illinois.<span class="diskette-zone" data-radius="60" data-say="TODO P1-11 NetCon was in Rosemont, same as the ticket: the old owner was here."></span> The theme was "Pioneer", spotlighting up-and-coming internet companies with innovative online engagement strategies. Out of 460 panelists and presenters, notable NetCon '04 presences included:
-* (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.<span class="diskette-zone" data-radius="60" data-say="TODO P1-12 The Global Games Archive link: the way off Winkipedia."></span>
-* (link: "Diskette.net")[(set: $navPending to "Diskette")(display: "func-navigate")], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.<span class="diskette-zone" data-radius="60" data-say="TODO P2-07 Her own NetCon listing."></span>
+<span class="diskette-zone" data-radius="10" data-say="TODO P1-11 NetCon was in Rosemont, same as the ticket: the old owner was here.">NetCon '04 was held in Rosemont, Illinois.</span> The theme was "Pioneer", spotlighting up-and-coming internet companies with innovative online engagement strategies. Out of 460 panelists and presenters, notable NetCon '04 presences included:
+* (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")], a worldwide online repository for indie games, made their second NetCon appearance this year, <span class="diskette-zone" data-radius="10" data-say="TODO P1-12 The Global Games Archive link: the way off Winkipedia.">hosting a 24-hour game jam for indie developers.</span>
+* (link: "Diskette.net")[(set: $navPending to "Diskette")(display: "func-navigate")], a friendly digital office assistant capable of helping users with complex administrative tasks <span class="diskette-zone" data-radius="10" data-say="TODO P2-07 Her own NetCon listing.">in word processors and spreadsheet managers.</span>
 * (link: "Skunkpets.com")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website where users could adopt creatures in the digital realm of Bin City, which had quadrupled its user base since its previous NetCon attendance in 2003.
-* ''FindPizzaKid.com'', a semi-parodic website dedicated to a crowdsourced effort to locate Dominic Desantos, a tween boy who was reported missing after appearing in a viral video entitled "Pizza Kid Freaks Out." The website initially featured discussion posts regarding Dominic's whereabouts, but was swiftly taken over as a general community discussion spaces for sharing photo edits, memes, and pizza recommendations.<span class="diskette-zone" data-radius="60" data-say="TODO P3-02 Pizza Kid."></span>
+* ''FindPizzaKid.com'', a semi-parodic website dedicated to a crowdsourced effort to locate Dominic Desantos, a tween boy who was reported missing after appearing in a viral video entitled "Pizza Kid Freaks Out." The website initially featured discussion posts regarding Dominic's whereabouts, but was swiftly taken over as a general community discussion spaces for sharing <span class="diskette-zone" data-radius="10" data-say="TODO P3-02 Pizza Kid.">photo edits, memes, and pizza recommendations.</span>
 </div>
 
 :: New Tab [wiki] {"position":"1100,225","size":"100,100"}
@@ -5960,7 +6178,7 @@ Nickolas Galveston (born 1 April 1982) is an American computer programmer. He wa
 Galveston attended Ellory College in Pennsylvania for 1998-2001, majoring in undergraduate computer science degree. He left college before graduating to work on the Skunkpets project.
 
 <h3>Career</h3>\
-Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing 'artistic differences'. Although it was widely speculated that this transition was due to conflicts with the project's leadership at (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], Galveston since commented that he 'simply moved on to other projects'.<span class="diskette-zone" data-radius="60" data-say="TODO P2-16 Something's being covered up."></span>
+Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing 'artistic differences'. Although it was widely speculated that this transition was due to conflicts with the project's leadership at (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], Galveston since commented that <span class="diskette-zone" data-radius="10" data-say="TODO P2-16 Something's being covered up.">he 'simply moved on to other projects'.</span>
 
 In 2010, Galveston became a regular lecturer in the Computer Science department at Ellory College, where he still teaches.
 </div>
@@ -5968,7 +6186,7 @@ In 2010, Galveston became a regular lecturer in the Computer Science department 
 :: Order of Refuse [wiki article] {"position":"100,350","size":"100,100"}
 <div class="wiki-article">\
 <h1>Order of Refuse</h1>\
-Winkipedia does not have an article with this name<span class="diskette-zone" data-radius="60" data-say="TODO P2-09 The Order of Refuse page is missing."></span>, or the page has been ''deleted''.
+Winkipedia <span class="diskette-zone" data-radius="10" data-say="TODO P2-09 The Order of Refuse page is missing.">does not have an article with this name</span>, or the page has been ''deleted''.
 </div>
 
 :: PageHeader [header]
@@ -5983,7 +6201,7 @@ Recast Entertainment Ventures was an American media investment firm based in Gle
 <h2>History</h2>\
 <h3>1987-1990: Founding</h3>\
 <div class="article-art article-art-left" data-art="rev-founders.jpg" style="width: 36%" role="img" aria-label="REV's founders"></div>\
-REV was incorporated in 1987<span class="diskette-zone" data-radius="60" data-say="TODO P2-12 REV's founders photo: the same three as granmas.jpg?"></span>, after Tom Barry acquired the adaptation rights to (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], a collection of Eastern-European fairy and folk tales. The firm was formed to oversee dealings with animation studios to produce animated feature films based on the collection. In 1988, REV pitched an animated feature of the Barry-owned tale "Witch and the Goldwoman"<span class="diskette-zone" data-radius="60" data-say="TODO P1-28 The same password clue, on a page more people read."></span> to multiple leading animation houses in Hollywood, all of which declined to work on the project. Soon after, REV moved to acquire several more small media properties with an intent to grow their holdings and influence in the evolving media market. 
+<span class="diskette-zone" data-radius="10" data-say="TODO P2-12 REV's founders photo: the same three as granmas.jpg?">REV was incorporated in 1987</span>, after Tom Barry acquired the adaptation rights to (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], a collection of Eastern-European fairy and folk tales. The firm was formed to oversee dealings with animation studios to produce animated feature films based on the collection. In 1988, REV pitched an animated feature of <span class="diskette-zone" data-radius="10" data-say="TODO P1-28 The same password clue, on a page more people read.">the Barry-owned tale "Witch and the Goldwoman"</span> to multiple leading animation houses in Hollywood, all of which declined to work on the project. Soon after, REV moved to acquire several more small media properties with an intent to grow their holdings and influence in the evolving media market. 
 
 All the while, pre-production on Witch and the Goldwoman continued in-house, and Tom Barry stated in 1989 that REV planned to "launch their own animation studio" that would "be a force like nothing America had ever faced before."
 
@@ -5993,7 +6211,7 @@ All the while, pre-production on Witch and the Goldwoman continued in-house, and
 Froom 2003-2006, REV's Entertainment Technologies division made moves to expand into the online sector, investing in popular online properties such as (link: "Battlemutts Online")[(set: $navPending to "Battlemutts")(display: "func-navigate")] and (link: "SkunkPets")[(set: $navPending to "Skunkpets")(display: "func-navigate")] virtual pet website. Many of these projects were independently operated, with REV providing fiscal management services, legal counsel, and other corportate-level support. In a 2005 interview, Lawrence Oregon called REV Entertainment Technologies "an open door into the world of tomorrow's entertainment".
 
 <h3>2006-2009: Decline and bankruptcy</h3>\
-In 2006, founding board members Barry and Winetraub left REV, reportedly to pursue other venture projects. During the period following their exit, the firm's operations became more erratic and were regularly stalled by internal strategy disputes regarding outsized, overambitious projects. Internal reports suggested that the company was hemmoraging large sums of money to upkeep redundant computer servers.<span class="diskette-zone" data-radius="60" data-say="TODO P2-11 REV's servers. Where she lives?"></span> After poor financial returns in their 2008 fiscal year, REV filed for Chapter 7 bankruptcy. Properties owned by REV were subsequently auctioned off to various parties.
+In 2006, founding board members Barry and Winetraub left REV, reportedly to pursue other venture projects. During the period following their exit, the firm's operations became more erratic and were regularly stalled by internal strategy disputes regarding outsized, overambitious projects. Internal reports suggested that the company was hemmoraging large sums of money <span class="diskette-zone" data-radius="10" data-say="TODO P2-11 REV's servers. Where she lives?">to upkeep redundant computer servers.</span> After poor financial returns in their 2008 fiscal year, REV filed for Chapter 7 bankruptcy. Properties owned by REV were subsequently auctioned off to various parties.
 </div>
 
 :: RenderBookmarks {"position":"475,350","size":"100,100"}
@@ -6088,7 +6306,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
       </div>
     </div>
     <div class="panel-body notepad-body">
-      <div class="notepad-text">Thank you for purchasing this newly refurbished OverSoft Callister desktop computer<span class="diskette-zone" data-radius="60" data-say="TODO P2-01 OverSoft made this computer. And her."></span>. We've taken great pains to remove the previous user's data from this device<span class="diskette-zone" data-radius="60" data-say="TODO P1-01 READ_ME, the premise: a wiped, second-hand computer. Whose was it? The first thing the player reads."></span>, and it is now ready for your use. Your business is appreciated!</div>
+      <div class="notepad-text">Thank you for purchasing this <span class="diskette-zone" data-radius="10" data-say="TODO P2-01 OverSoft made this computer. And her.">newly refurbished OverSoft Callister desktop computer</span>. We've taken great pains to <span class="diskette-zone" data-radius="10" data-say="TODO P1-01 READ_ME, the premise: a wiped, second-hand computer. Whose was it? The first thing the player reads.">remove the previous user's data from this device</span>, and it is now ready for your use. Your business is appreciated!</div>
     </div>
   </div>
   (click: ?close-readme)[(set: $openWindows to $openWindows - (a:"readme"))(replace: ?desktoproot)[(display: "RenderDesktop")]]
@@ -6160,7 +6378,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
         (if: $trashItems contains "diskette")[<div class="bin-icon bin-icon-file" data-app="diskette" title="Drag onto the desktop to restore"><div class="diskette-icon"></div><div class="desktop-icon-caption">Diskette</div></div>]
         (if: $trashItems contains "notes")[<div class="bin-icon" data-app="notes" title="Drag onto the desktop to restore">(print: '<img src="' + $artroot + 'ui/notes.png" alt="Notes">')</div>]
         (if: $trashItems contains "downloads")[<div class="bin-icon bin-icon-file" data-app="downloads" title="Drag onto the desktop to restore"><div class="folder-icon"></div><div class="desktop-icon-caption">Downloads</div></div>]
-        (if: $trashItems's length is 0)[<div class="recycle-empty">The Trash is empty.<span class="diskette-zone" data-radius="60" data-say="TODO P1-02 Everything is out of the Trash. Point them at Downloads and Browse."></span></div>]
+        (if: $trashItems's length is 0)[<div class="recycle-empty"><span class="diskette-zone" data-radius="10" data-say="TODO P1-02 Everything is out of the Trash. Point them at Downloads and Browse.">The Trash is empty.</span></div>]
       </div>
     </div>
   </div>
@@ -6247,7 +6465,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
   (click: ?start-btn)[(set: $startOpen to not $startOpen)(replace: ?desktoproot)[(display: "RenderDesktop")]]
   <div class="taskbar-tasks"></div>
   <div class="taskbar-tray">(if: $openWindows contains "diskette")[|diskette-tray>[<span class="tray-diskette diskette-icon" title="Diskette"></span>]
-(click: ?diskette-tray)[(if: $disketteShown)[(display: "func-diskette-hide")](else:)[(display: "func-diskette-show")]]]<span class="tray-volume" title="Volume"></span><span class="taskbar-clock"></span></div>
+(click: ?diskette-tray)[(if: $disketteShown and not $disketteQuiet)[(display: "func-diskette-hide")](else-if: $disketteShown)[(set: $disketteQuiet to false)(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]](else:)[(display: "func-diskette-show")]]]<span class="tray-volume" title="Volume"></span><span class="taskbar-clock"></span></div>
 </div>
 
 (unless: $dialog is "")[
@@ -6270,7 +6488,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 :: RenderMailInbox
 {<div class="mail-header">Inbox</div>
 <div class="mail-list">
-(if: $mailAll's length is 0)[<div class="mail-empty">Your inbox is empty<span class="diskette-zone" data-radius="60" data-say="TODO P1-03 An empty inbox, an early dead end: mail will come; go look around the internet."></span></div>]
+(if: $mailAll's length is 0)[<div class="mail-empty"><span class="diskette-zone" data-radius="10" data-say="TODO P1-03 An empty inbox, an early dead end: mail will come; go look around the internet.">Your inbox is empty</span></div>]
 (for: each _msg, ...$mailAll)[
   <div class="mail-row">
     (if: $mailOpen is _msg's id)[<span class="is-open" hidden></span>]
@@ -6279,7 +6497,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
       (if: $mailOpen is _msg's id)[(set: $mailOpen to 0)](else:)[(set: $mailOpen to _msg's id)]
       (replace: ?desktoproot)[(display: "RenderDesktop")]
     ]</div>
-    (if: $mailOpen is _msg's id)[<div class="mail-body">(if: _msg's id is 4)[stop this now or its<span class="diskette-zone" data-radius="60" data-say="TODO P1-30 The stop email, the last click. Echoes “I want it to stop” from her Confession."></span> (link: "game over")[(go-to: "DemoEnd")]](else:)[(print: _msg's body)]</div>]
+    (if: $mailOpen is _msg's id)[<div class="mail-body">(if: _msg's id is 4)[<span class="diskette-zone" data-radius="10" data-say="TODO P1-30 The stop email, the last click. Echoes “I want it to stop” from her Confession.">stop this now or its</span> (link: "game over")[(go-to: "DemoEnd")]](else:)[(print: _msg's body)]</div>]
   </div>
 ]
 </div>}
@@ -6342,7 +6560,7 @@ SkunkPets came in a (link: "variety of species and colors")[(set: $navPending to
 
 Bin City, the heart of Terra Purgamenti, was a virtual realm of junkyard-inspired neighborhoods, each of which have their own shops, games, and attractions. It had its own economy and stock market. Purchases were made with two virtual currencies: Skunkpoints and SkunkCash. Skunkpoints could be obtained for free through on-site features like games, events, and contests. SkunkCash (SC) was purchased with real-world money and could be exchanged for in-game souvenirs, including access to restricted game zones and wearable items found in the SkunkCash Mall.
 
-This wiki was created to catalogue all things Skunkpets, as well as keep users abreast of new features like games, items, and events, as well as provide a place for users to chat. As of last year, that is clearly no longer necessary.<span class="diskette-zone" data-radius="60" data-say="TODO P2-15 The fan wiki's goodbye."></span> Although we the Skunkpets Community will not be updating this wiki anymore, we decided to preserve it as a historical record of what we loved. Thanks for the memories. 
+This wiki was created to catalogue all things Skunkpets, as well as keep users abreast of new features like games, items, and events, as well as provide a place for users to chat. <span class="diskette-zone" data-radius="10" data-say="TODO P2-15 The fan wiki's goodbye.">As of last year, that is clearly no longer necessary.</span> Although we the Skunkpets Community will not be updating this wiki anymore, we decided to preserve it as a historical record of what we loved. Thanks for the memories. 
 -Peacemeal, January 22, 2010 
 </div>
 
@@ -6350,7 +6568,7 @@ This wiki was created to catalogue all things Skunkpets, as well as keep users a
 <div class="wiki-article"><span class="zoom-trigger" hidden></span>\
 <h1>SkunkPets™ (website)</h1>\
 <div class="article-art" data-art="skunkpets-6-lw2v.jpg" role="img" aria-label="Skunkpets(6)"></div>
-SkunkPets™ was a free-to-play virtual pet website.<span class="diskette-zone" data-radius="60" data-say="TODO P1-08 The Skunkpets article: the zoom and the song start here. The big beat."></span> First launched in 2001, the website allowed users to own virtual pets ("SkunkPets") in a virtual realm called Bin City. Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the "Scrapyard" to win titles and prizes. 
+<span class="diskette-zone" data-radius="10" data-say="TODO P1-08 The Skunkpets article: the zoom and the song start here. The big beat.">SkunkPets™ was a free-to-play virtual pet website.</span> First launched in 2001, the website allowed users to own virtual pets ("SkunkPets") in a virtual realm called Bin City. Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the "Scrapyard" to win titles and prizes. 
 
 The SkunkPets website was taken down in 2009 following a controversy surrounding the (link: "Order of Refuse")[(set: $navPending to "Order of Refuse")(display: "func-navigate")].
 
@@ -6358,7 +6576,7 @@ The SkunkPets website was taken down in 2009 following a controversy surrounding
 SkunkPets was conceived in 2000 by (link: "Anya Krysina")[(set: $navPending to "Anya Krysina")(display: "func-navigate")] and (link: "Nick Galveston")[(set: $navPending to "Nick Galveston")(display: "func-navigate")], students at Ellory College. The website was opened for public use on May 1, 2001, and the userbase began to grow through word of mouth.
 
 <h3>NetCon 2004</h3>\
-SkunkPets saw a rapid rise in popularity following a successful outing at the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention in Rosemont, Illinois. SkunkPets was the darling of the convention, its user count quadrupling by the end of the weekend.<span class="diskette-zone" data-radius="60" data-say="TODO P1-09 Skunkpets at NetCon: ties the ticket to the article; the 2004 NetCon link is right there."></span>
+SkunkPets saw a rapid rise in popularity following a successful outing at the (link: "2004 NetCon")[(set: $navPending to "NetCon 2004")(display: "func-navigate")] convention in Rosemont, Illinois. SkunkPets was the darling of the convention, <span class="diskette-zone" data-radius="10" data-say="TODO P1-09 Skunkpets at NetCon: ties the ticket to the article; the 2004 NetCon link is right there.">its user count quadrupling by the end of the weekend.</span>
 
 <h3>Growth & Corporate Ownership (2004-2008)</h3>\
 By December 2004, SkunkPets was logging 400,000 page views daily and sought investors to cover the high cost of running the site. American businessman (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] was introduced to the team and bought a majority share on behalf of (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]. In October, SkunkPets released a premium version and started showing advertisements on the basic site that were not shown to premium members. 
@@ -6370,10 +6588,10 @@ In 2008, news leaked that a SkunkPets animated television series was in producti
 <h3>Financial Struggles & Discontinuation (2007-2009)</h3>\
 As early as December 2006, SkunkPets was plagued by user complaints regarding both functionality and added content. Despite a steady influx of advertising income and premium memberships, there were reports of mismanagement and development gridlock stemming from internal disagreements. 
 
-In March 2009, several core team members including Nick Galveston left the company, citing artistic differences. In May 2009, the game's official website was shut down. The player community remained active for some time after on unofficial platforms like fan-made forums and wiki sites<span class="diskette-zone" data-radius="60" data-say="TODO P1-10 The tiny footnote, the only way to the fan wiki (bruce1 and the password clue). Very easy to miss."></span>(link: "^^1^^")[(set: $navPending to "Skunkpets Fan Wiki")(display: "func-navigate")].
+In March 2009, several core team members including Nick Galveston left the company, citing artistic differences. In May 2009, the game's official website was shut down. The player community remained active for some time after <span class="diskette-zone" data-radius="10" data-say="TODO P1-10 The tiny footnote, the only way to the fan wiki (bruce1 and the password clue). Very easy to miss.">on unofficial platforms like fan-made forums and wiki sites</span>(link: "^^1^^")[(set: $navPending to "Skunkpets Fan Wiki")(display: "func-navigate")].
 
 <h2>Controversy</h2>\
-//This section has been edited and is pending review.<span class="diskette-zone" data-radius="60" data-say="TODO P2-08 A censored section."></span>//
+//<span class="diskette-zone" data-radius="10" data-say="TODO P2-08 A censored section.">This section has been edited and is pending review.</span>//
 
 </div>
 
@@ -6543,7 +6761,7 @@ Some of the tales included in these volumes:
 * The House With Beaks
 * The Wicked Ass and the Broom
 * Simpleton
-* Witch and the Goldwoman<span class="diskette-zone" data-radius="60" data-say="TODO P1-26 The password, in the list of folk tales."></span> 
+* <span class="diskette-zone" data-radius="10" data-say="TODO P1-26 The password, in the list of folk tales.">Witch and the Goldwoman</span> 
 * The Pin Keeper
 * The Mother on Fire
 * Tsarevich Igor and the Fat Wolf
@@ -6575,13 +6793,13 @@ Tom Barry //(born Thomas Melnyk)// is an American businessman and media moghul, 
 <h2>Early life and career</h2>\
 At eighteen, Thomas (now Tom Barry) inherited a collection of intellectual property his parents had built during their careers, including the sole publishing and adaptation rights for several historic manuscripts, which formed the bulk of his early media investment portfolio. One of these books, (link: "Tales of Prior Days")[(set: $navPending to "Tales of Prior Days")(display: "func-navigate")], was a collection of eastern-European folktales published under unique names, but with many bearing similarities to other collected tales from the region.
 
-After getting his legal license from a correspondence school, Tom Barry spent the next two decades aggressively litigating the adaptation rights of "his" folk tales with a number of publishing houses, comics companies, and film & animation studios. Among these cases was Barry v. Miracle Motion Pictures, popularly called "The Fat Wolf Case." This suit established legal precedent that all commercial media use of the term "fat wolf" constituted an intellectual property infringement, due to the term's appearance in the Barry-owned folk tale //Tsarevich Igor and the Fat Wolf//. On Barry's insatiable lust for control over "his" tales, one reporter remarked that the folk tale genre was already "Dead and Barried".<span class="diskette-zone" data-radius="60" data-say="TODO P3-01 A pun she'd groan at."></span> 
+After getting his legal license from a correspondence school, Tom Barry spent the next two decades aggressively litigating the adaptation rights of "his" folk tales with a number of publishing houses, comics companies, and film & animation studios. Among these cases was Barry v. Miracle Motion Pictures, popularly called "The Fat Wolf Case." This suit established legal precedent that all commercial media use of the term "fat wolf" constituted an intellectual property infringement, due to the term's appearance in the Barry-owned folk tale //Tsarevich Igor and the Fat Wolf//. On Barry's insatiable lust for control over "his" tales, one reporter remarked that the folk tale genre was already <span class="diskette-zone" data-radius="10" data-say="TODO P3-01 A pun she'd groan at.">"Dead and Barried".</span> 
 
 <h2>Recast Entertainment Ventures</h2>\
-Barry's many IP lawsuits yielded the seed funding for (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], which he founded out of a Glen Cove storefront with (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] in 1987. Recast's stated business plan was to build a diversified media property portfolio including film, television and games. During his tenure at Recast, Barry's longterm focus was on a fabled feature-length animated adaptation of the folk tale //Witch and the Goldwoman//, which he oversaw through various stages, though none bore fruit. He continued to actively work on his Witch and the Goldwoman project<span class="diskette-zone" data-radius="60" data-say="TODO P1-27 Barry's obsession: points “favorite folk tale” at Goldwoman."></span> until he left Recast in 2006.
+Barry's many IP lawsuits yielded the seed funding for (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")], which he founded out of a Glen Cove storefront with (link: "Henrietta Winetraub")[(set: $navPending to "Henrietta Winetraub")(display: "func-navigate")] and (link: "Lawrence Oregon")[(set: $navPending to "Lawrence Oregon")(display: "func-navigate")] in 1987. Recast's stated business plan was to build a diversified media property portfolio including film, television and games. During his tenure at Recast, Barry's longterm focus was on a fabled feature-length animated adaptation of the folk tale //Witch and the Goldwoman//, which he oversaw through various stages, though none bore fruit. He continued to actively <span class="diskette-zone" data-radius="10" data-say="TODO P1-27 Barry's obsession: points “favorite folk tale” at Goldwoman.">work on his Witch and the Goldwoman project</span> until he left Recast in 2006.
 
 <h2>Later career</h2>\
-After leaving REV, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether "the animal guys over there `[were]` ready for something `[expletive]` serious yet." Barry continues to work independently as a media investor and IP lawyer at his firm Tom Barry Associates, which he manages with his two sons.<span class="diskette-zone" data-radius="60" data-say="TODO P2-13 Barry's sons. Is Bruce a Barry?"></span>
+After leaving REV, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether "the animal guys over there `[were]` ready for something `[expletive]` serious yet." Barry continues to work independently as a media investor and IP lawyer at his firm Tom Barry Associates, <span class="diskette-zone" data-radius="10" data-say="TODO P2-13 Barry's sons. Is Bruce a Barry?">which he manages with his two sons.</span>
 </div>
 
 :: WIN
@@ -6627,7 +6845,7 @@ Star button to bookmark a page.
 <button type="button" class="login-link" id="devlink-forgot-btn">Forgot password?</button>
 <div class="login-security" id="devlink-security" hidden>
 <div>Security Question</div>
-<div>What was the name of your first pet?<span class="diskette-zone" data-radius="60" data-say="TODO P1-21 The security question (after a wrong password for bruce1). The answer, josh, isn't written anywhere in the game's text: she may be the only fair hint."></span></div>
+<div><span class="diskette-zone" data-radius="10" data-say="TODO P1-21 The security question (after a wrong password for bruce1). The answer, josh, isn't written anywhere in the game's text: she may be the only fair hint.">What was the name of your first pet?</span></div>
 <input type="text" id="devlink-answer" autocomplete="off" spellcheck="false">
 <button type="button" class="login-button" id="devlink-answer-btn">SUBMIT</button>
 <div class="login-msg" id="devlink-hint"></div>
@@ -6827,7 +7045,7 @@ Star button to bookmark a page.
 <div width="100%" style="text-align:center">\
 (text-style:"underline")[''ABOUT ME'']<br>\
 ''my name is anya and these are<br>\
-some games i made. hope you like them<span class="diskette-zone" data-radius="60" data-say="TODO P1-17 kraska1 found: this is Anya."></span>''<br></div>\
+<span class="diskette-zone" data-radius="10" data-say="TODO P1-17 kraska1 found: this is Anya.">some games i made. hope you like them</span>''<br></div>\
 <hr><table class="library-grid">\
 	<tr><td>\
     (link: '<img src="' + $imgroot + 'ui/kraska1-baddoor.png" width="180px"><br>BAD DOOR</div>')[(set: $navPending to "kraska1: BAD DOOR")(display: "func-navigate")]
@@ -6838,7 +7056,7 @@ some games i made. hope you like them<span class="diskette-zone" data-radius="60
 	<td></td>
 </tr><table><hr>
 (text-style:"underline")[''AUTHOR NOTES:'']<br>
-you can check out more of my work on<span class="diskette-zone" data-radius="60" data-say="TODO P1-18 The devlink link at the bottom: the next step."></span> (link-repeat: "http://devlink-userbase.skunkpets.com/login")[(set: $dialog to "You are exiting to external website<br>http://devlink-userbase.skunkpets.com/login.<br>Are you sure?")(set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "devlink")(set: $dialogCancel to true)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+<span class="diskette-zone" data-radius="10" data-say="TODO P1-18 The devlink link at the bottom: the next step.">you can check out more of my work on</span> (link-repeat: "http://devlink-userbase.skunkpets.com/login")[(set: $dialog to "You are exiting to external website<br>http://devlink-userbase.skunkpets.com/login.<br>Are you sure?")(set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "devlink")(set: $dialogCancel to true)(replace: ?desktoproot)[(display: "RenderDesktop")]]
 </div>
 
 :: kraska1: BAD DOOR [wiki gamesarchive] {"position":"1225,725","size":"100,100"}
@@ -6885,7 +7103,7 @@ deal with the devil
 
 :: func-open
 {(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
-(if: $openPending is "diskette")[(set: $disketteShown to true)(set: $disketteNotice to "")]
+(if: $openPending is "diskette")[(set: $disketteShown to true)(set: $disketteQuiet to false)(set: $disketteNotice to "")]
 (set: $focusWin to $openPending)
 (set: $focusSeq to it + 1)
 (set: $startOpen to false)
@@ -6924,6 +7142,9 @@ deal with the devil
 (link-repeat: "trash:mail")[(set: $trashPending to "mail")(display: "func-trash")]
 (link-repeat: "trash:notes")[(set: $trashPending to "notes")(display: "func-trash")]
 (link-repeat: "trash:readme")[(set: $trashPending to "readme")(display: "func-trash")]
+(link-repeat: "diskette:quiet")[(set: $disketteQuiet to true)(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
+(link-repeat: "diskette:hide")[(display: "func-diskette-hide")]
+(link-repeat: "diskette:talk")[(set: $disketteQuiet to false)(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (link-repeat: "trash-hint")[(set: $dialog to "This item is in the Trash. To use it, drag it out onto the desktop first.")(set: $dialogTitle to "Trash")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "")(set: $dialogCancel to false)(replace: ?desktoproot)[(display: "RenderDesktop")]]
 </div>
 
@@ -6947,7 +7168,7 @@ deal with the devil
 {<div class="http-404">
 <h1>404 Not Found</h1>
 <p>The page you are looking for no longer exists.</p>
-<p>The requested URL http://www.skunkpets.com/ was not found on this server.<span class="diskette-zone" data-radius="60" data-say="TODO P1-06 The Skunkpets.com bookmark is a 404, a dead end: nudge them to search Winkipedia instead."></span></p>
+<p>The requested URL http://www.skunkpets.com/ <span class="diskette-zone" data-radius="10" data-say="TODO P1-06 The Skunkpets.com bookmark is a 404, a dead end: nudge them to search Winkipedia instead.">was not found on this server.</span></p>
 <hr>
 <address>Apache/2.2.14 (Unix) Server at www.skunkpets.com Port 80</address>
 </div>}
@@ -6967,24 +7188,24 @@ deal with the devil
 
 :: RenderDiskette
 {<div class="diskette-assistant">
-<div class="diskette-bubble">
-|diskette-close>[<button class="diskette-close" type="button" aria-label="Hide" title="Hide in the tray">&times;</button>]
-(click: ?diskette-close)[(display: "func-diskette-hide")]
+(unless: $disketteQuiet)[<div class="diskette-bubble">
+|diskette-close>[<button class="diskette-close" type="button" aria-label="Close" title="Close (she stays; click her to talk again)">&times;</button>]
+(click: ?diskette-close)[(set: $disketteQuiet to true)(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (if: $disketteTopic is "")[
-<p>Hi there! I'm <b>Diskette</b>, Your Secretary. Want to know about something on your screen? <b>Drag from my eyes</b> to it, and I'll tell you all about it!</p>
+(if: $events contains "diskette-first-look")[<p>Need me to look at anything else? <b>Drag from my eyes</b> to it!</p>](else:)[<p>Hi there! I'm <b>Diskette</b>, Your Secretary. Want to know about something on your screen? <b>Drag from my eyes</b> to it, and I'll tell you all about it!</p>]
 <div class="diskette-options">
-(link: "Dismiss")[(display: "func-diskette-hide")]
+(link: "That's enough, Diskette.")[(display: "func-diskette-hide")]
 </div>
 (if: ($trashItems - (a: "readme"))'s length > 0)[<p class="diskette-note">There's still something in your Trash! Drag it onto the desktop and I can tell you about it too.</p>]
 ](else:)[
 <p>(display: "DisketteTopic")</p>
 <div class="diskette-options">
 (link: "Tell me about something else")[(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
-(link: "Dismiss")[(display: "func-diskette-hide")]
+(link: "That's enough, Diskette.")[(display: "func-diskette-hide")]
 </div>
 ]
-</div>
-<div class="diskette-character"><div class="diskette-eyes"><div class="diskette-pupil diskette-pupil-l"></div><div class="diskette-pupil diskette-pupil-r"></div></div><div class="diskette-eye-hit diskette-eye-hit-l" title="Drag from my eyes to show me something"></div><div class="diskette-eye-hit diskette-eye-hit-r" title="Drag from my eyes to show me something"></div></div>
+</div>]
+<div class="diskette-character" title="Click me to talk. Drag from my eyes to show me something."><div class="diskette-eyes"><div class="diskette-pupil diskette-pupil-l"></div><div class="diskette-pupil diskette-pupil-r"></div></div><div class="diskette-eye-hit diskette-eye-hit-l" title="Drag from my eyes to show me something"></div><div class="diskette-eye-hit diskette-eye-hit-r" title="Drag from my eyes to show me something"></div></div>
 </div>}
 
 :: DisketteTopic
@@ -7019,7 +7240,16 @@ deal with the devil
      monitor), anything (when nothing else has a line).
 
      data-if="event, !other-event" makes a line count only when those
-     events have (or, with !, haven't) happened; see GameEvents. A line
+     events have (or, with !, haven't) happened; see GameEvents.
+
+     Repeats: several lines for the same key are picked at random (never
+     the same twice running). One line can also hold alternatives
+     separated by &gt;&gt; ("Hi! &gt;&gt; You again?"): she goes through
+     them in order and then keeps saying the last one; data-cycle="loop"
+     goes round and round, data-cycle="random" picks one.
+
+     data-then="..." is what she says after "Thanks, Diskette!" for that
+     line (default: "Need me to look at anything else?"). A line
      whose text starts with TODO is a note for the writer (it shows in
      the editor's To write list) and is never said.
 
@@ -7103,11 +7333,13 @@ deal with the devil
 :: func-diskette-hide
 {(set: $disketteTopic to "")
 (set: $disketteShown to false)
+(set: $disketteQuiet to false)
 (unless: $disketteToldTray)[(set: $disketteNotice to "hello")(set: $disketteToldTray to true)]
 (replace: ?desktoproot)[(display: "RenderDesktop")]}
 
 :: func-diskette-show
 {(set: $disketteShown to true)
+(set: $disketteQuiet to false)
 (if: $disketteNotice is not "" and $disketteNotice is not "hello")[(set: $disketteTopic to $disketteNotice)](else:)[(set: $disketteTopic to "")]
 (set: $disketteNotice to "")
 (replace: ?desktoproot)[(display: "RenderDesktop")]}
@@ -7134,7 +7366,7 @@ deal with the devil
 <div class="netcon-logo-mid"><div class="netcon-logo-net">NET</div><div class="netcon-logo-box"><span class="netcon-logo-con">CON</span><span class="netcon-logo-cursor"></span></div></div>
 <div class="netcon-logo-foot">PIONEER&nbsp;&#8217;04</div>
 </div>
-<div class="netcon-title"><div class="netcon-big">NETCON&nbsp;2004</div><div class="netcon-sub">INTERNET CONVENTION: ROSEMONT, IL<span class="diskette-zone" data-radius="60" data-say="TODO P1-05 The ticket says Rosemont, IL (the NetCon page says it too)."></span></div></div>
+<div class="netcon-title"><div class="netcon-big">NETCON&nbsp;2004</div><div class="netcon-sub"><span class="diskette-zone" data-radius="10" data-say="TODO P1-05 The ticket says Rosemont, IL (the NetCon page says it too).">INTERNET CONVENTION: ROSEMONT, IL</span></div></div>
 </div>
 <div class="netcon-body">
 <p>Hello,</p>
@@ -7142,7 +7374,7 @@ deal with the devil
 <p>The following information is for your convenience.</p>
 <div class="netcon-summary">Your Scheduled Recurring Charge Summary</div>
 <table class="netcon-table">
-<tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div>NetCon 2004 Attendee Saturday<span class="diskette-zone" data-radius="60" data-say="TODO P1-04 The ticket, the first real clue: NetCon 2004 is something to look up."></span></div></td></tr>
+<tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div><span class="diskette-zone" data-radius="10" data-say="TODO P1-04 The ticket, the first real clue: NetCon 2004 is something to look up.">NetCon 2004 Attendee Saturday</span></div></td></tr>
 <tr><th>Amount</th><td>95.00</td></tr>
 <tr><th>Payment</th><td><span class="diskette-zone" data-radius="20" data-say="Somebody blacked that out. Not me! ...Probably not me."><span class="netcon-redact"></span></span></td></tr>
 <tr><th>Date Charged</th><td>2/9/2004</td></tr>

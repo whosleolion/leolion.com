@@ -38,7 +38,11 @@ const rsrc = 'a' + cz + ' b <span class="diskette-page" data-say="TODO P2 page">
 const found = E.findReactions(rsrc);
 check('findReactions finds zones, page comments and wrapping zones', found.length === 3 && found[0].cond === 'zoom-started, !visited:kraska1' && found[1].todo.prio === 2 && !found[2].empty);
 check('editReaction rewrites one', E.findReactions(E.editReaction(rsrc, 1, { say: 'Hi' }))[1].say === 'Hi' && E.editReaction(rsrc, 1, { say: 'Hi' }).startsWith('a' + cz));
-check('...and deletes an empty one, not a wrapping one', E.findReactions(E.editReaction(rsrc, 0, null)).length === 2 && (() => { try { E.editReaction(rsrc, 2, null); return false; } catch (e) { return true; } })());
+check('...deletes an empty one, and unwraps one around words (keeping them)', E.findReactions(E.editReaction(rsrc, 0, null)).length === 2 && E.editReaction(rsrc, 2, null).endsWith(' <i>x</i>'));
+check('...but not one around other zones', (() => { try { E.editReaction('<span class="diskette-zone" data-say="a"><span class="x"></span></span>', 0, null); return false; } catch (e) { return true; } })());
+const shapes = E.findReactions(E.fromFriendly('[[diskette: 10 | on: two words | a]] [[diskette: 10 | on photo: p.jpg | b]] [[diskette: 70 | c]] [[diskette: page | d]]')).map((r) => r.shape + ':' + (r.words || r.photo || r.radius));
+check('zones cover words, a photo, or a point', shapes.join() === 'words:two words,element:p.jpg,point:70,page:60', shapes.join());
+check('words zones round-trip', E.toFriendly(E.fromFriendly('x [[diskette: 10 | on: two words | a]] y')) === 'x [[diskette: 10 | on: two words | a]] y');
 const looks = '<!-- x -->\n<p data-look="self icon-diskette">Me</p>\n<p data-look="page" data-mood="wide" data-if="zoom-started">TODO P2 x</p>\n';
 check('DisketteLooks lines', E.findLooks(looks).length === 2 && E.findLooks(looks)[1].todo.prio === 2 && E.findLooks(looks)[0].keys.join() === 'self,icon-diskette');
 check('...edit, delete and add', E.findLooks(E.editLook(looks, 1, { text: 'Yo' }))[1].text === 'Yo' && E.findLooks(E.editLook(looks, 0, null)).length === 1 && E.findLooks(E.addLook(looks, { keys: ['clock'], text: 'tick' })).length === 3);
@@ -48,6 +52,11 @@ check('a new zone goes at the end of the sentence, not inside a title', E.safeIn
 check('...or after a link', E.safeInsertPos(prose, prose.indexOf('Barry')) === prose.length);
 const tw = fs.readFileSync(path.join(__dirname, '..', 'skunkpets-redux.twee'), 'utf8');
 check('no reaction text has a straight double quote entity (Harlowe breaks on it)', !/data-say="[^"]*&quot;/.test(tw));
+
+// Repeats and follow-ups
+const rz = '[[diskette: 10 | shake | loop | if: zoom-started | on: these words | then: Ugh, something nicer? | One >> Two]]';
+check('alternatives, repeats and a follow-up round-trip', E.toFriendly(E.fromFriendly(rz)) === rz && E.findReactions(E.fromFriendly(rz))[0].then === 'Ugh, something nicer?' && E.findReactions(E.fromFriendly(rz))[0].cycle === 'loop');
+check('a line for an app keeps its repeats and follow-up', E.lookLine({ keys: ['clock'], text: 'a &gt;&gt; b', cycle: 'random', then: 'Bye' }) === '<p data-look="clock" data-cycle="random" data-then="Bye">a &gt;&gt; b</p>');
 
 // Pinning comments
 const doc = 'the cat sat. the cat ran. the dog sat.';

@@ -531,10 +531,16 @@ Add `article` to its tags if it should be findable in Winkipedia.
 
 - Searching **"skunkpets"** or **"skunkpets.com"** always opens the Skunkpets
   article (through a hidden link in the `Winkipedia` passage).
-- Otherwise search matches an article's **exact name**, ignoring capitals and
-  extra spaces. The list of searchable pages is the generated `WinkiIndex`
-  passage: one hidden link per passage tagged **`article`**. To make a page
-  searchable, tag it `article` and rebuild.
+- Otherwise an article's **exact name** (ignoring capitals and extra spaces)
+  opens it, and failing that the search matches titles loosely: **any word**
+  of a title ("netcon", "barry", "recast"), the start of one ("skunk"), a
+  one-letter typo in a longer word ("netcom"), or the title without spaces
+  ("netcon2004"); capitals, punctuation and "the/of/and" don't matter
+  (`scoreTitle`). One clear best match opens straight away; several show as
+  a "Did you mean: ..." list of links under the box.
+- The list of searchable pages is the generated `WinkiIndex` passage: one
+  hidden link per passage tagged **`article`**. To make a page searchable,
+  tag it `article` and rebuild.
 - **Experiment, switched off:** with `WINKI_REAL_FALLBACK = true` in the
   script, a search with no in-game article opens the real Wikipedia article in
   an iframe on the `Winkipedia Search Result` page.
@@ -624,8 +630,14 @@ and she pops up out of it, bottom-right like the old Office helper, with a
 pale-yellow speech bubble telling you to drag from her eyes to anything
 you want explained (see Inspecting below).
 
-- **Dismiss** (or the ×) tucks her back into the tray. She keeps running.
-- **Clicking her tray icon** brings her back up, or tucks her away again.
+- **The ×** on her bubble (or on an answer, or "Thanks, Diskette!") closes
+  the bubble but she stays up, quiet; you can still drag from her eyes.
+  **Clicking her** (not her eyes) brings her menu back (`$disketteQuiet`,
+  and the `diskette:quiet` / `diskette:talk` actions in `DesktopActions`).
+- **"That's enough, Diskette."** in her menu tucks her back into the tray.
+  She keeps running.
+- **Clicking her tray icon** brings her bubble back if she's quiet, brings
+  her up if she's tucked away, or tucks her away if she's talking.
 - **When she has something to say** while tucked away, an XP-style balloon
   comes out of her tray icon. Clicking the balloon (or her icon) brings her
   up to say it; the balloon's × just dismisses it.
@@ -672,14 +684,24 @@ back. A click on her eyes without dragging is a poke, and she objects.
 
 What she says, first match wins:
 
-1. **A response zone** near where you let go. Put one anywhere in a page:
-   `<span class="diskette-zone" data-radius="80" data-say="Ooh, I love this part!"></span>`
-   It answers when the drop is within `data-radius` game pixels of it
-   (default 60), in the same window, and not scrolled out of sight. The
-   span can be empty (a point) or wrap words (then it reaches out from
-   their edges). In the preview's article editor it's
-   `[[diskette: 80 | Ooh, I love this part!]]`, and while the editor is
-   open each zone shows as a pink dot with a dashed circle of its reach.
+1. **A response zone** where you let go, in the same window and not
+   scrolled out of sight (nearest wins). Three kinds:
+   - **a point** with a reach: an empty
+     `<span class="diskette-zone" data-radius="80" data-say="Ooh!"></span>`
+     answers within 80 game pixels (default 60). Editor:
+     `[[diskette: 80 | Ooh!]]`.
+   - **words**: the span wraps them,
+     `<span class="diskette-zone" data-radius="10" data-say="Ooh!">these words</span>`,
+     and answers on them (line by line) plus `data-radius` of slack
+     (default 10). Editor: `[[diskette: 10 | on: these words | Ooh!]]`.
+   - **an element**: `data-on` is a CSS selector of what it covers in the
+     same page or window, e.g. a photo,
+     `<span class="diskette-zone" data-radius="10" data-on="[data-art='x.jpg']" data-say="Ooh!"></span>`.
+     Editor: `[[diskette: 10 | on photo: x.jpg | Ooh!]]` or
+     `[[diskette: 10 | on element: .forum-user-pic | Ooh!]]`.
+   While the editor is open: points show as a dot with a dashed circle of
+   their reach, words underlined, elements outlined; click one (or press and
+   hold anywhere in its reach, or Alt-click) to open its card.
 2. **The page's own comment**, if you dropped on a browser page that has one:
    `<span class="diskette-page" data-say="..."></span>` (editor:
    `[[diskette: page | ...]]`).
@@ -693,6 +715,22 @@ Any of them can add `data-mood="shake"` or `"wide"` (editor:
 `[[diskette: 80 | shake | ...]]`); the default is a hop. Don't put a
 straight double quote in `data-say` (Harlowe breaks the tag on `&quot;`);
 the editor turns them into curly quotes for you.
+
+**Repeats:** a zone, page comment or line can hold several alternatives
+separated by `>>` (`data-say="Hi! >> You again? >> Still here."`; in the
+editor's cards, one per line). Each time she's asked about it she says the
+next: `data-cycle` absent = in order, then keep saying the last one;
+`"loop"` = round and round; `"random"` = at random, never the same twice
+running (friendly form: `[[diskette: 80 | loop | ...]]`). The counts are in
+`$disketteSeen`, so they're saved. Several DisketteLooks lines for the same
+key are still picked at random.
+
+**After "Thanks":** her answer offers "Thanks, Diskette!", which shows her
+follow-up: the reaction's own `data-then` (friendly `then: Ugh, can we look
+at something nicer?`) or, by default, "Need me to look at anything else?".
+The follow-up offers "That's enough, Diskette." (tucks her into the tray).
+Once she's looked at anything (`diskette-first-look`), her menu opens with
+the follow-up question instead of introducing herself again.
 
 **Only when (events):** any of them can also have `data-if="zoom-started,
 !visited:kraska1"` (editor: `[[diskette: 80 | if: zoom-started | ...]]`):
