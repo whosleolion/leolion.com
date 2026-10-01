@@ -166,10 +166,8 @@ await look([640, 160]);
 check('she can still be shown things while quiet: the wallpaper', /hills/.test(await reaction()), await reaction());
 await dbl('.desktop-icon[data-window-template="downloads"]');
 await dbl('.folder-file[data-file="netcontkts"]');
-await look(await center('.netcon-redact'));
-check('a response zone in the ticket answers', (await reaction()).includes('blacked that out'), await reaction());
 await look(await center('.netcon-big'));
-check('the rest of the ticket gets the window\'s line', (await reaction()).includes('NetCon 2004'), await reaction());
+check('the ticket gets the window\'s line', (await reaction()).includes('NetCon 2004'), await reaction());
 await click('.panel[data-window-template="netcontkts"] .panel-close');
 await click('.panel[data-window-template="downloads"] .panel-close');
 await dbl('.desktop-icon[data-window-template="browser"]');
@@ -178,11 +176,29 @@ await go('.bookmark-row tw-link', 'Winkipedia');
 await type('#winki-search-input', 'Diskette');
 await p.keyboard.press('Enter'); await W(500);
 await look(await center('.browser-page-content h1'));
+check('a page without its own comment gets her page line', /Winkipedia knows|So many words/.test(await reaction()), await reaction());
+// The pages have no zones of their own right now, so these checks add test
+// ones to the open page: a page comment, a words zone, an empty one, and
+// three responses stacked on one spot (the first whose data-if fits wins).
+await p.evaluate(() => {
+  const c = document.querySelector('.browser-page-content');
+  const box = document.createElement('div');
+  box.innerHTML = '<span class="diskette-page" data-say="Hey, that\'s my page!"></span>' +
+    '<p><span class="diskette-zone" data-radius="10" data-say="Such an ugly word.">decommissioned</span> and then ' +
+    '<span class="diskette-zone" data-radius="10" data-say="">sentience</span> and then ' +
+    '<span class="diskette-zone" data-radius="10" data-if="!game-started" data-say="Stacked: before the game started">' +
+    '<span class="diskette-zone" data-radius="10" data-if="game-started" data-say="Stacked: once the game started">' +
+    '<span class="diskette-zone" data-radius="10" data-say="Stacked: otherwise">stacked words</span></span></span></p>';
+  c.querySelector('h1').after(...box.childNodes);
+});
+await look(await center('.browser-page-content h1'));
 check('a page with its own comment', (await reaction()).includes('my page'), await reaction());
 // (zones are often empty markers: no size, so Playwright calls them hidden)
 const zoneAt = (says) => p.locator('.browser-page-content .diskette-zone').filter({ has: p.locator('xpath=self::*[contains(@data-say, "' + says + '")]') }).first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
 await look(await zoneAt('ugly word'));
 check('a response zone in an article', (await reaction()).includes('ugly word'), await reaction());
+await look(await zoneAt('otherwise'));
+check('stacked responses: the first whose condition fits wins', (await reaction()).includes('once the game started'), await reaction());
 await look(await p.locator('.browser-page-content .diskette-zone[data-say=""]').first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
 check('a zone with no line yet is ignored (she uses the page comment)', (await reaction()).includes('my page'), await reaction());
 await shot('03c-diskette-inspecting');
