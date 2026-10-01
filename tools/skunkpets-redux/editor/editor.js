@@ -42,7 +42,7 @@
   const PHOTO_RE = /<div class="article-art( article-art-left)?" data-art="([^"]+)"(?: style="width: ([\d.]+%)")? role="img" aria-label="([^"]*)"><\/div>/g;
   /* Diskette's response zones and whole-page comments (her "inspecting"
      mode; see DISKETTE INSPECTING in the game's script). */
-  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")? data-say="([^"]*)"><\/span>/g;
+  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")?(?: data-if="([^"]*)")? data-say="([^"]*)"><\/span>/g;
   const ZONE_RADIUS = 60;
 
   const escAttr = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
@@ -60,9 +60,10 @@
   /* Game markup -> the short form shown in the editor. */
   function toFriendly(source) {
     return source
-      .replace(ZONE_RE, function (_, kind, radius, mood, say) {
+      .replace(ZONE_RE, function (_, kind, radius, mood, cond, say) {
         const parts = [kind === "page" ? "page" : radius || String(ZONE_RADIUS)];
         if (mood) parts.push(mood);
+        if (cond) parts.push("if: " + unescAttr(cond));
         parts.push(unescSay(say));
         return "[[diskette: " + parts.join(" | ") + "]]";
       })
@@ -95,17 +96,123 @@
 
   function zoneHtml(inner) {
     const parts = inner.split("|").map((p) => p.trim());
-    let kind = "zone";
-    let radius = String(ZONE_RADIUS);
-    let mood = "";
+    const f = { kind: "zone", radius: ZONE_RADIUS, mood: "", cond: "" };
     if (parts.length > 1 && /^(page|\d+(px)?)$/.test(parts[0])) {
       const first = parts.shift();
-      if (first === "page") kind = "page";
-      else radius = String(parseInt(first, 10));
+      if (first === "page") f.kind = "page";
+      else f.radius = parseInt(first, 10);
     }
-    if (parts.length > 1 && /^(hop|shake|wide)$/.test(parts[0])) mood = parts.shift();
-    return '<span class="diskette-' + kind + '"' + (kind === "zone" ? ' data-radius="' + radius + '"' : "") +
-      (mood ? ' data-mood="' + mood + '"' : "") + ' data-say="' + escSay(parts.join(" | ")) + '"></span>';
+    if (parts.length > 1 && /^(hop|shake|wide)$/.test(parts[0])) f.mood = parts.shift();
+    if (parts.length > 1 && /^if:/.test(parts[0])) f.cond = parts.shift().slice(3).trim();
+    f.say = parts.join(" | ");
+    return zoneTag(f) + "</span>";
+  }
+
+  /* ---------- Diskette's reactions (pure) ---------- */
+
+  /* The opening tag of a zone or page comment, attributes in the one order
+     toFriendly understands. */
+  function zoneTag(f) {
+    return '<span class="diskette-' + (f.kind === "page" ? "page" : "zone") + '"' +
+      (f.kind === "page" ? "" : ' data-radius="' + (parseInt(f.radius, 10) || ZONE_RADIUS) + '"') +
+      (f.mood && f.mood !== "hop" ? ' data-mood="' + f.mood + '"' : "") +
+      (f.cond ? ' data-if="' + escAttr(f.cond.replace(/"/g, "")) + '"' : "") +
+      ' data-say="' + escSay(f.say || "") + '">';
+  }
+
+  const attrsOf = (str) => {
+    const out = {};
+    for (const m of str.matchAll(/\sdata-([a-z]+)="([^"]*)"/g)) out[m[1]] = m[2];
+    return out;
+  };
+
+  /* "TODO P1-04 Ticket: the first clue" -> { prio: 1, num: 4, note: "Ticket: the first clue" } */
+  function todoOf(text) {
+    const m = /^TODO\b\s*(?:P(\d)(?:-(\d+))?)?\s*([\s\S]*)$/.exec((text || "").trim());
+    return m ? { prio: m[1] ? +m[1] : 9, num: m[2] ? +m[2] : 999, note: m[3].trim() } : null;
+  }
+
+  /* Every zone and page comment in a passage's source, in order. */
+  function findReactions(source) {
+    const out = [];
+    for (const m of source.matchAll(/<span class="diskette-(zone|page)"((?:\s[a-z-]+="[^"]*")*)>/g)) {
+      const a = attrsOf(m[2]);
+      const say = unescSay(a.say || "");
+      out.push({
+        kind: m[1], from: m.index, to: m.index + m[0].length, empty: source.startsWith("</span>", m.index + m[0].length),
+        radius: a.radius ? +a.radius : ZONE_RADIUS, mood: a.mood || "hop", cond: unescAttr(a.if || ""), say: say, todo: todoOf(say),
+      });
+    }
+    return out;
+  }
+
+  /* Rewrites (fields) or deletes (null) the n-th reaction in a passage. */
+  function editReaction(source, n, fields) {
+    const r = findReactions(source)[n];
+    if (!r) throw new Error("That reaction isn't there any more.");
+    if (fields) return source.slice(0, r.from) + zoneTag(Object.assign({}, r, fields)) + source.slice(r.to);
+    if (!r.empty) throw new Error("This zone wraps words; remove it in the markup.");
+    return source.slice(0, r.from) + source.slice(r.to + "</span>".length);
+  }
+
+  /* DisketteLooks: one <p data-look="keys" ...>text</p> per line. */
+  const LOOK_RE = /^<p data-look="([^"]*)"((?:\s[a-z-]+="[^"]*")*)>(.*)<\/p>$/gm;
+  function findLooks(source) {
+    const out = [];
+    for (const m of source.matchAll(LOOK_RE)) {
+      const a = attrsOf(m[2]);
+      const text = m[3];
+      out.push({ keys: m[1].split(/[\s,]+/).filter(Boolean), from: m.index, to: m.index + m[0].length, mood: a.mood || "hop", cond: unescAttr(a.if || ""), text: text, todo: todoOf(text) });
+    }
+    return out;
+  }
+  function lookLine(f) {
+    return '<p data-look="' + f.keys.join(" ") + '"' + (f.mood && f.mood !== "hop" ? ' data-mood="' + f.mood + '"' : "") +
+      (f.cond ? ' data-if="' + escAttr(f.cond.replace(/"/g, "")) + '"' : "") + ">" + (f.text || "").replace(/\n/g, " ") + "</p>";
+  }
+  function editLook(source, n, fields) {
+    const l = findLooks(source)[n];
+    if (!l) throw new Error("That line isn't there any more.");
+    if (!fields) return source.slice(0, l.from) + source.slice(l.to).replace(/^\n/, "");
+    return source.slice(0, l.from) + lookLine(Object.assign({}, l, fields)) + source.slice(l.to);
+  }
+  function addLook(source, fields) {
+    return source.replace(/\n*$/, "\n") + lookLine(fields) + "\n";
+  }
+
+  /* GameEvents: <p data-event="id" data-after="a, b">what it is</p>. */
+  function findEvents(source) {
+    const out = [];
+    for (const m of source.matchAll(/^<p data-event="([^"]*)"((?:\s[a-z-]+="[^"]*")*)>(.*)<\/p>$/gm)) {
+      const a = attrsOf(m[2]);
+      out.push({ id: unescAttr(m[1]), after: unescAttr(a.after || "").split(",").map((x) => x.trim()).filter(Boolean), text: m[3] });
+    }
+    return out;
+  }
+
+  /* A place in the short form where a [[diskette: ...]] can go without
+     breaking a word, title, link, photo or tag: the end of the sentence pos
+     is in (or, if that's far, of the word), moved past any link or tag. */
+  function safeInsertPos(text, pos) {
+    const rest = text.slice(pos, pos + 160);
+    const end = /[.!?…](?=["”’')]*(?:\s|$|<|\[|\\))|\n/.exec(rest);
+    if (end) {
+      pos += end.index + (end[0] === "\n" ? 0 : 1);
+      while (pos < text.length && /["”’')]/.test(text[pos])) pos++;
+    } else {
+      while (pos < text.length && /[\w’'-]/.test(text[pos]) && pos > 0 && /[\w’'-]/.test(text[pos - 1])) pos++;
+    }
+    const open = text.lastIndexOf("[[", pos - 1);
+    if (open >= 0 && open < pos && text.indexOf("]]", open) >= pos - 1) {
+      const close = text.indexOf("]]", open);
+      if (close >= 0 && text.lastIndexOf("]]", pos - 1) < open) pos = close + 2;
+    }
+    const lt = text.lastIndexOf("<", pos - 1);
+    if (lt >= 0 && text.lastIndexOf(">", pos - 1) < lt) {
+      const gt = text.indexOf(">", lt);
+      if (gt >= 0) pos = gt + 1;
+    }
+    return pos;
   }
 
   /* The short form -> game markup. */
@@ -308,6 +415,7 @@
     module.exports = {
       toFriendly, fromFriendly, replacePassage, insertPassage, hasPassage, photoFiles, linkTargets, gameText,
       locateQuote, makeAnchor, pageNameProblem, TEMPLATES, winkiIndexLink, applyCommentOp, lineDiff, pagesInMessage,
+      zoneTag, todoOf, findReactions, editReaction, findLooks, lookLine, editLook, addLook, findEvents, safeInsertPos,
     };
   }
   if (typeof document === "undefined") return;
@@ -336,6 +444,9 @@
     data.saved = data.saved || {};        /* name -> source saved but not yet in this build */
     data.savedPhotos = data.savedPhotos || {};
     data.newPages = data.newPages || {};  /* name -> { tags, saved } for pages made here, until built */
+    data.raw = data.raw || {};            /* name -> true: its draft is plain source, not the short form
+                                             (passages that aren't wiki pages, edited from the Diskette tab) */
+    data.tab = data.tab || "article";
     data.open = !!data.open;
     return {
       data: data,
@@ -389,9 +500,14 @@
     return "";
   }
 
-  function currentSource(name) {
+  /* The source a draft stands for. */
+  function draftSource(name) {
     const d = store.data.drafts[name];
-    if (d != null) return fromFriendly(d);
+    return store.data.raw[name] ? d : fromFriendly(d);
+  }
+
+  function currentSource(name) {
+    if (store.data.drafts[name] != null) return draftSource(name);
     return baseline(name);
   }
 
@@ -436,6 +552,8 @@
     /* New pages first, so links to them on other pages aren't red. */
     Object.keys(store.data.newPages).forEach(applyToGame);
     wikiPageNames().forEach(applyToGame);
+    /* Reactions edited in other passages (mail, the ticket, DisketteLooks). */
+    Object.keys(store.data.drafts).forEach(function (name) { if (!isWikiPage(name) && passage(name)) applyToGame(name); });
     syncSearchIndex();
   }
 
@@ -535,7 +653,7 @@
 
       const clashes = [];
       names.forEach(function (name) {
-        const body = fromFriendly(store.data.drafts[name]);
+        const body = draftSource(name);
         if (isNewPage(name) && !hasPassage(twee, name)) {
           twee = insertPassage(twee, name, store.data.newPages[name].tags, body);
           return;
@@ -661,7 +779,7 @@
     for (const m of text.matchAll(/\([a-z][a-z0-9-]*:/gi)) add(m.index, m.index + m[0].length, "cm-ske-macro");
     for (const m of text.matchAll(/''|\^\^|(?<!:)\/\//g)) add(m.index, m.index + m[0].length, "cm-ske-dim");
     for (const m of text.matchAll(/\[\[photo:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, "cm-ske-photo");
-    for (const m of text.matchAll(/\[\[diskette:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, "cm-ske-diskette");
+    for (const m of text.matchAll(/\[\[diskette:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, /\|\s*TODO\b/.test(m[0]) ? "cm-ske-diskette cm-ske-todo" : "cm-ske-diskette");
     if (hook) {
       linkTargets(text).forEach(function (l) {
         if (pageExists(l.target)) add(l.from, l.to, "cm-ske-link");
@@ -798,11 +916,10 @@
     const commentInput = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "Leave a note for whoever edits next…" });
     const quoteHint = el("div", { class: "ske-muted ske-quote-hint" });
 
-    const panel = el("div", { class: "ske-panel" }, [
-      el("div", { class: "ske-head" }, [
-        el("b", { text: "Winkipedia editor" }),
-        el("button", { type: "button", class: "ske-close", title: "Close the editor", text: "×", onclick: () => setOpen(false) }),
-      ]),
+    const tabButton = (id, label) => el("button", { type: "button", class: "ske-tab-btn", "data-tab": id, text: label, onclick: () => setTab(id) });
+    const disketteTab = el("div", { class: "ske-tab ske-tab-diskette" });
+    const statusTab = el("div", { class: "ske-tab ske-tab-status" });
+    const articleTab = el("div", { class: "ske-tab ske-tab-article" }, [
       title,
       lastEdit,
       el("div", { class: "ske-tools" }, [
@@ -817,11 +934,8 @@
       editorBox,
       missing,
       el("div", { class: "ske-actions" }, [
-        el("button", { type: "button", class: "ske-save", text: "Save to preview…", onclick: openReview }),
         el("button", { type: "button", class: "ske-undo", text: "Undo my changes to this page", onclick: onRevert }),
       ]),
-      status,
-      pending,
       el("details", { class: "ske-comments", open: "" }, [
         commentsTitle,
         el("div", { class: "ske-comments-body" }, [
@@ -853,7 +967,11 @@
           "  a spot Diskette reacts to when you drag from her\n" +
           "  eyes to within 80 pixels of it (dashed circle)\n" +
           "[[diskette: 80 | shake | ...]]  or wide: how she reacts\n" +
+          "[[diskette: 80 | if: zoom-started | ...]]  only after\n" +
+          "  that event (see Game status); if: !x = only before\n" +
           "[[diskette: page | ...]]   what she says about the page\n" +
+          "[[diskette: 60 | TODO P1 ...]]  a note: still to write\n" +
+          "  (the Diskette tab lists these; she ignores them)\n" +
           "''bold''   //italic//   <h2>Heading</h2>\n" +
           "A \\ at the end of a line joins it to the next one.\n" +
           "Move a photo line to move the photo: right after a\n" +
@@ -873,10 +991,43 @@
         ]),
       ]),
     ]);
+    const panel = el("div", { class: "ske-panel" }, [
+      el("div", { class: "ske-head" }, [
+        el("b", { text: "Winkipedia editor" }),
+        el("button", { type: "button", class: "ske-close", title: "Close the editor", text: "×", onclick: () => setOpen(false) }),
+      ]),
+      el("div", { class: "ske-tabs" }, [
+        tabButton("article", "Article"),
+        tabButton("diskette", "Diskette"),
+        tabButton("status", "Game status"),
+      ]),
+      articleTab,
+      disketteTab,
+      statusTab,
+      el("div", { class: "ske-footer" }, [
+        el("div", { class: "ske-actions" }, [
+          el("button", { type: "button", class: "ske-save", text: "Save to preview…", onclick: openReview }),
+        ]),
+        status,
+        pending,
+      ]),
+    ]);
     document.body.appendChild(toggle);
     document.body.appendChild(panel);
-    ui = { toggle, panel, title, lastEdit, status, pending, missing, commentsTitle, commentList, commentOthers, commentStatus, commentInput, quoteHint };
+    ui = { toggle, panel, title, lastEdit, status, pending, missing, commentsTitle, commentList, commentOthers, commentStatus, commentInput, quoteHint, disketteTab, statusTab };
     view = makeEditor(editorBox);
+    setTab(store.data.tab);
+  }
+
+  function setTab(id) {
+    if (["article", "diskette", "status"].indexOf(id) < 0) id = "article";
+    store.data.tab = id;
+    store.write();
+    ui.panel.querySelectorAll(".ske-tab-btn").forEach((b) => b.classList.toggle("ske-tab-on", b.dataset.tab === id));
+    ui.panel.querySelectorAll(".ske-tab").forEach((t) => t.classList.toggle("ske-tab-shown", t.classList.contains("ske-tab-" + id)));
+    if (id === "diskette") renderDiskette(true);
+    if (id === "status") renderStatus(true);
+    if (id === "article" && view) view.requestMeasure();
   }
 
   function setOpen(open) {
@@ -953,6 +1104,7 @@
     applyTimer = setTimeout(function () {
       applyToGame(name);
       if (hook.currentPage() === name) redraw();
+      countTodos();
     }, 400);
   }
 
@@ -981,6 +1133,7 @@
     if (!(name in store.data.drafts)) return;
     if (!confirm("Undo your unsaved changes to “" + name + "”?")) return;
     delete store.data.drafts[name];
+    delete store.data.raw[name];
     store.write();
     applyToGame(name);
     redraw();
@@ -1037,6 +1190,7 @@
     updateQuoteHint();
     if (shownPage) checkPhotos();
     markGame();
+    renderDiskette(false);
   }
 
   /* ---------- New pages ---------- */
@@ -1086,13 +1240,13 @@
     const names = Object.keys(store.data.drafts);
     if (!names.length) { say("Nothing to save.", ""); return; }
     const known = knownPhotos();
-    const used = new Set([].concat.apply([], names.map((n) => photoFiles(fromFriendly(store.data.drafts[n])))));
+    const used = new Set([].concat.apply([], names.map((n) => photoFiles(draftSource(n)))));
     const missingPhotos = Array.from(used).filter((f) => !known.has(f));
     if (missingPhotos.length) { say("Can't save: no photo called " + missingPhotos.join(", ") + ".", "error"); return; }
     const photos = Object.keys(store.data.photos).filter((f) => used.has(f));
 
     const blocks = names.map(function (name) {
-      const before = isNewPage(name) && !(name in store.data.saved) ? "" : toFriendly(baseline(name));
+      const before = isNewPage(name) && !(name in store.data.saved) ? "" : store.data.raw[name] ? baseline(name) : toFriendly(baseline(name));
       const rows = lineDiff(before, store.data.drafts[name]);
       const changed = rows.map((r, i) => (r.type !== " " ? i : -1)).filter((i) => i >= 0);
       const keep = new Set();
@@ -1133,8 +1287,9 @@
         return confirm(clashes.join(", ") + " changed on GitHub since this preview was built. Save yours over it anyway?");
       });
       names.forEach(function (n) {
-        store.data.saved[n] = fromFriendly(store.data.drafts[n]);
+        store.data.saved[n] = draftSource(n);
         delete store.data.drafts[n];
+        delete store.data.raw[n];
         if (store.data.newPages[n]) store.data.newPages[n].saved = true;
       });
       photos.forEach(function (f) {
@@ -1145,6 +1300,7 @@
       refresh();
       loadHistory(true);
       say("Saved (" + sha.slice(0, 7) + "). The preview rebuilds in about a minute; your changes already show here.", "ok");
+      renderDiskette(true);
     } catch (err) {
       say(err.message || String(err), "error");
     }
@@ -1425,12 +1581,14 @@
      circles of their radius, and her page comment as a tag. */
   function showZones() {
     const on = !!store.data.open;
-    document.querySelectorAll(".browser-page-content .diskette-zone, .browser-page-content .diskette-page").forEach(function (z) {
-      if (z.classList.contains("ske-zone") === on) return;
-      z.classList.toggle("ske-zone", on);
-      if (on && z.dataset.radius) z.style.setProperty("--ske-r", z.dataset.radius + "px");
-      if (on) z.title = "Diskette: " + (z.dataset.say || "");
-      else z.removeAttribute("title");
+    document.querySelectorAll(".playfield .diskette-zone, .playfield .diskette-page").forEach(function (z) {
+      const todo = on && /^TODO\b/.test((z.dataset.say || "").trim());
+      if (z.classList.contains("ske-zone") !== on) z.classList.toggle("ske-zone", on);
+      if (z.classList.contains("ske-zone-todo") !== todo) z.classList.toggle("ske-zone-todo", todo);
+      if (on && z.dataset.radius && z.style.getPropertyValue("--ske-r") !== z.dataset.radius + "px") z.style.setProperty("--ske-r", z.dataset.radius + "px");
+      const title = on ? "Diskette: " + (z.dataset.say || "") + (z.dataset.if ? "  (if: " + z.dataset.if + ")" : "") : null;
+      if (title === null) { if (z.hasAttribute("title")) z.removeAttribute("title"); }
+      else if (z.title !== title) z.title = title;
     });
   }
 
@@ -1439,6 +1597,7 @@
      the markup to them. */
   function onGameClick(e) {
     if (!store.data.open || !e.target.closest(".browser-page-content")) return;
+    if (pickingZone) { e.preventDefault(); e.stopPropagation(); placeZoneAt(e); return; }
     const red = e.target.closest(".ske-redlink");
     if (red) { e.preventDefault(); e.stopPropagation(); openNewPageDialog(red.dataset.page); return; }
     const mark = e.target.closest(".ske-mark-badge, .ske-mark");
@@ -1449,8 +1608,15 @@
     if (e.target.closest("tw-link, tw-enchantment, a, button, input") || !shownPage) return;
     const sel = window.getSelection();
     if (sel && !sel.isCollapsed) return;
-    const caret = document.caretRangeFromPoint ? document.caretRangeFromPoint(e.clientX, e.clientY) : null;
-    if (!caret || caret.startContainer.nodeType !== Node.TEXT_NODE) return;
+    const pos = textPosAt(e.clientX, e.clientY);
+    if (pos !== null) selectRange(pos, pos, true);
+  }
+
+  /* Where a point in the game's page is in the markup (by matching the words
+     around it), or null. */
+  function textPosAt(x, y) {
+    const caret = document.caretRangeFromPoint ? document.caretRangeFromPoint(x, y) : null;
+    if (!caret || caret.startContainer.nodeType !== Node.TEXT_NODE) return null;
     const t = caret.startContainer.nodeValue;
     const off = caret.startOffset;
     const doc = getText();
@@ -1460,11 +1626,365 @@
       const snippet = t.slice(from, Math.min(t.length, b)).replace(/\s+/g, " ");
       if (snippet.trim().length < 6) continue;
       const i = doc.indexOf(snippet);
-      if (i >= 0) {
-        const pos = i + Math.min(snippet.length, off - from);
-        selectRange(pos, pos, true);
-        return;
+      if (i >= 0) return i + Math.min(snippet.length, off - from);
+    }
+    return null;
+  }
+
+  /* ---------- Diskette tab: every reaction, in one place ---------- */
+
+  /* What each DisketteLooks key is (the game's DISKETTE INSPECTING reads them). */
+  const LOOK_KEYS = [
+    ["self", "Diskette herself"], ["poke", "a click on her eyes, no drag"], ["page", "any browser page without its own comment"],
+    ["browser", "the Browse window's bars and buttons"], ["icon-browser", "the Browse icon"],
+    ["mail", "the Mail window"], ["icon-mail", "the Mail icon"], ["notes", "the Notes window"], ["icon-notes", "the Notes icon"],
+    ["readme", "the READ_ME window"], ["icon-readme", "the READ_ME icon"], ["recycle", "the Trash window"], ["icon-recycle", "the Trash icon"],
+    ["trash-item", "anything inside the Trash"], ["downloads", "the Downloads window"], ["icon-downloads", "the Downloads icon"],
+    ["granmas", "granmas.jpg, open"], ["netcontkts", "the NetCon ticket, open"], ["icon-diskette", "her own icon"],
+    ["start", "the Start button and menu"], ["clock", "the clock"], ["volume", "the speaker and volume popup"], ["taskbar", "the taskbar"],
+    ["dialog", "any popup"], ["dialog-exit", "the “exiting to external website” popup"], ["dialog-devlink", "the popup before devlink-userbase"],
+    ["dialog-openmail", "the “new email” popup"], ["desktop", "the wallpaper"], ["monitor", "the edge of the screen"],
+    ["outside", "off the monitor"], ["anything", "anything with no line of its own"],
+  ];
+  const PLACE_LABELS = {
+    RenderDesktop: "the desktop's windows (READ_ME, Trash)",
+    RenderMailInbox: "Mail",
+    RenderNetconTicket: "the NetCon ticket (Downloads)",
+    DisketteLooks: "apps & things (DisketteLooks)",
+  };
+  const placeLabel = (name) => PLACE_LABELS[name] || name;
+  const LOOKS = "DisketteLooks";
+
+  let pickingZone = false;
+  let disketteFilter = "todo";
+  let focusAfterRender = null;   /* { passage, index } of a card to focus */
+  let redrawTimer = null;
+
+  /* Every reaction in the game as it is now (drafts included). */
+  function allReactions() {
+    const names = Array.from(new Set(Object.keys(original).concat(Object.keys(store.data.newPages))));
+    const items = [];
+    names.forEach(function (name) {
+      const tags = tagsOf(name);
+      if (tags.indexOf("script") >= 0 || tags.indexOf("stylesheet") >= 0) return;
+      const src = currentSource(name);
+      if (name === LOOKS) {
+        findLooks(src).forEach((l, i) => items.push(Object.assign({ type: "look", passage: name, index: i }, l)));
+      } else {
+        findReactions(src).forEach(function (r, i) {
+          /* The words just before it, as a reader sees them. */
+          const before = gameText(toFriendly(src.slice(Math.max(0, r.from - 400), r.from)).replace(/\([a-z-]+:[^)]*\)/g, " ").replace(/\[\[diskette:[^\]]*\]\]/g, ""));
+          const plain = before.split(/[\[\]{}>|]/).pop().trim();
+          items.push(Object.assign({ type: r.kind, passage: name, index: i, context: plain.slice(-70) }, r));
+        });
       }
+    });
+    return items;
+  }
+
+  const byTodo = (a, b) => a.todo.prio - b.todo.prio || a.todo.num - b.todo.num || a.passage.localeCompare(b.passage);
+
+  /* Changes a passage from outside the markup box (a Diskette card). */
+  function setSource(name, source) {
+    const raw = !isWikiPage(name);
+    if (source === baseline(name)) {
+      delete store.data.drafts[name];
+      delete store.data.raw[name];
+    } else {
+      store.data.drafts[name] = raw ? source : toFriendly(source);
+      if (raw) store.data.raw[name] = true;
+      else delete store.data.raw[name];
+    }
+    store.write();
+    applyToGame(name);
+    if (name === shownPage) {
+      const at = selection().from;
+      setText(name in store.data.drafts ? store.data.drafts[name] : toFriendly(currentSource(name)));
+      const len = view.state.doc.length;
+      view.dispatch({ selection: { anchor: Math.min(at, len) } });
+      renderMissing();
+    }
+    refresh();
+    clearTimeout(redrawTimer);
+    redrawTimer = setTimeout(redraw, 350);
+  }
+
+  function conditionNow(cond) {
+    if (!cond) return "";
+    const happened = new Set((hook.events && hook.events()) || []);
+    const missing = cond.split(",").map((c) => c.trim()).filter(Boolean).filter(function (c) {
+      return c.charAt(0) === "!" ? happened.has(c.slice(1).trim()) : !happened.has(c);
+    });
+    return missing.length ? "Not in this playthrough yet (" + missing.join(", ") + ")" : "";
+  }
+
+  function moodSelect(value, onchange) {
+    const s = el("select", { class: "ske-input ske-small", title: "How she reacts", onchange: onchange });
+    [["hop", "hop"], ["shake", "shake her head"], ["wide", "wide eyes"]].forEach(function (m) {
+      const o = el("option", { value: m[0], text: m[1] });
+      if (m[0] === value) o.selected = true;
+      s.appendChild(o);
+    });
+    return s;
+  }
+
+  function reactionCard(item) {
+    const isLook = item.type === "look";
+    const card = el("div", { class: "ske-react" + (item.todo ? " ske-react-todo" : "") });
+    const head = el("div", { class: "ske-react-head" });
+    if (item.todo) head.appendChild(el("span", { class: "ske-prio ske-prio-" + item.todo.prio, title: "P1: needed to solve the demo. P2: story. P3: flavor.", text: item.todo.prio < 9 ? "P" + item.todo.prio + (item.todo.num < 999 ? "-" + String(item.todo.num).padStart(2, "0") : "") : "TODO" }));
+    head.appendChild(el("b", { text: item.todo ? item.todo.note || "To write" : isLook ? item.keys.join(", ") : item.type === "page" ? "Page comment" : "Zone" }));
+    card.appendChild(head);
+    const where = isLook
+      ? "When you drag her eyes to " + item.keys.map((k) => (LOOK_KEYS.find((x) => x[0] === k) || [k, k])[1]).join(" / ")
+      : item.type === "page" ? "Her comment on the page " + placeLabel(item.passage) : "On " + placeLabel(item.passage) + (item.todo ? "" : ", reaching " + item.radius + " px");
+    card.appendChild(el("div", { class: "ske-muted", text: where }));
+    if (item.type === "zone" && item.context) card.appendChild(el("div", { class: "ske-react-context", text: "…" + item.context + " ●" }));
+
+    const was = isLook ? item.text : item.say;
+    const text = el("textarea", { class: "ske-react-text", rows: "2", placeholder: item.todo ? "Write her line here…" : "What she says" });
+    text.value = item.todo ? "" : was;
+    const keys = isLook ? el("input", { type: "text", class: "ske-input ske-small", value: item.keys.join(" "), title: "Keys (see the list in “How it works”)" }) : null;
+    const radius = item.type === "zone" ? el("input", { type: "number", class: "ske-input ske-small ske-radius", min: "10", max: "400", step: "10", value: String(item.radius), title: "Reach in game pixels" }) : null;
+    const cond = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.cond, placeholder: "if: event, !event", title: "Only when these events have (or with !, haven't) happened" });
+    const condNote = el("div", { class: "ske-muted ske-cond-note", text: conditionNow(item.cond) });
+    let timer = null;
+    const apply = function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        const said = text.value.trim() || (item.todo ? was : "");
+        const fields = { mood: mood.value, cond: cond.value.trim() };
+        try {
+          const src = currentSource(item.passage);
+          if (isLook) {
+            fields.text = said;
+            fields.keys = keys.value.split(/[\s,]+/).filter(Boolean);
+            if (!fields.keys.length) return;
+            setSource(item.passage, editLook(src, item.index, fields));
+          } else {
+            fields.say = said;
+            if (radius) fields.radius = parseInt(radius.value, 10) || ZONE_RADIUS;
+            setSource(item.passage, editReaction(src, item.index, fields));
+          }
+          condNote.textContent = conditionNow(fields.cond);
+          card.classList.toggle("ske-react-todo", !!todoOf(said));
+          countTodos();
+        } catch (err) { say(err.message, "error"); }
+      }, 350);
+    };
+    const mood = moodSelect(item.mood, apply);
+    [text, cond, radius, keys].forEach((i) => i && i.addEventListener("input", apply));
+    card.appendChild(text);
+    const row = el("div", { class: "ske-react-row" }, [
+      keys, radius ? el("span", { class: "ske-muted", text: "px" }) : null, radius, mood, cond,
+    ]);
+    card.appendChild(row);
+    card.appendChild(condNote);
+    card.appendChild(el("div", { class: "ske-actions" }, [
+      isLook ? null : el("button", { type: "button", text: "Show me", onclick: () => showReaction(item) }),
+      el("button", { type: "button", text: "Delete", onclick: function () {
+        if (!confirm("Delete this " + (isLook ? "line" : item.type === "page" ? "page comment" : "zone") + "?")) return;
+        try {
+          const src = currentSource(item.passage);
+          setSource(item.passage, isLook ? editLook(src, item.index, null) : editReaction(src, item.index, null));
+          renderDiskette(true);
+        } catch (err) { say(err.message, "error"); }
+      } }),
+    ]));
+    card.dataset.key = item.passage + "#" + item.index;
+    return card;
+  }
+
+  /* Takes the game to a reaction and flashes it. */
+  function showReaction(item) {
+    const flash = function () {
+      let target = null;
+      if (isWikiPage(item.passage)) {
+        const all = document.querySelectorAll(".browser-page-content .diskette-zone, .browser-page-content .diskette-page");
+        target = all[item.index] || null;
+      } else {
+        target = Array.from(document.querySelectorAll(".playfield .diskette-zone, .playfield .diskette-page")).find((z) => (z.dataset.say || "") === item.say) || null;
+      }
+      if (!target) { say("Open " + placeLabel(item.passage) + " in the game to see it.", ""); return; }
+      target.scrollIntoView({ block: "center" });
+      target.classList.remove("ske-zone-flash");
+      void target.offsetWidth;
+      target.classList.add("ske-zone-flash");
+    };
+    if (isWikiPage(item.passage) && hook.currentPage() !== item.passage) {
+      if (!hook.goTo(item.passage)) { say("Get Browse out of the Trash to see " + item.passage + ".", ""); return; }
+      setTimeout(flash, 500);
+    } else flash();
+  }
+
+  function countTodos() {
+    const n = allReactions().filter((i) => i.todo).length;
+    const btn = ui.panel.querySelector('.ske-tab-btn[data-tab="diskette"]');
+    if (btn) btn.textContent = n ? "Diskette (" + n + " to write)" : "Diskette";
+    return n;
+  }
+
+  /* Puts a new zone in the open page's markup at pos, and its card up front. */
+  function insertZone(pos, page) {
+    const text = getText();
+    const marker = page ? "[[diskette: page | ]]" : "[[diskette: " + ZONE_RADIUS + " | ]]";
+    const at = page ? 0 : safeInsertPos(text, pos);
+    const before = text.slice(0, at);
+    view.dispatch({ changes: { from: at, to: at, insert: marker }, selection: { anchor: at + marker.length - 2 } });
+    focusAfterRender = { passage: shownPage, index: findReactions(fromFriendly(before + marker)).length - 1 };
+    disketteFilter = "written";
+    setTab("diskette");
+    say(page ? "Added a page comment. Write what she says about the page." : "Added a zone. Write her line, and set how far it reaches.", "ok");
+  }
+
+  function placeZoneAt(e) {
+    pickingZone = false;
+    document.body.classList.remove("ske-picking");
+    const pos = textPosAt(e.clientX, e.clientY);
+    if (pos === null) { say("Couldn't match that spot to the page's text. Try clicking on plain words.", "error"); return; }
+    insertZone(pos, false);
+  }
+
+  function openLookDialog() {
+    closeModal();
+    const keySel = el("select", { class: "ske-input" });
+    LOOK_KEYS.forEach((k) => keySel.appendChild(el("option", { value: k[0], text: k[0] + " (" + k[1] + ")" })));
+    const text = el("textarea", { class: "ske-react-text", rows: "3", placeholder: "What she says. <b>bold</b> works." });
+    const mood = moodSelect("hop", null);
+    const cond = el("input", { type: "text", class: "ske-input", placeholder: "Only if (optional): event, !event" });
+    openModal("New line for an app or thing", [
+      el("label", { class: "ske-field" }, [el("span", { text: "When you drag her eyes to" }), keySel]),
+      el("label", { class: "ske-field" }, [el("span", { text: "She says" }), text]),
+      el("label", { class: "ske-field" }, [el("span", { text: "Reaction" }), mood]),
+      el("label", { class: "ske-field" }, [el("span", { text: "Only if" }), cond]),
+      el("div", { class: "ske-muted", text: "A key with several lines picks one at random. {page} is the page open in the browser." }),
+    ], [
+      el("button", { type: "button", class: "ske-save", text: "Add line", onclick: function () {
+        if (!text.value.trim()) { text.focus(); return; }
+        const src = currentSource(LOOKS);
+        setSource(LOOKS, addLook(src, { keys: [keySel.value], text: text.value.trim(), mood: mood.value, cond: cond.value.trim() }));
+        focusAfterRender = { passage: LOOKS, index: findLooks(currentSource(LOOKS)).length - 1 };
+        disketteFilter = "looks";
+        closeModal();
+        renderDiskette(true);
+      } }),
+      el("button", { type: "button", text: "Cancel", onclick: closeModal }),
+    ]);
+    text.focus();
+  }
+
+  const DISKETTE_HELP =
+    "Drag from Diskette's eyes to anything in the game and she reacts. What she says, first match wins:\n\n" +
+    "1. A ZONE near where you let go: a spot in a page, with a reach (radius) in pixels. Add one with\n" +
+    "   “+ Zone at the cursor” or “+ Zone: click the game”. In the markup it reads\n" +
+    "   [[diskette: 80 | Her line.]]. While this panel is open, zones show in the game as a dot\n" +
+    "   with a dashed circle: pink when written, orange while still to write.\n" +
+    "2. The PAGE COMMENT of a browser page: what she says about the page as a whole\n" +
+    "   ([[diskette: page | ...]]).\n" +
+    "3. A LINE for the app or thing under the arrow (a window, an icon, the clock, the wallpaper,\n" +
+    "   herself...), from the Apps & things list. “+ Line for an app or thing” adds one.\n\n" +
+    "Each can have a reaction (hop, shake her head, wide eyes) and an “if”: event names from\n" +
+    "Game status, comma-separated; !name means “only before”. e.g. if: zoom-started, !visited:kraska1\n\n" +
+    "TO WRITE: zones whose text starts with TODO are notes for you; she ignores them. Writing her\n" +
+    "line in the card replaces the note. P1 = needed to solve the demo, P2 = story, P3 = flavor.\n\n" +
+    "Keep lines short (a sentence or two). <b>bold</b> works; don't use straight double quotes in\n" +
+    "zones (they turn curly). Everything here saves with “Save to preview…” like article edits.";
+
+  function renderDiskette(force) {
+    if (!ui) return;
+    const n = countTodos();
+    if (store.data.tab !== "diskette" && !force) return;
+    const tab = ui.disketteTab;
+    const items = allReactions();
+    const lists = {
+      todo: items.filter((i) => i.todo).sort(byTodo),
+      written: items.filter((i) => !i.todo && i.type !== "look"),
+      looks: items.filter((i) => !i.todo && i.type === "look"),
+    };
+    tab.textContent = "";
+    const canInsert = !!shownPage;
+    tab.appendChild(el("div", { class: "ske-tools" }, [
+      el("button", { type: "button", title: canInsert ? "Put a zone where the markup cursor is" : "Open a Winkipedia page first", text: "+ Zone at the cursor", onclick: () => (shownPage ? insertZone(selection().from, false) : say("Open a page in the game's browser first.", "error")) }),
+      el("button", { type: "button", class: "ske-pick", text: pickingZone ? "Click a spot in the page…" : "+ Zone: click the game", onclick: function () {
+        if (!shownPage) { say("Open a page in the game's browser first.", "error"); return; }
+        pickingZone = !pickingZone;
+        document.body.classList.toggle("ske-picking", pickingZone);
+        say(pickingZone ? "Click the spot in the game's page where she should react." : "", "");
+        renderDiskette(true);
+      } }),
+      el("button", { type: "button", text: "+ Page comment", onclick: () => (shownPage ? insertZone(0, true) : say("Open a page in the game's browser first.", "error")) }),
+      el("button", { type: "button", text: "+ Line for an app or thing", onclick: openLookDialog }),
+    ]));
+    tab.appendChild(el("details", { class: "ske-help" }, [el("summary", { text: "How it works" }), el("pre", { text: DISKETTE_HELP })]));
+    const filters = el("div", { class: "ske-filters" }, [
+      ["todo", "To write (" + lists.todo.length + ")"], ["written", "Zones & page comments (" + lists.written.length + ")"], ["looks", "Apps & things (" + lists.looks.length + ")"],
+    ].map((f) => el("button", { type: "button", class: "ske-filter" + (disketteFilter === f[0] ? " ske-filter-on" : ""), text: f[1], onclick: () => { disketteFilter = f[0]; renderDiskette(true); } })));
+    tab.appendChild(filters);
+    const list = el("div", { class: "ske-react-list" });
+    const shown = lists[disketteFilter] || [];
+    if (disketteFilter === "todo") list.appendChild(el("div", { class: "ske-muted", text: n ? "Spots worth a reaction, most important first. P1 = needed to solve the demo." : "Nothing left to write." }));
+    if (disketteFilter === "looks") {
+      const missingKeys = LOOK_KEYS.filter((k) => !items.some((i) => i.type === "look" && !i.todo && i.keys.indexOf(k[0]) >= 0));
+      if (missingKeys.length) list.appendChild(el("div", { class: "ske-muted", text: "No line yet (she uses a more general one): " + missingKeys.map((k) => k[0]).join(", ") }));
+    }
+    shown.forEach((item) => list.appendChild(reactionCard(item)));
+    tab.appendChild(list);
+    if (focusAfterRender) {
+      const card = list.querySelector('[data-key="' + CSS.escape(focusAfterRender.passage + "#" + focusAfterRender.index) + '"]');
+      focusAfterRender = null;
+      if (card) { card.scrollIntoView({ block: "center" }); card.querySelector("textarea").focus(); card.classList.add("ske-react-new"); }
+    }
+  }
+
+  /* ---------- Game status tab: events ---------- */
+
+  let statusSignature = "";
+  function renderStatus(force) {
+    if (!ui || store.data.tab !== "status" || !store.data.open) return;
+    const events = hook.events ? hook.events() : null;
+    const defs = findEvents(currentSource("GameEvents"));
+    const sig = JSON.stringify([events, defs.map((d) => d.id)]);
+    if (!force && sig === statusSignature) return;
+    statusSignature = sig;
+    const tab = ui.statusTab;
+    tab.textContent = "";
+    tab.appendChild(el("details", { class: "ske-help" }, [el("summary", { text: "How events work" }), el("pre", { text:
+      "An event is a moment that, once it happens, stays happened for this playthrough\n" +
+      "(it's saved with the game). The list is the GameEvents passage, in story order.\n\n" +
+      "✓ happened   ○ not yet   → next (everything it follows has happened)\n" +
+      "⚠ happened before something it normally follows.\n\n" +
+      "Tick or untick one to fake it while testing (NEW GAME undoes it), e.g. to try\n" +
+      "a Diskette line with “if: zoom-started”.\n\n" +
+      "The game also records every window opened (opened:mail) and page visited\n" +
+      "(visited:Tom Barry); those can be used in an “if” too. In Harlowe:\n" +
+      "(if: $events contains \"zoom-started\")[...]   and to mark a new one:\n" +
+      "(set: $events to it + (ds: \"my-event\"))" })]));
+    if (!events) {
+      tab.appendChild(el("div", { class: "ske-muted", text: "Press PLAY (or CONTINUE) to see this playthrough's events." }));
+      return;
+    }
+    const happened = new Set(events);
+    const list = el("div", { class: "ske-events" });
+    defs.forEach(function (d) {
+      const done = happened.has(d.id);
+      const waiting = d.after.filter((a) => !happened.has(a));
+      const state = done ? (waiting.length ? "⚠" : "✓") : waiting.length ? "○" : "→";
+      const box = el("input", { type: "checkbox", title: "Mark as happened (for testing)", onchange: (e) => hook.setEvent(d.id, e.target.checked) });
+      box.checked = done;
+      list.appendChild(el("label", { class: "ske-event ske-event-" + (done ? "done" : waiting.length ? "wait" : "next") }, [
+        box,
+        el("span", { class: "ske-event-state", text: state }),
+        el("span", {}, [
+          el("code", { text: d.id }),
+          el("div", { class: "ske-muted", text: d.text.replace(/<[^>]*>/g, "").replace(/&#95;/g, "_") + (waiting.length ? (done ? "  (before " : "  (after ") + waiting.join(", ") + ")" : "") }),
+        ]),
+      ]));
+    });
+    tab.appendChild(list);
+    const extra = events.filter((e) => !defs.some((d) => d.id === e));
+    if (extra.length) {
+      tab.appendChild(el("div", { class: "ske-muted ske-extra-title", text: "Also happened:" }));
+      tab.appendChild(el("div", { class: "ske-extra" }, extra.map((e) => el("code", { text: e }))));
     }
   }
 
@@ -1483,6 +2003,7 @@
     buildUi();
     syncGame();
     setOpen(store.data.open);
+    countTodos();
     renderComments();
     loadComments();
     loadHistory();
@@ -1491,6 +2012,7 @@
       if (store.data.open) requestAnimationFrame(() => markGame(false));
       requestAnimationFrame(showZones);
     }).observe(document.body, { childList: true, subtree: true });
+    setInterval(function () { if (store.data.open) renderStatus(false); }, 1000);
     setInterval(function () {
       if (!store.data.open) return;
       const page = hook.currentPage() || null;

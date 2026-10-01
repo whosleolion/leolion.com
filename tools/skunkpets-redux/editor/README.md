@@ -43,6 +43,40 @@ beside the game; the game shrinks to make room.
    like any other change. Under the page name, "Last saved by …" says who
    last saved it from the editor.
 
+**Tabs.** The panel has three: **Article** (the markup, above),
+**Diskette** and **Game status**. **Save to preview…** sits under all three
+and saves everything changed in any of them in one commit.
+
+**Diskette tab: her reactions.** Everything Diskette says when the player
+drags from her eyes (GUIDE.md 7.10), in three lists:
+- **To write**: spots that need a line (their text is a `TODO P1-04 ...`
+  note, which she ignores), most important first: P1 = needed to solve the
+  demo, P2 = story, P3 = flavor. Write her line in the card and it replaces
+  the note; the count on the tab goes down.
+- **Zones & page comments**: the written ones, wherever they are.
+- **Apps & things**: her lines for windows, icons, the clock, herself...
+  (the `DisketteLooks` passage), plus the keys that have no line yet.
+
+Each card shows where it is (for zones, the words just before it), and
+edits in place: her line, the zone's reach in pixels, her reaction (hop,
+shake her head, wide eyes) and an **if** (event names from Game status,
+comma-separated; `!name` = only before it). Changes show in the game as you
+type. **Show me** takes the game there and flashes the zone. Cards also work
+for reactions in Mail, the NetCon ticket and the desktop, which the Article
+tab can't open.
+
+New ones: **+ Zone at the cursor** (where the markup cursor is), **+ Zone:
+click the game** (then click a spot in the page; it goes at the end of that
+sentence), **+ Page comment**, and **+ Line for an app or thing**. **How it
+works** in the tab is the short version of all this. While the panel is open,
+zones show in the game as a dot with a dashed circle of their reach: pink when
+written, orange while still to write.
+
+**Game status tab: events.** The `GameEvents` list (GUIDE.md 7.16) with what
+has happened in this playthrough so far: ✓ happened, → next, ○ not yet,
+⚠ out of order, and everything else that happened (pages visited, windows
+opened). Tick or untick one to fake it while testing (NEW GAME undoes it).
+
 **GitHub access (once per browser).** Saving needs a fine-grained personal
 access token: GitHub → Settings → Developer settings → Fine-grained tokens →
 Generate new token; Repository access: *Only select repositories* →

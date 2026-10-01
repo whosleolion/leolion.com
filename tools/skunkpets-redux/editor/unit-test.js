@@ -29,6 +29,26 @@ check('a zone without a radius gets the default', E.fromFriendly('[[diskette: He
 check('a page comment', E.fromFriendly('[[diskette: page | Hi!]]') === '<span class="diskette-page" data-say="Hi!"></span>');
 check('zones are not links', E.linkTargets('[[diskette: 9 | x]] [[A]]').length === 1 && E.gameText('a [[diskette: 9 | x]] b') === 'a b');
 
+// Reactions: conditions, TODO notes, the Diskette tab's edits
+const cz = E.fromFriendly('[[diskette: 40 | wide | if: zoom-started, !visited:kraska1 | Ooh!]]');
+check('a zone with an if', cz === '<span class="diskette-zone" data-radius="40" data-mood="wide" data-if="zoom-started, !visited:kraska1" data-say="Ooh!"></span>', cz);
+check('...comes back the same', E.toFriendly(cz) === '[[diskette: 40 | wide | if: zoom-started, !visited:kraska1 | Ooh!]]', E.toFriendly(cz));
+check('TODO notes are read with their priority', JSON.stringify(E.todoOf('TODO P1-04 The ticket')) === '{"prio":1,"num":4,"note":"The ticket"}' && E.todoOf('Hello') === null);
+const rsrc = 'a' + cz + ' b <span class="diskette-page" data-say="TODO P2 page"></span> <span class="diskette-zone" data-radius="9" data-say="w"><i>x</i></span>';
+const found = E.findReactions(rsrc);
+check('findReactions finds zones, page comments and wrapping zones', found.length === 3 && found[0].cond === 'zoom-started, !visited:kraska1' && found[1].todo.prio === 2 && !found[2].empty);
+check('editReaction rewrites one', E.findReactions(E.editReaction(rsrc, 1, { say: 'Hi' }))[1].say === 'Hi' && E.editReaction(rsrc, 1, { say: 'Hi' }).startsWith('a' + cz));
+check('...and deletes an empty one, not a wrapping one', E.findReactions(E.editReaction(rsrc, 0, null)).length === 2 && (() => { try { E.editReaction(rsrc, 2, null); return false; } catch (e) { return true; } })());
+const looks = '<!-- x -->\n<p data-look="self icon-diskette">Me</p>\n<p data-look="page" data-mood="wide" data-if="zoom-started">TODO P2 x</p>\n';
+check('DisketteLooks lines', E.findLooks(looks).length === 2 && E.findLooks(looks)[1].todo.prio === 2 && E.findLooks(looks)[0].keys.join() === 'self,icon-diskette');
+check('...edit, delete and add', E.findLooks(E.editLook(looks, 1, { text: 'Yo' }))[1].text === 'Yo' && E.findLooks(E.editLook(looks, 0, null)).length === 1 && E.findLooks(E.addLook(looks, { keys: ['clock'], text: 'tick' })).length === 3);
+check('GameEvents entries', JSON.stringify(E.findEvents('<p data-event="b" data-after="a, c">B</p>')) === '{"id":"b","after":["a","c"],"text":"B"}'.replace(/^/, '[').replace(/$/, ']'));
+const prose = 'Her first game, "Bad Door", was a hit. Next [[Tom Barry]] here.';
+check('a new zone goes at the end of the sentence, not inside a title', E.safeInsertPos(prose, 18) === prose.indexOf('hit.') + 4);
+check('...or after a link', E.safeInsertPos(prose, prose.indexOf('Barry')) === prose.length);
+const tw = fs.readFileSync(path.join(__dirname, '..', 'skunkpets-redux.twee'), 'utf8');
+check('no reaction text has a straight double quote entity (Harlowe breaks on it)', !/data-say="[^"]*&quot;/.test(tw));
+
 // Pinning comments
 const doc = 'the cat sat. the cat ran. the dog sat.';
 const a2 = E.makeAnchor(doc, doc.indexOf('the cat ran'), doc.indexOf('the cat ran') + 7);

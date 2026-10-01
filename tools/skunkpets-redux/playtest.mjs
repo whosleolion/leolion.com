@@ -173,9 +173,11 @@ await p.keyboard.press('Enter'); await W(500);
 await look(await center('.browser-page-content h1'));
 check('a page with its own comment', (await reaction()).includes('my page'), await reaction());
 // (zones are often empty markers: no size, so Playwright calls them hidden)
-const zoneAt = (n) => p.locator('.browser-page-content .diskette-zone').nth(n).evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
-await look(await zoneAt(0));
+const zoneAt = (says) => p.locator('.browser-page-content .diskette-zone').filter({ has: p.locator('xpath=self::*[contains(@data-say, "' + says + '")]') }).first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
+await look(await zoneAt('sabbatical'));
 check('a response zone in an article', (await reaction()).includes('sabbatical'), await reaction());
+await look(await zoneAt('TODO P2-03'));
+check('a zone still marked TODO is ignored (she uses the page comment)', (await reaction()).includes('my page'), await reaction());
 await shot('03c-diskette-inspecting');
 await click('.panel[data-window-template="browser"] .panel-close');
 await click('.diskette-reaction .diskette-close');
@@ -242,6 +244,9 @@ await p.locator('.xp-dialog-buttons tw-link').filter({ hasText: 'Cancel' }).eval
 check('...and Cancel keeps the page scrolled', Math.abs((await scrollNow()) - scrolled) <= 2, `${scrolled} -> ${await scrollNow()}`);
 check('Skunkpets article starts the zoom', (await zoom()) > ZOOM_START, String(await zoom()));
 check('Skunkpets article starts the song', songLoads.some((s) => s === 200 || s === 206), songLoads.join(','));
+await W(1500);
+const savedEvents = await p.evaluate(() => { try { return JSON.parse(JSON.parse(localStorage.getItem('skunkpets-save')).variables).events.__set; } catch (e) { return []; } });
+check('events are recorded and saved', ['game-started', 'restored:diskette', 'diskette-met', 'diskette-first-look', 'opened:netcontkts', 'visited:Diskette', 'visited:Skunkpets', 'zoom-started'].every((e) => savedEvents.includes(e)), savedEvents.join(', '));
 
 // Autosave: reload mid-game, CONTINUE, and carry on from the same spot
 await W(1500);

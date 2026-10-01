@@ -211,6 +211,26 @@ check('clicking words in the game moves the markup cursor there', !!pt && Math.a
 await p.locator('.ske-other').filter({ hasText: 'Tom Barry' }).locator('button').click(); await W(1300);
 check('Go opens that page with its notes', (await text('.ske-title')) === 'Tom Barry' && (await text('.ske-comment-list')).includes('Is his birth year right?'));
 
+// ---------- Diskette tab: reactions, to write, and saving them ----------
+await p.locator('.ske-tab-btn[data-tab="diskette"]').click(); await W(500);
+check('the Diskette tab counts the spots to write', /Diskette \(\d+ to write\)/.test(await text('.ske-tab-btn[data-tab="diskette"]')), await text('.ske-tab-btn[data-tab="diskette"]'));
+check('...most important first', (await text('.ske-react .ske-prio')) === 'P1-01');
+const ticketCard = p.locator('.ske-react').filter({ hasText: 'NetCon 2004 is something to look up' });
+await ticketCard.locator('textarea').fill('A ticket to NetCon 2004! Somebody had fun.'); await W(1200);
+check('writing a TODO outside the articles edits that passage', (await text('.ske-pending')).includes('RenderNetconTicket'), await text('.ske-pending'));
+await p.locator('.ske-tab-diskette button', { hasText: '+ Line for an app or thing' }).click();
+await p.locator('.ske-modal select').first().selectOption('clock');
+await p.locator('.ske-modal textarea').fill('Tick tock!');
+await p.locator('.ske-modal .ske-save').click(); await W(800);
+check('a new line for an app shows in Apps & things', (await p.$$eval('.ske-react-list textarea', (t) => t.map((x) => x.value))).includes('Tick tock!'));
+await p.locator('.ske-save').first().click(); await W(500);
+await p.locator('.ske-review-save').click(); await W(1500);
+const savedTwee = sent.tree && sent.tree.tree.find((e) => e.path === 'tools/skunkpets-redux/skunkpets-redux.twee');
+check('saving commits reactions with everything else', !!savedTwee && savedTwee.content.includes('data-say="A ticket to NetCon 2004! Somebody had fun."') && savedTwee.content.includes('<p data-look="clock">Tick tock!</p>'));
+await p.locator('.ske-tab-btn[data-tab="status"]').click(); await W(1500);
+check('Game status lists events, ticked when they happened', (await p.locator('.ske-event-done').filter({ hasText: 'game-started' }).count()) === 1 && (await p.locator('.ske-event').count()) > 20);
+await p.locator('.ske-tab-btn[data-tab="article"]').click(); await W(300);
+
 // Closing the panel leaves the game clean
 await goTo('REV (Recast Entertainment Ventures)'); await W(900);
 await p.locator('.ske-close').click(); await W(900);

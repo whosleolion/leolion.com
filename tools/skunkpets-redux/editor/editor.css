@@ -413,11 +413,13 @@
 
 /* Diskette's response zones while the panel is open: a dot where the
    zone is and a dashed circle as far as it reaches. */
-.browser-page-content .ske-zone {
+.browser-page-content .ske-zone,
+.playfield .ske-zone {
   position: relative;
 }
 
-.browser-page-content .diskette-zone.ske-zone::before {
+.browser-page-content .diskette-zone.ske-zone::before,
+.playfield .diskette-zone.ske-zone::before {
   content: "";
   position: absolute;
   left: 50%;
@@ -431,7 +433,8 @@
   pointer-events: none;
 }
 
-.browser-page-content .diskette-zone.ske-zone::after {
+.browser-page-content .diskette-zone.ske-zone::after,
+.playfield .diskette-zone.ske-zone::after {
   content: "";
   display: inline-block;
   width: 8px;
@@ -579,3 +582,228 @@
 .ske-diff-del { background: #fbe3e3; text-decoration: line-through; color: #8a2020; }
 .ske-diff-same { color: #666; }
 .ske-diff-gap { color: #999; text-align: center; }
+
+/* Tabs: Article | Diskette | Game status, with the save button below all three. */
+.ske-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid #bbb;
+}
+
+.ske-panel .ske-tab-btn {
+  margin-bottom: -1px;
+  border-color: #bbb;
+  border-radius: 4px 4px 0 0;
+  background: #e8e8e3;
+  color: #444;
+  font-weight: 600;
+}
+
+.ske-panel .ske-tab-btn.ske-tab-on {
+  border-bottom-color: #f4f4f1;
+  background: #f4f4f1;
+  color: #111;
+}
+
+.ske-tab {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.ske-tab.ske-tab-shown {
+  display: flex;
+}
+
+.ske-tab-diskette,
+.ske-tab-status {
+  overflow-y: auto;
+}
+
+.ske-tab-article .ske-comments-body {
+  max-height: 24vh;
+}
+
+.ske-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #ccc;
+}
+
+.cm-ske-todo { color: #b45a00; background: #fff0de; }
+
+/* Diskette tab */
+.ske-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ske-panel .ske-filter.ske-filter-on {
+  border-color: #a0306a;
+  background: #fbeaf3;
+  color: #a0306a;
+  font-weight: 600;
+}
+
+.ske-react-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ske-react {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 1px solid #e3b8cf;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.ske-react-todo {
+  border-color: #f0c58f;
+  background: #fffaf2;
+}
+
+.ske-react-new {
+  outline: 2px solid #d0408a;
+}
+
+.ske-react-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ske-prio {
+  flex: none;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: #999;
+  color: #fff;
+  font: 700 10px/1.5 system-ui, sans-serif;
+}
+
+.ske-prio-1 { background: #c62020; }
+.ske-prio-2 { background: #d07a00; }
+.ske-prio-3 { background: #7a8a00; }
+
+.ske-react-context {
+  padding-left: 6px;
+  border-left: 3px solid #e3b8cf;
+  color: #555;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ske-react-text {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  font: 13px/1.4 system-ui, sans-serif;
+  resize: vertical;
+  cursor: text;
+}
+
+.ske-react-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.ske-input.ske-small {
+  padding: 2px 5px;
+  font-size: 12px;
+}
+
+.ske-radius {
+  width: 56px;
+}
+
+.ske-cond {
+  flex: 1;
+  min-width: 120px;
+}
+
+.ske-cond-note:empty {
+  display: none;
+}
+
+.ske-cond-note {
+  color: #8a5a00;
+}
+
+body.ske-picking .browser-page-content,
+body.ske-picking .browser-page-content * {
+  cursor: crosshair !important;
+}
+
+.ske-panel .ske-pick {
+  border-color: #a0306a;
+}
+
+/* Zones still to write, and a zone being shown. */
+.browser-page-content .diskette-zone.ske-zone.ske-zone-todo::before,
+.playfield .diskette-zone.ske-zone.ske-zone-todo::before {
+  border-color: #e08a00;
+  background: rgba(224, 138, 0, 0.08);
+}
+
+.browser-page-content .diskette-zone.ske-zone.ske-zone-todo::after,
+.playfield .diskette-zone.ske-zone.ske-zone-todo::after {
+  background: #e08a00;
+}
+
+.diskette-zone.ske-zone-flash::before {
+  animation: skeZoneFlash 1.2s ease 2;
+}
+
+@keyframes skeZoneFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(208, 64, 138, 0); }
+  50% { box-shadow: 0 0 0 8px rgba(208, 64, 138, 0.45); }
+}
+
+/* Game status tab */
+.ske-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ske-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 3px;
+}
+
+.ske-event code,
+.ske-extra code {
+  font: 11px ui-monospace, Menlo, Consolas, monospace;
+}
+
+.ske-event-state {
+  width: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ske-event-done { background: #e7f5e7; }
+.ske-event-next { background: #eef3fd; }
+.ske-event-wait { color: #666; }
+
+.ske-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}

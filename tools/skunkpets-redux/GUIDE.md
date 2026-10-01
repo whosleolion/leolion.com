@@ -31,6 +31,7 @@ own change.
    - 7.13 [The ending](#713-the-ending)
    - 7.14 [Small polish systems](#714-small-polish-systems)
    - 7.15 [Saving and CONTINUE](#715-saving-and-continue)
+   - 7.16 [Events](#716-events)
 8. [Art and images](#8-art-and-images)
 9. [Gotchas and troubleshooting](#9-gotchas-and-troubleshooting)
 10. [Glossary](#10-glossary)
@@ -298,6 +299,7 @@ of X?", it's one of these.
 | `$dialog`, `$dialogTitle`, `$dialogIcon`, `$dialogOk`, `$dialogAction`, `$dialogCancel` | The popup box (see [7.9](#79-popup-dialogs)). |
 | `$disketteTopic` | What Diskette is currently explaining (`""` = her main menu). |
 | `$disketteShown`, `$disketteNotice`, `$disketteToldTray` | Diskette up vs. tucked in the tray, and her tray balloon (7.10). |
+| `$events` | Every event that has happened this playthrough, as a dataset, e.g. `(ds: "game-started", "opened:mail", "zoom-started")` (7.16). |
 | `$imgroot`, `$artroot` | Base folders for images (see [8](#8-art-and-images)). |
 
 ---
@@ -692,6 +694,33 @@ Any of them can add `data-mood="shake"` or `"wide"` (editor:
 straight double quote in `data-say` (Harlowe breaks the tag on `&quot;`);
 the editor turns them into curly quotes for you.
 
+**Only when (events):** any of them can also have `data-if="zoom-started,
+!visited:kraska1"` (editor: `[[diskette: 80 | if: zoom-started | ...]]`):
+it counts only when every listed event has happened and none of the
+`!`-ed ones have (7.16). So one spot can have a line before the zoom and
+another after it.
+
+**To write:** a zone, page comment or DisketteLooks line whose text starts
+with `TODO` is a note for the writer, and she ignores it (falls through to
+the next rule). `TODO P1-04 The ticket...`: P1 = needed to solve the demo,
+P2 = story, P3 = flavor; the number is story order. The preview editor's
+Diskette tab lists them, most important first, and writing her line there
+replaces the note. 52 were planted along the solution path and at the
+story's big moments.
+
+**Popups** have their own keys: `dialog-exit` (leaving Winkipedia),
+`dialog-devlink` (leaving the archive for devlink-userbase) and
+`dialog-openmail` (the new email), then `dialog` for any popup.
+`RenderDesktop` prints the popup's `$dialogAction` into a hidden
+`.xp-dialog-action` marker for this.
+
+**Editing them:** the preview editor's **Diskette** tab (see
+`editor/README.md`) lists every reaction (To write, Zones & page comments,
+Apps & things), edits any of them in place (including ones in Mail, the
+ticket or the desktop, which the Article tab can't open), adds zones (at the
+markup cursor, or by clicking a spot in the game's page), page comments and
+app lines, and saves them with everything else.
+
 The samples so far: a page comment and two zones on her own Winkipedia
 article, and a zone on the blacked-out card number in the NetCon ticket.
 
@@ -812,6 +841,39 @@ one. Saves from another version are ignored and the player starts over. A save
 that points at a passage that no longer exists is dropped on its own.
 
 ---
+
+### 7.16 Events
+
+**What it is:** moments that, once they happen, stay happened for the
+playthrough: the dataset `$events` (set up in `GameStart`, saved with the
+game; saves from before it existed get an empty one on CONTINUE). Other
+things can depend on them: Diskette's reactions (`data-if`, 7.10), or any
+Harlowe code with `(if: $events contains "zoom-started")[...]`.
+
+**What marks them** (script `EVENTS`, called after every redraw, plus a few
+calls where things happen):
+
+| Event | When |
+|---|---|
+| `opened:<window>` | Any window opened: `opened:readme`, `opened:mail`, `opened:netcontkts`... |
+| `visited:<page>` | Any page shown in the browser: `visited:Anya Krysina`. |
+| `restored:<app>` | An app out of the Trash. |
+| `game-started`, `trash-emptied`, `diskette-met`, `email-arrived`, `stop-mail-opened` | Read off the variables (`$mail4Sent`, `$mailRead`...). |
+| `zoom-started`, `zoom-finished` | `startSkunkpetsZoom` (and `resumeSkunkpetsZoom` on CONTINUE). |
+| `archive-search-missed`, `login-failed`, `password-hint` | The games archive and devlink-userbase scripts. |
+| `diskette-first-look` | Her first reaction. |
+| `ending` | The ending screen appears. |
+
+To add one from Harlowe: `(set: $events to it + (ds: "my-event"))` (a
+dataset ignores repeats). From the script: `markGameEvent("my-event")`.
+
+**The catalog:** the `GameEvents` passage lists the ones that matter, in
+story order, one `<p data-event="id" data-after="a, b">what it is</p>`
+each; `data-after` says what it normally follows. The preview editor's
+**Game status** tab shows it live: ✓ happened, → next (everything it
+follows has happened), ○ not yet, ⚠ happened out of order; every other
+event that happened is listed under it. Ticking or unticking one fakes it
+for testing (NEW GAME undoes it), e.g. to try a reaction with `if:`.
 
 ## 8. Art and images
 
