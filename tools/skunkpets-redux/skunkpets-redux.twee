@@ -2366,7 +2366,7 @@ span.xp-dialog-icon {
 }
 
 .gga-tile-killdiskette {
-  aspect-ratio: 371 / 300;
+  aspect-ratio: 366 / 300;
   background-image: url("inline:icon-killdiskette.png");
 }
 
