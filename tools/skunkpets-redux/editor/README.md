@@ -49,13 +49,11 @@ and saves everything changed in any of them in one commit.
 
 **Diskette tab: her reactions.** Everything Diskette says when the player
 drags from her eyes (GUIDE.md 7.10), in three lists:
-- **To write**: spots that need a line (their text is a `TODO P1-04 ...`
-  note, which she ignores), most important first: P1 = needed to solve the
-  demo, P2 = story, P3 = flavor. Write her line in the card and it replaces
-  the note; the count on the tab goes down.
-- **Zones & page comments**: the written ones, wherever they are.
+- **Zones**: zones and page comments, wherever they are.
 - **Apps & things**: her lines for windows, icons, the clock, herself...
   (the `DisketteLooks` passage), plus the keys that have no line yet.
+- **Drafts**: reactions kept out of the game for now (**Make draft** on a
+  card; **Publish** puts one back). New ones are published straight away.
 
 Cards are one line each (priority, what it is, where); click one to open
 it. Open, it edits in place: her line (several lines = alternatives she

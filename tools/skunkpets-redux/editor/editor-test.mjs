@@ -213,13 +213,17 @@ check('Go opens that page with its notes', (await text('.ske-title')) === 'Tom B
 
 // ---------- Diskette tab: reactions, to write, and saving them ----------
 await p.locator('.ske-tab-btn[data-tab="diskette"]').click(); await W(500);
-check('the Diskette tab counts the spots to write', /Diskette \(\d+ to write\)/.test(await text('.ske-tab-btn[data-tab="diskette"]')), await text('.ske-tab-btn[data-tab="diskette"]'));
-check('...most important first', (await text('.ske-react .ske-prio')) === 'P1-01');
-const ticketCard = p.locator('.ske-react').filter({ hasText: 'NetCon 2004 is something to look up' });
+const ticketCard = p.locator('.ske-react').filter({ hasText: 'blacked that out' });
 check('cards start folded to one line', (await p.locator('.ske-react textarea').count()) === 0);
 await ticketCard.locator('.ske-react-head').click(); await W(200);
 await p.locator('.ske-react-open textarea').fill('A ticket to NetCon 2004! Somebody had fun.'); await W(1200);
-check('writing a TODO outside the articles edits that passage', (await text('.ske-pending')).includes('RenderNetconTicket'), await text('.ske-pending'));
+await p.locator('.ske-react-open .ske-icon-btn', { hasText: 'Make draft' }).click(); await W(800);
+check('Make draft moves it to Drafts', /Diskette \(1 drafts?\)/.test(await text('.ske-tab-btn[data-tab="diskette"]')), await text('.ske-tab-btn[data-tab="diskette"]'));
+await p.locator('.ske-filter', { hasText: 'Drafts' }).click(); await W(300);
+if (!(await p.locator('.ske-react-open').count())) { await p.locator('.ske-react-head').first().click(); await W(200); }
+await p.locator('.ske-react-open .ske-icon-btn', { hasText: 'Publish' }).click(); await W(800);
+check('Publish puts it back', (await text('.ske-tab-btn[data-tab="diskette"]')) === 'Diskette');
+check('editing a reaction outside the articles edits that passage', (await text('.ske-pending')).includes('RenderNetconTicket'), await text('.ske-pending'));
 await p.locator('.ske-new-btn').click();
 await p.locator('.ske-menu-item', { hasText: '+ Line for an app or thing' }).click();
 await p.locator('.ske-modal select').first().selectOption('clock');

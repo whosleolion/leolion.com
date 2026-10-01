@@ -1050,3 +1050,5 @@ body.ske-picking .browser-page-content * {
 .ske-modal .ske-token-input {
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
+
+.ske-prio.ske-draft-badge { background: #888; }

@@ -740,13 +740,15 @@ it counts only when every listed event has happened and none of the
 `!`-ed ones have (7.16). So one spot can have a line before the zoom and
 another after it.
 
-**To write:** a zone, page comment or DisketteLooks line whose text starts
-with `TODO` is a note for the writer, and she ignores it (falls through to
-the next rule). `TODO P1-04 The ticket...`: P1 = needed to solve the demo,
-P2 = story, P3 = flavor; the number is story order. The preview editor's
-Diskette tab lists them, most important first, and writing her line there
-replaces the note. 52 were planted along the solution path and at the
-story's big moments.
+**Drafts:** `data-draft="1"` on a zone, page comment or DisketteLooks line
+(friendly: `[[diskette: 80 | draft | ...]]`) keeps it out of the game until
+it's published. New reactions made in the editor are published straight
+away; a card's **Make draft** / **Publish** switches it. A zone with no line
+at all is ignored too.
+
+**Zones around a whole paragraph** (or anything with links or other tags
+inside) are written `[[diskette: 10 | around | Her line.]]…[[/diskette]]`
+in the editor; in the passage it's one span around it all.
 
 **Popups** have their own keys: `dialog-exit` (leaving Winkipedia),
 `dialog-devlink` (leaving the archive for devlink-userbase) and
@@ -755,7 +757,7 @@ story's big moments.
 `.xp-dialog-action` marker for this.
 
 **Editing them:** the preview editor's **Diskette** tab (see
-`editor/README.md`) lists every reaction (To write, Zones & page comments,
+`editor/README.md`) lists every reaction (Zones & page comments, Drafts,
 Apps & things), edits any of them in place (including ones in Mail, the
 ticket or the desktop, which the Article tab can't open), adds zones (at the
 markup cursor, or by clicking a spot in the game's page), page comments and

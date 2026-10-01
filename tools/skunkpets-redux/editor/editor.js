@@ -42,7 +42,7 @@
   const PHOTO_RE = /<div class="article-art( article-art-left)?" data-art="([^"]+)"(?: style="width: ([\d.]+%)")? role="img" aria-label="([^"]*)"><\/div>/g;
   /* Diskette's response zones and whole-page comments (her "inspecting"
      mode; see DISKETTE INSPECTING in the game's script). */
-  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")?(?: data-if="([^"]*)")?(?: data-on="([^"]*)")?(?: data-cycle="(loop|random)")?(?: data-then="([^"]*)")? data-say="([^"]*)">([^<>\[\]|]*)<\/span>/g;
+  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")?(?: data-if="([^"]*)")?(?: data-on="([^"]*)")?(?: data-cycle="(loop|random)")?(?: data-then="([^"]*)")?(?: data-draft="(1)")? data-say="([^"]*)">([^<>\[\]|]*)<\/span>/g;
   const PHOTO_ON_RE = /^\[data-art='([^']+)'\]$/;
   const ZONE_RADIUS = 60;
 
@@ -58,13 +58,60 @@
   const unescSay = (s) => unescAttr(s.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
   const quote = (s) => (s.indexOf('"') < 0 ? '"' + s + '"' : "'" + s + "'");
 
+  /* The </span> that closes the span opening at `from` (counting nested spans), or -1. */
+  function matchingClose(source, from) {
+    const re = /<span\b[^>]*>|<\/span>/g;
+    re.lastIndex = from;
+    let depth = 0;
+    for (let m = re.exec(source); m; m = re.exec(source)) {
+      if (m[0][1] === "/") { depth--; if (depth === 0) return m.index; }
+      else depth++;
+    }
+    return -1;
+  }
+
+  /* The short-form marker for a zone's opening tag (attrs from attrsOf). */
+  function zoneMarker(kind, a, extra) {
+    const parts = [kind === "page" ? "page" : a.radius || String(ZONE_RADIUS)];
+    if (a.mood) parts.push(a.mood);
+    if (a.cycle) parts.push(a.cycle);
+    if (a.draft) parts.push("draft");
+    if (a.if) parts.push("if: " + unescAttr(a.if));
+    if (extra) parts.push(extra);
+    if (a.then) parts.push("then: " + unescSay(a.then));
+    parts.push(unescSay(a.say || ""));
+    return "[[diskette: " + parts.join(" | ") + "]]";
+  }
+
+  /* Zones wrapped around more than plain words (a paragraph with links, other
+     tags) become [[diskette: ... | around | ...]] … [[/diskette]]. */
+  function wrapsToFriendly(source) {
+    let out = "";
+    let at = 0;
+    const re = /<span class="diskette-zone"((?:\s[a-z-]+="[^"]*")*)>/g;
+    for (let m = re.exec(source); m; m = re.exec(source)) {
+      const close = matchingClose(source, m.index);
+      const inside = close < 0 ? "" : source.slice(m.index + m[0].length, close);
+      if (close < 0 || inside === "" || /^[^<>\[\]|]*$/.test(inside)) continue; /* empty or plain words: ZONE_RE's */
+      const a = attrsOf(m[1]);
+      if (a.on) continue;
+      /* Only if it would come back the same (attribute order). */
+      if (zoneTag({ kind: "zone", radius: a.radius, mood: a.mood, cond: unescAttr(a.if || ""), cycle: a.cycle, then: a.then ? unescSay(a.then) : "", draft: a.draft !== undefined, say: unescSay(a.say || "") }) !== m[0]) continue;
+      out += source.slice(at, m.index) + zoneMarker("zone", a, "around") + wrapsToFriendly(inside) + "[[/diskette]]";
+      at = close + "</span>".length;
+      re.lastIndex = at;
+    }
+    return out + source.slice(at);
+  }
+
   /* Game markup -> the short form shown in the editor. */
   function toFriendly(source) {
-    return source
-      .replace(ZONE_RE, function (_, kind, radius, mood, cond, on, cycle, then, say, words) {
+    return wrapsToFriendly(source)
+      .replace(ZONE_RE, function (_, kind, radius, mood, cond, on, cycle, then, draft, say, words) {
         const parts = [kind === "page" ? "page" : radius || String(ZONE_RADIUS)];
         if (mood) parts.push(mood);
         if (cycle) parts.push(cycle);
+        if (draft) parts.push("draft");
         if (cond) parts.push("if: " + unescAttr(cond));
         if (on) {
           const photo = PHOTO_ON_RE.exec(unescAttr(on));
@@ -101,27 +148,31 @@
       ' role="img" aria-label="' + escAttr(rest.join(" | ")) + '"></div>';
   }
 
+  /* [[diskette: ...]] -> its tag(s). The parts before her line can come in
+     any order: a radius or "page", hop/shake/wide, loop/random, draft,
+     if: …, on: … / on photo: … / on element: …, around, then: … */
   function zoneHtml(inner) {
     const parts = inner.split("|").map((p) => p.trim());
     const f = { kind: "zone", radius: ZONE_RADIUS, mood: "", cond: "" };
-    if (parts.length > 1 && /^(page|\d+(px)?)$/.test(parts[0])) {
-      const first = parts.shift();
-      if (first === "page") f.kind = "page";
-      else f.radius = parseInt(first, 10);
-    }
-    if (parts.length > 1 && /^(hop|shake|wide)$/.test(parts[0])) f.mood = parts.shift();
-    if (parts.length > 1 && /^(loop|random)$/.test(parts[0])) f.cycle = parts.shift();
-    if (parts.length > 1 && /^if:/.test(parts[0])) f.cond = parts.shift().slice(3).trim();
     let words = "";
-    if (parts.length > 1 && /^on( photo| element)?:/.test(parts[0])) {
-      const on = parts.shift();
-      if (/^on photo:/.test(on)) f.on = "[data-art='" + on.slice(9).trim() + "']";
-      else if (/^on element:/.test(on)) f.on = on.slice(11).trim();
-      else words = on.slice(3).trim();
+    let around = false;
+    while (parts.length > 1) {
+      const x = parts[0];
+      if (/^(page|\d+(px)?)$/.test(x)) { if (x === "page") f.kind = "page"; else f.radius = parseInt(x, 10); }
+      else if (/^(hop|shake|wide)$/.test(x)) f.mood = x;
+      else if (/^(loop|random)$/.test(x)) f.cycle = x;
+      else if (x === "draft") f.draft = true;
+      else if (x === "around") around = true;
+      else if (/^if:/.test(x)) f.cond = x.slice(3).trim();
+      else if (/^on photo:/.test(x)) f.on = "[data-art='" + x.slice(9).trim() + "']";
+      else if (/^on element:/.test(x)) f.on = x.slice(11).trim();
+      else if (/^on:/.test(x)) words = x.slice(3).trim();
+      else if (/^then:/.test(x)) f.then = x.slice(5).trim();
+      else break;
+      parts.shift();
     }
-    if (parts.length > 1 && /^then:/.test(parts[0])) f.then = parts.shift().slice(5).trim();
     f.say = parts.join(" | ");
-    return zoneTag(f) + words + "</span>";
+    return zoneTag(f) + (around ? "" : words + "</span>");
   }
 
   /* ---------- Diskette's reactions (pure) ---------- */
@@ -136,6 +187,7 @@
       (f.on && f.kind !== "page" ? ' data-on="' + escAttr(f.on.replace(/"/g, "'")) + '"' : "") +
       (f.cycle && f.cycle !== "order" ? ' data-cycle="' + f.cycle + '"' : "") +
       (f.then ? ' data-then="' + escSay(f.then) + '"' : "") +
+      (f.draft ? ' data-draft="1"' : "") +
       ' data-say="' + escSay(f.say || "") + '">';
   }
 
@@ -158,7 +210,7 @@
       const a = attrsOf(m[2]);
       const say = unescSay(a.say || "");
       const at = m.index + m[0].length;
-      const close = source.indexOf("</span>", at);
+      const close = matchingClose(source, m.index);
       const inside = close >= 0 ? source.slice(at, close) : "";
       const on = unescAttr(a.on || "");
       const photo = PHOTO_ON_RE.exec(on);
@@ -166,7 +218,7 @@
         kind: m[1], from: m.index, to: at, empty: inside === "",
         /* what it covers: a point, the words it wraps, or elements (data-on) */
         shape: m[1] === "page" ? "page" : on ? "element" : inside === "" ? "point" : "words",
-        on: on, photo: photo ? photo[1] : "", words: inside.indexOf("<span") < 0 ? inside : "",
+        on: on, photo: photo ? photo[1] : "", words: inside, draft: a.draft !== undefined,
         radius: a.radius ? +a.radius : on || inside ? 10 : ZONE_RADIUS, mood: a.mood || "hop", cycle: a.cycle || "order", then: unescSay(a.then || ""), cond: unescAttr(a.if || ""), say: say, todo: todoOf(say),
       });
     }
@@ -179,9 +231,9 @@
     if (!r) throw new Error("That reaction isn't there any more.");
     if (fields) return source.slice(0, r.from) + zoneTag(Object.assign({}, r, fields)) + source.slice(r.to);
     if (r.empty) return source.slice(0, r.from) + source.slice(r.to + "</span>".length);
-    /* Words or an element inside: keep them, drop the zone around them. */
-    const close = source.indexOf("</span>", r.to);
-    if (r.words === "" || close < 0) throw new Error("This zone wraps other markup; remove it in the markup.");
+    /* Words (or anything) inside: keep them, drop the zone around them. */
+    const close = matchingClose(source, r.from);
+    if (close < 0) throw new Error("Couldn't find the end of this zone; remove it in the markup.");
     return source.slice(0, r.from) + source.slice(r.to, close) + source.slice(close + "</span>".length);
   }
 
@@ -192,7 +244,7 @@
     for (const m of source.matchAll(LOOK_RE)) {
       const a = attrsOf(m[2]);
       const text = m[3];
-      out.push({ keys: m[1].split(/[\s,]+/).filter(Boolean), from: m.index, to: m.index + m[0].length, mood: a.mood || "hop", cycle: a.cycle || "order", then: unescSay(a.then || ""), cond: unescAttr(a.if || ""), text: text, todo: todoOf(text) });
+      out.push({ keys: m[1].split(/[\s,]+/).filter(Boolean), from: m.index, to: m.index + m[0].length, mood: a.mood || "hop", cycle: a.cycle || "order", then: unescSay(a.then || ""), draft: a.draft !== undefined, cond: unescAttr(a.if || ""), text: text, todo: todoOf(text) });
     }
     return out;
   }
@@ -200,7 +252,8 @@
     return '<p data-look="' + f.keys.join(" ") + '"' + (f.mood && f.mood !== "hop" ? ' data-mood="' + f.mood + '"' : "") +
       (f.cond ? ' data-if="' + escAttr(f.cond.replace(/"/g, "")) + '"' : "") +
       (f.cycle && f.cycle !== "order" ? ' data-cycle="' + f.cycle + '"' : "") +
-      (f.then ? ' data-then="' + escSay(f.then) + '"' : "") + ">" + (f.text || "").replace(/\n/g, " ") + "</p>";
+      (f.then ? ' data-then="' + escSay(f.then) + '"' : "") +
+      (f.draft ? ' data-draft="1"' : "") + ">" + (f.text || "").replace(/\n/g, " ") + "</p>";
   }
   function editLook(source, n, fields) {
     const l = findLooks(source)[n];
@@ -250,6 +303,7 @@
   /* The short form -> game markup. */
   function fromFriendly(text) {
     return text
+      .replace(/\[\[\/diskette\]\]/g, "</span>")
       .replace(/\[\[diskette:([^\]]*)\]\]/g, (_, inner) => zoneHtml(inner))
       .replace(/\[\[photo:([^\]]*)\]\]/g, (_, inner) => photoHtml(inner))
       .replace(/\[\[([^\]]+?)\]\]/g, function (_, inner) {
@@ -267,7 +321,7 @@
   /* Links in the short form: where they point and where they sit. */
   function linkTargets(text) {
     const out = [];
-    for (const m of text.matchAll(/\[\[(?!photo:|diskette:)([^\]]+?)\]\]/g)) {
+    for (const m of text.matchAll(/\[\[(?!photo:|diskette:|\/diskette)([^\]]+?)\]\]/g)) {
       const arrow = m[1].lastIndexOf("->");
       out.push({ target: arrow >= 0 ? m[1].slice(arrow + 2) : m[1], from: m.index, to: m.index + m[0].length });
     }
@@ -278,7 +332,7 @@
      find a comment's quote in the game. */
   function gameText(text) {
     return text
-      .replace(/\[\[(?:photo|diskette):[^\]]*\]\]/g, " ")
+      .replace(/\[\[(?:photo:|diskette:|\/diskette)[^\]]*\]\]/g, " ")
       .replace(/\[\[([^\]]+?)\]\]/g, function (_, inner) {
         const arrow = inner.lastIndexOf("->");
         return arrow >= 0 ? inner.slice(0, arrow) : inner;
@@ -436,6 +490,46 @@
     return out;
   }
 
+  /* Three-way merge by lines: the changes from base to mine, applied on top of
+     theirs (base changed by someone else). Returns the merged text, or null
+     when both changed the same lines differently. */
+  function mergeLines(base, mine, theirs) {
+    if (mine === base) return theirs;
+    if (theirs === base || theirs === mine) return mine;
+    const b = base.split("\n");
+    /* Per base line: deleted (and what replaces it), and lines inserted before it. */
+    const edits = function (other) {
+      const del = new Set();
+      const repl = {};
+      const ins = {};
+      let i = 0;
+      let lastDel = -1;
+      lineDiff(base, other).forEach(function (r) {
+        if (r.type === " ") { i++; lastDel = -1; }
+        else if (r.type === "-") { del.add(i); lastDel = i; i++; }
+        else if (lastDel >= 0) (repl[lastDel] = repl[lastDel] || []).push(r.text);
+        else (ins[i] = ins[i] || []).push(r.text);
+      });
+      return { del: del, repl: repl, ins: ins };
+    };
+    const A = edits(mine);
+    const B = edits(theirs);
+    const same = (x, y) => String(x || "") === String(y || "");
+    const out = [];
+    for (let i = 0; i <= b.length; i++) {
+      if (A.ins[i] && B.ins[i] && !same(A.ins[i], B.ins[i])) return null;
+      out.push.apply(out, A.ins[i] || B.ins[i] || []);
+      if (i === b.length) break;
+      const da = A.del.has(i);
+      const db = B.del.has(i);
+      if (da && db && !same(A.repl[i], B.repl[i])) return null;
+      if (da) out.push.apply(out, A.repl[i] || []);
+      else if (db) out.push.apply(out, B.repl[i] || []);
+      else out.push(b[i]);
+    }
+    return out.join("\n");
+  }
+
   /* Pages named in an editor commit message ("Edit Winkipedia: A, B (new), photo x.jpg"). */
   function pagesInMessage(message) {
     const first = (message || "").split("\n")[0];
@@ -447,7 +541,7 @@
     module.exports = {
       toFriendly, fromFriendly, replacePassage, insertPassage, hasPassage, photoFiles, linkTargets, gameText,
       locateQuote, makeAnchor, pageNameProblem, TEMPLATES, winkiIndexLink, applyCommentOp, lineDiff, pagesInMessage,
-      zoneTag, todoOf, findReactions, editReaction, findLooks, lookLine, editLook, addLook, findEvents, safeInsertPos,
+      mergeLines, zoneTag, zoneHtml, matchingClose, todoOf, findReactions, editReaction, findLooks, lookLine, editLook, addLook, findEvents, safeInsertPos,
     };
   }
   if (typeof document === "undefined") return;
@@ -460,6 +554,7 @@
   const script = document.currentScript;
   const REPO = (script && script.dataset.repo) || "whosleolion/leolion.com";
   const BRANCH = (script && script.dataset.branch) || "";
+  const BUILT = script && script.dataset.built ? Date.parse(script.dataset.built) : 0;
   const TWEE_PATH = "tools/skunkpets-redux/skunkpets-redux.twee";
   const ART_PATH = "tools/skunkpets-redux/art/";
   const COMMENTS_PATH = "tools/skunkpets-redux/editor/comments.json";
@@ -479,6 +574,9 @@
     data.raw = data.raw || {};            /* name -> true: its draft is plain source, not the short form
                                              (passages that aren't wiki pages, edited from the Diskette tab) */
     data.tab = data.tab || "article";
+    data.bases = data.bases || {};        /* name -> the source a draft was started from */
+    data.conflicts = data.conflicts || {}; /* name -> true: changed underneath and couldn't be merged */
+    data.savedAt = data.savedAt || {};    /* name -> when it was saved (ms) */
     data.open = !!data.open;
     return {
       data: data,
@@ -530,6 +628,32 @@
     if (name in store.data.saved) return store.data.saved[name];
     if (name in original) return original[name];
     return "";
+  }
+
+  function forgetDraft(name) {
+    delete store.data.drafts[name];
+    delete store.data.raw[name];
+    delete store.data.bases[name];
+    delete store.data.conflicts[name];
+  }
+
+  /* Drafts started on an older build: carry them over onto what the game
+     has now, or flag them if both changed the same lines (saving would
+     undo someone else's change). */
+  function rebaseDrafts() {
+    Object.keys(store.data.drafts).forEach(function (name) {
+      const base = store.data.bases[name];
+      const now = baseline(name);
+      if (base === undefined) { store.data.bases[name] = now; return; }
+      if (base === now) return;
+      const merged = mergeLines(base, draftSource(name), now);
+      if (merged === null) { store.data.conflicts[name] = true; return; }
+      store.data.drafts[name] = store.data.raw[name] ? merged : toFriendly(merged);
+      store.data.bases[name] = now;
+      delete store.data.conflicts[name];
+      if (merged === now) forgetDraft(name);
+    });
+    store.write();
   }
 
   /* The source a draft stands for. */
@@ -616,8 +740,12 @@
   /* Saved edits stay applied until the preview has been rebuilt with them. */
   function settleSaved() {
     Object.keys(store.data.saved).forEach(function (name) {
-      if (name in original && original[name] === store.data.saved[name]) delete store.data.saved[name];
-      else if (!(name in original) && !store.data.newPages[name]) delete store.data.saved[name];
+      /* The build has it (or something newer: built after it was saved). */
+      const built = BUILT && (store.data.savedAt[name] || 0) < BUILT;
+      if ((name in original && (original[name] === store.data.saved[name] || built)) || (!(name in original) && !store.data.newPages[name])) {
+        delete store.data.saved[name];
+        delete store.data.savedAt[name];
+      }
     });
     Object.keys(store.data.newPages).forEach(function (name) {
       if (name in original) delete store.data.newPages[name]; /* the build has it now */
@@ -811,6 +939,7 @@
     for (const m of text.matchAll(/\([a-z][a-z0-9-]*:/gi)) add(m.index, m.index + m[0].length, "cm-ske-macro");
     for (const m of text.matchAll(/''|\^\^|(?<!:)\/\//g)) add(m.index, m.index + m[0].length, "cm-ske-dim");
     for (const m of text.matchAll(/\[\[photo:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, "cm-ske-photo");
+    for (const m of text.matchAll(/\[\[\/diskette\]\]/g)) add(m.index, m.index + m[0].length, "cm-ske-diskette");
     for (const m of text.matchAll(/\[\[diskette:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, /\|\s*TODO\b/.test(m[0]) ? "cm-ske-diskette cm-ske-todo" : "cm-ske-diskette");
     if (hook) {
       linkTargets(text).forEach(function (l) {
@@ -1087,6 +1216,8 @@
     const lines = [];
     if (drafts.length || photos.length) lines.push("Not saved yet: " + drafts.map((n) => (isNewPage(n) ? n + " (new)" : n)).concat(photos.map((f) => "photo " + f)).join(", "));
     if (saved.length) lines.push("Saved, waiting for the preview to rebuild: " + saved.join(", "));
+    const clashing = Object.keys(store.data.conflicts).filter((n) => n in store.data.drafts);
+    if (clashing.length) lines.push("⚠ Changed by someone else since you started editing: " + clashing.join(", ") + ". Saving would undo their changes; check it, or Undo yours.");
     if (!getToken()) lines.push("Add a GitHub token (GitHub, top of the panel) to be able to save.");
     ui.pending.textContent = lines.join("\n");
   }
@@ -1125,8 +1256,11 @@
     const name = shownPage;
     const text = getText();
     const unchanged = fromFriendly(text) === baseline(name) && (!isNewPage(name) || name in store.data.saved);
-    if (unchanged) delete store.data.drafts[name];
-    else store.data.drafts[name] = text;
+    if (unchanged) forgetDraft(name);
+    else {
+      if (!(name in store.data.drafts)) store.data.bases[name] = baseline(name);
+      store.data.drafts[name] = text;
+    }
     store.write();
     refresh();
     checkPhotos();
@@ -1164,8 +1298,7 @@
     }
     if (!(name in store.data.drafts)) return;
     if (!confirm("Undo your unsaved changes to “" + name + "”?")) return;
-    delete store.data.drafts[name];
-    delete store.data.raw[name];
+    forgetDraft(name);
     store.write();
     applyToGame(name);
     redraw();
@@ -1311,6 +1444,8 @@
       return;
     }
     if (!BRANCH) { say("This preview doesn't know which branch it came from.", "error"); return; }
+    const clashing = names.filter((n) => store.data.conflicts[n]);
+    if (clashing.length && !confirm(clashing.join(", ") + " changed in the game since you started editing. Saving your version would undo those changes. Save anyway?")) return;
     const who = ensureName();
     if (!who) { say("Not saved: saves need a name.", "error"); return; }
     say("Saving…", "");
@@ -1320,8 +1455,8 @@
       });
       names.forEach(function (n) {
         store.data.saved[n] = draftSource(n);
-        delete store.data.drafts[n];
-        delete store.data.raw[n];
+        store.data.savedAt[n] = Date.now();
+        forgetDraft(n);
         if (store.data.newPages[n]) store.data.newPages[n].saved = true;
       });
       photos.forEach(function (f) {
@@ -1656,7 +1791,7 @@
     }
     if (!passageName || index < 0) { say("Couldn't find that zone in the markup.", "error"); return; }
     const item = allReactions().find((i) => i.passage === passageName && i.index === index && i.type !== "look");
-    disketteFilter = item && item.todo ? "todo" : "written";
+    disketteFilter = item && item.draft ? "drafts" : "written";
     focusAfterRender = { passage: passageName, index: index };
     if (store.data.tab !== "diskette") setTab("diskette");
     else renderDiskette(true);
@@ -1775,7 +1910,7 @@
   const LOOKS = "DisketteLooks";
 
   let pickingZone = false;
-  let disketteFilter = "todo";
+  let disketteFilter = "written";
   let focusAfterRender = null;   /* { passage, index } of a card to focus */
   let redrawTimer = null;
 
@@ -1807,9 +1942,9 @@
   function setSource(name, source) {
     const raw = !isWikiPage(name);
     if (source === baseline(name)) {
-      delete store.data.drafts[name];
-      delete store.data.raw[name];
+      forgetDraft(name);
     } else {
+      if (!(name in store.data.drafts)) store.data.bases[name] = baseline(name);
       store.data.drafts[name] = raw ? source : toFriendly(source);
       if (raw) store.data.raw[name] = true;
       else delete store.data.raw[name];
@@ -1878,6 +2013,7 @@
     const title = item.todo ? item.todo.note || "To write" : gameText(was.replace(ALT_SPLIT, " / ")) || "(nothing yet)";
 
     const head = el("div", { class: "ske-react-head", title: "Click to " + (expandedCards.has(cardKey) ? "fold" : "edit") });
+    if (item.draft) head.appendChild(el("span", { class: "ske-prio ske-draft-badge", title: "A draft: she doesn't say it until it's published", text: "draft" }));
     if (item.todo) head.appendChild(el("span", { class: "ske-prio ske-prio-" + item.todo.prio, title: "P1: needed to solve the demo. P2: story. P3: flavor.", text: item.todo.prio < 9 ? "P" + item.todo.prio + (item.todo.num < 999 ? "-" + String(item.todo.num).padStart(2, "0") : "") : "TODO" }));
     head.appendChild(el("span", { class: "ske-react-title", text: title }));
     head.appendChild(el("span", { class: "ske-react-where", text: where, title: where }));
@@ -1943,6 +2079,14 @@
     card.appendChild(el("div", { class: "ske-react-row ske-react-actions" }, [
       isLook ? null : iconBtn("Show me", "Take the game there and flash it", () => showReaction(item)),
       isLook || !isWikiPage(item.passage) ? null : iconBtn("Edit in markup", "Select it in the Article tab", () => editInMarkup(item)),
+      iconBtn(item.draft ? "Publish" : "Make draft", item.draft ? "Put it in the game" : "Take it out of the game (she won't say it) but keep it here", function () {
+        try {
+          const src = currentSource(item.passage);
+          setSource(item.passage, isLook ? editLook(src, item.index, { draft: !item.draft }) : editReaction(src, item.index, { draft: !item.draft }));
+          say(item.draft ? "Published: she says it now." : "Made it a draft.", "ok");
+          renderDiskette(true);
+        } catch (err) { say(err.message, "error"); }
+      }),
       iconBtn("Delete", "Delete this " + (isLook ? "line" : item.type === "page" ? "page comment" : "zone"), function () {
         if (!confirm("Delete this " + (isLook ? "line" : item.type === "page" ? "page comment" : "zone") + "?")) return;
         try {
@@ -1997,9 +2141,9 @@
   }
 
   function countTodos() {
-    const n = allReactions().filter((i) => i.todo).length;
+    const n = allReactions().filter((i) => i.draft).length;
     const btn = ui.panel.querySelector('.ske-tab-btn[data-tab="diskette"]');
-    if (btn) btn.textContent = n ? "Diskette (" + n + " to write)" : "Diskette";
+    if (btn) btn.textContent = n ? "Diskette (" + n + " drafts)" : "Diskette";
     return n;
   }
 
@@ -2147,7 +2291,7 @@
     ["Only if (events)", "Event names from Game status, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1. So one spot can say one thing early and another later."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
     ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.” (tucks her into the tray). Thanks brings her follow-up: the answer's own (the “after Thanks” box, e.g. “Ugh, can we look at something nicer?”), otherwise “Need me to look at anything else?”. The follow-up offers “Sure!” (she stays up, quiet, ready to look again) and “No, that's all.” (tray). The × on any of her bubbles just quiets her; click her to talk again."],
-    ["To write", "Text starting with TODO is a note for you; she ignores it. P1 = needed to solve the demo, P2 = story, P3 = flavor. Writing her line replaces the note."],
+    ["Drafts", "New reactions are live straight away. “Make draft” takes one out of the game (she won't say it) while you work on it; Drafts lists them, and “Publish” puts one back."],
     ["In the game", "With this panel open, zones show in the game: points as a dot and dashed circle, words and elements outlined; pink when written, orange while still to write. Click a zone (or press and hold, or Alt-click, anywhere it reaches) to open it here."],
     ["Tips", "Keep lines to a sentence or two. <b>bold</b> works. Straight double quotes turn curly. Everything saves with Save to preview… like article edits."],
   ];
@@ -2178,9 +2322,9 @@
     const tab = ui.disketteTab;
     const items = allReactions();
     const lists = {
-      todo: items.filter((i) => i.todo).sort(byTodo),
-      written: items.filter((i) => !i.todo && i.type !== "look"),
-      looks: items.filter((i) => !i.todo && i.type === "look"),
+      written: items.filter((i) => !i.draft && i.type !== "look"),
+      looks: items.filter((i) => !i.draft && i.type === "look"),
+      drafts: items.filter((i) => i.draft),
     };
     tab.textContent = "";
     const menu = el("div", { class: "ske-menu ske-hidden" }, NEW_ACTIONS.map((a) => el("button", { type: "button", class: "ske-menu-item", title: a[1], onclick: () => { menu.classList.add("ske-hidden"); a[2](); } }, [
@@ -2190,7 +2334,7 @@
     tab.appendChild(el("div", { class: "ske-bar" }, [
       el("div", { class: "ske-new-wrap" }, [newBtn, menu]),
       el("div", { class: "ske-filters" }, [
-        ["todo", "To write", lists.todo.length], ["written", "Zones", lists.written.length], ["looks", "Apps & things", lists.looks.length],
+        ["written", "Zones", lists.written.length], ["looks", "Apps & things", lists.looks.length], ["drafts", "Drafts", lists.drafts.length],
       ].map((f) => el("button", { type: "button", class: "ske-filter" + (disketteFilter === f[0] ? " ske-filter-on" : ""), onclick: () => { disketteFilter = f[0]; renderDiskette(true); } }, [
         el("span", { text: f[1] + " " }), el("span", { class: "ske-count", text: String(f[2]) }),
       ]))),
@@ -2198,7 +2342,7 @@
     ]));
     const list = el("div", { class: "ske-react-list" });
     const shown = lists[disketteFilter] || [];
-    if (disketteFilter === "todo" && !n) list.appendChild(el("div", { class: "ske-muted", text: "Nothing left to write." }));
+    if (disketteFilter === "drafts") list.appendChild(el("div", { class: "ske-muted ske-tiny", text: lists.drafts.length ? "Drafts: she doesn't say these until they're published." : "No drafts. New reactions are published straight away; “Make draft” on one takes it out of the game." }));
     if (disketteFilter === "looks") {
       const missingKeys = LOOK_KEYS.filter((k) => !items.some((i) => i.type === "look" && !i.todo && i.keys.indexOf(k[0]) >= 0));
       if (missingKeys.length) list.appendChild(el("div", { class: "ske-muted ske-tiny", title: missingKeys.map((k) => k[0] + ": " + k[1]).join("\n"), text: missingKeys.length + " things have no line of their own yet (hover to see)" }));
@@ -2269,6 +2413,7 @@
     if (!hook || ui || !CM) return;
     hook.passages.forEach((p, name) => { if (p instanceof Map) original[name] = p.get("source"); });
     settleSaved();
+    rebaseDrafts();
     /* Pages made here but not in this build yet come back. */
     Object.keys(store.data.newPages).forEach(function (name) {
       if (!store.data.drafts[name] && !(name in store.data.saved)) delete store.data.newPages[name];

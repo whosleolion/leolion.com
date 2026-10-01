@@ -183,8 +183,8 @@ check('a page with its own comment', (await reaction()).includes('my page'), awa
 const zoneAt = (says) => p.locator('.browser-page-content .diskette-zone').filter({ has: p.locator('xpath=self::*[contains(@data-say, "' + says + '")]') }).first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
 await look(await zoneAt('ugly word'));
 check('a response zone in an article', (await reaction()).includes('ugly word'), await reaction());
-await look(await zoneAt('TODO P2-03'));
-check('a zone still marked TODO is ignored (she uses the page comment)', (await reaction()).includes('my page'), await reaction());
+await look(await p.locator('.browser-page-content .diskette-zone[data-say=""]').first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
+check('a zone with no line yet is ignored (she uses the page comment)', (await reaction()).includes('my page'), await reaction());
 await shot('03c-diskette-inspecting');
 await click('.panel[data-window-template="browser"] .panel-close');
 await click('.diskette-reaction .diskette-enough');
