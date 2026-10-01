@@ -7377,7 +7377,7 @@ deal with the devil
 <table class="netcon-table">
 <tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div><span class="diskette-zone" data-radius="10" data-say="TODO P1-04 The ticket, the first real clue: NetCon 2004 is something to look up.">NetCon 2004 Attendee Saturday</span></div></td></tr>
 <tr><th>Amount</th><td>95.00</td></tr>
-<tr><th>Payment</th><td><span class="diskette-zone" data-radius="20" data-say="Somebody blacked that out. Not me! ...Probably not me."><span class="netcon-redact"></span></span></td></tr>
+<tr><th>Payment</th><td><span class="diskette-zone" data-radius="20" data-say="Somebody blacked that out."><span class="netcon-redact"></span></span></td></tr>
 <tr><th>Date Charged</th><td>2/9/2004</td></tr>
 <tr><th></th><td><span class="netcon-url">http:&#47;&#47;www.netcon04.com/tickets</span></td></tr>
 </table>
