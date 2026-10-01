@@ -70,10 +70,11 @@
       "author": "sofe",
       "text": "diskette believes this page to also be Wikipedia when prompted",
       "at": "2026-10-01T19:14:43.204Z",
-      "resolved": false,
+      "resolved": true,
       "quote": "AR",
       "prefix": "button\" id=\"gga-search-btn\">SE",
-      "suffix": "CH</button>\n<div class=\"gga-ms"
+      "suffix": "CH</button>\n<div class=\"gga-ms",
+      "resolvedBy": "Leo"
     }
   ]
 }
