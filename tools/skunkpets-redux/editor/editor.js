@@ -1167,7 +1167,7 @@
     const commentList = el("div", { class: "ske-comment-list" });
     const commentOthers = el("div", { class: "ske-others" });
     const commentStatus = el("div", { class: "ske-muted ske-comment-status" });
-    const commentInput = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "Leave a note for whoever edits next…" });
+    const commentInput = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "Leave a comment for whoever edits next…" });
     const quoteHint = el("div", { class: "ske-muted ske-quote-hint" });
 
     const tabButton = (id, label) => el("button", { type: "button", class: "ske-tab-btn", "data-tab": id, text: label, onclick: () => setTab(id) });
@@ -1182,10 +1182,10 @@
         commentInput,
         quoteHint,
         el("div", { class: "ske-actions" }, [
-          el("button", { type: "button", class: "ske-post", text: "Post note", onclick: onPostComment }),
+          el("button", { type: "button", class: "ske-post", text: "Post comment", onclick: onPostComment }),
           el("button", { type: "button", text: "Refresh", onclick: () => { loadComments(); loadHistory(true); } }),
-          el("button", { type: "button", title: "The name shown on your notes and saves", text: "My name…", onclick: function () {
-            const n = (prompt("Your name (shown on your notes and saves):", getName()) || "").trim();
+          el("button", { type: "button", title: "The name shown on your comments and saves", text: "My name…", onclick: function () {
+            const n = (prompt("Your name (shown on your comments and saves):", getName()) || "").trim();
             if (n) { local.set(NAME_KEY, n); renderComments(); }
           } }),
         ]),
@@ -1618,7 +1618,7 @@
     if (!ui) return;
     const page = shownPage;
     const open = openRoots();
-    ui.toggle.textContent = "✎ Backend" + (open.length ? " · " + open.length + (open.length === 1 ? " note" : " notes") : "");
+    ui.toggle.textContent = "✎ Backend" + (open.length ? " · " + open.length + (open.length === 1 ? " comment" : " comments") : "");
     ui.commentList.textContent = "";
     ui.commentOthers.textContent = "";
     if (!getToken()) {
@@ -1634,16 +1634,16 @@
     if (sel) {
       /* Notes on the selection first. */
       const mine = notesFor(sel);
-      ui.commentsTitle.textContent = "Notes on " + selectionLabel(sel) + (mine.length ? " (" + mine.length + ")" : "");
+      ui.commentsTitle.textContent = "Comments on " + selectionLabel(sel) + (mine.length ? " (" + mine.length + ")" : "");
       if (!mine.length) ui.commentList.appendChild(el("div", { class: "ske-muted", text: "None yet. Write one below; it's pinned to the selection." }));
       const selText = sel.raw ? currentSource(sel.passage) : sel.passage === page ? text : friendlyOf(sel.passage);
       mine.forEach((c, i) => ui.commentList.appendChild(commentThread(c, i + 1, selText)));
       const rest = openHere.filter((c) => mine.indexOf(c) < 0);
-      if (rest.length) ui.commentList.appendChild(el("div", { class: "ske-section-title ske-tiny", text: "Other notes on this page (" + rest.length + ")" }));
+      if (rest.length) ui.commentList.appendChild(el("div", { class: "ske-section-title ske-tiny", text: "Other comments on this page (" + rest.length + ")" }));
       rest.forEach((c, i) => ui.commentList.appendChild(commentThread(c, mine.length + i + 1, text)));
     } else {
-      ui.commentsTitle.textContent = "Notes" + (page ? " on " + page : "") + (openHere.length ? " (" + openHere.length + ")" : "");
-      if (page && !roots.length) ui.commentList.appendChild(el("div", { class: "ske-muted", text: "No notes on this page yet. Select something in the game to pin one to it." }));
+      ui.commentsTitle.textContent = "Comments" + (page ? " on " + page : "") + (openHere.length ? " (" + openHere.length + ")" : "");
+      if (page && !roots.length) ui.commentList.appendChild(el("div", { class: "ske-muted", text: "No comments on this page yet. Select something in the game to pin one to it." }));
       openHere.forEach((c, i) => ui.commentList.appendChild(commentThread(c, i + 1, text)));
     }
     if (done.length) {
@@ -1655,7 +1655,7 @@
     open.forEach(function (c) { if (c.page !== page) elsewhere[c.page] = (elsewhere[c.page] || 0) + 1; });
     const pages = Object.keys(elsewhere).sort();
     if (pages.length) {
-      ui.commentOthers.appendChild(el("div", { class: "ske-muted", text: "Open notes on other pages:" }));
+      ui.commentOthers.appendChild(el("div", { class: "ske-muted", text: "Open comments on other pages:" }));
       pages.forEach(function (p) {
         ui.commentOthers.appendChild(el("div", { class: "ske-other" }, [
           el("span", { text: p + " (" + elsewhere[p] + ")" }),
@@ -2316,7 +2316,7 @@
     const canMarkup = sel.kind !== "app" || !!sel.passage;
     const pop = el("div", { class: "ske-pop" }, [
       el("button", { type: "button", class: "ske-pop-btn", title: canMarkup ? "Show it in the page's markup" : "No markup for this", text: "✎ Markup", onclick: () => setTab("markup") }),
-      el("button", { type: "button", class: "ske-pop-btn", title: notes.length ? "Its notes" : "Leave a note on it", text: "💬 " + (notes.length ? notes.length + (notes.length === 1 ? " note" : " notes") : "Note") , onclick: () => { setTab("comments"); ui.commentInput.focus(); } }),
+      el("button", { type: "button", class: "ske-pop-btn", title: notes.length ? "Its comments" : "Leave a comment on it", text: "💬 " + (notes.length ? notes.length + (notes.length === 1 ? " comment" : " comments") : "Comment") , onclick: () => { setTab("comments"); ui.commentInput.focus(); } }),
       el("button", { type: "button", class: "ske-pop-btn ske-pop-diskette", title: first ? "Her response here" : "Make Diskette react to this", text: first ? "◉ “" + (line.length > 26 ? line.slice(0, 26) + "…" : line || "…") + "”" + (reactions.length > 1 ? " +" + (reactions.length - 1) : "") : "◉ Diskette +", onclick: function () {
         if (!first) createReactionFor(sel);
         else setTab("diskette");
@@ -2362,7 +2362,7 @@
       const to = sel.raw ? sel.to : 0;
       const start = Math.max(0, src.lastIndexOf("\n", Math.max(0, from - 300)));
       raw.textContent = "";
-      raw.appendChild(el("div", { class: "ske-muted ske-tiny", text: sel.passage + " is game code, so it's shown here read-only. Diskette reactions and notes on it work from their tabs." }));
+      raw.appendChild(el("div", { class: "ske-muted ske-tiny", text: sel.passage + " is game code, so it's shown here read-only. Diskette reactions and comments on it work from their tabs." }));
       const pre = el("pre", { class: "ske-rawpre" }, [
         document.createTextNode(src.slice(start, from)),
         el("mark", { text: src.slice(from, to) }),
@@ -2566,21 +2566,96 @@
 
   /* Alternatives are one per line in a card's box, and " >> " in the markup. */
   const ALT_SPLIT = /\s*(?:>>|&gt;&gt;)\s*/;
-  const altsToBox = (t) => (t || "").split(ALT_SPLIT).join("\n");
-  const boxToAlts = (t, look) => t.split("\n").map((x) => x.trim()).filter(Boolean).join(look ? " &gt;&gt; " : " >> ");
 
-  const CYCLES = [["order", "in order, then keep the last"], ["loop", "in order, round and round"], ["random", "at random"]];
-  function cycleSelect(value, onchange) {
-    const s = el("select", { class: "ske-input ske-small", title: "When she's asked again: which of the alternatives (one per line) she says", onchange: onchange });
+  /* How she picks among several lines when asked about the same spot again.
+     Only shown when there is more than one line. */
+  const CYCLES = [
+    ["order", "In order", "1, 2, 3, then she keeps saying the last one"],
+    ["loop", "Loop", "1, 2, 3, 1, 2, 3…"],
+    ["random", "Random", "A random one each time (never the same twice in a row)"],
+  ];
+  function cyclePicker(value, onchange) {
+    const box = el("div", { class: "ske-cycle", title: "When she's asked about it again" });
+    box.value = value || "order";
+    box.appendChild(el("span", { class: "ske-muted ske-tiny", text: "Asked again:" }));
     CYCLES.forEach(function (c) {
-      const o = el("option", { value: c[0], text: "repeats: " + c[1] });
-      if (c[0] === (value || "order")) o.selected = true;
-      s.appendChild(o);
+      const b = el("button", { type: "button", class: "ske-cycle-btn" + (c[0] === box.value ? " ske-cycle-on" : ""), text: c[1], title: c[2], onclick: function () {
+        box.value = c[0];
+        box.querySelectorAll(".ske-cycle-btn").forEach((x) => x.classList.toggle("ske-cycle-on", x === b));
+        onchange();
+      } });
+      box.appendChild(b);
     });
-    return s;
+    return box;
+  }
+
+  /* Her line(s): one box per alternative. Enter adds the next one, Backspace in
+     an empty one removes it, pasting several lines splits them. */
+  function lineBoxes(initial, placeholder, onchange) {
+    const wrap = el("div", { class: "ske-lines" });
+    const list = el("div", { class: "ske-lines-list" });
+    const more = el("button", { type: "button", class: "ske-link-btn ske-tiny", text: "+ Another line", title: "Something else she can say here when asked again" });
+    const boxes = () => Array.from(list.querySelectorAll("textarea"));
+    const renumber = function () {
+      const all = boxes();
+      list.classList.toggle("ske-lines-many", all.length > 1);
+      all.forEach((t, i) => { t.previousSibling.textContent = String(i + 1); t.placeholder = i ? "…or this, when asked again" : placeholder; });
+    };
+    const add = function (value, after) {
+      const t = el("textarea", { class: "ske-react-text", rows: "1" });
+      t.value = value || "";
+      const fit = () => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; };
+      t.addEventListener("input", function () { fit(); onchange(); });
+      t.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          add("", row).focus();
+          onchange();
+        } else if (e.key === "Backspace" && !t.value && boxes().length > 1) {
+          e.preventDefault();
+          const prev = row.previousSibling || row.nextSibling;
+          row.remove();
+          renumber();
+          if (prev) prev.querySelector("textarea").focus();
+          onchange();
+        }
+      });
+      t.addEventListener("paste", function (e) {
+        const pasted = (e.clipboardData && e.clipboardData.getData("text")) || "";
+        const parts = pasted.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+        if (parts.length < 2) return;
+        e.preventDefault();
+        t.value = (t.value + " " + parts[0]).trim();
+        let at = row;
+        parts.slice(1).forEach(function (x) { at = add(x, at).closest(".ske-line"); });
+        onchange();
+      });
+      const row = el("div", { class: "ske-line" }, [el("span", { class: "ske-line-num" }), t]);
+      if (after && after.nextSibling) list.insertBefore(row, after.nextSibling);
+      else list.appendChild(row);
+      renumber();
+      setTimeout(fit, 0);
+      return t;
+    };
+    (initial.length ? initial : [""]).forEach((x) => add(x));
+    more.addEventListener("click", function () { add("").focus(); onchange(); });
+    wrap.appendChild(list);
+    wrap.appendChild(more);
+    wrap.values = () => boxes().map((t) => t.value.trim()).filter(Boolean);
+    wrap.count = () => boxes().length;
+    return wrap;
   }
 
   const expandedCards = new Set();
+
+  /* The item again from the current source (its card may have edited it). */
+  function freshItem(item) {
+    try {
+      const src = currentSource(item.passage);
+      const now = item.type === "look" ? findLooks(src)[item.index] : findReactions(src)[item.index];
+      return now ? Object.assign({}, item, now) : item;
+    } catch (err) { return item; }
+  }
 
   function reactionCard(item) {
     const isLook = item.type === "look";
@@ -2592,17 +2667,19 @@
       : item.type === "page" ? "page comment" : "point · " + item.radius + " px";
     const where = isLook ? item.keys.join(", ") : placeLabel(item.passage) + " · " + covers;
     const was = isLook ? item.text : item.say;
-    const title = item.todo ? item.todo.note || "To write" : gameText(was.replace(ALT_SPLIT, " / ")) || "(nothing yet)";
+    const title = item.todo ? item.todo.note || "To write" : gameText((was || "").split(ALT_SPLIT)[0]) || "(nothing yet)";
 
     const head = el("div", { class: "ske-react-head", title: "Click to " + (expandedCards.has(cardKey) ? "fold" : "edit") });
     if (item.draft) head.appendChild(el("span", { class: "ske-prio ske-draft-badge", title: "A draft: she doesn't say it until it's published", text: "draft" }));
     if (item.todo) head.appendChild(el("span", { class: "ske-prio ske-prio-" + item.todo.prio, title: "P1: needed to solve the demo. P2: story. P3: flavor.", text: item.todo.prio < 9 ? "P" + item.todo.prio + (item.todo.num < 999 ? "-" + String(item.todo.num).padStart(2, "0") : "") : "TODO" }));
     head.appendChild(el("span", { class: "ske-react-title", text: title }));
+    const altCount = (was || "").split(ALT_SPLIT).filter((x) => x.trim()).length;
+    if (altCount > 1 && !item.todo) head.appendChild(el("span", { class: "ske-alt-badge", title: altCount + " lines, " + (CYCLES.find((c) => c[0] === (item.cycle || "order")) || CYCLES[0])[2].toLowerCase(), text: (item.cycle === "random" ? "⤮ " : item.cycle === "loop" ? "↻ " : "") + altCount + " lines" }));
     head.appendChild(el("span", { class: "ske-react-where", text: where, title: where }));
     head.addEventListener("click", function () {
       if (expandedCards.has(cardKey)) expandedCards.delete(cardKey);
       else expandedCards.add(cardKey);
-      card.replaceWith(reactionCard(item));
+      card.replaceWith(reactionCard(freshItem(item)));
     });
     card.appendChild(head);
     if (!expandedCards.has(cardKey)) return card;
@@ -2610,8 +2687,7 @@
 
     if (item.type === "zone" && item.shape === "point" && item.context) card.appendChild(el("div", { class: "ske-react-context", text: "…" + item.context + " ●" }));
     if (isLook) card.appendChild(el("div", { class: "ske-muted ske-tiny", text: "When you drag her eyes to " + item.keys.map((k) => (LOOK_KEYS.find((x) => x[0] === k) || [k, k])[1]).join(" / ") }));
-    const text = el("textarea", { class: "ske-react-text", rows: "2", placeholder: item.todo ? "Write her line here… (one per line for alternatives)" : "What she says (one per line for alternatives)" });
-    text.value = item.todo ? "" : altsToBox(was);
+    const lines = lineBoxes(item.todo ? [] : (was || "").split(ALT_SPLIT).map((x) => x.trim()).filter(Boolean), item.todo ? "Write her line here…" : "What she says", () => { showCycle(); apply(); });
     const keys = isLook ? el("input", { type: "text", class: "ske-input ske-small", value: item.keys.join(" "), title: "Keys: what she's looking at (see ?)" }) : null;
     const radius = item.type === "zone" ? el("input", { type: "number", class: "ske-input ske-small ske-radius", min: "0", max: "400", step: item.shape === "point" ? "10" : "2", value: String(item.radius), title: item.shape === "point" ? "Reach: how far from the point it counts (game px)" : "Slack around the words or element (game px)" }) : null;
     const selector = item.shape === "element" && !item.photo ? el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.on, title: "CSS selector of what it covers, in the same page or window" }) : null;
@@ -2622,7 +2698,7 @@
     const apply = function () {
       clearTimeout(timer);
       timer = setTimeout(function () {
-        const said = boxToAlts(text.value, isLook) || (item.todo ? was : "");
+        const said = lines.values().join(isLook ? " &gt;&gt; " : " >> ") || (item.todo ? was : "");
         const fields = { mood: mood.value, cond: cond.value.trim(), cycle: cycle.value, then: then.value.trim().replace(/[|\]]/g, "") };
         try {
           const src = currentSource(item.passage);
@@ -2639,22 +2715,24 @@
           }
           condNote.textContent = conditionNow(fields.cond);
           const titleEl = card.querySelector(".ske-react-title");
-          if (titleEl && !todoOf(said)) titleEl.textContent = gameText(said.replace(ALT_SPLIT, " / ")) || "(nothing yet)";
-          cycle.disabled = text.value.split("\n").filter((x) => x.trim()).length < 2;
+          if (titleEl && !todoOf(said)) titleEl.textContent = gameText(said.split(ALT_SPLIT)[0]) || "(nothing yet)";
           card.classList.toggle("ske-react-todo", !!todoOf(said));
           countTodos();
         } catch (err) { say(err.message, "error"); }
       }, 350);
     };
     const mood = moodSelect(item.mood, apply);
-    const cycle = cycleSelect(item.cycle, apply);
-    cycle.disabled = text.value.split("\n").filter((x) => x.trim()).length < 2;
-    [text, cond, radius, keys, selector, then].forEach((i) => i && i.addEventListener("input", apply));
-    card.appendChild(text);
+    const cycle = cyclePicker(item.cycle, apply);
+    /* The picker only matters (and only shows) with more than one line. */
+    const showCycle = () => { cycle.hidden = lines.count() < 2; };
+    [cond, radius, keys, selector, then].forEach((i) => i && i.addEventListener("input", apply));
+    card.appendChild(lines);
+    card.appendChild(cycle);
+    showCycle();
     card.appendChild(el("div", { class: "ske-react-row" }, [
       keys,
       radius ? el("span", { class: "ske-muted ske-tiny", text: item.shape === "point" ? "reach" : "slack" }) : null, radius,
-      mood, cycle,
+      mood,
     ]));
     card.appendChild(el("div", { class: "ske-react-row" }, [selector, cond]));
     card.appendChild(el("div", { class: "ske-react-row" }, [then]));
@@ -2771,7 +2849,7 @@
   const DISKETTE_HELP = [
     ["What she says", "Drag from Diskette's eyes to anything in the game and she reacts. First match wins: a zone where you let go, then the page's comment (browser pages), then her line for the thing under the arrow (a window, an icon, the clock, herself...)."],
     ["Making one", "Select something in the game: drag across words, or turn on ⌖ Edit (or press E) and click a paragraph, a photo or a thing. Then ◉ in the little popup (or “Diskette reacts here” in this tab). The zone takes the shape of what you selected; for things on the desktop it's her line for that thing. Selecting the page itself (the first step of the breadcrumb) gives her comment on the whole page."],
-    ["Repeats", "Put several alternatives in one box, one per line, and she says one each time she's asked about that spot. “Repeats” picks how: in order then keep the last, round and round, or at random. In the markup they're separated by >>."],
+    ["Several lines", "“+ Another line” (or Enter at the end of one) gives her something else to say when she's asked about the same spot again. With more than one, “Asked again” picks which: In order (then she keeps saying the last), Loop, or Random. The card's header shows how many (e.g. ↻ 3 lines). In the markup they're separated by >>."],
     ["Only if (events)", "Event names from the Events tab, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
     ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks brings her follow-up: the reaction's own (the “after Thanks” box), otherwise “Need me to look at anything else?”, offering “Sure!” and “No, that's all.”."],

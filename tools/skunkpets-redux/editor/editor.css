@@ -1253,3 +1253,74 @@ body.ske-aiming .playfield * {
 .ske-tab-markup.ske-raw-mode .ske-missing {
   display: none;
 }
+
+/* Her line(s): one box per alternative; numbers only show with several. */
+.ske-lines-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ske-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.ske-line-num {
+  display: none;
+  min-width: 14px;
+  padding-top: 6px;
+  color: #999;
+  font: 11px system-ui, sans-serif;
+  text-align: right;
+}
+.ske-lines-many .ske-line-num { display: inline; }
+.ske-line .ske-react-text {
+  flex: 1;
+  resize: none;
+  overflow: hidden;
+}
+.ske-panel .ske-link-btn {
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2a5db0;
+  cursor: pointer;
+}
+.ske-panel .ske-link-btn:hover { background: none; text-decoration: underline; }
+
+/* "Asked again:" In order / Loop / Random (only with several lines). */
+.ske-cycle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.ske-cycle[hidden] { display: none; }
+.ske-cycle > .ske-muted { margin-right: 6px; }
+.ske-panel .ske-cycle-btn {
+  padding: 2px 8px;
+  border: 1px solid #aaa;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ske-panel .ske-cycle-btn + .ske-cycle-btn { border-left: 0; }
+.ske-panel .ske-cycle-btn:first-of-type { border-radius: 3px 0 0 3px; }
+.ske-panel .ske-cycle-btn:last-of-type { border-radius: 0 3px 3px 0; }
+.ske-panel .ske-cycle-btn.ske-cycle-on {
+  background: #c2185b;
+  border-color: #c2185b;
+  color: #fff;
+}
+.ske-panel .ske-cycle-btn:not(.ske-cycle-on):hover { background: #f8e8f0; }
+
+.ske-alt-badge {
+  flex: none;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #f3dbe7;
+  color: #8a1f4f;
+  font-size: 10px;
+  line-height: 16px;
+  white-space: nowrap;
+}

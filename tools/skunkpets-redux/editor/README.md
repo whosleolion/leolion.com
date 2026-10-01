@@ -2,7 +2,7 @@
 
 On the preview (leolion.com/building/skunkpets-preview/) a yellow
 **✎ Backend** button sits in the bottom-left corner (with the number of open
-notes). It opens a panel beside the game; the game shrinks to make room.
+comments). It opens a panel beside the game; the game shrinks to make room.
 
 The panel has four editors as tabs, **Markup · Comments · Diskette ·
 Events**, which all follow one shared **selection**. **Save to preview…** at
@@ -23,7 +23,7 @@ the bottom saves everything changed in any of them as one commit.
   selection (the page itself = her comment on the whole page). **Esc**
   clears it; Esc again leaves Edit mode.
 - A small **popup** by the selection jumps to the right tab:
-  **✎ Markup**, **💬 Note** (with how many notes are on it), and **◉ Diskette**
+  **✎ Markup**, **💬 Comment** (with how many comments are on it), and **◉ Diskette**
   (her line there, or **◉ Diskette +** to make one, in one click).
 
 ## The four editors
@@ -41,13 +41,13 @@ forum thread, games archive page, blank). Selecting something in game code
 (Mail, the NetCon ticket, READ_ME) shows that passage here read-only, with the
 selection marked. Unsaved edits are kept in this browser.
 
-**Comments.** Notes for whoever edits next. With a selection, its notes come
-first and a new note is pinned to it (words, a photo, a thing, or game code);
-otherwise the open page's notes, and other pages' notes with **Go**. Notes
+**Comments.** Comments for whoever edits next. With a selection, its comments
+come first and a new comment is pinned to it (words, a photo, a thing, or game code);
+otherwise the open page's comments, and other pages' with **Go**. Comments
 highlight in the game while this tab is open; click one to open its thread.
 **Reply**, **Resolve**/**Reopen**, **Delete** your own; if the pinned words are
-edited away, select new ones and **Re-pin**. Each note is its own small
-commit to `comments.json` (the repository is public, so so are notes); the
+edited away, select new ones and **Re-pin**. Each comment is its own small
+commit to `comments.json` (the repository is public, so so are comments); the
 first time, it asks your name (**My name…** changes it).
 
 **Diskette.** What she says when the player drags from her eyes
@@ -57,8 +57,9 @@ words, the paragraph, the photo, the page) or, for a thing on the desktop,
 her line for that thing. Without one: every reaction, the open page first,
 then *Desktop & apps* and the other pages, drafts last, with a search box and
 **+ Line for something you can't point at** (off the screen, a poke in the
-eye, any page...). A card holds her line (several lines = alternatives, per
-**repeats**), her reaction (hop, shake, wide eyes), the zone's slack or reach,
+eye, any page...). A card holds her line (**+ Another line**, or Enter, adds something
+else for when she's asked again; with more than one, **Asked again: In order /
+Loop / Random** appears and the header says e.g. *↻ 3 lines*), her reaction (hop, shake, wide eyes), the zone's slack or reach,
 **only if** (events; `!name` = only before), what she says **after
 "Thanks"**, and **Make draft** / **Publish**, **Show me**, **Edit in markup**,
 **Delete**. Zones show in the game while this tab is open; click one to open
@@ -70,7 +71,7 @@ other event that happened. **◉ n** on an event = n of Diskette's reactions
 depend on it (hover to see which); those of the selection's reaction are
 outlined. Tick or untick one to fake it while testing (NEW GAME undoes it).
 
-**What the game shows follows the tab:** notes in Comments, zones in
+**What the game shows follows the tab:** comments in Comments, zones in
 Diskette, nothing extra in Markup and Events.
 
 ## Saving

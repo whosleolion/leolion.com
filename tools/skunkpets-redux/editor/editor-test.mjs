@@ -160,7 +160,7 @@ await goTo('REV (Recast Entertainment Ventures)'); await W(1000);
 
 // ---------- Comments pinned to text ----------
 check('the panel is the Backend Editor, with four tabs', (await text('.ske-head b')) === 'Backend Editor' && (await text('.ske-tabs')).replace(/\s+/g, ' ') === 'Markup Comments Diskette Events', await text('.ske-tabs'));
-check('toggle counts open notes', (await text('.ske-toggle')).includes('2 notes'), await text('.ske-toggle'));
+check('toggle counts open notes', (await text('.ske-toggle')).includes('2 comments'), await text('.ske-toggle'));
 check('notes do not show in the game on the Markup tab', (await p.locator('.browser-page-content mark.ske-mark').count()) === 0);
 await p.locator('.ske-tab-btn[data-tab="comments"]').click(); await W(600);
 check('a pinned comment is highlighted in the game', (await p.locator('.browser-page-content mark.ske-mark').filter({ hasText: 'Glen Cove' }).count()) >= 1);
@@ -240,8 +240,8 @@ const wordsAt = async (words) => p.evaluate((w) => {
 const drag = await wordsAt('his two sons');
 await p.mouse.move(drag[0], drag[1]); await p.mouse.down(); await p.mouse.move(drag[2], drag[3], { steps: 8 }); await p.mouse.up(); await W(600);
 check('dragging across words selects them: breadcrumb', (await text('.ske-crumbs')).includes('Tom Barry') && (await text('.ske-crumbs')).includes('“his two sons”'), await text('.ske-crumbs'));
-check('...a popup with Markup, Note and Diskette', (await text('.ske-pop')).includes('Markup') && (await text('.ske-pop')).includes('Note') && (await text('.ske-pop')).includes('Diskette'), await text('.ske-pop'));
-check('...and the Comments tab follows it', (await text('.ske-comments-body .ske-section-title')).startsWith('Notes on “his two sons”'), await text('.ske-comments-body .ske-section-title'));
+check('...a popup with Markup, Comment and Diskette', (await text('.ske-pop')).includes('Markup') && (await text('.ske-pop')).includes('Comment') && (await text('.ske-pop')).includes('Diskette'), await text('.ske-pop'));
+check('...and the Comments tab follows it', (await text('.ske-comments-body .ske-section-title')).startsWith('Comments on “his two sons”'), await text('.ske-comments-body .ske-section-title'));
 await p.locator('.ske-comment-input').first().fill('Is Bruce one of them?');
 await p.locator('.ske-post').click(); await W(1200);
 const sonsNote = commentsFile.data.comments.find((c) => c.text === 'Is Bruce one of them?');
@@ -253,6 +253,16 @@ await p.locator('.ske-pop-diskette').click(); await W(900);
 check('◉ in the popup makes a zone on those words and opens it', (await text('.ske-tab-btn.ske-tab-on')).startsWith('Diskette') && (await ed.get()).includes('[[diskette: 10 | on: his two sons | ]]') && (await p.locator('.ske-react-open textarea').count()) === 1);
 await p.locator('.ske-react-open textarea').fill('Two sons? Bruce, is that you?'); await W(1300);
 check('...her line goes into the page', (await ed.get()).includes('[[diskette: 10 | on: his two sons | Two sons? Bruce, is that you?]]'));
+check('..."Asked again" is hidden with one line', (await p.locator('.ske-react-open .ske-cycle:not([hidden])').count()) === 0);
+await p.locator('.ske-react-open textarea').press('End'); await p.locator('.ske-react-open textarea').press('Enter'); await W(100);
+await p.locator('.ske-react-open textarea').nth(1).fill('Still two sons.'); await W(1300);
+check('...Enter adds another line, saved as an alternative', (await ed.get()).includes('| Two sons? Bruce, is that you? >> Still two sons.]]') && (await p.locator('.ske-react-open .ske-line-num').first().isVisible()));
+check('...and "Asked again" shows with two', (await p.locator('.ske-react-open .ske-cycle:not([hidden])').count()) === 1);
+await p.locator('.ske-react-open .ske-cycle-btn', { hasText: 'Loop' }).click(); await W(1300);
+check('...Loop sets the cycle', (await ed.get()).includes('[[diskette: 10 | loop | on: his two sons | Two sons? Bruce, is that you? >> Still two sons.]]'), (await ed.get()).match(/\[\[diskette: 10[^\]]*his two sons[^\]]*\]\]/)?.[0]);
+await p.locator('.ske-react-open .ske-cycle-btn', { hasText: 'In order' }).click();
+await p.locator('.ske-react-open textarea').nth(1).fill(''); await p.locator('.ske-react-open textarea').nth(1).press('Backspace'); await W(1300);
+check('...Backspace in an empty line removes it', (await p.locator('.ske-react-open textarea').count()) === 1 && (await ed.get()).includes('[[diskette: 10 | on: his two sons | Two sons? Bruce, is that you?]]') && (await p.locator('.ske-react-open .ske-cycle:not([hidden])').count()) === 0);
 check('...and the popup shows it', (await text('.ske-pop')).includes('Two sons?'), await text('.ske-pop'));
 await p.keyboard.press('Escape'); await W(200);
 check('Esc clears the selection', (await p.locator('.ske-pop').count()) === 0 && (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);

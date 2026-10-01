@@ -718,7 +718,7 @@ the editor turns them into curly quotes for you.
 
 **Repeats:** a zone, page comment or line can hold several alternatives
 separated by `>>` (`data-say="Hi! >> You again? >> Still here."`; in the
-editor's cards, one per line). Each time she's asked about it she says the
+editor's cards, one box per line: **+ Another line**, and **Asked again** picks the order). Each time she's asked about it she says the
 next: `data-cycle` absent = in order, then keep saying the last one;
 `"loop"` = round and round; `"random"` = at random, never the same twice
 running (friendly form: `[[diskette: 80 | loop | ...]]`). The counts are in
