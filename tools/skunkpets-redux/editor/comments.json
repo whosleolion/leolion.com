@@ -38,10 +38,11 @@
       "author": "sofe",
       "text": "we should make sure the search terms on winki are flexible - natalie typed in netcon and this page didnt come up. she had to do neocon 2004. we should make so that any amount of the words in the page title will bring up the page",
       "at": "2026-10-01T04:36:27.018Z",
-      "resolved": false,
+      "resolved": true,
       "quote": "2004 wa",
       "prefix": "\n<h1>NetCon 2004</h1>\\\nNetCon ",
-      "suffix": "s the third occurrence of NetC"
+      "suffix": "s the third occurrence of NetC",
+      "resolvedBy": "Leo"
     },
     {
       "id": "mup1opn3zm1p",
