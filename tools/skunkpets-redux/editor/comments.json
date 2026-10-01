@@ -62,6 +62,15 @@
       "at": "2026-10-01T07:20:03.356Z",
       "resolved": false,
       "about": "app:icon-notes"
+    },
+    {
+      "id": "mup7hracjlpd",
+      "page": "NetCon 2004",
+      "author": "Leo",
+      "text": "did this! searching \"netcon\" now brings this up, etc",
+      "at": "2026-10-01T07:22:00.420Z",
+      "resolved": false,
+      "parent": "mup1kumiz0q6"
     }
   ]
 }
