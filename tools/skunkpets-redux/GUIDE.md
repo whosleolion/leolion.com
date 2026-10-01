@@ -619,7 +619,8 @@ else. Add your own actions there.
 **What you see:** drag Diskette out of the Trash and double-click her. She's
 a tray app: her little icon appears in the taskbar tray (left of the speaker)
 and she pops up out of it, bottom-right like the old Office helper, with a
-pale-yellow speech bubble offering to explain the apps you have.
+pale-yellow speech bubble telling you to drag from her eyes to anything
+you want explained (see Inspecting below).
 
 - **Dismiss** (or the ×) tucks her back into the tray. She keeps running.
 - **Clicking her tray icon** brings her back up, or tucks her away again.
@@ -644,15 +645,17 @@ answers), `RenderDisketteBalloon` (the tray balloon), `func-diskette-show` /
 | `$disketteNotice` | What her tray balloon is about (`""` = no balloon). `"hello"` is the one-time "I'll be down here in the tray" note; an app name (`"mail"` etc.) offers to explain that app, and clicking opens her on that topic. |
 | `$disketteToldTray` | The "hello" balloon has been shown (it only appears on the first dismiss). |
 
-- Her menu only lists apps that are in `$desktopItems`, and adds a nudge if
-  there's anything in the Trash other than READ_ME (players are expected to
-  throw that away).
+- Her menu is just that instruction and Dismiss, plus a nudge if there's
+  anything in the Trash other than READ_ME (players are expected to throw
+  that away).
 - **Her voice:** each time she pops up or a balloon appears she says a random
   robot "hmm" (one of eight, never the same twice running; silent when sound is
   muted). The clips and the script that makes them are in
   `tools/skunkpets-redux/diskette-voice/` (see its README to re-voice her).
-- Choosing a topic sets `$disketteTopic`; `DisketteTopic` holds one answer per
-  topic. Edit the text there to change what she says.
+- `$disketteTopic` is only set now when she opens from a tray balloon
+  ("Psst! I can tell you about Mail"); `DisketteTopic` holds those answers.
+  The same answers are her eye reactions to each app in `DisketteLooks`, so
+  change both if you reword one.
 - Today she pipes up (sets `$disketteNotice`) in `func-restore`, when Browse,
   Mail or Notes comes out of the Trash while she's tucked away.
 

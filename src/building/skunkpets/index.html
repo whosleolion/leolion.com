@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="51a105f74c68">
+<meta name="skunkpets-build" content="a45f3381a7cc">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "51a105f74c68";
+  var mine = "a45f3381a7cc";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -5210,7 +5210,7 @@ The official release of the game was slated for July 2009, but the project enter
 
 &lt;div class=&quot;article-art article-art-left&quot; data-art=&quot;diskette-chyt.jpg&quot; style=&quot;width: 28%&quot; role=&quot;img&quot; aria-label=&quot;diskette&quot;&gt;&lt;/div&gt;&lt;p&gt;Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as &quot;//Your Secretary//&quot;, a tagline made famous by her launch expo at (link: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)]. 
 
-However, Diskette&#39;s Install CD was only in distribution for 6 months, after which she was decommissioned.&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;50&quot; data-mood=&quot;shake&quot; data-say=&quot;Decommissioned is such an ugly word. I prefer “on sabbatical.”&quot;&gt;&lt;/span&gt; Popular theories have circulated online that Diskette was shut off after she &#39;attained sentience,&#39;&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;40&quot; data-mood=&quot;wide&quot; data-say=&quot;Sentience? Me? I can barely do spreadsheets!&quot;&gt;&lt;/span&gt; with many users citing a viral dialogue posted online in November 2004 (//&quot;The Diskette Confession&quot;//) as evidence that she had &#39;gone rogue&#39;.&lt;/p&gt;&lt;/div&gt;OpenSoft declined to comment on these rumors, stating that the software was discontinued was disabled due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)].
+However, Diskette&#39;s Install CD was only in distribution for 6 months, after which she was decommissioned.&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;50&quot; data-mood=&quot;shake&quot; data-say=&quot;Decommissioned is such an ugly word. I prefer “on sabbatical.”&quot;&gt;&lt;/span&gt; Popular theories have circulated online that Diskette was shut off after she &#39;attained sentience,&#39;&lt;span class=&quot;diskette-zone&quot; data-radius=&quot;40&quot; data-mood=&quot;wide&quot; data-say=&quot;Sentience? Me? I can barely do spreadsheets!&quot;&gt;&lt;/span&gt; with many users citing a viral dialogue posted online in November 2004 (//&quot;The Diskette Confession&quot;//) as evidence that she had &#39;gone rogue&#39;.&lt;/p&gt;&lt;/div&gt;OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)].
 &lt;/div&gt;
 
 &lt;h2&gt;&quot;The Diskette Confession&quot;&lt;/h2&gt;\
@@ -6674,18 +6674,11 @@ deal with the devil
 |diskette-close&gt;[&lt;button class=&quot;diskette-close&quot; type=&quot;button&quot; aria-label=&quot;Hide&quot; title=&quot;Hide in the tray&quot;&gt;&amp;times;&lt;/button&gt;]
 (click: ?diskette-close)[(display: &quot;func-diskette-hide&quot;)]
 (if: $disketteTopic is &quot;&quot;)[
-&lt;p&gt;Hi there! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. What would you like to know about?&lt;/p&gt;
+&lt;p&gt;Hi there! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. Want to know about something on your screen? &lt;b&gt;Drag from my eyes&lt;/b&gt; to it, and I&#39;ll tell you all about it!&lt;/p&gt;
 &lt;div class=&quot;diskette-options&quot;&gt;
-(if: $desktopItems contains &quot;browser&quot;)[(link: &quot;Browse&quot;)[(set: $disketteTopic to &quot;browser&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
-(if: $desktopItems contains &quot;mail&quot;)[(link: &quot;Mail&quot;)[(set: $disketteTopic to &quot;mail&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
-(if: $desktopItems contains &quot;notes&quot;)[(link: &quot;Notes&quot;)[(set: $disketteTopic to &quot;notes&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
-(if: $desktopItems contains &quot;downloads&quot;)[(link: &quot;Downloads&quot;)[(set: $disketteTopic to &quot;downloads&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]]
-(link: &quot;Trash&quot;)[(set: $disketteTopic to &quot;recycle&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
-(link: &quot;Diskette&quot;)[(set: $disketteTopic to &quot;diskette&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link: &quot;Dismiss&quot;)[(display: &quot;func-diskette-hide&quot;)]
 &lt;/div&gt;
 (if: ($trashItems - (a: &quot;readme&quot;))&#39;s length &gt; 0)[&lt;p class=&quot;diskette-note&quot;&gt;There&#39;s still something in your Trash! Drag it onto the desktop and I can tell you about it too.&lt;/p&gt;]
-&lt;p class=&quot;diskette-note diskette-tip&quot;&gt;Tip: drag from my eyes to anything on the screen, and I&#39;ll take a look!&lt;/p&gt;
 ](else:)[
 &lt;p&gt;(display: &quot;DisketteTopic&quot;)&lt;/p&gt;
 &lt;div class=&quot;diskette-options&quot;&gt;
@@ -6722,26 +6715,21 @@ deal with the devil
 
      A page can have its own comment, and any spot in a page its own
      response zone; see the script&#39;s DISKETTE INSPECTING. --&gt;
-&lt;p data-look=&quot;self&quot;&gt;Hey, that&#39;s me!&lt;/p&gt;
-&lt;p data-look=&quot;self&quot;&gt;Looking good, if I do say so myself.&lt;/p&gt;
+&lt;p data-look=&quot;self icon-diskette&quot;&gt;That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!&lt;/p&gt;
 &lt;p data-look=&quot;poke&quot; data-mood=&quot;shake&quot;&gt;Ow! Drag, don&#39;t poke!&lt;/p&gt;
 &lt;p data-look=&quot;poke&quot; data-mood=&quot;shake&quot;&gt;Hey! I need those to see!&lt;/p&gt;
 &lt;p data-look=&quot;page&quot;&gt;Ooh, &lt;b&gt;{page}&lt;/b&gt;! Winkipedia knows about everything.&lt;/p&gt;
 &lt;p data-look=&quot;page&quot;&gt;I could read about &lt;b&gt;{page}&lt;/b&gt; all day. Well, I could if I had all day.&lt;/p&gt;
 &lt;p data-look=&quot;page&quot; data-mood=&quot;wide&quot;&gt;So many words! Want me to look at something in particular? Aim right at it.&lt;/p&gt;
-&lt;p data-look=&quot;browser&quot;&gt;That&#39;s &lt;b&gt;Browse&lt;/b&gt;. The ◀ and ▶ buttons go back and forward, and ★ has your bookmarks!&lt;/p&gt;
-&lt;p data-look=&quot;icon-browser&quot;&gt;That&#39;s &lt;b&gt;Browse&lt;/b&gt;! Open it up and visit the World Wide Web.&lt;/p&gt;
-&lt;p data-look=&quot;mail&quot;&gt;Your &lt;b&gt;Mail&lt;/b&gt;! Remember to read everything. Twice!&lt;/p&gt;
-&lt;p data-look=&quot;icon-mail&quot;&gt;That&#39;s &lt;b&gt;Mail&lt;/b&gt;. When the envelope&#39;s full, you&#39;ve got something new!&lt;/p&gt;
-&lt;p data-look=&quot;notes&quot; data-mood=&quot;shake&quot;&gt;I promise I&#39;m not reading your notes. Mostly.&lt;/p&gt;
-&lt;p data-look=&quot;icon-notes&quot;&gt;That&#39;s &lt;b&gt;Notes&lt;/b&gt;! Handy for writing down anything you might forget.&lt;/p&gt;
+&lt;p data-look=&quot;browser icon-browser&quot;&gt;&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.&lt;/p&gt;
+&lt;p data-look=&quot;mail icon-mail&quot;&gt;&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it.&lt;/p&gt;
+&lt;p data-look=&quot;notes icon-notes&quot;&gt;&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember.&lt;/p&gt;
 &lt;p data-look=&quot;readme icon-readme&quot;&gt;READ&amp;#95;ME! You should read it. It says so right there.&lt;/p&gt;
-&lt;p data-look=&quot;recycle icon-recycle&quot;&gt;That&#39;s the &lt;b&gt;Trash&lt;/b&gt;. Things go in, and sometimes they come back out!&lt;/p&gt;
+&lt;p data-look=&quot;recycle icon-recycle&quot;&gt;The &lt;b&gt;Trash&lt;/b&gt; holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.&lt;/p&gt;
 &lt;p data-look=&quot;trash-item&quot;&gt;Somebody threw that away. Drag it onto the desktop if you want it back!&lt;/p&gt;
-&lt;p data-look=&quot;downloads icon-downloads&quot;&gt;Your &lt;b&gt;Downloads&lt;/b&gt; folder! Everything you save from the internet lands here.&lt;/p&gt;
+&lt;p data-look=&quot;downloads icon-downloads&quot;&gt;&lt;b&gt;Downloads&lt;/b&gt; is a folder of files saved from the internet.&lt;/p&gt;
 &lt;p data-look=&quot;granmas&quot; data-mood=&quot;wide&quot;&gt;What a lovely photo! I wonder who they are.&lt;/p&gt;
 &lt;p data-look=&quot;netcontkts&quot;&gt;NetCon 2004! I&#39;ve heard that was quite a weekend.&lt;/p&gt;
-&lt;p data-look=&quot;icon-diskette&quot;&gt;That&#39;s my icon! Double-click it whenever you need me.&lt;/p&gt;
 &lt;p data-look=&quot;start&quot;&gt;The &lt;b&gt;Start&lt;/b&gt; button! Everything on this computer starts there. That&#39;s why it&#39;s called that!&lt;/p&gt;
 &lt;p data-look=&quot;clock&quot;&gt;Is it that time already? Time flies when you&#39;re having a nice computer!&lt;/p&gt;
 &lt;p data-look=&quot;volume&quot;&gt;That&#39;s the volume. Turn it up! I love this song.&lt;/p&gt;

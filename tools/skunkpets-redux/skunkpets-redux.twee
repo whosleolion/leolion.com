@@ -5195,7 +5195,7 @@ The official release of the game was slated for July 2009, but the project enter
 
 <div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
-However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned.<span class="diskette-zone" data-radius="50" data-mood="shake" data-say="Decommissioned is such an ugly word. I prefer “on sabbatical.”"></span> Popular theories have circulated online that Diskette was shut off after she 'attained sentience,'<span class="diskette-zone" data-radius="40" data-mood="wide" data-say="Sentience? Me? I can barely do spreadsheets!"></span> with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OpenSoft declined to comment on these rumors, stating that the software was discontinued was disabled due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned.<span class="diskette-zone" data-radius="50" data-mood="shake" data-say="Decommissioned is such an ugly word. I prefer “on sabbatical.”"></span> Popular theories have circulated online that Diskette was shut off after she 'attained sentience,'<span class="diskette-zone" data-radius="40" data-mood="wide" data-say="Sentience? Me? I can barely do spreadsheets!"></span> with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
 
 <h2>"The Diskette Confession"</h2>\
@@ -6857,18 +6857,11 @@ deal with the devil
 |diskette-close>[<button class="diskette-close" type="button" aria-label="Hide" title="Hide in the tray">&times;</button>]
 (click: ?diskette-close)[(display: "func-diskette-hide")]
 (if: $disketteTopic is "")[
-<p>Hi there! I'm <b>Diskette</b>, Your Secretary. What would you like to know about?</p>
+<p>Hi there! I'm <b>Diskette</b>, Your Secretary. Want to know about something on your screen? <b>Drag from my eyes</b> to it, and I'll tell you all about it!</p>
 <div class="diskette-options">
-(if: $desktopItems contains "browser")[(link: "Browse")[(set: $disketteTopic to "browser")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
-(if: $desktopItems contains "mail")[(link: "Mail")[(set: $disketteTopic to "mail")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
-(if: $desktopItems contains "notes")[(link: "Notes")[(set: $disketteTopic to "notes")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
-(if: $desktopItems contains "downloads")[(link: "Downloads")[(set: $disketteTopic to "downloads")(replace: ?desktoproot)[(display: "RenderDesktop")]]]
-(link: "Trash")[(set: $disketteTopic to "recycle")(replace: ?desktoproot)[(display: "RenderDesktop")]]
-(link: "Diskette")[(set: $disketteTopic to "diskette")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (link: "Dismiss")[(display: "func-diskette-hide")]
 </div>
 (if: ($trashItems - (a: "readme"))'s length > 0)[<p class="diskette-note">There's still something in your Trash! Drag it onto the desktop and I can tell you about it too.</p>]
-<p class="diskette-note diskette-tip">Tip: drag from my eyes to anything on the screen, and I'll take a look!</p>
 ](else:)[
 <p>(display: "DisketteTopic")</p>
 <div class="diskette-options">
@@ -6911,26 +6904,21 @@ deal with the devil
 
      A page can have its own comment, and any spot in a page its own
      response zone; see the script's DISKETTE INSPECTING. -->
-<p data-look="self">Hey, that's me!</p>
-<p data-look="self">Looking good, if I do say so myself.</p>
+<p data-look="self icon-diskette">That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!</p>
 <p data-look="poke" data-mood="shake">Ow! Drag, don't poke!</p>
 <p data-look="poke" data-mood="shake">Hey! I need those to see!</p>
 <p data-look="page">Ooh, <b>{page}</b>! Winkipedia knows about everything.</p>
 <p data-look="page">I could read about <b>{page}</b> all day. Well, I could if I had all day.</p>
 <p data-look="page" data-mood="wide">So many words! Want me to look at something in particular? Aim right at it.</p>
-<p data-look="browser">That's <b>Browse</b>. The ◀ and ▶ buttons go back and forward, and ★ has your bookmarks!</p>
-<p data-look="icon-browser">That's <b>Browse</b>! Open it up and visit the World Wide Web.</p>
-<p data-look="mail">Your <b>Mail</b>! Remember to read everything. Twice!</p>
-<p data-look="icon-mail">That's <b>Mail</b>. When the envelope's full, you've got something new!</p>
-<p data-look="notes" data-mood="shake">I promise I'm not reading your notes. Mostly.</p>
-<p data-look="icon-notes">That's <b>Notes</b>! Handy for writing down anything you might forget.</p>
+<p data-look="browser icon-browser"><b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.</p>
+<p data-look="mail icon-mail"><b>Mail</b> is where your email arrives. Click a message in your Inbox to read it.</p>
+<p data-look="notes icon-notes"><b>Notes</b> is a handy notepad. Jot down anything you want to remember.</p>
 <p data-look="readme icon-readme">READ&#95;ME! You should read it. It says so right there.</p>
-<p data-look="recycle icon-recycle">That's the <b>Trash</b>. Things go in, and sometimes they come back out!</p>
+<p data-look="recycle icon-recycle">The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.</p>
 <p data-look="trash-item">Somebody threw that away. Drag it onto the desktop if you want it back!</p>
-<p data-look="downloads icon-downloads">Your <b>Downloads</b> folder! Everything you save from the internet lands here.</p>
+<p data-look="downloads icon-downloads"><b>Downloads</b> is a folder of files saved from the internet.</p>
 <p data-look="granmas" data-mood="wide">What a lovely photo! I wonder who they are.</p>
 <p data-look="netcontkts">NetCon 2004! I've heard that was quite a weekend.</p>
-<p data-look="icon-diskette">That's my icon! Double-click it whenever you need me.</p>
 <p data-look="start">The <b>Start</b> button! Everything on this computer starts there. That's why it's called that!</p>
 <p data-look="clock">Is it that time already? Time flies when you're having a nice computer!</p>
 <p data-look="volume">That's the volume. Turn it up! I love this song.</p>
