@@ -139,6 +139,7 @@
 .cm-ske-macro { color: #7a3fb0; }
 .cm-ske-dim { color: #aaa; }
 .cm-ske-photo { color: #1a7a3a; background: #eaf7ee; }
+.cm-ske-diskette { color: #a0306a; background: #fbeaf3; }
 .cm-ske-link { color: #1f55c8; }
 .cm-ske-redlink { color: #c62020; text-decoration: underline wavy #e88; }
 
@@ -408,6 +409,49 @@
   color: #c62020;
   text-decoration: underline wavy #e88;
   cursor: pointer;
+}
+
+/* Diskette's response zones while the panel is open: a dot where the
+   zone is and a dashed circle as far as it reaches. */
+.browser-page-content .ske-zone {
+  position: relative;
+}
+
+.browser-page-content .diskette-zone.ske-zone::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ske-r, 60px) * 2);
+  height: calc(var(--ske-r, 60px) * 2);
+  border: 1px dashed #d0408a;
+  border-radius: 50%;
+  background: rgba(208, 64, 138, 0.06);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.browser-page-content .diskette-zone.ske-zone::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 2px;
+  border-radius: 50%;
+  background: #d0408a;
+  vertical-align: middle;
+}
+
+.browser-page-content .diskette-page.ske-zone::after {
+  content: "Diskette's comment on this page";
+  display: inline-block;
+  margin: 0 6px 4px 0;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #fbeaf3;
+  color: #a0306a;
+  font: 600 10px/1.5 system-ui, sans-serif;
+  vertical-align: middle;
 }
 
 /* Windows: new page, review. */

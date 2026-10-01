@@ -18,6 +18,12 @@ beside the game; the game shrinks to make room.
      `[[photo: file.jpg | left | 36% | description]]` floats it left at 36%
      wide. Move the line to move the photo; right after a heading puts it
      beside that section. Delete the line to remove it.
+   - `[[diskette: 80 | what she says]]` is a spot Diskette reacts to when
+     the player drags from her eyes to within 80 pixels of it (add `shake`
+     or `wide` before the words for a different reaction), and
+     `[[diskette: page | what she says]]` is what she says about the whole
+     page. While the panel is open, zones show in the game as a pink dot
+     with a dashed circle of their reach. See GUIDE.md 7.10.
    - **+ Photo** adds a picture from your computer (shrunk to 480 px wide and
      saved as JPEG) and puts its line where your cursor is.
    Unsaved edits are kept in this browser, so a reload doesn't lose them.

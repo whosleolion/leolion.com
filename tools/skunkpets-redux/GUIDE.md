@@ -80,7 +80,8 @@ so you can work on it from any machine, or right in the browser on github.com.
 | `tools/skunkpets-redux/build.js` | Turns the `.twee` file into the playable HTML page. |
 | `tools/skunkpets-redux/playtest.mjs` | Plays the whole game automatically and reports anything broken. |
 | `tools/skunkpets-redux/extract.js` | The reverse of build: pulls a `.twee` back out of a published HTML page. (Used once, at the start. You shouldn't need it.) |
-| `tools/skunkpets-redux/diskette-cutout.png`, `diskette-icon.png` | Transparent cut-outs of Diskette, embedded into the page when you build. |
+| `tools/skunkpets-redux/diskette-cutout.png`, `diskette-icon.png` | Transparent cut-outs of Diskette. |
+| `tools/skunkpets-redux/diskette-body.png`, `diskette-pupil-l.png`, `diskette-pupil-r.png`, `diskette-eyemask.png` | The pieces of her moving-eyes version, made from the cut-out by `diskette-eyes.py` (7.10). All of these are embedded into the page when you build. |
 | `tools/skunkpets-redux/GUIDE.md` | This guide. (`README.md` next to it is the short version.) |
 | `src/building/skunkpets/index.html` | **The playable game** that the build writes, served at leolion.com/building/skunkpets. |
 
@@ -654,6 +655,51 @@ answers), `RenderDisketteBalloon` (the tray balloon), `func-diskette-show` /
   topic. Edit the text there to change what she says.
 - Today she pipes up (sets `$disketteNotice`) in `func-restore`, when Browse,
   Mail or Notes comes out of the Trash while she's tucked away.
+
+#### Inspecting: drag from her eyes
+
+Her pupils follow the mouse. **Press on her eyes and drag**: a see-through
+arrow runs from her eyes to the pointer. Let go and she scans the topmost
+thing there (a dashed yellow box sweeps over it) and says something about it
+in her bubble, with a little hop (or a head-shake, or wide eyes). Her answer
+stays up until you close it (× or "Thanks, Diskette!"), then her menu comes
+back. A click on her eyes without dragging is a poke, and she objects.
+
+What she says, first match wins:
+
+1. **A response zone** near where you let go. Put one anywhere in a page:
+   `<span class="diskette-zone" data-radius="80" data-say="Ooh, I love this part!"></span>`
+   It answers when the drop is within `data-radius` game pixels of it
+   (default 60), in the same window, and not scrolled out of sight. The
+   span can be empty (a point) or wrap words (then it reaches out from
+   their edges). In the preview's article editor it's
+   `[[diskette: 80 | Ooh, I love this part!]]`, and while the editor is
+   open each zone shows as a pink dot with a dashed circle of its reach.
+2. **The page's own comment**, if you dropped on a browser page that has one:
+   `<span class="diskette-page" data-say="..."></span>` (editor:
+   `[[diskette: page | ...]]`).
+3. **The `DisketteLooks` passage**: one line per app or thing (Mail, a
+   desktop icon, the Start button, the clock, the wallpaper, herself...). Its
+   comment lists every key. Several lines for one key are picked at random;
+   `{page}` is the page open in the browser. Plain HTML only there (it's
+   read by the script, never shown as a page).
+
+Any of them can add `data-mood="shake"` or `"wide"` (editor:
+`[[diskette: 80 | shake | ...]]`); the default is a hop. Don't put a
+straight double quote in `data-say` (Harlowe breaks the tag on `&quot;`);
+the editor turns them into curly quotes for you.
+
+The samples so far: a page comment and two zones on her own Winkipedia
+article, and a zone on the blacked-out card number in the NetCon ticket.
+
+**How the eyes work:** her drawing is split by `diskette-eyes.py` into her
+body with the pupils painted out, the two pupils, and a mask of the
+eye-whites minus the lashes over them. `RenderDiskette` lays the pupils
+over her body inside that mask, so they slide around inside the whites and
+behind the lashes. The eye positions in the script (`DISKETTE_EYES`) and
+the CSS match the ellipses in that script; re-run it if her picture ever
+changes. Script: `DISKETTE INSPECTING`; CSS: the INSPECTING part of
+`DISKETTE`.
 
 **Try it:** make her pipe up about something new. Anywhere in the game, add
 `(if: $openWindows contains "diskette" and not $disketteShown)[(set: $disketteNotice to "mail")]`

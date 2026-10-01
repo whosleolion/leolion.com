@@ -21,6 +21,14 @@ check('gameText drops link targets and markup',
 check('gameText keeps URLs', E.gameText('see https://x.com') === 'see https://x.com');
 check('gameText decodes &#95;', E.gameText('READ&#95;ME') === 'READ_ME');
 
+// Diskette's response zones and page comments
+const zone = E.fromFriendly('[[diskette: 80 | shake | Say "hi" & <b>wave</b>]]');
+check('a zone becomes its span', zone === '<span class="diskette-zone" data-radius="80" data-mood="shake" data-say="Say \u201chi\u201d &amp; &lt;b&gt;wave&lt;/b&gt;"></span>', zone);
+check('...and comes back (straight quotes turn curly)', E.toFriendly(zone) === '[[diskette: 80 | shake | Say \u201chi\u201d & <b>wave</b>]]', E.toFriendly(zone));
+check('a zone without a radius gets the default', E.fromFriendly('[[diskette: Hello]]').includes('data-radius="60"'));
+check('a page comment', E.fromFriendly('[[diskette: page | Hi!]]') === '<span class="diskette-page" data-say="Hi!"></span>');
+check('zones are not links', E.linkTargets('[[diskette: 9 | x]] [[A]]').length === 1 && E.gameText('a [[diskette: 9 | x]] b') === 'a b');
+
 // Pinning comments
 const doc = 'the cat sat. the cat ran. the dog sat.';
 const a2 = E.makeAnchor(doc, doc.indexOf('the cat ran'), doc.indexOf('the cat ran') + 7);

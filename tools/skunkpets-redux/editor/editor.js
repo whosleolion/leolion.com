@@ -18,6 +18,8 @@
      [[Tom Barry]]                  link to a page
      [[shown words->Page name]]     link with other words
      [[photo: file.jpg | right | 40% | description]]
+     [[diskette: 80 | what Diskette says]]   a response zone
+     [[diskette: page | what she says]]      her comment on the page
    A link to a page that doesn't exist yet shows red; create
    the page from the panel (templates below). Saving needs a
    GitHub token (asked for once, kept in this browser).
@@ -38,14 +40,32 @@
 
   const LINK_RE = /\(link: "([^"]*)"\)\[\(set: \$navPending to "([^"]*)"\)\(display: "func-navigate"\)\]/g;
   const PHOTO_RE = /<div class="article-art( article-art-left)?" data-art="([^"]+)"(?: style="width: ([\d.]+%)")? role="img" aria-label="([^"]*)"><\/div>/g;
+  /* Diskette's response zones and whole-page comments (her "inspecting"
+     mode; see DISKETTE INSPECTING in the game's script). */
+  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")? data-say="([^"]*)"><\/span>/g;
+  const ZONE_RADIUS = 60;
 
   const escAttr = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   const unescAttr = (s) => s.replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+  /* Harlowe breaks a tag on &quot; inside an attribute, so straight double
+     quotes in what Diskette says become curly ones. */
+  const escSay = (s) => {
+    let open = true;
+    return s.replace(/"/g, () => ((open = !open) ? "\u201d" : "\u201c"))
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  };
+  const unescSay = (s) => unescAttr(s.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
   const quote = (s) => (s.indexOf('"') < 0 ? '"' + s + '"' : "'" + s + "'");
 
   /* Game markup -> the short form shown in the editor. */
   function toFriendly(source) {
     return source
+      .replace(ZONE_RE, function (_, kind, radius, mood, say) {
+        const parts = [kind === "page" ? "page" : radius || String(ZONE_RADIUS)];
+        if (mood) parts.push(mood);
+        parts.push(unescSay(say));
+        return "[[diskette: " + parts.join(" | ") + "]]";
+      })
       .replace(PHOTO_RE, function (_, left, file, width, alt) {
         const parts = [file, left ? "left" : "right"];
         if (width) parts.push(width);
@@ -73,9 +93,25 @@
       ' role="img" aria-label="' + escAttr(rest.join(" | ")) + '"></div>';
   }
 
+  function zoneHtml(inner) {
+    const parts = inner.split("|").map((p) => p.trim());
+    let kind = "zone";
+    let radius = String(ZONE_RADIUS);
+    let mood = "";
+    if (parts.length > 1 && /^(page|\d+(px)?)$/.test(parts[0])) {
+      const first = parts.shift();
+      if (first === "page") kind = "page";
+      else radius = String(parseInt(first, 10));
+    }
+    if (parts.length > 1 && /^(hop|shake|wide)$/.test(parts[0])) mood = parts.shift();
+    return '<span class="diskette-' + kind + '"' + (kind === "zone" ? ' data-radius="' + radius + '"' : "") +
+      (mood ? ' data-mood="' + mood + '"' : "") + ' data-say="' + escSay(parts.join(" | ")) + '"></span>';
+  }
+
   /* The short form -> game markup. */
   function fromFriendly(text) {
     return text
+      .replace(/\[\[diskette:([^\]]*)\]\]/g, (_, inner) => zoneHtml(inner))
       .replace(/\[\[photo:([^\]]*)\]\]/g, (_, inner) => photoHtml(inner))
       .replace(/\[\[([^\]]+?)\]\]/g, function (_, inner) {
         const arrow = inner.lastIndexOf("->");
@@ -92,7 +128,7 @@
   /* Links in the short form: where they point and where they sit. */
   function linkTargets(text) {
     const out = [];
-    for (const m of text.matchAll(/\[\[(?!photo:)([^\]]+?)\]\]/g)) {
+    for (const m of text.matchAll(/\[\[(?!photo:|diskette:)([^\]]+?)\]\]/g)) {
       const arrow = m[1].lastIndexOf("->");
       out.push({ target: arrow >= 0 ? m[1].slice(arrow + 2) : m[1], from: m.index, to: m.index + m[0].length });
     }
@@ -103,7 +139,7 @@
      find a comment's quote in the game. */
   function gameText(text) {
     return text
-      .replace(/\[\[photo:[^\]]*\]\]/g, " ")
+      .replace(/\[\[(?:photo|diskette):[^\]]*\]\]/g, " ")
       .replace(/\[\[([^\]]+?)\]\]/g, function (_, inner) {
         const arrow = inner.lastIndexOf("->");
         return arrow >= 0 ? inner.slice(0, arrow) : inner;
@@ -625,6 +661,7 @@
     for (const m of text.matchAll(/\([a-z][a-z0-9-]*:/gi)) add(m.index, m.index + m[0].length, "cm-ske-macro");
     for (const m of text.matchAll(/''|\^\^|(?<!:)\/\//g)) add(m.index, m.index + m[0].length, "cm-ske-dim");
     for (const m of text.matchAll(/\[\[photo:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, "cm-ske-photo");
+    for (const m of text.matchAll(/\[\[diskette:[^\]]*\]\]/g)) add(m.index, m.index + m[0].length, "cm-ske-diskette");
     if (hook) {
       linkTargets(text).forEach(function (l) {
         if (pageExists(l.target)) add(l.from, l.to, "cm-ske-link");
@@ -651,7 +688,7 @@
   /* Typing [[ (or ->) suggests page names. */
   function pageCompletions(ctx) {
     const m = ctx.matchBefore(/\[\[(?:[^\]\n]*->)?[^\]\n>]*/);
-    if (!m || /^\[\[photo:/.test(m.text)) return null;
+    if (!m || /^\[\[(photo|diskette):/.test(m.text)) return null;
     const lead = /^\[\[(?:[^\]\n]*->)?/.exec(m.text)[0];
     return {
       from: m.from + lead.length,
@@ -812,6 +849,11 @@
           "   yet: Ctrl/Cmd-click it or use Create below)\n" +
           "[[photo: file.jpg | right | description]]\n" +
           "[[photo: file.jpg | left | 36% | description]]\n" +
+          "[[diskette: 80 | Ooh, I love this part!]]\n" +
+          "  a spot Diskette reacts to when you drag from her\n" +
+          "  eyes to within 80 pixels of it (dashed circle)\n" +
+          "[[diskette: 80 | shake | ...]]  or wide: how she reacts\n" +
+          "[[diskette: page | ...]]   what she says about the page\n" +
           "''bold''   //italic//   <h2>Heading</h2>\n" +
           "A \\ at the end of a line joins it to the next one.\n" +
           "Move a photo line to move the photo: right after a\n" +
@@ -1379,6 +1421,19 @@
     markSignature = sig;
   }
 
+  /* While the panel is open, Diskette's response zones show as dashed
+     circles of their radius, and her page comment as a tag. */
+  function showZones() {
+    const on = !!store.data.open;
+    document.querySelectorAll(".browser-page-content .diskette-zone, .browser-page-content .diskette-page").forEach(function (z) {
+      if (z.classList.contains("ske-zone") === on) return;
+      z.classList.toggle("ske-zone", on);
+      if (on && z.dataset.radius) z.style.setProperty("--ske-r", z.dataset.radius + "px");
+      if (on) z.title = "Diskette: " + (z.dataset.say || "");
+      else z.removeAttribute("title");
+    });
+  }
+
   /* Clicks in the game while the panel is open: comment marks open their
      thread, red links offer to create the page, and clicking words jumps
      the markup to them. */
@@ -1434,6 +1489,7 @@
     document.addEventListener("click", onGameClick, true);
     new MutationObserver(function () {
       if (store.data.open) requestAnimationFrame(() => markGame(false));
+      requestAnimationFrame(showZones);
     }).observe(document.body, { childList: true, subtree: true });
     setInterval(function () {
       if (!store.data.open) return;

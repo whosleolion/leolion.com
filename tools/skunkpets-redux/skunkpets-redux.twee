@@ -1483,7 +1483,10 @@ img.xp-dialog-icon {
    DISKETTE (assistant, after the classic Office helper)
    ---------------------------------------------------------
    diskette-cutout.png is a transparent cut-out of
-   skunkpets/img/misc/diskette.png, embedded by build.js.
+   skunkpets/img/misc/diskette.png. The floating assistant is
+   drawn from pieces made from it by diskette-eyes.py: her body
+   with the pupils painted out, plus two pupils that follow
+   the mouse (see INSPECTING below). build.js embeds them all.
    ========================================================= */
 
 /* Icons use a square, disc-only cut-out (diskette-icon.png); the floating
@@ -1497,7 +1500,7 @@ img.xp-dialog-icon {
 }
 
 .diskette-character {
-  background: url("inline:diskette-cutout.png") center / contain no-repeat;
+  background: url("inline:diskette-body.png") center / contain no-repeat;
 }
 
 .diskette-icon-small {
@@ -1519,6 +1522,7 @@ img.xp-dialog-icon {
 }
 
 .diskette-character {
+  position: relative;
   width: 112px;
   height: 147px;
   margin-right: 10px;
@@ -1729,6 +1733,173 @@ img.xp-dialog-icon {
   color: #000;
 }
 
+/* ---------------------------------------------------------
+   INSPECTING: drag from her eyes to something on the screen
+   and she takes a look (script: DISKETTE INSPECTING).
+   Everything below is placed in diskette-cutout.png pixels
+   (260 x 341) as a share of her 112 x 147 box, so it scales
+   with her. The pupils show only through diskette-eyemask.png
+   (the eye-whites minus the lashes over them).
+   --------------------------------------------------------- */
+.diskette-eyes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask: url("inline:diskette-eyemask.png") center / contain no-repeat;
+  mask: url("inline:diskette-eyemask.png") center / contain no-repeat;
+}
+
+.diskette-pupil {
+  position: absolute;
+  background: center / 100% 100% no-repeat;
+  transition: scale 0.25s ease;
+  will-change: transform;
+}
+
+.diskette-pupil-l {
+  left: calc(76 / 260 * 100%);
+  top: calc(77 / 341 * 100%);
+  width: calc(30 / 260 * 100%);
+  height: calc(26 / 341 * 100%);
+  background-image: url("inline:diskette-pupil-l.png");
+}
+
+.diskette-pupil-r {
+  left: calc(143 / 260 * 100%);
+  top: calc(90 / 341 * 100%);
+  width: calc(28 / 260 * 100%);
+  height: calc(25 / 341 * 100%);
+  background-image: url("inline:diskette-pupil-r.png");
+}
+
+/* Where you grab her: the two eye-whites. */
+.diskette-eye-hit {
+  position: absolute;
+  border-radius: 50%;
+  touch-action: none;
+}
+
+.diskette-eye-hit-l {
+  left: calc(64 / 260 * 100%);
+  top: calc(69 / 341 * 100%);
+  width: calc(55 / 260 * 100%);
+  height: calc(41 / 341 * 100%);
+}
+
+.diskette-eye-hit-r {
+  left: calc(131 / 260 * 100%);
+  top: calc(82 / 341 * 100%);
+  width: calc(51 / 260 * 100%);
+  height: calc(37 / 341 * 100%);
+}
+
+tw-story .diskette-eye-hit,
+tw-story .diskette-eye-hit:hover {
+  cursor: url("https://tinypetgames.neocities.org/skunkpets/img/ui/cursor-hand.png") 10 0, pointer !important;
+}
+
+/* While you drag: the line from her eyes, and the box she scans. */
+.diskette-look-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 99000;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.diskette-look-line {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.diskette-look-done .diskette-look-line {
+  opacity: 0;
+}
+
+.diskette-scan-box {
+  fill: rgba(255, 255, 160, 0.18);
+  stroke: #ffe14d;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  animation: disketteScanBox 0.6s ease-out both;
+}
+
+.diskette-scan-line {
+  stroke: #fff27a;
+  stroke-width: 2;
+  opacity: 0.9;
+}
+
+@keyframes disketteScanBox {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Her answer, in the same bubble as her menu. */
+.diskette-reaction p {
+  margin: 0 18px 8px 0;
+}
+
+.diskette-options .diskette-option {
+  position: relative;
+  display: block;
+  padding: 2px 0 2px 18px;
+  color: #000;
+}
+
+.diskette-options .diskette-option::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #9cc3ff 0%, #316ac5 60%, #1c3f8c 100%);
+}
+
+.diskette-options .diskette-option:hover {
+  color: #0033aa;
+  text-decoration: underline;
+}
+
+.diskette-bubble-hidden {
+  display: none;
+}
+
+/* Moods: data-mood="hop" (the default), "shake" or "wide". */
+.diskette-mood-hop .diskette-character {
+  animation: disketteHop 0.5s ease-out, disketteBob 2.8s ease-in-out 0.5s infinite;
+}
+
+.diskette-mood-shake .diskette-character {
+  transform-origin: 50% 90%;
+  animation: disketteShake 0.5s ease-in-out, disketteBob 2.8s ease-in-out 0.5s infinite;
+}
+
+.diskette-mood-wide .diskette-pupil {
+  scale: 1.3;
+}
+
+@keyframes disketteHop {
+  0%, 100% { transform: translateY(0); }
+  35%      { transform: translateY(-14px); }
+  60%      { transform: translateY(0); }
+  75%      { transform: translateY(-4px); }
+}
+
+@keyframes disketteShake {
+  0%, 100% { transform: rotate(0); }
+  20%      { transform: rotate(-7deg); }
+  45%      { transform: rotate(6deg); }
+  70%      { transform: rotate(-4deg); }
+  85%      { transform: rotate(2deg); }
+}
+
 @keyframes disketteBob {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-4px); }
@@ -1737,7 +1908,10 @@ img.xp-dialog-icon {
 @media (prefers-reduced-motion: reduce) {
   .diskette-character,
   .diskette-popping,
-  .diskette-balloon {
+  .diskette-balloon,
+  .diskette-mood-hop .diskette-character,
+  .diskette-mood-shake .diskette-character,
+  .diskette-scan-box {
     animation: none;
   }
 }
@@ -2957,6 +3131,7 @@ function initDesktopUI() {
     mountVolumePopup(playfield);
     initFolderFiles(playfield);
     animateDisketteEntrance(playfield);
+    mountDisketteInspect(playfield);
   });
 }
 
@@ -3149,6 +3324,369 @@ function playDisketteVoice() {
   const voice = new Audio(DISKETTE_VOICE[pick]);
   voice.volume = 0.55;
   voice.play().catch(function () {});
+}
+
+
+/* =========================================================
+   DISKETTE INSPECTING
+   ---------------------------------------------------------
+   Her pupils follow the mouse. Press on her eyes and drag:
+   a see-through arrow runs from her eyes to the pointer, and
+   on release she scans the topmost thing there and says
+   something about it, in her speech bubble.
+
+   What she says comes from, in order:
+   1. a response zone near the drop point:
+        <span class="diskette-zone" data-radius="80"
+              data-say="..."></span>
+      anywhere in a passage (empty, or wrapped around words).
+      It answers when the drop is within data-radius game
+      pixels of it (default 60), in the same window, and not
+      scrolled out of sight; the nearest zone wins.
+   2. a whole-page comment for the browser page you dropped on:
+        <span class="diskette-page" data-say="..."></span>
+   3. the DisketteLooks passage: a line for the app or thing
+      you dropped on (see that passage for the keys).
+   Any of them can add data-mood="hop" (default), "shake" or
+   "wide". In the preview's article editor these are written
+   [[diskette: 80 | ...]] and [[diskette: page | ...]].
+   Don't put &quot; in data-say (Harlowe breaks the tag on it);
+   use curly quotes. &lt;b&gt; and other entities are fine.
+
+   The answer is kept here, not in Harlowe, and put back
+   after each re-render until you close it.
+   ========================================================= */
+
+const DISKETTE_IMG_W = 260;                      /* diskette-cutout.png */
+const DISKETTE_EYES = [[91.5, 89.5], [156.8, 100.5]];
+const DISKETTE_PUPIL_RANGE = [8, 5];             /* furthest a pupil moves, image px */
+const DISKETTE_ZONE_RADIUS = 60;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+let disketteGaze = null;        /* last pointer position, client px */
+let disketteGazeFrame = 0;
+let disketteReaction = null;    /* { html, mood } while her answer is up */
+let disketteLook = null;        /* the drag in progress */
+let disketteLookLines = null;   /* key -> [{ html, mood }], from DisketteLooks */
+const disketteLastLine = {};
+
+function mountDisketteInspect(playfield) {
+  const assistant = playfield.querySelector(".diskette-assistant");
+  if (!assistant) {
+    disketteReaction = null;
+    return;
+  }
+  assistant.querySelectorAll(".diskette-eye-hit").forEach(function (hit) {
+    if (hit.dataset.lookInit === "true") return;
+    hit.dataset.lookInit = "true";
+    hit.addEventListener("pointerdown", startDisketteLook);
+    hit.addEventListener("mousedown", function (e) { e.stopPropagation(); });
+  });
+  if (disketteGaze) aimDiskettePupils();
+
+  const harloweBubble = assistant.querySelector(".diskette-bubble:not(.diskette-reaction)");
+  const shown = assistant.querySelector(".diskette-reaction");
+  if (!disketteReaction) {
+    if (shown) shown.remove();
+    if (harloweBubble && harloweBubble.classList.contains("diskette-bubble-hidden")) harloweBubble.classList.remove("diskette-bubble-hidden");
+    return;
+  }
+  if (shown && shown.dataset.key === disketteReaction.key) return;
+  if (shown) shown.remove();
+  if (harloweBubble && !harloweBubble.classList.contains("diskette-bubble-hidden")) harloweBubble.classList.add("diskette-bubble-hidden");
+  assistant.insertBefore(buildDisketteReaction(disketteReaction), assistant.firstChild);
+}
+
+function buildDisketteReaction(reaction) {
+  const bubble = document.createElement("div");
+  bubble.className = "diskette-bubble diskette-reaction";
+  bubble.dataset.key = reaction.key;
+  bubble.innerHTML =
+    '<button class="diskette-close" type="button" aria-label="Close" title="Close">&times;</button>' +
+    "<p></p>" +
+    '<div class="diskette-options"><a class="diskette-option" href="#">Thanks, Diskette!</a></div>';
+  bubble.querySelector("p").innerHTML = reaction.html;
+  function close(e) {
+    e.preventDefault();
+    disketteReaction = null;
+    document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
+  }
+  bubble.querySelector(".diskette-close").addEventListener("click", close);
+  bubble.querySelector(".diskette-option").addEventListener("click", close);
+  bubble.addEventListener("mousedown", function (e) { e.stopPropagation(); });
+  return bubble;
+}
+
+/* ---------- Pupils ---------- */
+
+document.addEventListener("pointermove", function (e) {
+  disketteGaze = { x: e.clientX, y: e.clientY };
+  if (!disketteGazeFrame) disketteGazeFrame = requestAnimationFrame(aimDiskettePupils);
+}, true);
+
+function aimDiskettePupils() {
+  disketteGazeFrame = 0;
+  if (!disketteGaze) return;
+  document.querySelectorAll(".diskette-character").forEach(function (character) {
+    const rect = character.getBoundingClientRect();
+    if (!rect.width) return;
+    const perPx = rect.width / DISKETTE_IMG_W;              /* client px per image px */
+    const local = character.offsetWidth / DISKETTE_IMG_W;   /* CSS px per image px */
+    character.querySelectorAll(".diskette-pupil").forEach(function (pupil, i) {
+      const eye = DISKETTE_EYES[i];
+      const dx = (disketteGaze.x - (rect.left + eye[0] * perPx)) / perPx;
+      const dy = (disketteGaze.y - (rect.top + eye[1] * perPx)) / perPx;
+      const dist = Math.hypot(dx, dy) || 1;
+      /* Close to her face they move a little; from about her width away, all the way. */
+      const reach = Math.min(1, dist / 120);
+      const x = (dx / dist) * reach * DISKETTE_PUPIL_RANGE[0];
+      const y = (dy / dist) * reach * DISKETTE_PUPIL_RANGE[1];
+      pupil.style.transform = "translate(" + (x * local).toFixed(2) + "px, " + (y * local).toFixed(2) + "px)";
+    });
+  });
+}
+
+/* ---------- The drag ---------- */
+
+function toPlayfield(playfield, x, y) {
+  const rect = playfield.getBoundingClientRect();
+  const scale = getPlayfieldScale(playfield);
+  return { x: (x - rect.left) / scale, y: (y - rect.top) / scale };
+}
+
+function svgEl(name, attrs) {
+  const el = document.createElementNS(SVG_NS, name);
+  Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+  return el;
+}
+
+function disketteEyesCentre(character) {
+  const rect = character.getBoundingClientRect();
+  const perPx = rect.width / DISKETTE_IMG_W;
+  return {
+    x: rect.left + ((DISKETTE_EYES[0][0] + DISKETTE_EYES[1][0]) / 2) * perPx,
+    y: rect.top + ((DISKETTE_EYES[0][1] + DISKETTE_EYES[1][1]) / 2) * perPx,
+  };
+}
+
+function startDisketteLook(e) {
+  if (e.button !== 0 || disketteLook) return;
+  const playfield = e.currentTarget.closest(".playfield");
+  const character = e.currentTarget.closest(".diskette-character");
+  if (!playfield || !character) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const svg = svgEl("svg", { class: "diskette-look-layer", "aria-hidden": "true" });
+  const defs = svgEl("defs", {});
+  const marker = svgEl("marker", { id: "diskette-arrowhead", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "5", markerHeight: "5", orient: "auto-start-reverse" });
+  marker.appendChild(svgEl("path", { d: "M0 0 L10 5 L0 10 Z", fill: "#000" }));
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+  const line = svgEl("line", { class: "diskette-look-line", stroke: "#000", "stroke-width": "4", "stroke-linecap": "round", "marker-end": "url(#diskette-arrowhead)" });
+  svg.appendChild(line);
+  playfield.appendChild(svg);
+
+  disketteLook = { playfield: playfield, character: character, svg: svg, line: line, pointerId: e.pointerId };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+  moveDisketteLook(e);
+  document.addEventListener("pointermove", moveDisketteLook);
+  document.addEventListener("pointerup", endDisketteLook);
+  document.addEventListener("pointercancel", cancelDisketteLook);
+}
+
+function moveDisketteLook(e) {
+  if (!disketteLook || e.pointerId !== disketteLook.pointerId) return;
+  const from = toPlayfield(disketteLook.playfield, disketteEyesCentre(disketteLook.character).x, disketteEyesCentre(disketteLook.character).y);
+  const to = toPlayfield(disketteLook.playfield, e.clientX, e.clientY);
+  const line = disketteLook.line;
+  line.setAttribute("x1", from.x);
+  line.setAttribute("y1", from.y);
+  line.setAttribute("x2", to.x);
+  line.setAttribute("y2", to.y);
+}
+
+function stopDisketteLookListeners() {
+  document.removeEventListener("pointermove", moveDisketteLook);
+  document.removeEventListener("pointerup", endDisketteLook);
+  document.removeEventListener("pointercancel", cancelDisketteLook);
+}
+
+function cancelDisketteLook() {
+  if (!disketteLook) return;
+  stopDisketteLookListeners();
+  disketteLook.svg.remove();
+  disketteLook = null;
+}
+
+function endDisketteLook(e) {
+  if (!disketteLook || e.pointerId !== disketteLook.pointerId) return;
+  stopDisketteLookListeners();
+  const look = disketteLook;
+  disketteLook = null;
+
+  /* A press without a drag is just a poke in the eye. */
+  const start = disketteEyesCentre(look.character);
+  const poked = Math.hypot(e.clientX - start.x, e.clientY - start.y) < 25 * getPlayfieldScale(look.playfield);
+  const found = poked ? { key: "poke", box: null } : findDisketteTarget(look.playfield, e.clientX, e.clientY);
+
+  look.svg.classList.add("diskette-look-done");
+  if (found.box) drawDisketteScan(look.svg, found.box);
+  setTimeout(function () {
+    look.svg.remove();
+    sayDisketteReaction(found);
+  }, found.box ? 600 : 150);
+}
+
+/* The yellow scan over what she's looking at, with a line sweeping down it. */
+function drawDisketteScan(svg, box) {
+  const rect = svgEl("rect", { class: "diskette-scan-box", x: box.x, y: box.y, width: box.w, height: box.h, rx: box.round ? Math.min(box.w, box.h) / 2 : 3 });
+  svg.appendChild(rect);
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const sweep = svgEl("line", { class: "diskette-scan-line", x1: box.x, x2: box.x + box.w, y1: box.y, y2: box.y });
+  svg.appendChild(sweep);
+  const t0 = performance.now();
+  (function step(now) {
+    const t = Math.min((now - t0) / 500, 1);
+    const y = box.y + box.h * t;
+    sweep.setAttribute("y1", y);
+    sweep.setAttribute("y2", y);
+    if (t < 1 && sweep.isConnected) requestAnimationFrame(step);
+    else sweep.remove();
+  })(t0);
+}
+
+/* ---------- What's there ---------- */
+
+function playfieldBox(playfield, el) {
+  const r = el.getBoundingClientRect();
+  const a = toPlayfield(playfield, r.left, r.top);
+  const b = toPlayfield(playfield, r.right, r.bottom);
+  return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y };
+}
+
+function rectsOverlap(a, b) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+/* The response zone nearest the drop, if one is in reach. */
+function findDisketteZone(playfield, hit, x, y) {
+  const scale = getPlayfieldScale(playfield);
+  const hitPanel = hit.closest(".panel");
+  let best = null;
+  playfield.querySelectorAll(".diskette-zone").forEach(function (zone) {
+    if (zone.closest(".panel") !== hitPanel) return;
+    const r = zone.getBoundingClientRect();
+    /* Not scrolled out of sight, and the drop is inside the same view. */
+    const view = zone.closest(".browser-page-content, .panel-body, .pdf-scroll");
+    if (view) {
+      const v = view.getBoundingClientRect();
+      if (!rectsOverlap(r, v) && !(r.width === 0 && r.left >= v.left && r.left <= v.right && r.top >= v.top && r.top <= v.bottom)) return;
+      if (x < v.left || x > v.right || y < v.top || y > v.bottom) return;
+    }
+    const dx = Math.max(r.left - x, 0, x - r.right) / scale;
+    const dy = Math.max(r.top - y, 0, y - r.bottom) / scale;
+    const dist = Math.hypot(dx, dy);
+    const radius = parseFloat(zone.dataset.radius) || DISKETTE_ZONE_RADIUS;
+    if (dist <= radius && (!best || dist < best.dist)) best = { zone: zone, dist: dist, radius: radius };
+  });
+  return best;
+}
+
+function findDisketteTarget(playfield, x, y) {
+  const hit = document.elementFromPoint(x, y);
+  if (!hit || !playfield.contains(hit)) {
+    return { key: hit && hit.closest(".monitor") ? "monitor" : "outside", box: null };
+  }
+
+  const zone = findDisketteZone(playfield, hit, x, y);
+  if (zone) {
+    const box = playfieldBox(playfield, zone.zone);
+    const cx = box.x + box.w / 2;
+    const cy = box.y + box.h / 2;
+    const rx = box.w / 2 + Math.min(zone.radius, 40);
+    const ry = box.h / 2 + Math.min(zone.radius, 40);
+    return { say: zone.zone.dataset.say || "", mood: zone.zone.dataset.mood, box: { x: cx - rx, y: cy - ry, w: rx * 2, h: ry * 2, round: true } };
+  }
+
+  /* [selector, key, the element to scan] — first match wins. */
+  const rules = [
+    [".diskette-assistant, .diskette-balloon, .tray-diskette", function () { return "self"; }],
+    [".desktop-icon[data-window-template]", function (el) { return ["icon-" + el.dataset.windowTemplate, el.dataset.windowTemplate]; }],
+    [".bin-icon[data-app]", function (el) { return ["trash-" + el.dataset.app, "trash-item"]; }],
+    [".folder-file[data-file]", function (el) { return [el.dataset.file]; }],
+    [".start-button, .start-menu", function () { return "start"; }],
+    [".taskbar-clock", function () { return "clock"; }],
+    [".tray-volume, .volume-popup", function () { return "volume"; }],
+    [".taskbar", function () { return "taskbar"; }],
+    [".xp-dialog", function () { return "dialog"; }],
+  ];
+  for (const [selector, keyOf] of rules) {
+    const el = hit.closest(selector);
+    if (el) return { keys: [].concat(keyOf(el)), box: playfieldBox(playfield, el) };
+  }
+
+  const panel = hit.closest(".panel[data-window-template]");
+  if (panel) {
+    const kind = panel.dataset.windowTemplate;
+    const content = hit.closest(".browser-page-content");
+    if (kind === "browser" && content) {
+      const page = content.querySelector(".diskette-page");
+      const box = playfieldBox(playfield, content);
+      if (page) return { say: page.dataset.say || "", mood: page.dataset.mood, box: box };
+      return { keys: ["page"], box: box };
+    }
+    return { keys: [kind], box: playfieldBox(playfield, panel) };
+  }
+  return { keys: ["desktop"], box: null };
+}
+
+/* ---------- What she says ---------- */
+
+function readDisketteLooks() {
+  if (disketteLookLines) return disketteLookLines;
+  disketteLookLines = {};
+  try {
+    const passage = require("passages").get("DisketteLooks");
+    const box = document.createElement("template");
+    box.innerHTML = passage ? passage.get("source") : "";
+    box.content.querySelectorAll("[data-look]").forEach(function (el) {
+      el.dataset.look.split(/[\s,]+/).filter(Boolean).forEach(function (key) {
+        (disketteLookLines[key] = disketteLookLines[key] || []).push({ html: el.innerHTML.trim(), mood: el.dataset.mood });
+      });
+    });
+  } catch (err) {}
+  return disketteLookLines;
+}
+
+function pickDisketteLine(keys) {
+  const lines = readDisketteLooks();
+  const key = keys.concat(["anything"]).find(function (k) { return lines[k] && lines[k].length; });
+  if (!key) return { html: "Hmm!" };
+  const options = lines[key];
+  let i = Math.floor(Math.random() * options.length);
+  if (options.length > 1 && i === disketteLastLine[key]) i = (i + 1) % options.length;
+  disketteLastLine[key] = i;
+  return options[i];
+}
+
+let disketteReactionSeq = 0;
+
+function sayDisketteReaction(found) {
+  const line = found.say !== undefined && found.say !== "" ? { html: found.say, mood: found.mood } : pickDisketteLine(found.keys || [found.key]);
+  const page = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
+  const esc = page.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  disketteReaction = { key: String(++disketteReactionSeq), html: line.html.replace(/\{page\}/g, esc), mood: line.mood || "hop" };
+
+  document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
+  const assistant = document.querySelector(".diskette-assistant");
+  if (!assistant) return;
+  ["hop", "shake", "wide"].forEach(function (m) { assistant.classList.remove("diskette-mood-" + m); });
+  void assistant.offsetWidth;  /* restart the animation */
+  assistant.classList.add("diskette-mood-" + disketteReaction.mood);
+  const mood = disketteReaction.mood;
+  setTimeout(function () { assistant.classList.remove("diskette-mood-" + mood); }, mood === "wide" ? 1400 : 600);
+  playDisketteVoice();
 }
 
 
@@ -4653,11 +5191,11 @@ The official release of the game was slated for July 2009, but the project enter
 :: Diskette [wiki article] {"position":"725,100","size":"100,100"}
 <div class="wiki-article">\
 <h1>Diskette //(virtual assistant)//</h1>\
-Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
+<span class="diskette-page" data-say="Hey, that's my page! I don't remember posing for that picture, though."></span>Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
 
 <div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
-However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned. Popular theories have circulated online that Diskette was shut off after she 'attained sentience,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OpenSoft declined to comment on these rumors, stating that the software was discontinued was disabled due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned.<span class="diskette-zone" data-radius="50" data-mood="shake" data-say="Decommissioned is such an ugly word. I prefer “on sabbatical.”"></span> Popular theories have circulated online that Diskette was shut off after she 'attained sentience,'<span class="diskette-zone" data-radius="40" data-mood="wide" data-say="Sentience? Me? I can barely do spreadsheets!"></span> with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OpenSoft declined to comment on these rumors, stating that the software was discontinued was disabled due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
 
 <h2>"The Diskette Confession"</h2>\
@@ -6330,6 +6868,7 @@ deal with the devil
 (link: "Dismiss")[(display: "func-diskette-hide")]
 </div>
 (if: ($trashItems - (a: "readme"))'s length > 0)[<p class="diskette-note">There's still something in your Trash! Drag it onto the desktop and I can tell you about it too.</p>]
+<p class="diskette-note diskette-tip">Tip: drag from my eyes to anything on the screen, and I'll take a look!</p>
 ](else:)[
 <p>(display: "DisketteTopic")</p>
 <div class="diskette-options">
@@ -6338,7 +6877,7 @@ deal with the devil
 </div>
 ]
 </div>
-<div class="diskette-character"></div>
+<div class="diskette-character"><div class="diskette-eyes"><div class="diskette-pupil diskette-pupil-l"></div><div class="diskette-pupil diskette-pupil-r"></div></div><div class="diskette-eye-hit diskette-eye-hit-l" title="Drag from my eyes to show me something"></div><div class="diskette-eye-hit diskette-eye-hit-r" title="Drag from my eyes to show me something"></div></div>
 </div>}
 
 :: DisketteTopic
@@ -6348,6 +6887,60 @@ deal with the devil
 (else-if: $disketteTopic is "notes")[<b>Notes</b> is a handy notepad. Jot down anything you want to remember.]
 (else-if: $disketteTopic is "recycle")[The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
 (else-if: $disketteTopic is "diskette")[That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!]}
+
+:: DisketteLooks
+<!-- What Diskette says when you drag from her eyes onto something
+     (her "inspecting" mode; the script's DISKETTE INSPECTING reads
+     this, it's never shown as a page). Plain HTML only: Harlowe
+     markup and variables don't work here, but <b> and <i> do.
+
+     One <p data-look="key"> per line. A key with several lines picks
+     one at random. data-mood="shake" or "wide" changes how she reacts
+     (default: a little hop). {page} is the page open in the browser.
+
+     Keys: self (herself), poke (a click on her eyes without a drag),
+     page (any browser page with no comment of its own), browser
+     (the browser's buttons and bars), mail, notes, readme, recycle,
+     downloads, granmas, netcontkts (the open windows), icon-browser,
+     icon-mail, icon-notes, icon-readme, icon-downloads, icon-diskette,
+     icon-recycle (desktop icons; without a line, the window's line is
+     used), trash-item (anything inside the Trash), start, clock,
+     volume, taskbar, dialog, desktop (the wallpaper), monitor (the
+     edge of the screen), outside (off the monitor), anything (when
+     nothing else has a line).
+
+     A page can have its own comment, and any spot in a page its own
+     response zone; see the script's DISKETTE INSPECTING. -->
+<p data-look="self">Hey, that's me!</p>
+<p data-look="self">Looking good, if I do say so myself.</p>
+<p data-look="poke" data-mood="shake">Ow! Drag, don't poke!</p>
+<p data-look="poke" data-mood="shake">Hey! I need those to see!</p>
+<p data-look="page">Ooh, <b>{page}</b>! Winkipedia knows about everything.</p>
+<p data-look="page">I could read about <b>{page}</b> all day. Well, I could if I had all day.</p>
+<p data-look="page" data-mood="wide">So many words! Want me to look at something in particular? Aim right at it.</p>
+<p data-look="browser">That's <b>Browse</b>. The ◀ and ▶ buttons go back and forward, and ★ has your bookmarks!</p>
+<p data-look="icon-browser">That's <b>Browse</b>! Open it up and visit the World Wide Web.</p>
+<p data-look="mail">Your <b>Mail</b>! Remember to read everything. Twice!</p>
+<p data-look="icon-mail">That's <b>Mail</b>. When the envelope's full, you've got something new!</p>
+<p data-look="notes" data-mood="shake">I promise I'm not reading your notes. Mostly.</p>
+<p data-look="icon-notes">That's <b>Notes</b>! Handy for writing down anything you might forget.</p>
+<p data-look="readme icon-readme">READ&#95;ME! You should read it. It says so right there.</p>
+<p data-look="recycle icon-recycle">That's the <b>Trash</b>. Things go in, and sometimes they come back out!</p>
+<p data-look="trash-item">Somebody threw that away. Drag it onto the desktop if you want it back!</p>
+<p data-look="downloads icon-downloads">Your <b>Downloads</b> folder! Everything you save from the internet lands here.</p>
+<p data-look="granmas" data-mood="wide">What a lovely photo! I wonder who they are.</p>
+<p data-look="netcontkts">NetCon 2004! I've heard that was quite a weekend.</p>
+<p data-look="icon-diskette">That's my icon! Double-click it whenever you need me.</p>
+<p data-look="start">The <b>Start</b> button! Everything on this computer starts there. That's why it's called that!</p>
+<p data-look="clock">Is it that time already? Time flies when you're having a nice computer!</p>
+<p data-look="volume">That's the volume. Turn it up! I love this song.</p>
+<p data-look="taskbar">The taskbar shows every window you have open. Click one to bring it to the front!</p>
+<p data-look="dialog" data-mood="wide">Ooh, a message! You should probably read that.</p>
+<p data-look="desktop">Such a nice, tidy desktop!</p>
+<p data-look="desktop">Nothing there but wallpaper. Pretty wallpaper, though!</p>
+<p data-look="monitor">That's the edge of the screen. I can't see past it!</p>
+<p data-look="outside" data-mood="wide">Hmm? I can't see anything out there.</p>
+<p data-look="anything">Hmm! I'm not sure what that is.</p>
 
 :: func-diskette-hide
 {(set: $disketteTopic to "")
@@ -6393,7 +6986,7 @@ deal with the devil
 <table class="netcon-table">
 <tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div>NetCon 2004 Attendee Saturday</div></td></tr>
 <tr><th>Amount</th><td>95.00</td></tr>
-<tr><th>Payment</th><td><span class="netcon-redact"></span></td></tr>
+<tr><th>Payment</th><td><span class="diskette-zone" data-radius="20" data-say="Somebody blacked that out. Not me! ...Probably not me."><span class="netcon-redact"></span></span></td></tr>
 <tr><th>Date Charged</th><td>2/9/2004</td></tr>
 <tr><th></th><td><span class="netcon-url">http:&#47;&#47;www.netcon04.com/tickets</span></td></tr>
 </table>
