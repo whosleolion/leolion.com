@@ -96,6 +96,7 @@ check('links and photos use the short form', start.includes('[[Tom Barry]]') && 
 await ed.set(start.replace('an American media investment firm', 'an American media conglomerate').replace('New York. Originally', 'New York, near [[Bin City]]. Originally'));
 await W(1000);
 check('edits show in the game as you type', (await text('.browser-page-content')).includes('an American media conglomerate'));
+check('unsaved changes show on the Markup tab and as a Save chip', (await text('.ske-tab-btn[data-tab="markup"] .ske-tab-badge')) === '●' && (await text('.ske-save-chip')) === '1 unsaved · Save' && (await p.locator('.ske-save-chip').isVisible()), await text('.ske-save-chip'));
 check('a link to a missing page is red in the markup', (await p.locator('.cm-ske-redlink').filter({ hasText: 'Bin City' }).count()) === 1);
 check('...and red (not a broken link) in the game', (await p.locator('.browser-page-content .ske-redlink').filter({ hasText: 'Bin City' }).count()) === 1);
 check('...and listed with Create', (await text('.ske-missing')).includes('Bin City'));
@@ -159,14 +160,16 @@ check('the saved new page is still there', (await text('.browser-page-content'))
 await goTo('REV (Recast Entertainment Ventures)'); await W(1000);
 
 // ---------- Comments pinned to text ----------
-check('the panel is the Backend Editor, with four tabs', (await text('.ske-head b')) === 'Backend Editor' && (await text('.ske-tabs')).replace(/\s+/g, ' ') === 'Markup Comments Diskette Events', await text('.ske-tabs'));
+check('the panel is the Backend Editor, with four tabs', (await text('.ske-head b')) === 'Backend Editor' && (await p.$$eval('.ske-tab-label', (l) => l.map((x) => x.textContent).join(' '))) === 'Markup Comments Diskette Events', await text('.ske-tabs'));
 check('toggle counts open notes', (await text('.ske-toggle')).includes('2 comments'), await text('.ske-toggle'));
+check('...so does the Comments tab', (await text('.ske-tab-btn[data-tab="comments"] .ske-tab-badge')) === '2');
 check('notes do not show in the game on the Markup tab', (await p.locator('.browser-page-content mark.ske-mark').count()) === 0);
 await p.locator('.ske-tab-btn[data-tab="comments"]').click(); await W(600);
 check('a pinned comment is highlighted in the game', (await p.locator('.browser-page-content mark.ske-mark').filter({ hasText: 'Glen Cove' }).count()) >= 1);
 check('...and in the markup', (await p.locator('.cm-ske-comment').filter({ hasText: 'Glen Cove' }).count()) >= 1);
 await p.locator('.browser-page-content .ske-mark-badge').first().click(); await W(500);
 check('clicking it in the game opens its thread', (await p.locator('.ske-comment.ske-comment-focus').filter({ hasText: 'Where is Glen Cove?' }).count()) === 1);
+check('...and makes its words the selection', (await text('.ske-crumbs')).includes('Glen Cove'), await text('.ske-crumbs'));
 check('...and selects its words in the markup', (await p.evaluate(() => { const v = document.querySelector('.cm-ske-comment-focus'); return v ? v.textContent : ''; })).includes('Glen Cove'));
 const txt = await ed.get();
 const q = txt.indexOf('media conglomerate');
@@ -196,8 +199,10 @@ if (OUT) await p.screenshot({ path: `${OUT}/comments.png` });
 await p.locator('.ske-comment').filter({ hasText: 'Should this say conglomerate?' }).locator('button').filter({ hasText: 'Resolve' }).click(); await W(1000);
 check('resolved comments fold away and stop highlighting', (await text('.ske-resolved summary')).includes('Resolved (1)') && (await p.locator('.browser-page-content mark.ske-mark').filter({ hasText: 'media empire' }).count()) === 0);
 
-// Click a word in the game: the markup jumps there (Markup tab)
+// A plain click in the game just plays it (no selection, no cursor jump)
+await p.keyboard.press('Escape'); await W(200);
 await p.locator('.ske-tab-btn[data-tab="markup"]').click(); await W(400);
+const cur0 = await p.evaluate(() => window.SkunkpetsEditorDebug.cursor());
 const pt = await p.evaluate(() => {
   const w = document.createTreeWalker(document.querySelector('.browser-page-content'), NodeFilter.SHOW_TEXT);
   for (let n = w.nextNode(); n; n = w.nextNode()) {
@@ -207,14 +212,21 @@ const pt = await p.evaluate(() => {
   return null;
 });
 if (pt) { await p.mouse.click(pt[0], pt[1]); await W(400); }
-const cursor = await p.evaluate(() => window.SkunkpetsEditorDebug.cursor());
-const target = (await ed.get()).indexOf('nationwide development');
-check('clicking words in the game moves the markup cursor there', !!pt && Math.abs(cursor - (target + 3)) <= 2, `cursor ${cursor}, word at ${target}`);
+check('a plain click in the game selects nothing', !!pt && (await p.locator('.ske-crumbs.ske-hidden').count()) === 1 && (await p.evaluate(() => window.SkunkpetsEditorDebug.cursor())) === cur0);
 
-// Go to another page's notes
+// The Comments tab with nothing selected: every comment, by page
 await p.locator('.ske-tab-btn[data-tab="comments"]').click(); await W(400);
-await p.locator('.ske-other').filter({ hasText: 'Tom Barry' }).locator('button').click(); await W(1300);
-check('Go opens that page with its notes', (await text('.ske-title')) === 'Tom Barry' && (await text('.ske-comment-list')).includes('Is his birth year right?'));
+check('Comments with nothing selected lists all of them, by page', (await text('.ske-comments-body .ske-section-title')) === 'All comments' && (await p.locator('.ske-comment-group').filter({ hasText: 'Tom Barry' }).count()) === 1 && (await p.locator('.ske-comment-group').first().innerText()).includes('REV'), await p.locator('.ske-comment-group').allInnerTexts().then((a) => a.join(' | ')));
+await p.locator('.ske-filter .ske-cycle-btn', { hasText: 'Resolved' }).click(); await W(300);
+check('...Resolved shows the resolved ones', (await text('.ske-comment-list')).includes('Should this say conglomerate?') && !(await text('.ske-comment-list')).includes('Where is Glen Cove?'));
+await p.locator('.ske-filter .ske-cycle-btn', { hasText: 'Open' }).click(); await W(300);
+await p.locator('.ske-comment-search').fill('birth'); await W(300);
+check('...search narrows them', (await p.locator('.ske-comment-list .ske-comment').count()) === 1 && (await text('.ske-comment-list')).includes('Is his birth year right?'));
+await p.locator('.ske-comment').filter({ hasText: 'Is his birth year right?' }).locator('button', { hasText: 'Show me' }).click(); await W(1300);
+check('Show me opens that page and selects what it is on', (await text('.ske-crumbs')).includes('Tom Barry') && (await text('.ske-comment-list')).includes('Is his birth year right?'), await text('.ske-crumbs'));
+await p.locator('.ske-back').click(); await W(300);
+await p.locator('.ske-comment-search').fill(''); await W(200);
+check('← All comments goes back to the list', (await text('.ske-comments-body .ske-section-title')) === 'All comments' && (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);
 
 // ---------- Selecting in the game: crumbs, popup, and each tab following ----------
 const wordsAt = async (words) => p.evaluate((w) => {
@@ -241,7 +253,7 @@ const drag = await wordsAt('his two sons');
 await p.mouse.move(drag[0], drag[1]); await p.mouse.down(); await p.mouse.move(drag[2], drag[3], { steps: 8 }); await p.mouse.up(); await W(600);
 check('dragging across words selects them: breadcrumb', (await text('.ske-crumbs')).includes('Tom Barry') && (await text('.ske-crumbs')).includes('“his two sons”'), await text('.ske-crumbs'));
 check('...a popup with Markup, Comment and Diskette', (await text('.ske-pop')).includes('Markup') && (await text('.ske-pop')).includes('Comment') && (await text('.ske-pop')).includes('Diskette'), await text('.ske-pop'));
-check('...and the Comments tab follows it', (await text('.ske-comments-body .ske-section-title')).startsWith('Comments on “his two sons”'), await text('.ske-comments-body .ske-section-title'));
+check('...and the Comments tab follows it', (await text('.ske-comments-body .ske-section-title')).includes('Comments on “his two sons”'), await text('.ske-comments-body .ske-section-title'));
 await p.locator('.ske-comment-input').first().fill('Is Bruce one of them?');
 await p.locator('.ske-post').click(); await W(1200);
 const sonsNote = commentsFile.data.comments.find((c) => c.text === 'Is Bruce one of them?');
@@ -268,22 +280,33 @@ await p.keyboard.press('Escape'); await W(200);
 check('Esc clears the selection', (await p.locator('.ske-pop').count()) === 0 && (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);
 // Edit mode: click a thing
 await p.locator('.ske-aim-btn').click(); await W(200);
+check('Edit mode shows its bar over the game', (await p.locator('.ske-aimbar').count()) === 1);
 await p.mouse.click(...await box('.taskbar-clock')); await W(500);
 check('Edit mode: clicking the clock selects it', (await text('.ske-crumbs')).includes('the clock'), await text('.ske-crumbs'));
 check('...and the popup shows her clock line', (await text('.ske-pop-diskette')).includes('“'), await text('.ske-pop-diskette'));
-await p.keyboard.press('Escape'); await p.keyboard.press('Escape'); await W(200);
-check('Esc twice leaves Edit mode', (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 0);
+check('...and Edit mode ends after one pick', (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 0 && (await p.locator('.ske-aimbar').count()) === 0);
+await p.keyboard.press('e'); await W(200);
+await p.keyboard.down('Shift'); await p.mouse.click(...await box('.start-button')); await p.keyboard.up('Shift'); await W(400);
+check('Shift-click picks and stays in Edit mode', (await text('.ske-crumbs')).includes('the Start button') && (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 1, await text('.ske-crumbs'));
+await p.keyboard.press('Escape'); await W(200);
+check('Esc leaves Edit mode first...', (await p.locator('.ske-aim-btn.ske-aim-on').count()) === 0 && (await p.locator('.ske-crumbs.ske-hidden').count()) === 0);
+await p.keyboard.press('Escape'); await W(200);
+check('...then clears the selection', (await p.locator('.ske-crumbs.ske-hidden').count()) === 1);
 
 // ---------- Diskette tab overview: drafts, lines, and saving ----------
 await p.locator('.ske-tab-btn[data-tab="diskette"]').click(); await W(500);
 const ticketCard = p.locator('.ske-react').filter({ hasText: 'blacked that out' });
 check('the overview groups reactions by place', (await text('.ske-tab-diskette')).includes('DESKTOP & APPS') || (await p.locator('.ske-group-title').filter({ hasText: 'Desktop & apps' }).count()) === 1);
+const sons = await wordsAt('his two sons');
+await p.mouse.click(sons[0] + 4, sons[1]); await W(600);
+check('clicking a zone in the game (Diskette tab) selects it and opens its card', (await text('.ske-crumbs')).includes('his two sons') && (await p.locator('.ske-react-open').filter({ hasText: 'Bruce' }).count()) === 1, await text('.ske-crumbs'));
+await p.keyboard.press('Escape'); await W(400);
 await ticketCard.locator('.ske-react-head').click(); await W(200);
 await ticketCard.locator('textarea').fill('A ticket to NetCon 2004! Somebody had fun.'); await W(1200);
 await p.locator('.ske-react-open .ske-icon-btn', { hasText: 'Make draft' }).first().click(); await W(800);
-check('Make draft moves it to Drafts, last', /Diskette \(1 drafts?\)/.test(await text('.ske-tab-btn[data-tab="diskette"]')) && (await p.locator('.ske-group-drafts .ske-react').count()) === 1, await text('.ske-tab-btn[data-tab="diskette"]'));
+check('Make draft moves it to Drafts, last', (await text('.ske-tab-btn[data-tab="diskette"] .ske-tab-badge')) === '1 draft' && (await p.locator('.ske-group-drafts .ske-react').count()) === 1, await text('.ske-tab-btn[data-tab="diskette"]'));
 await p.locator('.ske-group-drafts .ske-icon-btn', { hasText: 'Publish' }).click(); await W(800);
-check('Publish puts it back', (await text('.ske-tab-btn[data-tab="diskette"]')) === 'Diskette');
+check('Publish puts it back', (await p.locator('.ske-tab-btn[data-tab="diskette"] .ske-tab-badge.ske-hidden').count()) === 1);
 check('editing a reaction outside the articles edits that passage', (await text('.ske-pending')).includes('RenderNetconTicket'), await text('.ske-pending'));
 await p.locator('.ske-tab-diskette .ske-icon-btn', { hasText: 'Line for something you can' }).click();
 await p.locator('.ske-modal select').first().selectOption('outside');
@@ -297,6 +320,16 @@ check('saving commits reactions with everything else', !!savedTwee && savedTwee.
 await p.locator('.ske-tab-btn[data-tab="events"]').click(); await W(1500);
 check('Events lists events, ticked when they happened', (await p.locator('.ske-event-done').filter({ hasText: 'game-started' }).count()) === 1 && (await p.locator('.ske-event').count()) > 20);
 await p.locator('.ske-tab-btn[data-tab="markup"]').click(); await W(300);
+
+// ☰ Pages: every page, what needs work, and opening one
+await p.locator('.ske-pages-btn').click(); await W(400);
+check('☰ Pages lists every page by kind', (await p.locator('.ske-pi-row').filter({ hasText: 'Tom Barry' }).count()) === 1 && (await text('.ske-pageindex')).includes('Winkipedia') && (await p.locator('.ske-tab-markup .ske-cm').isVisible()) === false);
+check('...with comment and Diskette counts', (await p.locator('.ske-pi-row').filter({ hasText: 'Tom Barry' }).innerText()).includes('◉'), await p.locator('.ske-pi-row').filter({ hasText: 'Tom Barry' }).innerText());
+await p.locator('.ske-page-search').fill('kraska'); await W(300);
+check('...and finds pages by name', (await p.locator('.ske-pi-row').count()) >= 4 && !(await text('.ske-page-list')).includes('Tom Barry'));
+await p.locator('.ske-page-search').fill(''); await W(200);
+await p.locator('.ske-pi-row').filter({ hasText: 'Nick Galveston' }).first().click(); await W(1300);
+check('clicking a page opens it in the game and the markup', (await text('.ske-title')) === 'Nick Galveston' && (await p.locator('.ske-tab-markup.ske-index-mode').count()) === 0 && (await ed.get()).length > 100, await text('.ske-title'));
 
 // Closing the panel leaves the game clean
 await goTo('REV (Recast Entertainment Ventures)'); await W(900);
