@@ -566,7 +566,7 @@ Add `article` to its tags if it should be findable in Winkipedia.
 - **Global Games Archive** (`globalgamesarchive.co.uk`) has a search box
   handled by the script (`GLOBAL GAMES ARCHIVE — SEARCH`). Searching "kraska",
   "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`;
-  "muzzy", "muzzythegrump", "grump" or "kill diskette" to `muzzythegrump`
+  "muzzy", "muzzythegrump", "grump", "diskette" or "kill diskette" to `muzzythegrump`
   (each creator: its terms and hidden link in the script's `creators` list).
 - **kraska1** pages embed the minigames in `<iframe>`s from
   tinypetgames.neocities.org. The "devlink-userbase" link shows an "exiting to
@@ -574,10 +574,15 @@ Add `article` to its tags if it should be findable in Winkipedia.
 - **muzzythegrump** is another archive creator, with an almost empty profile
   and one game, **KILL DISKETTE** (`muzzythegrump: KILL DISKETTE`): Diskette
   pops out of one of nine holes, shoot her (crosshair, gunshot) before she
-  drops back and she shatters (glass), the kill counter goes up and she gets
-  faster. Our own minigames live next to the game,
-  `src/building/skunkpets/minigames/<name>/index.html` (self-contained; sound
-  made with Web Audio), and the page embeds them with
+  drops back and she shatters (a random glass break and one of her screams,
+  robot-voiced), the kill counter goes up and she gets faster; each pop-up
+  says one of her "hmm" whirrs. The banner is `banner-muzzythegrump.png`
+  (embedded). The sounds come from
+  `tools/skunkpets-redux/kill-diskette/make-sounds.py` (recordings in its
+  `sources/`; every clip brought to the same quiet level, and the game's
+  `VOLUME` keeps them low). Our own minigames live next to the game,
+  `src/building/skunkpets/minigames/<name>/index.html` (with its own art and
+  sounds next to it), and the page embeds them with
   `<iframe data-site-src="/building/skunkpets/minigames/<name>/">`
   (`initSiteFrames` sets the src through `siteAsset`, so the preview loads its
   own copy).
@@ -749,7 +754,7 @@ reorder, and **+ Another response here** asks when she should say it.
 **Thanks / That's enough:** every answer offers **Thanks, Diskette!** and
 **That's enough, Diskette.** (tucks her into the tray). Thanks brings her
 follow-up: the answer's own `data-then` (friendly `then: Ugh, can we look
-at something nicer?`), else "Need me to look at anything else?", offering
+at something nicer?`), else "Want me to stick around?", offering
 **Sure!** (she stays up, quiet, ready to look again) and **No, that's
 all.** (tray). The × on any bubble just quiets her. Once she's looked at anything
 (`diskette-first-look`), her menu opens with "Need me to look at anything

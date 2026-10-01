@@ -2347,10 +2347,11 @@ span.xp-dialog-icon {
 }
 
 /* muzzythegrump's (mostly empty) creator page */
-.gga-user {
-  padding: 6px 0 2px;
-  font: bold 22px "Courier New", Courier, monospace;
-  color: #ddd;
+.gga-banner-muzzy {
+  aspect-ratio: 1600 / 300;
+  margin: 0 0 6px;
+  background: url("inline:banner-muzzythegrump.png") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 
 .gga-empty {
@@ -3516,7 +3517,7 @@ function mountDisketteInspect(playfield) {
    "Sure!" (she stays up, quiet, ready to look again) and "No, that's all."
    (tray). The x on any bubble just leaves her up, quiet; clicking her
    brings her menu. */
-const DISKETTE_FOLLOWUP = "Need me to look at anything else?";
+const DISKETTE_FOLLOWUP = "Want me to stick around?";
 
 function buildDisketteReaction(reaction) {
   const bubble = document.createElement("div");
@@ -4683,7 +4684,7 @@ document.addEventListener("click", function (e) {
   /* Each creator: the search terms that find them, and their hidden link. */
   const creators = [
     [["kraska", "kraska1", "bad door", "deal with the devil"], ".gga-nav-hidden"],
-    [["muzzy", "muzzythegrump", "kill diskette", "grump"], ".gga-nav-muzzy"],
+    [["muzzy", "muzzythegrump", "kill diskette", "grump", "diskette"], ".gga-nav-muzzy"],
   ];
   for (const [terms, nav] of creators) {
     if (terms.some(function (t) { return q === t || q.includes(t); })) {
@@ -7126,7 +7127,7 @@ you can check out more of my work on (link-repeat: "http://devlink-userbase.skun
 
 :: muzzythegrump [wiki gamesarchive] {"position":"1350,725","size":"100,100"}
 <div class="wiki-gamesarchive">\
-<div class="gga-user">muzzythegrump</div>\
+<div class="gga-banner-muzzy" role="img" aria-label="globalgamesarchive.co.uk: games by user muzzythegrump"></div>\
 <div width="100%" style="text-align:center">\
 (text-style:"underline")[''ABOUT ME'']<br>\
 <span class="gga-empty">this user hasn't written anything yet.</span><br></div>\
@@ -7143,7 +7144,7 @@ you can check out more of my work on (link-repeat: "http://devlink-userbase.skun
 
 :: muzzythegrump: KILL DISKETTE [wiki gamesarchive] {"position":"1475,725","size":"100,100"}
 <div class="wiki-gamesarchive">\
-<div class="gga-user">muzzythegrump</div><hr>\
+<div class="gga-banner-muzzy" role="img" aria-label="globalgamesarchive.co.uk: games by user muzzythegrump"></div><hr>\
 <div style="width: 100%; height: 330px; background: black;">\
   <iframe
     data-site-src="/building/skunkpets/minigames/kill-diskette/"
@@ -7347,7 +7348,7 @@ deal with the devil
      round, data-cycle="random" picks one (never the same twice running).
 
      data-then="..." is her follow-up after "Thanks, Diskette!" for that
-     line (default: "Need me to look at anything else?"). A line
+     line (default: "Want me to stick around?"). A line
      with data-draft is a draft (the editor's Drafts) and is never said
      until it's published.
 

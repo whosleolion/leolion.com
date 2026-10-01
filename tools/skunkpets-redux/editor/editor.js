@@ -3027,7 +3027,7 @@
     const selector = item.shape === "element" && !item.photo ? el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.on, title: "CSS selector of what it covers, in the same page or window" }) : null;
     const cond = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.cond, placeholder: "only if: event, !event", title: "Only when these events have happened (!name = only before). See the Events tab." });
     const condNote = el("div", { class: "ske-muted ske-cond-note", text: conditionNow(item.cond) });
-    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks: Need me to look at anything else?", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
+    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks: Want me to stick around?", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
     let timer = null;
     const apply = function () {
       clearTimeout(timer);
@@ -3186,7 +3186,7 @@
     ["Several responses", "One spot can have several responses, each with its own “only if”: she says the first one that fits (one without a condition always fits, so it goes last, as the “otherwise”). “+ Another response here” asks when she should say it and puts it in place; the cards are numbered, ▶ marks what she'd say now in this playthrough, ↑ ↓ reorder them, and ⚠ never means one above always wins first."],
     ["Only if (events)", "Event names from the Events tab, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
-    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks brings her follow-up: the reaction's own (the “after Thanks” box), otherwise “Need me to look at anything else?”, offering “Sure!” and “No, that's all.”."],
+    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks brings her follow-up: the reaction's own (the “after Thanks” box), otherwise “Want me to stick around?”, offering “Sure!” and “No, that's all.”."],
     ["Drafts", "New reactions are live straight away. “Make draft” takes one out of the game while you work on it; drafts are listed last, and “Publish” puts one back."],
     ["In the game", "On this tab, zones show in the game: points as a dot and dashed circle, words and elements outlined; drafts dashed grey. Click a zone to open it here."],
     ["In the markup", "[[diskette: 80 | Her line.]]   a point\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | around | Her line.]] … [[/diskette]]   around a whole paragraph\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | Her line.]]"],

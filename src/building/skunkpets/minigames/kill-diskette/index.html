@@ -13,7 +13,11 @@
   Diskette pops up out of one of nine holes and drops back down. Click her
   while she's up: she shatters and the kill counter goes up. The more kills,
   the shorter she stays up and the sooner she pops up again.
-  The gunshot and the glass are made with Web Audio (no sound files).
+  Sounds: gunshot.mp3, glass-1..3 (a random one per kill), scream-1..4
+  (her screams, through her robot voice; random, never the same twice
+  running) and, when she pops up, one of her usual "hmm" whirrs from the
+  game (../../diskette/). Made by tools/skunkpets-redux/kill-diskette/
+  make-sounds.py; VOLUME below keeps them all quiet.
 -->
 <style>
   :root {
@@ -271,6 +275,7 @@
     current = holes[i];
     current.classList.remove("dead");
     current.classList.add("up");
+    whirr();
     clearTimeout(downTimer);
     downTimer = setTimeout(popDown, upTime());
   }
@@ -359,84 +364,68 @@
     }
   }
 
-  /* ---------- Sound (Web Audio, made on the spot) ---------- */
+  /* ---------- Sound ---------- */
+
+  const SOUNDS = {
+    gunshot: ["gunshot.mp3"],
+    glass: ["glass-1.mp3", "glass-2.mp3", "glass-3.mp3"],
+    scream: ["scream-1.mp3", "scream-2.mp3", "scream-3.mp3", "scream-4.mp3"],
+    whirr: [1, 2, 3, 4, 5, 6, 7, 8].map((n) => "../../diskette/diskette-hmm-" + n + ".mp3"),
+  };
+  /* How loud each kind plays (0..1). Kept low on purpose. */
+  const VOLUME = { gunshot: 0.45, glass: 0.5, scream: 0.55, whirr: 0.3 };
 
   let ac = null;
+  const buffers = {};      /* kind -> [AudioBuffer] */
+  const lastPick = {};     /* kind -> index played last */
+  let screaming = null;    /* the scream playing, cut off by the next one */
+
   function audio() {
     if (!ac) {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) ac = new AC();
+      if (AC) { ac = new AC(); loadSounds(); }
     }
     if (ac && ac.state === "suspended") ac.resume();
     return ac;
   }
 
-  function noiseBuffer(seconds) {
-    const len = Math.floor(ac.sampleRate * seconds);
-    const buf = ac.createBuffer(1, len, ac.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    return buf;
+  function loadSounds() {
+    Object.keys(SOUNDS).forEach(function (kind) {
+      buffers[kind] = [];
+      SOUNDS[kind].forEach(function (file, i) {
+        fetch(file)
+          .then((r) => r.arrayBuffer())
+          .then((data) => new Promise((ok, fail) => ac.decodeAudioData(data, ok, fail)))
+          .then((buf) => { buffers[kind][i] = buf; })
+          .catch(() => {});
+      });
+    });
   }
 
-  function gunshot() {
-    if (!audio()) return;
-    const t = ac.currentTime;
-    /* the crack */
-    const n = ac.createBufferSource();
-    n.buffer = noiseBuffer(0.4);
-    const lp = ac.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(5000, t);
-    lp.frequency.exponentialRampToValueAtTime(400, t + 0.25);
+  /* Plays a random clip of that kind (never the same one twice running). */
+  function play(kind) {
+    if (!audio()) return null;
+    const list = (buffers[kind] || []).map((b, i) => [b, i]).filter((x) => x[0]);
+    if (!list.length) return null;
+    let options = list.filter((x) => x[1] !== lastPick[kind]);
+    if (!options.length) options = list;
+    const [buf, i] = options[Math.floor(Math.random() * options.length)];
+    lastPick[kind] = i;
+    const src = ac.createBufferSource();
+    src.buffer = buf;
     const g = ac.createGain();
-    g.gain.setValueAtTime(0.9, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-    n.connect(lp).connect(g).connect(ac.destination);
-    n.start(t);
-    n.stop(t + 0.4);
-    /* the thump */
-    const o = ac.createOscillator();
-    o.type = "sine";
-    o.frequency.setValueAtTime(150, t);
-    o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-    const og = ac.createGain();
-    og.gain.setValueAtTime(0.8, t);
-    og.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-    o.connect(og).connect(ac.destination);
-    o.start(t);
-    o.stop(t + 0.2);
+    g.gain.value = VOLUME[kind];
+    src.connect(g).connect(ac.destination);
+    src.start();
+    return src;
   }
 
+  const gunshot = () => play("gunshot");
+  const whirr = () => play("whirr");
   function glass() {
-    if (!audio()) return;
-    const t = ac.currentTime + 0.02;
-    /* the smash */
-    const n = ac.createBufferSource();
-    n.buffer = noiseBuffer(0.6);
-    const hp = ac.createBiquadFilter();
-    hp.type = "highpass";
-    hp.frequency.value = 2500;
-    const g = ac.createGain();
-    g.gain.setValueAtTime(0.5, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    n.connect(hp).connect(g).connect(ac.destination);
-    n.start(t);
-    n.stop(t + 0.6);
-    /* the tinkles */
-    for (let i = 0; i < 9; i++) {
-      const at = t + Math.random() * 0.35;
-      const o = ac.createOscillator();
-      o.type = "sine";
-      o.frequency.value = 2200 + Math.random() * 4500;
-      const og = ac.createGain();
-      og.gain.setValueAtTime(0.0001, at);
-      og.gain.exponentialRampToValueAtTime(0.12 + Math.random() * 0.1, at + 0.005);
-      og.gain.exponentialRampToValueAtTime(0.0001, at + 0.15 + Math.random() * 0.35);
-      o.connect(og).connect(ac.destination);
-      o.start(at);
-      o.stop(at + 0.6);
-    }
+    play("glass");
+    if (screaming) { try { screaming.stop(); } catch (e) {} }
+    screaming = play("scream");
   }
 
   /* ---------- Input ---------- */
