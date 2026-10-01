@@ -3423,8 +3423,7 @@ function trackGameEvents() {
    lines (the editor's To write list): she ignores it.
    Several alternatives in one, separated by >>, are said in
    turn (data-cycle; see cycleDisketteLine). data-then is her
-   follow-up after "Thanks, Diskette!" (default
-   DISKETTE_FOLLOWUP).
+   follow-up after "Thanks, Diskette!" (see buildDisketteReaction).
    Don't put &quot; in data-say (Harlowe breaks the tag on it);
    use curly quotes. &lt;b&gt; and other entities are fine.
 
@@ -3464,10 +3463,9 @@ function mountDisketteInspect(playfield) {
   if (character && character.dataset.talkInit !== "true") {
     character.dataset.talkInit = "true";
     character.addEventListener("click", function () {
-      if (disketteLook) return;
+      if (disketteLook || disketteReaction) return;
       const quiet = !assistant.querySelector(".diskette-bubble:not(.diskette-bubble-hidden)");
-      if (!disketteReaction && !quiet) return;
-      disketteReaction = null;
+      if (!quiet) return;
       runDesktopAction("diskette:talk");
     });
   }
@@ -3486,10 +3484,12 @@ function mountDisketteInspect(playfield) {
   assistant.insertBefore(buildDisketteReaction(disketteReaction), assistant.firstChild);
 }
 
-/* Her answer has "Thanks, Diskette!", which brings her follow-up: the
-   reaction's own data-then if it has one, else DISKETTE_FOLLOWUP. The
-   follow-up has "That's enough, Diskette." (tuck her into the tray). The x
-   on either leaves her up, just quiet (clicking her brings her menu). */
+/* A short conversation. Her answer offers "Thanks, Diskette!" and "That's
+   enough, Diskette." (tucks her into the tray). Thanks brings her follow-up:
+   the answer's own data-then if it has one, else DISKETTE_FOLLOWUP, with
+   "Sure!" (she stays up, quiet, ready to look again) and "No, that's all."
+   (tray). The x on any bubble just leaves her up, quiet; clicking her
+   brings her menu. */
 const DISKETTE_FOLLOWUP = "Need me to look at anything else?";
 
 function buildDisketteReaction(reaction) {
@@ -3499,26 +3499,30 @@ function buildDisketteReaction(reaction) {
   bubble.innerHTML =
     '<button class="diskette-close" type="button" aria-label="Close" title="Close (she stays; click her to talk again)">&times;</button>' +
     "<p></p>" +
-    '<div class="diskette-options"><a class="diskette-option" href="#"></a></div>';
+    '<div class="diskette-options"><a class="diskette-option diskette-yes" href="#"></a>' +
+    '<a class="diskette-option diskette-enough" href="#"></a></div>';
   bubble.querySelector("p").innerHTML = reaction.html;
-  bubble.querySelector(".diskette-option").textContent = reaction.followup ? "That's enough, Diskette." : "Thanks, Diskette!";
-  function close(e) {
+  bubble.querySelector(".diskette-yes").textContent = reaction.followup ? "Sure!" : "Thanks, Diskette!";
+  bubble.querySelector(".diskette-enough").textContent = reaction.followup ? "No, that's all." : "That's enough, Diskette.";
+  function quiet(e) {
     e.preventDefault();
     e.stopPropagation();
     disketteReaction = null;
     runDesktopAction("diskette:quiet");
   }
-  bubble.querySelector(".diskette-close").addEventListener("click", close);
-  bubble.querySelector(".diskette-option").addEventListener("click", function (e) {
+  bubble.querySelector(".diskette-close").addEventListener("click", quiet);
+  bubble.querySelector(".diskette-yes").addEventListener("click", function (e) {
+    if (reaction.followup) return quiet(e);
     e.preventDefault();
     e.stopPropagation();
-    if (reaction.followup) {
-      disketteReaction = null;
-      runDesktopAction("diskette:hide");
-      return;
-    }
     disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || DISKETTE_FOLLOWUP, followup: true };
     document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
+  });
+  bubble.querySelector(".diskette-enough").addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    disketteReaction = null;
+    runDesktopAction("diskette:hide");
   });
   bubble.addEventListener("mousedown", function (e) { e.stopPropagation(); });
   return bubble;
@@ -7248,7 +7252,7 @@ deal with the devil
      them in order and then keeps saying the last one; data-cycle="loop"
      goes round and round, data-cycle="random" picks one.
 
-     data-then="..." is what she says after "Thanks, Diskette!" for that
+     data-then="..." is her follow-up after "Thanks, Diskette!" for that
      line (default: "Need me to look at anything else?"). A line
      whose text starts with TODO is a note for the writer (it shows in
      the editor's To write list) and is never said.

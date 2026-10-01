@@ -1899,7 +1899,7 @@
     const selector = item.shape === "element" && !item.photo ? el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.on, title: "CSS selector of what it covers, in the same page or window" }) : null;
     const cond = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.cond, placeholder: "only if: event, !event", title: "Only when these events have happened (!name = only before). See Game status." });
     const condNote = el("div", { class: "ske-muted ske-cond-note", text: conditionNow(item.cond) });
-    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after “Thanks”: Need me to look at anything else?", title: "What she says after “Thanks, Diskette!” (her follow-up; it always offers “That's enough, Diskette.”)" });
+    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks: Need me to look at anything else?", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
     let timer = null;
     const apply = function () {
       clearTimeout(timer);
@@ -2146,7 +2146,7 @@
     ["Repeats", "Put several alternatives in one box, one per line, and she says one each time she's asked about that spot. “Repeats” picks how: in order then keep the last (a first reaction, a second, then the same one from then on), in order round and round, or at random (never the same twice running). In the markup they're separated by >>.\nSeveral lines for the same app or thing (Apps & things) are picked at random."],
     ["Only if (events)", "Event names from Game status, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1. So one spot can say one thing early and another later."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
-    ["After “Thanks”", "Her answer offers “Thanks, Diskette!”, which brings a follow-up: “Need me to look at anything else?” unless the reaction has its own (the “after Thanks” box, e.g. “Ugh, can we look at something nicer?”). The follow-up always offers “That's enough, Diskette.”, which tucks her into the tray. The × on any of her bubbles just quiets her; click her to talk again."],
+    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.” (tucks her into the tray). Thanks brings her follow-up: the answer's own (the “after Thanks” box, e.g. “Ugh, can we look at something nicer?”), otherwise “Need me to look at anything else?”. The follow-up offers “Sure!” (she stays up, quiet, ready to look again) and “No, that's all.” (tray). The × on any of her bubbles just quiets her; click her to talk again."],
     ["To write", "Text starting with TODO is a note for you; she ignores it. P1 = needed to solve the demo, P2 = story, P3 = flavor. Writing her line replaces the note."],
     ["In the game", "With this panel open, zones show in the game: points as a dot and dashed circle, words and elements outlined; pink when written, orange while still to write. Click a zone (or press and hold, or Alt-click, anywhere it reaches) to open it here."],
     ["Tips", "Keep lines to a sentence or two. <b>bold</b> works. Straight double quotes turn curly. Everything saves with Save to preview… like article edits."],

@@ -725,12 +725,14 @@ running (friendly form: `[[diskette: 80 | loop | ...]]`). The counts are in
 `$disketteSeen`, so they're saved. Several DisketteLooks lines for the same
 key are still picked at random.
 
-**After "Thanks":** her answer offers "Thanks, Diskette!", which shows her
-follow-up: the reaction's own `data-then` (friendly `then: Ugh, can we look
-at something nicer?`) or, by default, "Need me to look at anything else?".
-The follow-up offers "That's enough, Diskette." (tucks her into the tray).
-Once she's looked at anything (`diskette-first-look`), her menu opens with
-the follow-up question instead of introducing herself again.
+**Thanks / That's enough:** every answer offers **Thanks, Diskette!** and
+**That's enough, Diskette.** (tucks her into the tray). Thanks brings her
+follow-up: the answer's own `data-then` (friendly `then: Ugh, can we look
+at something nicer?`), else "Need me to look at anything else?", offering
+**Sure!** (she stays up, quiet, ready to look again) and **No, that's
+all.** (tray). The × on any bubble just quiets her. Once she's looked at anything
+(`diskette-first-look`), her menu opens with "Need me to look at anything
+else?" instead of introducing herself again.
 
 **Only when (events):** any of them can also have `data-if="zoom-started,
 !visited:kraska1"` (editor: `[[diskette: 80 | if: zoom-started | ...]]`):
