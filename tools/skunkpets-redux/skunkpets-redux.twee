@@ -7258,7 +7258,7 @@ deal with the devil
 <p data-look="recycle icon-recycle">The <b>Trash</b> holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.</p>
 <p data-look="trash-item">Somebody threw that away. Drag it onto the desktop if you want it back!</p>
 <p data-look="downloads icon-downloads"><b>Downloads</b> is a folder of files saved from the internet.</p>
-<p data-look="granmas" data-mood="wide">What a lovely photo! I wonder who they are.</p>
+<p data-look="granmas" data-mood="wide">What a lovely photo!</p>
 <p data-look="netcontkts">Remember NetCon 2004? What a weekend!</p>
 <p data-look="start">The <b>Start</b> button! Everything on this computer starts there.</p>
 <p data-look="clock">Is it that time already?</p>
