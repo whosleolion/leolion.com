@@ -295,7 +295,7 @@ const ghostShown = await p.evaluate(() => {
   G.advance(0.2);
   G.player.hidden = true; const sp = e.seePlayer; e.seePlayer = () => 0; // break line of sight
   G.advance(1);
-  const v = G.scene.children.some((o) => o.visible && o.children.length && o.children[0].children.length && o.traverse && (() => { let g = false; o.traverse((m) => { if (m.material && m.material.opacity < 0.4 && m.material.isMeshBasicMaterial && m.geometry.type === 'BoxGeometry' && m.parent && m.parent.parent) g = true; }); return g; })());
+  const v = G.scene.children.some((o) => o.visible && o.children.length && o.children[0].children.length && o.traverse && (() => { let g = false; o.traverse((m) => { if (m.material && m.material.opacity < 0.4 && m.material.isMeshBasicMaterial && (m.isSkinnedMesh || m.geometry.type === 'BoxGeometry') && m.parent && m.parent.parent) g = true; }); return g; })());
   e.seePlayer = sp;
   return v;
 });

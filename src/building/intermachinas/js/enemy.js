@@ -13,10 +13,10 @@ const angDiff = (a, b) => { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if
 const turn = (a, b, rate) => { const d = angDiff(a, b); return a + Math.sign(d) * Math.min(Math.abs(d), rate); };
 
 const TYPES = {
-  guard:     { hp: 60, speed: 1.6, block: 0.35, windup: 0.55, rig: { body: 0x9b2d2d, limb: 0x777777, accent: 0x2b2b2b, hood: false, helmet: true, club: true } },
-  bodyguard: { hp: 80, speed: 1.4, block: 0.5, windup: 0.5, rig: { body: 0x5a1a1a, limb: 0x555555, accent: 0x111111, hood: false, helmet: true, club: true, scale: 1.08 } },
-  sentry:    { hp: 40, speed: 1.4, block: 0.1, windup: 0.6, ranged: true, view: 1.35, rig: { body: 0xb5651d, limb: 0x777777, accent: 0x2b2b2b, hood: false, helmet: true } },
-  target:    { hp: 120, speed: 1.3, block: 0.5, windup: 0.7, rig: { body: 0xd4a017, limb: 0x8a6d1a, accent: 0x6b1d1d, hood: false, cape: true, club: true } },
+  guard:     { hp: 60, speed: 1.6, block: 0.35, windup: 0.55, rig: { look: 'guard', club: true } },
+  bodyguard: { hp: 80, speed: 1.4, block: 0.5, windup: 0.5, rig: { look: 'bodyguard', club: true, scale: 1.08 } },
+  sentry:    { hp: 40, speed: 1.4, block: 0.1, windup: 0.6, ranged: true, view: 1.35, rig: { look: 'sentry' } },
+  target:    { hp: 120, speed: 1.3, block: 0.5, windup: 0.7, rig: { look: 'target', club: true } },
 };
 
 export class Director {
@@ -484,10 +484,11 @@ export class Enemy {
       const u = a.phase === 'windup' ? 0.35 * a.t / a.windup : a.phase === 'strike' ? 0.35 + 0.2 * a.t / 0.15 : 0.55 + 0.45 * a.t / 0.45;
       target = Poses.attack(a.kind, u); rate = 24;
     } else if (this.blockT > 0) { target = Poses.block(); rate = 24; }
-    else if (sp > 0.3) target = Poses.run(this.phase, Math.max(0, Math.min(1, (sp - 1.6) / 5)));
-    else if (this.state === 'combat') target = Poses.stance();
+    // troopers move heavier and more mechanically than the player: stiffer poses, slower blends
+    else if (sp > 0.3) { target = Poses.march(this.phase, Math.max(0, Math.min(1, (sp - 1.6) / 5))); rate = 9; }
+    else if (this.state === 'combat') { target = Poses.guardStance(this.t); rate = 9; }
     else if (this.state === 'search' || this.looking) target = Poses.look(this.t);
-    else target = Poses.idle(this.t);
+    else { target = Poses.guardIdle(this.t); rate = 8; }
     this.looking = false;
     this.rig.apply(target, dt, rate);
     this.syncRig();
