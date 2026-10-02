@@ -484,10 +484,11 @@ export class Enemy {
       const u = a.phase === 'windup' ? 0.35 * a.t / a.windup : a.phase === 'strike' ? 0.35 + 0.2 * a.t / 0.15 : 0.55 + 0.45 * a.t / 0.45;
       target = Poses.attack(a.kind, u); rate = 24;
     } else if (this.blockT > 0) { target = Poses.block(); rate = 24; }
-    else if (sp > 0.3) target = Poses.run(this.phase, Math.max(0, Math.min(1, (sp - 1.6) / 5)));
-    else if (this.state === 'combat') target = Poses.stance();
+    // troopers move heavier and more mechanically than the player: stiffer poses, slower blends
+    else if (sp > 0.3) { target = Poses.march(this.phase, Math.max(0, Math.min(1, (sp - 1.6) / 5))); rate = 9; }
+    else if (this.state === 'combat') { target = Poses.guardStance(this.t); rate = 9; }
     else if (this.state === 'search' || this.looking) target = Poses.look(this.t);
-    else target = Poses.idle(this.t);
+    else { target = Poses.guardIdle(this.t); rate = 8; }
     this.looking = false;
     this.rig.apply(target, dt, rate);
     this.syncRig();

@@ -959,32 +959,54 @@ export class Player {
     this.bank += (clamp(-yawRate * 0.045 * Math.min(1, sp / 8), -0.38, 0.38) - this.bank) * Math.min(1, dt * 10);
     this.accelLean += (clamp(accel * 0.012, -0.25, 0.3) - this.accelLean) * Math.min(1, dt * 8);
 
+    // remember how far we fell (display only): drops over ~5 m land in a three-point crouch
+    if (this.state === 'air') this.animPeak = Math.max(this.animPeak ?? this.pos.y, this.pos.y);
+    else if (this.animPeak !== undefined) { this.animDrop = this.animPeak - this.pos.y; this.animPeak = undefined; }
     switch (this.state) {
       case 'ground':
-        if (a && a.type === 'attack') { target = Poses.attack(a.kind, a.t / ATTACKS[a.kind].dur); rate = 26; }
-        else if (a && a.type === 'dodge') { target = Poses.run(this.phase += dt * 18, 1, 0.8); target.spine[0] += 0.3; rate = 24; }
-        else if (a && a.type === 'slide') { target = Poses.slide(); rate = 18; }
+        if (a && a.type === 'attack') {
+          // snappy into the strike, softer out of it
+          const u = a.t / ATTACKS[a.kind].dur;
+          target = Poses.attack(a.kind, u); rate = u < 0.55 ? 30 : 13;
+        } else if (a && a.type === 'dodge') {
+          const f = a.dx * Math.sin(this.yaw) + a.dz * Math.cos(this.yaw), sd = a.dx * Math.cos(this.yaw) - a.dz * Math.sin(this.yaw);
+          target = Poses.dodge(Math.min(1, a.t / a.dur), [f, sd]); rate = 28;
+        } else if (a && a.type === 'slide') { target = Poses.slide(); rate = 18; }
         else if (a && a.type === 'roll') { target = Poses.roll(Math.min(1, a.t / a.dur)); rate = 30; }
         else if (a && (a.type === 'hurt' || a.type === 'recoil')) { target = Poses.hurt(); rate = 22; }
-        else if (a && a.type === 'land') { target = Poses.land(1 - a.t / a.dur); rate = 30; }
+        else if (a && a.type === 'land') { target = Poses.land(1 - a.t / a.dur, a.dur > 0.3 || this.animDrop > 5); rate = 34; }
         else if (a && a.type === 'hayland') { target = Poses.hide(); }
         else if (a && a.type === 'whistle') { target = Poses.whistle(this.t); rate = 18; }
         else {
           if (this.hidden && sp < 0.5) target = Poses.hide();
-          else if (sp < 0.3) target = this.lockTarget ? Poses.stance() : this.crouch ? Poses.run(0, 0, 1) : Poses.idle(this.t);
+          else if (sp < 0.3) target = this.lockTarget ? Poses.stance(this.t) : this.crouch ? Poses.run(0, 0, 1) : Poses.idle(this.t);
           else {
-            target = Poses.run(this.phase, Math.max(0, Math.min(1, (sp - 2) / 7)), this.crouch ? 1 : 0);
+            target = Poses.run(this.phase, Math.max(0, Math.min(1, (sp - 2) / 7)), this.crouch ? 1 : 0, this.flow);
             target.bodyZ += this.bank;
-            target.spine[0] += this.accelLean + 0.08 * this.flow;
+            target.spine[0] += this.accelLean;
+            rate = this.crouch ? 10 : 16;
           }
         }
         break;
-      case 'air': target = Poses.air(this.vel.y); target.bodyZ += this.bank * 0.5; rate = 10; break;
-      case 'climb': target = Poses.climb(this.phase, false); rate = 16; break;
-      case 'wallrun': target = Poses.wallrun(this.phase, this.wr.side); break;
+      case 'air': target = Poses.air(this.vel.y, this.airT); target.bodyZ += this.bank * 0.5; rate = this.airT < 0.16 ? 18 : 11; break;
+      case 'climb': {
+        const still = Math.abs(this.phase - (this.climbPhase ?? this.phase)) < 1e-4;
+        this.climbStill = (this.climbStill || 0) + ((still ? 1 : 0) - (this.climbStill || 0)) * Math.min(1, dt * 6);
+        this.climbPhase = this.phase;
+        target = Poses.climb(this.phase, { leap: this.cl ? Math.max(0, this.cl.leapT / 0.32) : 0, still: this.climbStill, t: this.t });
+        rate = 16; break;
+      }
+      case 'wallrun': target = Poses.wallrun(this.phase, this.wr.side); rate = 16; break;
       case 'scripted': target = this.script.anim(Math.min(1, this.script.t / this.script.dur)); rate = 22; break;
       case 'sync': target = Poses.sync(this.t); rate = 6; break;
       case 'dead': target = Poses.dead(); rate = 8; break;
+    }
+    // head: lead into turns, keep eyes on the lock-on target
+    if (this.state !== 'dead' && this.state !== 'sync') {
+      let look = clamp(yawRate * 0.09, -0.45, 0.45);
+      const L = this.lockTarget;
+      if (L && this.state === 'ground') look += clamp(angDiff(this.yaw, Math.atan2(L.pos.x - this.pos.x, L.pos.z - this.pos.z)), -0.8, 0.8) * 0.6;
+      target.head[1] += look;
     }
     this.rig.apply(target, dt, rate);
     this.sync();
