@@ -1,13 +1,14 @@
-// Rig: a jointed white-box mannequin with procedural poses.
-// No skinned assets yet — every state gets a readable pose from a few joint
-// angles, blended toward each frame. Swap for a skinned glTF later; the game
-// only talks to Rig through `pose` objects + `apply()`.
+// Rig: a jointed action-figure character with procedural poses.
+// The body is built in models.js (rigid kitbashed parts per joint, merged per material into
+// SkinnedMeshes that share one skeleton); the game only talks to Rig through `pose` objects
+// + `apply()`, `flash()`, `blade`, `club`, `root`/`body`, so swapping the look never touches gameplay.
 //
 // Conventions (character faces local +z):
 //   thigh/upper-arm x < 0 swings the limb forward; knee x > 0 bends back;
 //   elbow x < 0 bends the forearm forward/up; spine/head x > 0 leans forward.
 //   left limbs are on +x; arm z > 0 raises the LEFT arm sideways, z < 0 the right.
 import * as THREE from './vendor/three.module.min.js';
+import { BONES, getLook, bladeGeometry, batonGeometry } from './models.js';
 
 const JOINTS = ['hips', 'spine', 'head', 'uaL', 'faL', 'uaR', 'faR', 'thL', 'shL', 'thR', 'shR'];
 
@@ -26,78 +27,66 @@ export function pose(over) {
   return p;
 }
 
-function mesh(geo, mat, x, y, z, parent) {
-  const m = new THREE.Mesh(geo, mat);
-  m.position.set(x, y, z);
-  m.castShadow = true;
-  parent.add(m);
-  return m;
-}
-const B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+let steelMat, batonMats;
+const sharedSteel = () => (steelMat ||= new THREE.MeshStandardMaterial({ color: 0xd5dde4, metalness: 0.85, roughness: 0.22 }));
+const sharedBaton = () => (batonMats ||= {
+  rubber: new THREE.MeshStandardMaterial({ color: 0x1d1d1f, roughness: 0.8 }),
+  metal: new THREE.MeshStandardMaterial({ color: 0x6d7276, metalness: 0.7, roughness: 0.35 }),
+});
 
 export class Rig {
+  // opts: look ('player' | 'guard' | 'bodyguard' | 'sentry' | 'target'), club, scale, ghost (colour)
   constructor(opts = {}) {
-    const {
-      body = 0xe9e9e9, limb = 0xdddddd, accent = 0xc0392b, skin = 0xf4f4f4,
-      hood = true, helmet = false, club = false, cape = false, scale = 1,
-    } = opts;
-    const mBody = new THREE.MeshStandardMaterial({ color: body, roughness: 0.75 });
-    const mLimb = new THREE.MeshStandardMaterial({ color: limb, roughness: 0.75 });
-    const mAcc = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.6 });
-    const mSkin = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.8 });
-    const mDark = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-    const mSteel = new THREE.MeshStandardMaterial({ color: 0xcfd8e0, metalness: 0.8, roughness: 0.25 });
-    this.mats = { mBody, mAcc };
+    const { look = 'player', club = false, scale = 1 } = opts;
+    const L = getLook(look);
+    this.look = look;
 
     this.root = new THREE.Group();
     this.body = new THREE.Group();
     this.root.add(this.body);
     this.body.scale.setScalar(scale);
-    const j = {};
-    const g = (name, parent, x, y, z) => { const n = new THREE.Group(); n.position.set(x, y, z); parent.add(n); j[name] = n; return n; };
-
-    g('hips', this.body, 0, 0.95, 0);
-    mesh(B(0.34, 0.18, 0.22), mLimb, 0, 0, 0, j.hips);
-    mesh(B(0.36, 0.07, 0.24), mAcc, 0, 0.08, 0, j.hips); // sash / belt
-    g('spine', j.hips, 0, 0.08, 0);
-    mesh(B(0.42, 0.5, 0.25), mBody, 0, 0.28, 0, j.spine);
-    if (cape) mesh(B(0.44, 0.75, 0.04), mAcc, 0, 0.18, -0.15, j.spine);
-    g('head', j.spine, 0, 0.58, 0);
-    mesh(B(0.22, 0.26, 0.24), mSkin, 0, 0.13, 0, j.head);
-    mesh(B(0.17, 0.07, 0.02), mDark, 0, 0.14, 0.125, j.head); // eye band: shows facing
-    if (hood) {
-      mesh(B(0.28, 0.3, 0.27), mBody, 0, 0.15, -0.025, j.head);
-      const peak = mesh(new THREE.ConeGeometry(0.1, 0.18, 4), mBody, 0, 0.3, 0.07, j.head);
-      peak.rotation.x = 0.7;
-      mesh(B(0.2, 0.12, 0.02), mDark, 0, 0.12, 0.115, j.head);
+    const j = {}, bones = [];
+    for (const [name, parent, x, y, z] of BONES) {
+      const b = new THREE.Bone(); b.name = name; b.position.set(x, y, z);
+      (parent ? j[parent] : this.body).add(b);
+      j[name] = b; bones.push(b);
     }
-    if (helmet) mesh(B(0.27, 0.12, 0.29), mDark, 0, 0.27, 0, j.head);
+    this.root.updateMatrixWorld(true);
+    const skeleton = new THREE.Skeleton(bones);
+    this.skeleton = skeleton;
 
-    for (const s of [1, -1]) {
-      const L = s > 0 ? 'L' : 'R';
-      g('ua' + L, j.spine, 0.27 * s, 0.5, 0);
-      mesh(B(0.12, 0.31, 0.12), mBody, 0, -0.15, 0, j['ua' + L]);
-      g('fa' + L, j['ua' + L], 0, -0.3, 0);
-      mesh(B(0.1, 0.28, 0.1), mLimb, 0, -0.14, 0, j['fa' + L]);
-      mesh(B(0.1, 0.1, 0.11), mSkin, 0, -0.32, 0, j['fa' + L]);
-      g('th' + L, j.hips, 0.11 * s, -0.04, 0);
-      mesh(B(0.16, 0.45, 0.16), mLimb, 0, -0.225, 0, j['th' + L]);
-      g('sh' + L, j['th' + L], 0, -0.45, 0);
-      mesh(B(0.13, 0.42, 0.13), mLimb, 0, -0.21, 0, j['sh' + L]);
-      mesh(B(0.13, 0.08, 0.25), mDark, 0, -0.44, 0.05, j['sh' + L]);
+    // flashable materials are per-rig clones (textures/programs stay shared)
+    const mats = {};
+    this.flashMats = [];
+    for (const key in L.geos) {
+      let m = L.mats[key];
+      if (L.look.flash?.includes(key) || key === L.look.lens) { m = m.clone(); if (key !== L.look.lens) this.flashMats.push(m); }
+      mats[key] = m;
+      const sm = new THREE.SkinnedMesh(L.geos[key], m);
+      sm.castShadow = true;
+      this.body.add(sm);
+      sm.bind(skeleton);
     }
-    // hidden blade (left forearm)
+    this.lensMat = L.look.lens ? mats[L.look.lens] : null;
+    this.lensBase = this.lensMat ? [this.lensMat.emissive.getHex(), this.lensMat.emissiveIntensity] : null;
+    this.lift = L.look.lift ?? 0.13;
+    this.tris = L.tris;
+
+    // hidden blade (left forearm, under the wrist)
     this.blade = new THREE.Group();
-    this.blade.position.set(0, -0.3, 0);
+    this.blade.position.set(-0.05, -0.27, 0);
     j.faL.add(this.blade);
-    mesh(B(0.025, 0.3, 0.05), mSteel, 0, -0.15, 0, this.blade);
+    const bl = new THREE.Mesh(bladeGeometry(), sharedSteel()); bl.castShadow = true;
+    this.blade.add(bl);
     this.blade.scale.y = 0.01;
-    // club (right hand)
+    // baton (right hand)
     if (club) {
       this.club = new THREE.Group();
-      this.club.position.set(0, -0.32, 0);
+      this.club.position.set(0, -0.34, 0);
+      this.club.rotation.x = 0.3; // carried slightly tip-down
       j.faR.add(this.club);
-      mesh(B(0.07, 0.07, 0.8), mDark, 0, 0, 0.3, this.club);
+      const parts = batonGeometry(), bm = sharedBaton();
+      for (const k of ['rubber', 'metal']) for (const g of parts[k]) { const m = new THREE.Mesh(g, bm[k]); m.castShadow = true; this.club.add(m); }
     }
 
     if (opts.ghost) {
@@ -106,6 +95,14 @@ export class Rig {
       this.root.traverse((o) => { if (o.isMesh) { o.material = g; o.castShadow = false; } });
       this.ghostMat = g;
     }
+
+    // secondary motion: sash tails / cape swing from the rig's own velocity
+    this.chains = [];
+    for (const c of L.look.chains || []) {
+      if (c === 'sash') this.chains.push({ bones: [j.sash1, j.sash2, j.sash3], parents: ['hips'], rest: 0.1, k: 0.2, max: 1.5, min: -0.25, lag: [9, 7, 5], flut: 0.14, ang: [0, 0, 0], side: [0, 0, 0] });
+      if (c === 'cape') this.chains.push({ bones: [j.cape1, j.cape2], parents: ['hips', 'spine'], rest: 0.06, k: 0.14, max: 1.2, min: 0.0, lag: [6, 4], flut: 0.05, ang: [0, 0], side: [0, 0] });
+    }
+    this.lastPos = new THREE.Vector3(); this.hasLast = false; this.t = 0;
 
     this.j = j;
     this.cur = neutral();
@@ -126,6 +123,38 @@ export class Rig {
       a[0] += (b[0] - a[0]) * k; a[1] += (b[1] - a[1]) * k; a[2] += (b[2] - a[2]) * k;
     }
     this.write();
+    this.swing(dt);
+  }
+
+  // Sash/cape chains: hang toward world-down (undo the parents' pitch), stream back with speed, flutter.
+  swing(dt) {
+    if (!this.chains.length || dt <= 0) return;
+    this.t += dt;
+    const p = this.root.position;
+    let fwd = 0, side = 0, vy = 0;
+    if (this.hasLast) {
+      const dx = (p.x - this.lastPos.x) / dt, dz = (p.z - this.lastPos.z) / dt, yaw = this.root.rotation.y;
+      vy = (p.y - this.lastPos.y) / dt;
+      fwd = dx * Math.sin(yaw) + dz * Math.cos(yaw);
+      side = dx * Math.cos(yaw) - dz * Math.sin(yaw);
+      if (Math.hypot(dx, dz) > 30) fwd = side = vy = 0; // teleport / respawn
+    }
+    this.lastPos.copy(p); this.hasLast = true;
+    const c = this.cur, sp = Math.min(12, Math.hypot(fwd, side));
+    for (const ch of this.chains) {
+      let pitch = c.bodyX;
+      for (const n of ch.parents) pitch += c[n][0];
+      for (let i = 0; i < ch.bones.length; i++) {
+        const stream = Math.max(0, fwd) * ch.k + Math.max(0, -vy) * 0.08 * (i + 1);
+        const flutter = Math.sin(this.t * (9 + i * 3) + i * 1.7) * ch.flut * Math.min(1, sp / 3) * (i + 1);
+        let tgt = (i === 0 ? ch.rest - pitch : 0.05) + stream * (i === 0 ? 1 : 0.35) + flutter;
+        if (i === 0) tgt = Math.max(ch.min, Math.min(ch.max, tgt));
+        const kk = 1 - Math.exp(-ch.lag[i] * dt);
+        ch.ang[i] += (tgt - ch.ang[i]) * kk;
+        ch.side[i] += ((i === 0 ? -side * 0.06 : 0) - ch.side[i]) * kk;
+        ch.bones[i].rotation.set(ch.ang[i], 0, ch.side[i]);
+      }
+    }
   }
 
   applyNow(p) {
@@ -141,12 +170,20 @@ export class Rig {
     this.body.rotation.x = c.bodyX;
     this.body.rotation.z = c.bodyZ;
     this.body.rotation.y = c.spin;
-    this.body.position.y = Math.abs(Math.sin(c.bodyX)) * 0.13; // lying down: keep the boxes above the floor
+    this.body.position.y = Math.abs(Math.sin(c.bodyX)) * this.lift; // lying down: keep the kit above the floor
     this.blade.scale.y = Math.max(0.01, c.blade);
+    this.blade.visible = c.blade > 0.02;
+    // lying down: the baton settles along the forearm instead of standing up off the floor
+    if (this.club) this.club.rotation.x = 0.3 + Math.min(1, Math.max(0, (Math.abs(c.bodyX) - 0.7) * 2)) * 1.25;
   }
 
+  // whole-body emissive flash (red attack telegraph, gold posture break); the lenses flare with it
   flash(color, on) {
-    this.mats.mBody.emissive.setHex(on ? color : 0x000000);
+    for (const m of this.flashMats) m.emissive.setHex(on ? color : 0x000000);
+    if (this.lensMat) {
+      this.lensMat.emissive.setHex(on ? color : this.lensBase[0]);
+      this.lensMat.emissiveIntensity = on ? 4 : this.lensBase[1];
+    }
   }
 }
 

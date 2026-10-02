@@ -43,7 +43,7 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export class Player {
   constructor(G) {
     this.G = G;
-    this.rig = new Rig({ accent: 0xc0392b });
+    this.rig = new Rig({ look: 'player' });
     G.scene.add(this.rig.root);
     this.pos = { x: 0, y: 0, z: 0 };
     this.vel = { x: 0, y: 0, z: 0 };
