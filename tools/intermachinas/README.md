@@ -3,7 +3,7 @@
 Live: leolion.com/building/intermachinas (noindexed, unlinked). Source: `src/building/intermachinas/`.
 Three.js r170 (vendored, `js/vendor/three.module.min.js`), plain ES modules, no build step.
 
-## What's in v0.1
+## What's in v0.2 (feel pass)
 
 | System | Where | Notes |
 |---|---|---|
@@ -13,6 +13,23 @@ Three.js r170 (vendored, `js/vendor/three.module.min.js`), plain ES modules, no 
 | Enemies | `js/enemy.js` | Vision cone + LOS + stance → awareness meter; `patrol → suspicious → investigate → search`, or `combat`. Attack tokens via `Director` (one attacker at a time by default), telegraphed wind-ups, blocking, ranged sentries, body discovery, shouting alerts neighbours, noise. |
 | Camera | `js/camera.js` | Orbit + shoulder offset, wall collision, FOV kick, shake, sync sweep, auto-follow on pad/touch. |
 | HUD / input / audio / tuning | `hud.js`, `input.js`, `audio.js`, `tuning.js` | Keyboard+mouse (pointer lock), gamepad, touch. Synth SFX (no files). ` opens the live tuning panel (persists per browser). |
+
+### Where the v0.2 feel changes come from
+| Change | Reference |
+|---|---|
+| Coyote time (0.14 s) + jump buffer (0.16 s); variable jump height; heavier fall | platformer staples (Celeste-style forgiveness windows) |
+| Momentum steering while freerunning (velocity rotates, doesn't brake), sprint ramps up, `flow` meter (gold bar under health) from clean parkour raises top speed + FOV | Mirror's Edge |
+| Landing roll (C just before landing, or automatic while freerunning) carries speed, soaks falls | Mirror's Edge |
+| Parkour down (crouch-walk off an edge to hang), fast-climb (hold Shift on a wall), corner wraps (inside + outside), faster sprint top-outs | AC Unity |
+| Bigger ledge-catch reach, buffered jump into a grab = instant climb leap, vault speed carry | general "assist" practice |
+| Freeflow combo (×4 = FREEFLOW: faster swings, long-range snap to the guard you point at, damage ramps), hit resets it; long-range counters; last blow of a fight in slow-mo | Batman: Arkham |
+| Posture: blocked hits fill it, break → reeling guard → F EXECUTE | Sekiro |
+| Chain kills: F again within ~1 s of an F-kill dashes to the next guard | AC double / chain assassinations, Splinter Cell: Conviction |
+| Last-known-position ghost while hunters can't see you | Splinter Cell: Conviction |
+| Detection arrows around the screen centre, filling with awareness; ⚡ on guards winding up, gold ✕ on broken guards | Hitman / AC Unity / Arkham counter icons |
+| Visible noise rings (sprinting, landings, whistle) | Mark of the Ninja |
+| Whistle (V) to lure a guard | AC / Ghost of Tsushima |
+| Body bank into turns, lean into acceleration, camera look-ahead, speed lines, wall-run camera roll, punch-in on big hits, fight framing that pulls back with the crowd, slash arcs, dust, sparks | general game-feel juice |
 
 ### Mechanics checklist
 - **Freerun**: hold Shift. Runs off edges with an auto-leap; walking (not freerunning) stops at roof edges.
@@ -28,7 +45,7 @@ Three.js r170 (vendored, `js/vendor/three.module.min.js`), plain ES modules, no 
 - **Mission**: kill the gold target in the courtyard, then lose any pursuers → MISSION COMPLETE with time / kills / times detected ("GHOST" if 0).
 
 ## Testing
-`playtest.mjs` drives the real page with key/mouse events and steps the sim deterministically through `G.advance(seconds)` (headless Chromium renders at ~4 fps, so wall-clock timing would be meaningless). It checks walking, vault, climb + top-out, the tower climb, sync, leap of faith, fall damage, wall-run, eject, assassination, hiding, detection, combat kills, counter, knock-off-the-wall, mission complete, death/retry, and a 20 s soak for runtime errors.
+`playtest.mjs` drives the real page with key/mouse events and steps the sim deterministically through `G.advance(seconds)` (headless Chromium renders at ~4 fps, so wall-clock timing would be meaningless). It checks walking, vault, climb + top-out, the tower climb, sync, leap of faith, fall damage, wall-run, eject, assassination, hiding, detection, combat kills, counter, knock-off-the-wall, mission complete, death/retry, coyote time, jump buffer, landing roll, parkour down + fast climb, corner wrap, chain kill, whistle, combo, posture break + execution, the last-known-position ghost, and a 20 s soak for runtime errors. Enemy dice are seeded so runs repeat.
 
 ```
 (cd src && python3 -m http.server 8765) &

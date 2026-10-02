@@ -100,6 +100,13 @@ export class Rig {
       mesh(B(0.07, 0.07, 0.8), mDark, 0, 0, 0.3, this.club);
     }
 
+    if (opts.ghost) {
+      // last-known-position silhouette: one flat see-through material, no shadows
+      const g = new THREE.MeshBasicMaterial({ color: opts.ghost, transparent: true, opacity: 0.28, depthWrite: false });
+      this.root.traverse((o) => { if (o.isMesh) { o.material = g; o.castShadow = false; } });
+      this.ghostMat = g;
+    }
+
     this.j = j;
     this.cur = neutral();
     this.applyNow(this.cur);
@@ -109,6 +116,10 @@ export class Rig {
   apply(target, dt, rate = 14) {
     const k = 1 - Math.exp(-rate * dt);
     const c = this.cur;
+    // full-turn moves (spin launcher, rolls) end a whole turn away from rest: wrap, don't unwind
+    const TAU = Math.PI * 2;
+    if (c.spin - (target.spin ?? 0) > Math.PI) c.spin -= TAU; else if ((target.spin ?? 0) - c.spin > Math.PI) c.spin += TAU;
+    if (c.hips[0] - target.hips[0] > Math.PI) c.hips[0] -= TAU; else if (target.hips[0] - c.hips[0] > Math.PI) c.hips[0] += TAU;
     for (const key of ['y', 'bodyX', 'bodyZ', 'spin', 'blade', 'weapon']) c[key] += ((target[key] ?? 0) - c[key]) * k;
     for (const name of JOINTS) {
       const a = c[name], b = target[name];
@@ -288,6 +299,9 @@ export const Poses = {
       case 'COUNTER': return { ...base, blade: 1, spine: mix([0.1, 0.6, 0], [0.4, -0.5, 0]),
         uaL: mix([-1.4, 0, 0.6], [-1.6, 0, -0.3]), faL: mix([-1.5, 0, 0], [0, 0, 0]),
         uaR: mix([-1.6, 0, -0.5], [-0.6, 0, -0.8]), faR: [-1.0, 0, 0] };
+      case 'EXECUTE': return { ...base, blade: 1, y: -0.1 * S, spine: mix([-0.1, 0.5, 0], [0.55, -0.2, 0]),
+        uaL: mix([-2.6, 0, 0.4], [-1.0, 0, -0.2]), faL: mix([-1.0, 0, 0], [-0.1, 0, 0]),
+        uaR: mix([-1.8, 0, -0.5], [-0.5, 0, -0.9]), faR: [-0.8, 0, 0], thL: [-0.9, 0, 0], shL: [1.0, 0, 0], thR: [0.5, 0, 0], shR: [0.8, 0, 0] };
       // enemy moves
       case 'CLUB': return { ...base, spine: mix([-0.2, 0.4, 0], [0.45, -0.3, 0]),
         uaR: mix([-2.9, 0, -0.4], [-0.6, 0, 0.1]), faR: mix([-1.2, 0, 0], [-0.2, 0, 0]) };
@@ -320,6 +334,30 @@ export const Poses = {
   look(t) { // guard scanning around
     return pose({ spine: [0.04, Math.sin(t * 1.3) * 0.5, 0], head: [-0.05, Math.sin(t * 1.3) * 0.4, 0],
       uaL: [0.2, 0, 0.15], faL: [-0.4, 0, 0], uaR: [0.2, 0, -0.15], faR: [-0.4, 0, 0] });
+  },
+
+  // forward roll: the whole body tumbles around the hips
+  roll(u) {
+    const p = pose({
+      y: -0.5 + 0.15 * Math.sin(u * Math.PI), spine: [0.9, 0, 0], head: [0.6, 0, 0],
+      thL: [-1.9, 0, 0.1], shL: [2.2, 0, 0], thR: [-1.9, 0, -0.1], shR: [2.2, 0, 0],
+      uaL: [-1.2, 0, 0.3], faL: [-1.6, 0, 0], uaR: [-1.2, 0, -0.3], faR: [-1.6, 0, 0],
+    });
+    p.hips = [u * Math.PI * 2, 0, 0];
+    return p;
+  },
+
+  whistle(t) {
+    return pose({ spine: [0.02, 0, 0], head: [-0.15, 0.2, 0],
+      uaR: [-0.4, 0, -0.5], faR: [-2.4, 0, 0], uaL: [0.05, 0, 0.12] });
+  },
+
+  // posture-broken guard: staggered, guard down
+  broken(t) {
+    const w = Math.sin(t * 7) * 0.08;
+    return pose({ y: -0.12, spine: [0.45 + w, 0.2, 0], head: [0.4, 0, 0],
+      uaL: [0.3, 0, 0.5], faL: [-0.2, 0, 0], uaR: [0.4, 0, -0.6], faR: [-0.2, 0, 0],
+      thL: [-0.4, 0, 0.1], shL: [0.6, 0, 0], thR: [0.2, 0, -0.1], shR: [0.4, 0, 0] });
   },
 
   sync(t) {

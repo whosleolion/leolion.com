@@ -9,6 +9,8 @@ import { CameraRig } from './camera.js';
 import { Hud } from './hud.js';
 import { T, META, DEFAULTS, saveTuning, resetTuning } from './tuning.js';
 import { initAudio, sfx } from './audio.js';
+import { Fx } from './fx.js';
+import { Rig } from './rig.js';
 
 const G = (window.G = { enemies: [], synced: false, paused: true, started: false });
 
@@ -62,8 +64,36 @@ G.fx = {
   hitstop(t) { hitstopT = Math.max(hitstopT, t); },
   slowmo(scale, t) { slowScale = scale; slowT = t; },
   shake(a) { G.cam.shake(a); },
+  vfx: new Fx(scene),
 };
-G.noise = (x, y, z, r) => { for (const e of G.enemies) e.hear(x, y, z, r); };
+// noise: guards in range come to look. `visible` draws the ring so you can read how loud you are (Mark of the Ninja)
+G.noise = (x, y, z, r, visible) => {
+  for (const e of G.enemies) e.hear(x, y, z, r);
+  if (visible) G.fx.vfx.ring(x, y, z, r, 0xffffff, Math.min(0.9, 0.35 + r * 0.04));
+};
+
+// Splinter Cell: Conviction's last-known-position ghost: where the hunters
+// think you are, frozen in the pose they last saw you in.
+const ghost = new Rig({ ghost: 0xffffff, hood: true });
+ghost.root.visible = false;
+scene.add(ghost.root);
+let unseenT = 0;
+function updateGhost(dt) {
+  const P = G.player;
+  const hunting = G.enemies.filter((e) => e.alive && (e.state === 'combat' || (e.state === 'search' && e.awareness >= 0.5)));
+  const seen = G.enemies.some((e) => e.alive && e.state === 'combat' && e.vis > 0);
+  if (!hunting.length || P.state === 'dead') { ghost.root.visible = false; unseenT = 0; return; }
+  if (seen) {
+    unseenT = 0;
+    ghost.root.visible = false;
+    ghost.root.position.set(P.pos.x, P.pos.y, P.pos.z);
+    ghost.root.rotation.y = P.yaw;
+    ghost.applyNow(P.rig.cur);
+  } else if ((unseenT += dt) > 0.35 && ghost.root.position.lengthSq() > 0) {
+    ghost.root.visible = true;
+    ghost.ghostMat.opacity = 0.22 + 0.08 * Math.sin(performance.now() / 180);
+  }
+}
 
 // ---------------------------------------------------------------- mission
 const M = {};
@@ -76,18 +106,25 @@ function startMission(full) {
   G.enemies = spawnEnemies(G);
   G.player.reset(G.checkpoint);
   G.cam.reset(G.checkpoint.yaw);
+  ghost.root.visible = false; ghost.root.position.set(0, 0, 0);
   Object.assign(M, { targetDead: false, complete: false, failed: false, calmT: 0, time: 0, everDetected: false });
   G.hud.objective(G.synced ? 'Assassinate the target in the courtyard (north)' : 'Assassinate the target in the courtyard (north)  ·  optional: synchronize the viewpoint');
 }
 
+const KILL_TOAST = { air: 'AIR ASSASSINATION', assassinate: 'ASSASSINATION', chain: 'CHAIN KILL', execute: 'EXECUTION' };
 G.onKill = (e, how) => {
+  const fightOver = !G.enemies.some((x) => x.alive && x !== e && x.state === 'combat');
   if (e === G.target && !M.targetDead) {
     M.targetDead = true;
     G.hud.banner('TARGET ELIMINATED', how === 'combat' ? 'messy.' : 'clean.', 3);
     G.hud.objective('Escape — lose any pursuers');
     G.fx.slowmo(0.3, 0.9);
-  } else if (how === 'assassinate' || how === 'air') {
-    G.hud.toast(how === 'air' ? 'AIR ASSASSINATION' : 'ASSASSINATION');
+  } else if (fightOver && M.inCombat && (how === 'combat' || how === 'counter' || how === 'execute')) {
+    // Arkham's last-hit beat: the final blow of a fight lands in slow motion
+    G.fx.slowmo(0.2, 0.8); G.cam.punch(1);
+    G.hud.toast('FIGHT OVER');
+  } else if (KILL_TOAST[how]) {
+    G.hud.toast(KILL_TOAST[how]);
   }
 };
 G.onDetected = () => {
@@ -116,7 +153,7 @@ function updateMission(dt) {
       M.complete = true;
       const s = G.player.stats;
       const mm = Math.floor(M.time / 60), ss = String(Math.floor(M.time % 60)).padStart(2, '0');
-      G.hud.banner('MISSION COMPLETE', `${mm}:${ss}  ·  ${s.kills} down (${s.assassinations} assassinations)  ·  detected ${s.detected}×${s.detected === 0 ? '  ·  GHOST' : ''}  ·  R to replay`, 999);
+      G.hud.banner('MISSION COMPLETE', `${mm}:${ss}  ·  ${s.kills} down (${s.assassinations} assassinations)  ·  best combo ×${s.bestCombo}  ·  detected ${s.detected}×${s.detected === 0 ? '  ·  GHOST' : ''}  ·  R to replay`, 999);
       sfx.complete();
     }
   }
@@ -215,7 +252,7 @@ function frame(now) {
     const pl = G.player;
     G.hud.debug(`${fps} fps  ·  state ${pl.state}${pl.action ? '/' + pl.action.type : ''}  ·  speed ${pl.speedXZ.toFixed(1)}  vy ${pl.vel.y.toFixed(1)}\n` +
       `pos ${P.x.toFixed(1)}, ${P.y.toFixed(1)}, ${P.z.toFixed(1)}  ·  hp ${pl.hp.toFixed(0)}  ·  hidden ${pl.hidden}  ·  ${G.input.lastDevice}\n` +
-      `enemies: ${G.enemies.filter((e) => e.alive).length} alive  ·  attackers ${G.director.attackers.size}`);
+      `enemies: ${G.enemies.filter((e) => e.alive).length} alive  ·  attackers ${G.director.attackers.size}  ·  flow ${pl.flow.toFixed(2)}  ·  combo ${pl.combo}`);
   } else G.hud.debug('');
 }
 function debugOn() { return tuningOpen(); }
@@ -225,6 +262,8 @@ function step(dt) {
   G.director.update(dt);
   for (const e of G.enemies) e.update(dt);
   G.projectiles.update(dt);
+  G.fx.vfx.update(dt);
+  updateGhost(dt);
   updateMission(dt);
 }
 

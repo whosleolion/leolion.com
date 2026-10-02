@@ -20,6 +20,23 @@
   #hp { height: 8px; background: rgba(0,0,0,.25); outline: 1px solid rgba(255,255,255,.7); }
   #hp-fill { height: 100%; width: 100%; background: #fff; transition: width .15s; }
   #hp-fill.low { background: var(--red); }
+  #flow { height: 3px; margin-top: 3px; background: rgba(0,0,0,.18); }
+  #flow-fill { height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+  #combo { right: 24px; top: 38%; font-size: 30px; font-weight: 800; color: #fff; letter-spacing: .08em;
+    text-shadow: 0 2px 0 var(--ink), 0 0 12px rgba(0,0,0,.35); }
+  #combo.flow { color: var(--gold); }
+  #combo.pop { animation: pop .18s ease-out; }
+  @keyframes pop { from { transform: scale(1.35); } to { transform: scale(1); } }
+  #speedlines { inset: 0; opacity: 0; transition: opacity .25s;
+    background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0) 0deg 5deg, rgba(255,255,255,.55) 5.4deg 5.8deg, rgba(255,255,255,0) 6.2deg 11deg);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 38%, #000 80%); mask-image: radial-gradient(circle at 50% 50%, transparent 38%, #000 80%); }
+  #arrows { left: 50%; top: 50%; width: 0; height: 0; }
+  .arrow { position: absolute; left: -9px; top: -14px; width: 18px; height: 14px; clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    background: rgba(255,255,255,.35); transform-origin: 50% 50%; }
+  .arrow i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--yellow); }
+  .arrow[data-s="combat"] { background: var(--red); } .arrow[data-s="combat"] i { background: var(--red); }
+  .arrow[data-s="windup"] { background: #fff; animation: blink .12s infinite alternate; } .arrow[data-s="windup"] i { background: var(--red); height: 100% !important; }
+  @keyframes blink { to { opacity: .35; } }
   #status { margin-top: 8px; font-weight: 700; font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
   #status.red { color: var(--red); } #status.yellow { color: var(--yellow); } #status.green { color: var(--green); }
   #objective { top: max(16px, env(safe-area-inset-top)); right: 16px; max-width: min(420px, 48vw); text-align: right;
@@ -28,6 +45,7 @@
     background: rgba(0,0,0,.55); padding: 6px 14px; white-space: nowrap; }
   #prompt:empty { display: none; }
   #prompt.counter { background: var(--red); animation: pulse .25s infinite alternate; }
+  #prompt.gold { background: var(--gold); color: var(--ink); }
   @keyframes pulse { to { transform: translateX(-50%) scale(1.08); } }
   #hint { left: 50%; bottom: 12%; transform: translate(-50%, 8px); max-width: min(640px, 92vw); text-align: center;
     color: #fff; background: rgba(17,17,17,.7); padding: 8px 14px; font-size: 11px; opacity: 0; transition: opacity .3s, transform .3s; }
@@ -55,6 +73,10 @@
   .marker[data-s="calm"] i { background: #fff; }
   .marker[data-s="combat"] { background: var(--red); }
   .marker[data-s="combat"] i { background: var(--red); }
+  .marker[data-s="windup"] { background: #fff; animation: blink .1s infinite alternate; transform-origin: 50% 100%; }
+  .marker[data-s="windup"] i { background: var(--red); height: 100% !important; }
+  .marker[data-s="broken"] { background: var(--gold); }
+  .marker[data-s="broken"] i { background: var(--gold); }
   .marker.target { clip-path: polygon(50% 100%, 0 40%, 50% 0, 100% 40%); background: var(--gold); width: 16px; height: 20px; margin-left: -8px; }
 
   #debug { left: 16px; bottom: 16px; white-space: pre; font-size: 11px; color: #fff; text-shadow: 0 1px 2px #000; letter-spacing: 0; text-transform: none; }
@@ -109,10 +131,13 @@
 <body>
 <canvas id="game" tabindex="0"></canvas>
 
+<div class="hud" id="speedlines"></div>
 <div class="hud" id="vignette"></div>
+<div class="hud" id="arrows"></div>
+<div class="hud" id="combo"></div>
 <div class="hud" id="markers"></div>
 <div class="hud" id="crosshair"></div>
-<div class="hud" id="tl"><div id="hp"><div id="hp-fill"></div></div><div id="status"></div></div>
+<div class="hud" id="tl"><div id="hp"><div id="hp-fill"></div></div><div id="flow" title="momentum"><div id="flow-fill"></div></div><div id="status"></div></div>
 <div class="hud" id="objective"></div>
 <div class="hud" id="prompt"></div>
 <div class="hud" id="hint"></div>
@@ -129,16 +154,18 @@
 <div id="overlay" class="on">
   <div class="card">
     <h1>INTERMACHINAS</h1>
-    <div class="sub">stealth · freerun · combat — mechanical white-box build v0.1</div>
+    <div class="sub">stealth · freerun · combat — mechanical white-box build v0.2</div>
     <div class="cols kbm-only">
       <div>
         <h3>MOVE</h3>
         <dl>
           <dt>WASD</dt><dd>move · mouse look</dd>
-          <dt>SHIFT</dt><dd>freerun (hold)</dd>
-          <dt>SPACE</dt><dd>jump · climb leap</dd>
+          <dt>SHIFT</dt><dd>freerun · fast-climb (hold)</dd>
+          <dt>SPACE</dt><dd>jump (hold = higher) · climb leap</dd>
           <dt>C</dt><dd>crouch · slide · let go</dd>
+          <dt>C in air</dt><dd>landing roll</dd>
           <dt>S+SPACE</dt><dd>eject off a wall</dd>
+          <dt>crouch off edge</dt><dd>drop down &amp; hang</dd>
         </dl>
       </div>
       <div>
@@ -147,8 +174,9 @@
           <dt>LMB</dt><dd>light (×3 combo)</dd>
           <dt>RMB</dt><dd>heavy · breaks guard</dd>
           <dt>L L R</dt><dd>spin launcher</dd>
-          <dt>F</dt><dd>assassinate · counter · sync</dd>
+          <dt>F</dt><dd>assassinate · counter · execute · chain</dd>
           <dt>Q</dt><dd>dodge</dd>
+          <dt>V</dt><dd>whistle (lure a guard)</dd>
         </dl>
       </div>
     </div>
@@ -156,11 +184,12 @@
       <dl>
         <dt>left thumb</dt><dd>move (push far to freerun)</dd>
         <dt>right thumb</dt><dd>look</dd>
-        <dt>buttons</dt><dd>JMP · ATK · HVY · DGE · C (crouch) · F (assassinate / counter / sync)</dd>
+        <dt>buttons</dt><dd>JMP · ATK · HVY · DGE · C (crouch) · F (assassinate / counter / execute / sync) · WHS (whistle) · RUN</dd>
       </dl>
     </div>
-    <p style="font-size:12px;margin:-8px 0 20px;opacity:.8">Gamepad: sticks · A jump · X light · Y heavy · B crouch · RB assassinate/counter · RT freerun · LB dodge.
-      Climb anything. Hide in green. Red flashing guard = <b>F</b> to counter. ` opens the tuning panel.</p>
+    <p style="font-size:12px;margin:-8px 0 20px;opacity:.8">Gamepad: sticks · A jump · X light · Y heavy · B crouch · RB F-actions · RT freerun · LB dodge · D-pad up whistle.
+      Climb anything. Hide in green. Land hits to build a combo — ×4 is FREEFLOW. Guard flashing red = <b>F</b> to counter; gold = guard broken, <b>F</b> to execute.
+      After an F-kill, <b>F</b> again chains to the next. ` opens the tuning panel.</p>
     <div class="actions"><button id="play">PLAY</button><button id="restart" class="ghost">RESTART MISSION</button></div>
     <div class="credits">
       Prototype textures: <a href="https://kenney.nl/assets/prototype-textures" target="_blank" rel="noopener">Kenney</a> (CC0) ·

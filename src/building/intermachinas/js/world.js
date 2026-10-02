@@ -250,8 +250,8 @@ export function buildLevel(world) {
   W.box(-4, 0, -46, 2.2, 1.1, 2.2, { mat: 'hide', kind: 'hide' }); // tutorial bush
   W.hint(-20, -66, 20, -50, 'WASD move · mouse look · hold SHIFT to freerun · SPACE jump');
   W.hint(-8, -54, 8, -50, 'Freerun into low walls to vault them');
-  W.hint(3, -62, 10, -53, 'Run into any wall to climb · W/S/A/D on the wall · SPACE leaps · S+SPACE ejects · C drops');
-  W.hint(-7, -48, -1, -44, 'C to crouch · crouch in green cover to hide from guards');
+  W.hint(3, -62, 10, -53, 'Run into any wall to climb · hold SHIFT to climb fast · SPACE leaps · S+SPACE ejects · C drops · crouch-walk off an edge to hang');
+  W.hint(-7, -48, -1, -44, 'C to crouch · crouch in green cover to hide · V whistles a guard over to you');
 
   // --- viewpoint tower (boulevard, z=-15) ---
   const TX = 0, TZ = -15, TH = 28;

@@ -141,6 +141,54 @@ s = await S();
 check(s.state === 'air', `S+SPACE ejects off the wall (${s.state})`);
 await run(1);
 
+// --- forgiveness: coyote time + jump buffer ---
+await place(7, 4, -57, 0);
+await p.evaluate(() => { const P = G.player; P.state = 'air'; P.airT = 0.05; P.jumped = false; P.vel.y = -1; });
+await tap('Space');
+check(await p.evaluate(() => G.player.vel.y > 5), 'coyote time: jump just after leaving an edge');
+await run(1.5);
+await place(0, 0.45, -60, 0);
+await p.evaluate(() => { const P = G.player; P.state = 'air'; P.jumped = true; P.vel.y = -3; P.peakY = 0.45; });
+await tap('Space'); // pressed in the air, a few frames before touching down
+[s] = await until((s) => s.state === 'air' && s.y > 0.3, 0.6, 0.03);
+check(await p.evaluate(() => G.player.vel.y > 0 && G.player.state === 'air'), 'jump buffer: early press jumps on landing');
+await run(1.5);
+
+// --- landing roll off the 7 m block while freerunning ---
+await place(13, 7, -57, 0);
+await down('ShiftLeft', 'KeyW');
+let sawRoll = false;
+[s] = await until((s) => s.y < 0.1 && s.state === 'ground' && s.action !== 'roll', 3, 0.03, (s) => { if (s.action === 'roll') sawRoll = true; });
+await up('ShiftLeft', 'KeyW');
+s = await S();
+check(sawRoll && s.hp === 100, `freerun drop rolls out without damage (roll=${sawRoll} hp=${s.hp.toFixed(0)})`);
+
+// --- parkour down: crouch-walk off the 4 m block -> hang on the wall ---
+await place(8.3, 4, -56, Math.PI); // facing the south edge (z=-59), beside the roof crate
+await p.evaluate(() => { G.player.crouch = true; });
+await down('KeyW');
+[s, seen] = await until((s) => s.state === 'climb', 3);
+await up('KeyW');
+check(s.state === 'climb' && s.y > 1.5 && s.y < 3, `parkour down hangs from the edge (state ${s.state}, y=${s.y.toFixed(2)})`);
+// fast-climb back up with shift
+await down('ShiftLeft', 'KeyW');
+[s] = await until((s) => s.state === 'ground' && s.y > 3.9, 2);
+await up('ShiftLeft', 'KeyW');
+check(s.y > 3.9, 'fast-climbs back up');
+
+// --- climbing wraps around an outside corner ---
+await place(7, 0, -61, 0);
+await down('KeyW'); await down('Space'); await run(0.1); await up('Space');
+await until((s) => s.state === 'climb', 1);
+await up('KeyW');
+const n0 = await p.evaluate(() => ({ ...G.player.cl }));
+await down('KeyD');
+await until(() => false, 2.2, 0.1);
+await up('KeyD');
+const n1 = await p.evaluate(() => ({ ...G.player.cl, state: G.player.state }));
+check(n1.state === 'climb' && (n1.nx !== n0.nx || n1.nz !== n0.nz), `climb wraps the corner (normal ${n0.nx},${n0.nz} -> ${n1.nx},${n1.nz})`);
+await p.keyboard.down('KeyC'); await run(0.05); await p.keyboard.up('KeyC'); await run(1.5);
+
 // --- stealth: assassinate an unaware guard from behind ---
 await calm(false);
 const victim = await p.evaluate(() => {
@@ -157,6 +205,29 @@ await tap('KeyF');
 await run(0.8);
 check(await p.evaluate((i) => !G.enemies[i].alive, victim), 'assassination kills');
 await shot('05-assassinate');
+
+// --- chain kill: right after an assassination, F again dashes to the next unaware guard ---
+const chained = await p.evaluate(() => {
+  const a = G.enemies[7], b = G.enemies[8]; // market-street patrols
+  b.pos.x = a.pos.x + 5; b.pos.z = a.pos.z; b.pos.y = a.pos.y; b.yaw = 0; b.state = 'patrol'; b.awareness = 0; b.syncRig();
+  a.yaw = 0; a.state = 'patrol'; a.awareness = 0;
+  G.player.reset({ x: a.pos.x, y: a.pos.y, z: a.pos.z - 1.5, yaw: 0 });
+  return [G.enemies.indexOf(a), G.enemies.indexOf(b)];
+});
+await run(0.02); await tap('KeyF'); await run(0.7);
+s = await S();
+check(s.prompt === 'CHAIN KILL', `chain prompt after an assassination (prompt="${s.prompt}")`);
+await tap('KeyF'); await run(0.8);
+check(await p.evaluate(([a, b]) => !G.enemies[a].alive && !G.enemies[b].alive, chained), 'chain kill lands');
+
+// --- whistle lures a guard ---
+const lured = await p.evaluate(() => {
+  const e = G.enemies.find((x) => x.alive && x.type === 'guard' && x.state === 'patrol');
+  G.player.reset({ x: e.pos.x + 7, y: e.pos.y, z: e.pos.z, yaw: 0 });
+  return G.enemies.indexOf(e);
+});
+await tap('KeyV');
+check(await p.evaluate((i) => G.enemies[i].state === 'investigate', lured), 'whistle pulls a guard to investigate');
 
 // --- hiding: crouched in a bush in front of a guard stays hidden ---
 const hid = await p.evaluate(() => {
@@ -199,6 +270,36 @@ for (let i = 0; i < 80 && !killed; i++) {
 s = await S();
 check(killed, `combat kills a guard (hp left ${s.hp.toFixed(0)})`);
 await shot('07-combat');
+
+check(await p.evaluate(() => G.player.stats.bestCombo >= 2), `combo builds while fighting (best ×${await p.evaluate(() => G.player.stats.bestCombo)})`);
+
+// --- posture: battering a guard's block breaks it, then F executes ---
+const broke = await p.evaluate(() => {
+  const e = G.enemies.find((x) => x.alive && x.type === 'guard');
+  G.player.reset({ x: e.pos.x, y: e.pos.y, z: e.pos.z - 1.8, yaw: 0 });
+  e.enterCombat(false); e.yaw = Math.PI; e.attack = null; e.blockT = 1;
+  let r, n = 0;
+  while (n++ < 10 && r !== 'break') r = e.takeHit(1, { dx: 0, dz: 1, knock: 0, posture: 0.18 });
+  G.player.updateContext();
+  return [r, G.player.prompt, G.enemies.indexOf(e)];
+});
+check(broke[0] === 'break' && broke[1] === 'EXECUTE', `blocked hits break posture -> EXECUTE (${broke[0]}, prompt "${broke[1]}")`);
+await tap('KeyF'); await run(0.9);
+check(await p.evaluate((i) => !G.enemies[i].alive, broke[2]), 'execution kills');
+
+// --- last-known-position ghost appears when hunters lose sight of you ---
+const ghostShown = await p.evaluate(() => {
+  const e = G.enemies.find((x) => x.alive && x.type === 'guard');
+  G.player.reset({ x: e.pos.x, y: e.pos.y, z: e.pos.z - 4, yaw: 0 });
+  e.enterCombat(false);
+  G.advance(0.2);
+  G.player.hidden = true; const sp = e.seePlayer; e.seePlayer = () => 0; // break line of sight
+  G.advance(1);
+  const v = G.scene.children.some((o) => o.visible && o.children.length && o.children[0].children.length && o.traverse && (() => { let g = false; o.traverse((m) => { if (m.material && m.material.opacity < 0.4 && m.material.isMeshBasicMaterial && m.geometry.type === 'BoxGeometry' && m.parent && m.parent.parent) g = true; }); return g; })());
+  e.seePlayer = sp;
+  return v;
+});
+check(ghostShown, 'last-known-position ghost shows after losing sight');
 
 // --- counter window is offered when a guard winds up ---
 const counter = await p.evaluate(() => {

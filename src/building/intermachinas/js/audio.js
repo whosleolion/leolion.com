@@ -49,4 +49,12 @@ export const sfx = {
   throwing: () => noise(0.1, 1200, 2, 0.1),
   complete: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, 0.8, 'triangle', 0.12), i * 150)),
   death: () => tone(300, 1.2, 'sawtooth', 0.12, 0.2),
+  vault: () => noise(0.14, 700, 1.5, 0.1),
+  grab: () => { noise(0.06, 400, 2, 0.12); tone(140, 0.06, 'sine', 0.08); },
+  slide: () => noise(0.5, 350, 0.7, 0.12),
+  roll: () => { noise(0.3, 260, 0.8, 0.18); tone(90, 0.2, 'sine', 0.12, 0.6); },
+  whistle: () => { tone(1400, 0.16, 'sine', 0.12, 1.25); setTimeout(() => tone(1750, 0.28, 'sine', 0.12, 0.85), 170); },
+  perfect: () => { tone(1320, 0.4, 'triangle', 0.14); tone(1980, 0.5, 'sine', 0.08); },
+  freeflow: () => [660, 880, 1320].forEach((f, i) => setTimeout(() => tone(f, 0.25, 'triangle', 0.1), i * 60)),
+  guardBreak: () => { tone(900, 0.35, 'sawtooth', 0.1, 0.3); noise(0.3, 1500, 1, 0.25); },
 };

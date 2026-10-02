@@ -58,6 +58,7 @@ export class Enemy {
     this.avoidSide = this.strafe;
     this.stuck = { t: 0, x, z, detour: 0 };
     this.found = false; // as a corpse
+    this.posture = 0; this.postureT = 0; this.broken = false; this.brokenT = 0;
     this.vis = 0;
     this.rig.applyNow(Poses.idle(0));
     this.syncRig();
@@ -128,12 +129,28 @@ export class Enemy {
   // ------------------------------------------------------------- update
   update(dt) {
     this.t += dt;
-    if (!this.alive) { this.rig.apply(Poses.dead(), dt, 7); this.syncRig(); return; }
+    if (!this.alive) {
+      // knocked-down bodies slide to a stop instead of dropping in place
+      if (Math.abs(this.vel.x) + Math.abs(this.vel.z) > 0.05) { const k = Math.exp(-4 * dt); this.vel.x *= k; this.vel.z *= k; this.integrate(dt, false); }
+      this.rig.apply(Poses.dead(), dt, 7); this.syncRig(); return;
+    }
     if (this.freezeT > 0) { this.freezeT -= dt; this.rig.apply(Poses.hurt(), dt, 10); this.syncRig(); return; }
     const P = this.G.player;
 
     this.vis = this.seePlayer();
     if (this.vis > 0) { this.lastSeen = { ...P.pos }; }
+    if ((this.postureT += dt) > 1.5) this.posture = Math.max(0, this.posture - dt * 0.3);
+
+    if (this.broken) {
+      // posture broken: reeling, open to an execution
+      this.brokenT -= dt;
+      const k = Math.exp(-5 * dt); this.vel.x *= k; this.vel.z *= k;
+      this.integrate(dt, false);
+      this.rig.flash(Math.sin(this.t * 18) > 0 ? 0x806000 : 0x302000, true);
+      this.rig.apply(Poses.broken(this.t), dt, 14); this.syncRig();
+      if (this.brokenT <= 0) { this.broken = false; this.rig.flash(0, false); this.blockT = 0.6; }
+      return;
+    }
 
     if (this.stunT > 0) {
       this.stunT -= dt;
@@ -353,22 +370,34 @@ export class Enemy {
     const dx = P.pos.x - this.pos.x, dz = P.pos.z - this.pos.z, d = Math.hypot(dx, dz) || 1;
     const f = this.forward;
     const facing = (dx * f.x + dz * f.z) / d > 0.4;
-    if (wasAware && !o.breaks && !this.attack && facing && (this.blockT > 0 || Math.random() < this.cfg.block)) {
+    this.postureT = 0;
+    if (!this.broken && wasAware && !o.breaks && !this.attack && facing && (this.blockT > 0 || Math.random() < this.cfg.block)) {
       this.blockT = 0.4;
+      this.posture += (o.posture || 0.2) * 1.7;
+      if (this.posture >= 1) { this.breakGuard(); return 'break'; }
       return 'block';
     }
     this.cancelAttack();
-    this.hp -= dmg;
+    this.hp -= dmg * (this.broken ? 1.5 : 1);
     this.vel.x = o.dx * o.knock; this.vel.z = o.dz * o.knock;
     if (this.hp <= 0) { this.die('combat'); return 'kill'; }
-    this.stunT = o.finisher || o.breaks ? 0.75 : 0.38;
     this.blockT = 0;
+    if (!this.broken) {
+      this.posture += o.posture || 0.2;
+      if (this.posture >= 1) { this.breakGuard(); return 'break'; }
+    }
+    this.stunT = o.finisher || o.breaks ? 0.75 : 0.38;
     return 'hit';
+  }
+
+  breakGuard() {
+    this.broken = true; this.brokenT = 2.2; this.posture = 0; this.stunT = 0;
+    this.cancelAttack();
   }
 
   die(how) {
     if (!this.alive) return;
-    this.alive = false; this.state = 'dead'; this.found = false;
+    this.alive = false; this.state = 'dead'; this.found = false; this.broken = false;
     this.cancelAttack();
     this.rig.flash(0, false);
   }

@@ -1,15 +1,15 @@
 // Input: keyboard + mouse (pointer lock), gamepad, and touch, folded into
 // one set of actions so the game never cares which device is in use.
-//   held(a) / pressed(a)   a in: jump sprint crouch light heavy action dodge
+//   held(a) / pressed(a)   a in: jump sprint crouch light heavy action dodge whistle
 //   move {x: right, y: forward}  -1..1
 //   look {x, y}                  radians this frame
 const KEYMAP = {
   Space: 'jump', ShiftLeft: 'sprint', ShiftRight: 'sprint',
   KeyC: 'crouch', ControlLeft: 'crouch',
   KeyJ: 'light', KeyK: 'heavy', KeyF: 'action', KeyE: 'action',
-  KeyQ: 'dodge', AltLeft: 'dodge',
+  KeyQ: 'dodge', AltLeft: 'dodge', KeyV: 'whistle', KeyG: 'whistle',
 };
-const PAD = { 0: 'jump', 1: 'crouch', 2: 'light', 3: 'heavy', 5: 'action', 4: 'dodge', 7: 'sprint', 6: 'sprint' };
+const PAD = { 0: 'jump', 1: 'crouch', 2: 'light', 3: 'heavy', 5: 'action', 4: 'dodge', 7: 'sprint', 6: 'sprint', 12: 'whistle' };
 
 export class Input {
   constructor(canvas) {
@@ -127,6 +127,8 @@ export class Input {
         <button data-a="dodge">DGE</button>
         <button data-a="crouch">C</button>
         <button data-a="jump">JMP</button>
+        <button data-a="whistle">WHS</button>
+        <button data-a="sprint">RUN</button>
       </div>`;
     document.body.appendChild(ui);
     const stick = ui.querySelector('.stick'), knob = ui.querySelector('.knob');
