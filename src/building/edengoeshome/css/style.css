@@ -47,7 +47,7 @@ h1,h2,h3{font-family:"Fraunces",Georgia,serif;line-height:1.05;margin:0 0 .4em;f
 .sheet{background:var(--paper)}
 section{padding:64px 0}
 section h2{font-size:clamp(2rem,5vw,3rem);color:var(--teal-deep)}
-.bricks{background-color:var(--teal);color:var(--mist);background-image:
+.bricks{background-color:var(--teal);color:#f6fafc;background-image:
  linear-gradient(rgba(0,0,0,.14) 2px,transparent 2px),
  linear-gradient(90deg,rgba(0,0,0,.14) 2px,transparent 2px);
  background-size:96px 38px,96px 38px}
