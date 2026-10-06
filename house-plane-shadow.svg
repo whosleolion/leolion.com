@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <title>A house casting the shadow of a plane</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fd3f5"/>
+      <stop offset="1" stop-color="#fdeccb"/>
+    </linearGradient>
+    <g id="plane">
+      <ellipse cx="0" cy="0" rx="105" ry="11"/>
+      <path d="M30 -6 L-32 -98 L-58 -98 L-28 -6 Z"/>
+      <path d="M30 6 L-32 98 L-58 98 L-28 6 Z"/>
+      <path d="M-88 -5 L-112 -36 L-124 -36 L-106 -5 Z"/>
+      <path d="M-88 5 L-112 36 L-124 36 L-106 5 Z"/>
+    </g>
+  </defs>
+
+  <!-- sky and ground -->
+  <rect width="800" height="450" fill="url(#sky)"/>
+  <rect y="300" width="800" height="150" fill="#9ccc7a"/>
+
+  <!-- sun -->
+  <circle cx="70" cy="70" r="34" fill="#ffd54a"/>
+  <g stroke="#ffd54a" stroke-width="5" stroke-linecap="round">
+    <path d="M70 18v-12M70 122v12M18 70H6M122 70h12M33 33l-9-9M107 107l9 9M107 33l9-9M33 107l-9 9"/>
+  </g>
+
+  <!-- shadow: a plane, flattened onto the ground, starting at the house -->
+  <g fill="#2f4a2a" opacity="0.55">
+    <rect x="290" y="318" width="40" height="14"/>
+    <use href="#plane" transform="translate(470 372) scale(1.3 0.42)"/>
+  </g>
+
+  <!-- house -->
+  <rect x="120" y="190" width="180" height="130" fill="#e8c8a0"/>
+  <path d="M105 195 L210 110 L315 195 Z" fill="#b5483a"/>
+  <rect x="245" y="125" width="22" height="48" fill="#8c3a30"/>
+  <rect x="190" y="250" width="40" height="70" fill="#6b4a32"/>
+  <circle cx="222" cy="287" r="3" fill="#ffd54a"/>
+  <rect x="140" y="220" width="36" height="36" fill="#cfe8f7" stroke="#6b4a32" stroke-width="4"/>
+  <path d="M158 220v36M140 238h36" stroke="#6b4a32" stroke-width="3"/>
+  <rect x="244" y="220" width="36" height="36" fill="#cfe8f7" stroke="#6b4a32" stroke-width="4"/>
+  <path d="M262 220v36M244 238h36" stroke="#6b4a32" stroke-width="3"/>
+</svg>
