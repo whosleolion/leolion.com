@@ -62,8 +62,8 @@ section h2{font-size:clamp(2rem,5vw,3rem);color:var(--teal-deep)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
 .pull{font-family:"Fraunces",serif;font-size:1.7rem;font-weight:700;color:var(--purple-deep);line-height:1.2;border-left:6px solid var(--gold);padding-left:18px;margin:0}
 .tag{display:inline-block;background:var(--mist);color:var(--navy);border-radius:99px;padding:3px 12px;font-weight:700;font-size:.85rem;margin:0 6px 6px 0}
-.page-head{padding:60px 0 80px;position:relative}
-.page-head h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:1.02;margin:20px 0 14px;color:var(--mist);text-shadow:3px 3px 0 var(--teal-deep)}
+.page-head{padding:36px 0 52px;position:relative}
+.page-head h1{font-size:clamp(2.6rem,7vw,4.4rem);line-height:1.02;margin:0;color:var(--mist);text-shadow:3px 3px 0 var(--teal-deep)}
 .page-head p{max-width:46ch;font-size:1.2rem;margin:0}
 
 /* countdown */
@@ -83,6 +83,11 @@ footer .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:30px}
 footer a{color:var(--gold)}
 .credits{font-size:.88rem;opacity:.9}
 .credits strong{color:#fff}
+.logos{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:20px}
+.logos img{display:block;height:40px;width:auto}
+.logo-nytf img{border-radius:6px}
+.card-logo{height:34px;width:auto;margin-bottom:14px}
+.presented{margin:-4px 0 0;font-weight:700;color:var(--purple-deep)}
 
 .small{font-size:.9rem;opacity:.85;margin:.6em 0 0}
 .card ul{margin:.5em 0 0;padding-left:1.2em}.card li{margin:.3em 0}
@@ -109,8 +114,7 @@ html,body{overflow-x:hidden}
   .poster-wrap{max-width:290px;margin:0 auto}
   .poster{transform:rotate(1.5deg);border-width:6px;box-shadow:6px 8px 0 rgba(31,26,99,.35)}
   .torn{height:30px}
-  .page-head{padding:36px 0 56px}
-  .page-head h1{margin:16px 0 12px}
+  .page-head{padding:26px 0 38px}
   .page-head p{font-size:1.1rem}
   .cards{gap:16px;margin-top:20px}
   .card{padding:18px;box-shadow:4px 4px 0 var(--navy)}
