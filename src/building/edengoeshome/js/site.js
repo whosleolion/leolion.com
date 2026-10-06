@@ -13,10 +13,4 @@
     };
     tick(); setInterval(tick, 1000);
   }
-  // Fundraising meter: values come from data-raised / data-goal on the element.
-  var m = document.querySelector('.meter i');
-  if (m) {
-    var pct = Math.min(100, (+m.dataset.raised / +m.dataset.goal) * 100);
-    requestAnimationFrame(function () { m.style.width = Math.max(pct, 2) + '%'; });
-  }
 })();
