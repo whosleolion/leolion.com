@@ -82,11 +82,48 @@ footer a{color:var(--gold)}
 .credits{font-size:.88rem;opacity:.9}
 .credits strong{color:#fff}
 
+.small{font-size:.9rem;opacity:.85;margin:.6em 0 0}
+.card ul{margin:.5em 0 0;padding-left:1.2em}.card li{margin:.3em 0}
+.card p:last-child{margin-bottom:0}
+.card>.btn{margin-top:8px}
+p{margin:0 0 1em}
+html,body{overflow-x:hidden}
+.hero{overflow:hidden}
+
 @media(max-width:780px){
-  .hero .wrap,.two,footer .wrap{grid-template-columns:1fr}
-  .poster{max-width:360px;margin:10px auto 0}
-  .person{grid-template-columns:1fr}
-  .sun{width:70px}
-  body{font-size:17px}
+  body{font-size:17px;line-height:1.55}
+  .wrap{padding:0 18px}
+  .nav .wrap{min-height:0;padding-top:8px;padding-bottom:8px;justify-content:center}
+  .brand{width:100%;text-align:center;font-size:1.05rem}
+  .nav ul{width:100%;justify-content:center;gap:2px}
+  .nav li a{padding:7px 11px;font-size:.9rem}
+  section{padding:44px 0}
+  .hero{padding:32px 0 64px}
+  .hero .wrap,.two,footer .wrap{grid-template-columns:1fr;gap:28px}
+  .hero .wrap{gap:36px}
+  .hero h1{margin:12px 0 4px}
+  .hero .lede{max-width:none}
+  .poster{max-width:300px;margin:0 auto;transform:rotate(1.5deg);border-width:6px;box-shadow:6px 8px 0 rgba(31,26,99,.35)}
+  .torn{height:30px}
+  .page-head{padding:36px 0 52px}
+  .page-head p{font-size:1.1rem}
+  .cards{gap:16px;margin-top:20px}
+  .card{padding:18px;box-shadow:4px 4px 0 var(--navy)}
+  .card h3{font-size:1.3rem}
+  .card .big{font-size:1.9rem;margin-bottom:4px}
+  .btns{gap:12px;margin-top:20px}
+  .btns .btn{flex:1 1 100%;text-align:center}
+  .card>.btn{display:block;text-align:center}
+  .btn{padding:14px 20px}
+  .count{gap:8px;margin-top:20px}
+  .count div{flex:1;min-width:0;padding:8px 4px}
+  .count b{font-size:1.5rem}
+  .pull{font-size:1.4rem}
+  .person{grid-template-columns:1fr;gap:16px}
+  .avatar{width:104px;height:104px;font-size:2.4rem}
+  .bricks{background-size:72px 30px,72px 30px}
+  .sun{width:64px;top:12px;right:10px}
+  footer{padding:36px 0 44px}
 }
+@media(max-width:360px){.nav li a{padding:6px 8px;font-size:.85rem}.wrap{padding:0 14px}}
 @media(prefers-reduced-motion:reduce){.sun{animation:none}html{scroll-behavior:auto}.btn{transition:none}}
