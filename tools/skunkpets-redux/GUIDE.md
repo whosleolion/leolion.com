@@ -730,7 +730,7 @@ What she says, first match wins:
 Any of them can add `data-mood="shake"` or `"wide"` (editor:
 `[[diskette: 80 | shake | ...]]`); the default is a hop. Don't put a
 straight double quote in `data-say` (Harlowe breaks the tag on `&quot;`);
-the editor turns them into curly quotes for you.
+the editor turns them into curly quotes for you. Her lines can use the short-form `''bold''` and `//italic//` (the script's `disketteMarkup` turns them into `<b>`/`<i>`; `http://` is left alone), or plain `<b>`/`<i>` in DisketteLooks.
 
 **Repeats:** a zone, page comment or line can hold several alternatives
 separated by `>>` (`data-say="Hi! >> You again? >> Still here."`; in the

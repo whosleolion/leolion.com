@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="62b09579602d">
+<meta name="skunkpets-build" content="6ddaa0af1755">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "62b09579602d";
+  var mine = "6ddaa0af1755";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -1870,6 +1870,12 @@ tw-story .diskette-eye-hit:hover {
     repeating-linear-gradient(to bottom, #d9d9d9 0px, #d9d9d9 2px, #cfcfcf 2px, #cfcfcf 3px);
 }
 
+.mail-address {
+  margin: 0 6px 4px;
+  color: #555;
+  font: 11px Arial, sans-serif;
+}
+
 .mail-header {
   margin: 4px 4px 2px;
   padding: 1px 10px 3px;
@@ -3479,7 +3485,7 @@ function buildDisketteReaction(reaction) {
     if (reaction.followup) return quiet(e);
     e.preventDefault();
     e.stopPropagation();
-    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || DISKETTE_FOLLOWUP, followup: true };
+    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || disketteMarkup(DISKETTE_FOLLOWUP), followup: true };
     document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   });
   bubble.querySelector(".diskette-enough").addEventListener("click", function (e) {
@@ -3872,6 +3878,14 @@ function cycleDisketteLine(html, mode, id) {
   return options[Math.min(count, options.length - 1)];
 }
 
+/* Her lines may use the editor's short-form markup: ''bold'' and //italic//
+   (not the // in an http:// address). */
+function disketteMarkup(html) {
+  return String(html || "")
+    .replace(/''(.+?)''/g, "<b>$1</b>")
+    .replace(/(^|[^:\w])\/\/(?=\S)(.+?)\/\//g, "$1<i>$2</i>");
+}
+
 function sayDisketteReaction(found) {
   markGameEvent("diskette-first-look");
   let line = found.say !== undefined && found.say !== "" ? { html: found.say, mood: found.mood, cycle: found.cycle, then: found.then } : pickDisketteLine(found.keys || [found.key]);
@@ -3879,7 +3893,7 @@ function sayDisketteReaction(found) {
   const page = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
   const esc = page.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const then = line.then ? line.then.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
-  disketteReaction = { key: String(++disketteReactionSeq), html: line.html.replace(/\{page\}/g, esc), mood: line.mood || "hop", then: then };
+  disketteReaction = { key: String(++disketteReactionSeq), html: disketteMarkup(line.html.replace(/\{page\}/g, esc)), mood: line.mood || "hop", then: disketteMarkup(then) };
 
   document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   const assistant = document.querySelector(".diskette-assistant");
@@ -6107,10 +6121,10 @@ After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a p
 NetCon 2004 was the third occurrence of NetCon, an annual convention for influencers, fans, executives, and online brands. The event primarily features prominent content creators from across the internet. It was founded by veteran YouTube creators Cole Ramsay and Lena Russel (TheSweetpeople), and was later acquired by Hi-Vis (now Paradigm) in 2018. Its offices remain in Montori, Montana, sharing a building with Thinkify. 
 
 &lt;h2&gt;Standout Presenters&lt;/h2&gt;\
-NetCon &#39;04 was held in Rosemont, Illinois. The theme was &quot;Pioneer&quot;, spotlighting up-and-coming internet companies with innovative online engagement strategies. Out of 460 panelists and presenters, notable NetCon &#39;04 presences included:
-* (link: &quot;Global Games Archive&quot;)[(set: $navPending to &quot;globalgamesarchive.co.uk&quot;)(display: &quot;func-navigate&quot;)], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.
-* (link: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
+NetCon &#39;04 was held in Rosemont, Illinois. The theme was &quot;Pioneer&quot;, spotlighting up-and-coming internet companies with innovative online engagement strategies. Out of 75 panelists and presenters, notable NetCon &#39;04 presences included:
 * (link: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)], a virtual pet website where users could adopt creatures in the digital realm of Bin City, which had quadrupled its user base since its previous NetCon attendance in 2003.
+* (link: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
+* (link: &quot;Global Games Archive&quot;)[(set: $navPending to &quot;globalgamesarchive.co.uk&quot;)(display: &quot;func-navigate&quot;)], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.
 * &#39;&#39;FindPizzaKid.com&#39;&#39;, a semi-parodic website dedicated to a crowdsourced effort to locate Dominic Desantos, a tween boy who was reported missing after appearing in a viral video entitled &quot;Pizza Kid Freaks Out.&quot; The website initially featured discussion posts regarding Dominic&#39;s whereabouts, but was swiftly taken over as a general community discussion spaces for sharing photo edits, memes, and pizza recommendations.
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="19" name="New Tab" tags="wiki" position="1100,225" size="100,100">&lt;div class=&quot;new-tab-page&quot;&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="20" name="Nick Galveston" tags="wiki article" position="1225,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Nick Galveston (computer scientist)&lt;/h1&gt;\
@@ -6408,6 +6422,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 
 &lt;div class=&quot;crt&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="27" name="RenderMailInbox" tags="" position="100,100" size="100,100">{&lt;div class=&quot;mail-header&quot;&gt;Inbox&lt;/div&gt;
+&lt;div class=&quot;mail-address&quot;&gt;Your email: user3294@openmail.net&lt;/div&gt;
 &lt;div class=&quot;mail-list&quot;&gt;
 (if: $mailAll&#39;s length is 0)[&lt;div class=&quot;mail-empty&quot;&gt;Your inbox is empty&lt;/div&gt;]
 (for: each _msg, ...$mailAll)[
@@ -6502,7 +6517,7 @@ In March 2009, several core team members including Nick Galveston left the compa
 &lt;h2&gt;Controversy&lt;/h2&gt;\
 //This section has been edited and is pending review.//
 
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="32" name="Songs for Family Learning" tags="wiki article" position="225,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="32" name="Songs for Family Learning" tags="wiki article" position="225,475" size="100,100">&lt;span class=&quot;diskette-page&quot; data-say=&quot;Hey, I know &#39;&#39;Songs for Family Learning&#39;&#39;! My favorite is “Takin&#39; Dictation”.&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Songs for Family Learning&lt;/h1&gt;\
 &lt;div class=&quot;article-art&quot; data-art=&quot;songs-for-family-learning.jpg&quot; role=&quot;img&quot; aria-label=&quot;Songs for Family Learning logo&quot;&gt;&lt;/div&gt;\
 “Songs for Family Learning” is a series of albums released by (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.

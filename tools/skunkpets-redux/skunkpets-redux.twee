@@ -1843,6 +1843,12 @@ tw-story .diskette-eye-hit:hover {
     repeating-linear-gradient(to bottom, #d9d9d9 0px, #d9d9d9 2px, #cfcfcf 2px, #cfcfcf 3px);
 }
 
+.mail-address {
+  margin: 0 6px 4px;
+  color: #555;
+  font: 11px Arial, sans-serif;
+}
+
 .mail-header {
   margin: 4px 4px 2px;
   padding: 1px 10px 3px;
@@ -3446,7 +3452,7 @@ function buildDisketteReaction(reaction) {
     if (reaction.followup) return quiet(e);
     e.preventDefault();
     e.stopPropagation();
-    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || DISKETTE_FOLLOWUP, followup: true };
+    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || disketteMarkup(DISKETTE_FOLLOWUP), followup: true };
     document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   });
   bubble.querySelector(".diskette-enough").addEventListener("click", function (e) {
@@ -3839,6 +3845,14 @@ function cycleDisketteLine(html, mode, id) {
   return options[Math.min(count, options.length - 1)];
 }
 
+/* Her lines may use the editor's short-form markup: ''bold'' and //italic//
+   (not the // in an http:// address). */
+function disketteMarkup(html) {
+  return String(html || "")
+    .replace(/''(.+?)''/g, "<b>$1</b>")
+    .replace(/(^|[^:\w])\/\/(?=\S)(.+?)\/\//g, "$1<i>$2</i>");
+}
+
 function sayDisketteReaction(found) {
   markGameEvent("diskette-first-look");
   let line = found.say !== undefined && found.say !== "" ? { html: found.say, mood: found.mood, cycle: found.cycle, then: found.then } : pickDisketteLine(found.keys || [found.key]);
@@ -3846,7 +3860,7 @@ function sayDisketteReaction(found) {
   const page = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
   const esc = page.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const then = line.then ? line.then.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
-  disketteReaction = { key: String(++disketteReactionSeq), html: line.html.replace(/\{page\}/g, esc), mood: line.mood || "hop", then: then };
+  disketteReaction = { key: String(++disketteReactionSeq), html: disketteMarkup(line.html.replace(/\{page\}/g, esc)), mood: line.mood || "hop", then: disketteMarkup(then) };
 
   document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   const assistant = document.querySelector(".diskette-assistant");
@@ -6456,6 +6470,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 
 :: RenderMailInbox
 {<div class="mail-header">Inbox</div>
+<div class="mail-address">Your email: user3294@openmail.net</div>
 <div class="mail-list">
 (if: $mailAll's length is 0)[<div class="mail-empty">Your inbox is empty</div>]
 (for: each _msg, ...$mailAll)[

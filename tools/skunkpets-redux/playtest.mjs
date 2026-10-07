@@ -188,7 +188,8 @@ await p.evaluate(() => {
     '<span class="diskette-zone" data-radius="10" data-say="">sentience</span> and then ' +
     '<span class="diskette-zone" data-radius="10" data-if="!game-started" data-say="Stacked: before the game started">' +
     '<span class="diskette-zone" data-radius="10" data-if="game-started" data-say="Stacked: once the game started">' +
-    '<span class="diskette-zone" data-radius="10" data-say="Stacked: otherwise">stacked words</span></span></span></p>';
+    '<span class="diskette-zone" data-radius="10" data-say="Stacked: otherwise">stacked words</span></span></span> and then ' +
+    '<span class="diskette-zone" data-radius="10" data-say="I love \'\'Songs for Family Learning\'\' and //Takin\' Dictation//, see http://example.com">marked words</span></p>';
   c.querySelector('h1').after(...box.childNodes);
 });
 await look(await center('.browser-page-content h1'));
@@ -197,6 +198,8 @@ check('a page with its own comment', (await reaction()).includes('my page'), awa
 const zoneAt = (says) => p.locator('.browser-page-content .diskette-zone').filter({ has: p.locator('xpath=self::*[contains(@data-say, "' + says + '")]') }).first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
 await look(await zoneAt('ugly word'));
 check('a response zone in an article', (await reaction()).includes('ugly word'), await reaction());
+await look(await zoneAt('Songs for Family'));
+check('her lines render the editor\'s markup (\'\'bold\'\', //italic//, not http://)', await p.evaluate(() => { const r = document.querySelector('.diskette-reaction p'); return !!r && !!r.querySelector('b') && r.querySelector('b').textContent === 'Songs for Family Learning' && !!r.querySelector('i') && r.textContent.includes('http://example.com'); }), await p.evaluate(() => document.querySelector('.diskette-reaction p')?.innerHTML));
 await look(await zoneAt('otherwise'));
 check('stacked responses: the first whose condition fits wins', (await reaction()).includes('once the game started'), await reaction());
 await look(await p.locator('.browser-page-content .diskette-zone[data-say=""]').first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
