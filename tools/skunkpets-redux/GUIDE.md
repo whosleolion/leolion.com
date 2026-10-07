@@ -565,10 +565,32 @@ Add `article` to its tags if it should be findable in Winkipedia.
   (set in `func-navigate`).
 - **Global Games Archive** (`globalgamesarchive.co.uk`) has a search box
   handled by the script (`GLOBAL GAMES ARCHIVE — SEARCH`). Searching "kraska",
-  "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`.
+  "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`;
+  "muzzy", "muzzythegrump", "grump", "diskette" or "kill diskette" to `muzzythegrump`
+  (each creator: its terms and hidden link in the script's `creators` list).
 - **kraska1** pages embed the minigames in `<iframe>`s from
   tinypetgames.neocities.org. The "devlink-userbase" link shows an "exiting to
   external website" popup first.
+- **muzzythegrump** is another archive creator, with an almost empty profile
+  and one game, **KILL DISKETTE** (`muzzythegrump: KILL DISKETTE`): Diskette
+  pops out of one of nine holes, shoot her (crosshair, gunshot) before she
+  drops back and she shatters (a random glass break and one of her screams,
+  robot-voiced), the kill counter goes up and she gets a little faster
+  (`SPEEDUP`); each pop-up says one of her "hmm" whirrs. About a third of
+  pop-ups use one of Leo's other drawings of her (gasp, X eyes, "Et tu,
+  Brutus?", "Nyaa!", "stop."; `make-art.py` cuts them out to one size).
+  Rounds last a minute; then it shows your kills and the high score (kept in
+  that browser). The background slowly cycles through bright colours so her
+  limbs show. The banner is `banner-muzzythegrump.png`
+  (embedded). The sounds come from
+  `tools/skunkpets-redux/kill-diskette/make-sounds.py` (recordings in its
+  `sources/`; every clip brought to the same quiet level, and the game's
+  `VOLUME` keeps them low). Our own minigames live next to the game,
+  `src/building/skunkpets/minigames/<name>/index.html` (with its own art and
+  sounds next to it), and the page embeds them with
+  `<iframe data-site-src="/building/skunkpets/minigames/<name>/">`
+  (`initSiteFrames` sets the src through `siteAsset`, so the preview loads its
+  own copy).
 - **devlink-userbase login** is plain HTML inputs with the checking done in
   the script (`DEVLINK-USERBASE — LOGIN + PASSWORD RECOVERY`). The right
   details are **bruce1 / thegoldwoman**. With the right username but wrong
@@ -699,22 +721,22 @@ What she says, first match wins:
      `<span class="diskette-zone" data-radius="10" data-on="[data-art='x.jpg']" data-say="Ooh!"></span>`.
      Editor: `[[diskette: 10 | on photo: x.jpg | Ooh!]]` or
      `[[diskette: 10 | on element: .forum-user-pic | Ooh!]]`.
-   While the editor is open: points show as a dot with a dashed circle of
-   their reach, words underlined, elements outlined; click one (or press and
-   hold anywhere in its reach, or Alt-click) to open its card.
+   While the editor's Diskette tab is open: points show as a dot with a
+   dashed circle of their reach, words outlined, elements outlined; click
+   one to select it and open its card.
 2. **The page's own comment**, if you dropped on a browser page that has one:
    `<span class="diskette-page" data-say="..."></span>` (editor:
    `[[diskette: page | ...]]`).
 3. **The `DisketteLooks` passage**: one line per app or thing (Mail, a
    desktop icon, the Start button, the clock, the wallpaper, herself...). Its
-   comment lists every key. Several lines for one key are picked at random;
-   `{page}` is the page open in the browser. Plain HTML only there (it's
+   comment lists every key. A browser page without its own comment gets its site's line (`page-winkipedia`, `page-fanwiki`, `page-forum`, `page-gamesarchive`, `page-kraska1`, `page-devlink`, `page-404`, `page-newtab`; the script's `disketteSiteKey` decides), else the plain `page` line. `{page}` is the page open in the browser. Plain HTML only there (it's
    read by the script, never shown as a page).
 
-Any of them can add `data-mood="shake"` or `"wide"` (editor:
-`[[diskette: 80 | shake | ...]]`); the default is a hop. Don't put a
+Any of them can add `data-mood="shake"`, `"wide"` or `"tremble"` (a soft,
+fast shiver; editor: `[[diskette: 80 | shake | ...]]`); the default is a
+hop (crouch, spring, land with a squash). Don't put a
 straight double quote in `data-say` (Harlowe breaks the tag on `&quot;`);
-the editor turns them into curly quotes for you.
+the editor turns them into curly quotes for you. Her lines can use the short-form `''bold''` and `//italic//` (the script's `disketteMarkup` turns them into `<b>`/`<i>`; `http://` is left alone), or plain `<b>`/`<i>` in DisketteLooks.
 
 **Repeats:** a zone, page comment or line can hold several alternatives
 separated by `>>` (`data-say="Hi! >> You again? >> Still here."`; in the
@@ -722,15 +744,26 @@ editor's cards, one box per line: **+ Another line**, and **Asked again** picks 
 next: `data-cycle` absent = in order, then keep saying the last one;
 `"loop"` = round and round; `"random"` = at random, never the same twice
 running (friendly form: `[[diskette: 80 | loop | ...]]`). The counts are in
-`$disketteSeen`, so they're saved. Several DisketteLooks lines for the same
-key are still picked at random.
+`$disketteSeen`, so they're saved.
+
+**Alternate responses (conditions):** one spot can have several
+responses, each with its own `data-if`, and she says **the first one
+whose condition fits** (one without `data-if` always fits, so it goes
+last, as the "otherwise"). Same-spot zones are stacked: points side by
+side (`[[diskette: 80 | if: zoom-started | Now?]][[diskette: 80 | Hm.]]`),
+words zones nested (`[[diskette: 10 | if: x | around | Later.]][[diskette: 10 | on: these words | First.]][[/diskette]]`),
+photo/element zones and page comments one after another; DisketteLooks
+lines for the same key, in order. The editor's Diskette tab shows them as a
+numbered list (▶ = what she'd say now in this playthrough) with ↑/↓ to
+reorder, and **+ Another response here** asks when she should say it.
 
 **Thanks / That's enough:** every answer offers **Thanks, Diskette!** and
-**That's enough, Diskette.** (tucks her into the tray). Thanks brings her
-follow-up: the answer's own `data-then` (friendly `then: Ugh, can we look
-at something nicer?`), else "Need me to look at anything else?", offering
-**Sure!** (she stays up, quiet, ready to look again) and **No, that's
-all.** (tray). The × on any bubble just quiets her. Once she's looked at anything
+**That's enough, Diskette.** (tucks her into the tray). Thanks just closes
+the bubble: she stays up, quiet, ready to look again. If the answer has a
+`data-then` (friendly `then: Ugh, can we look at something nicer?`), Thanks
+brings that follow-up instead, offering **Sure!** (stays up, quiet) and
+**No, that's all.** (tray). Her opening bubble (click her) offers **OK**
+(closes it; she stays up) and **That's enough, Diskette.**. The × on any bubble just quiets her. Once she's looked at anything
 (`diskette-first-look`), her menu opens with "Need me to look at anything
 else?" instead of introducing herself again.
 

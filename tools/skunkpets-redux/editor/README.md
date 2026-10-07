@@ -5,31 +5,45 @@ On the preview (leolion.com/building/skunkpets-preview/) a yellow
 comments). It opens a panel beside the game; the game shrinks to make room.
 
 The panel has four editors as tabs, **Markup · Comments · Diskette ·
-Events**, which all follow one shared **selection**. **Save to preview…** at
-the bottom saves everything changed in any of them as one commit.
+Events**, which all follow one shared **selection**. The tabs show what's
+waiting: a dot on Markup for unsaved changes, the number of open comments,
+Diskette's drafts, and ⚠ on Events when something happened out of order.
+**Save to preview…** at the bottom (or the **N unsaved · Save** chip at the
+top) saves everything changed in any of them as one commit.
 
 ## Selecting
 
-- **Drag across words** in the game (any time the panel is open) to select
-  them.
-- **⌖ Edit** (top of the panel, or press **E**) turns on Edit mode: the
-  pointer becomes a crosshair, things outline as you hover, and a click
-  selects instead of acting (links don't fire, icons don't drag). Click a
-  **paragraph** of a page, a **photo**, or any **thing**: an icon, a window,
-  the clock, the Start button, Diskette herself. Dragging across words still
-  picks just those.
+A plain click always plays the game. Selecting is one of:
+
+- **Drag across words** in the game (any time the panel is open), or in the
+  markup.
+- **⌖ Edit** (top of the panel, or press **E**), then click: the pointer
+  becomes a crosshair, things outline as you hover, and a bar over the game
+  says you're in Edit mode. Click a **paragraph** of a page, a **photo**, or
+  any **thing**: an icon, a window, the clock, the Start button, Diskette
+  herself. That one click selects it and Edit mode ends (press E again for
+  another). Doing anything from the popup ends it too.
+- **Click something the editor is showing**: a comment's highlight (Comments
+  tab) or one of Diskette's zones (Diskette tab) selects it and opens it.
 - The **breadcrumb** under the tabs shows what's selected
   (`Tom Barry › ¶ paragraph › “his two sons”`); click a step to widen the
   selection (the page itself = her comment on the whole page). **Esc**
-  clears it; Esc again leaves Edit mode.
-- A small **popup** by the selection jumps to the right tab:
-  **✎ Markup**, **💬 Comment** (with how many comments are on it), and **◉ Diskette**
-  (her line there, or **◉ Diskette +** to make one, in one click).
+  leaves Edit mode, then clears the selection.
+- A bar over the game says what's selected (**Esc to deselect**).
+- A small **popup** by the selection: **✎ Markup** (straight to editing it:
+  its text selected in the markup, the game's selection let go), **💬
+  Comment** (with how many comments are on it), and **◉ Diskette** (her line
+  there, or **◉ Diskette +** to make one, in one click). Clicking into the
+  markup to edit also lets go of the selection.
 
 ## The four editors
 
 **Markup.** The whole page's markup, always (the selection is selected and
-scrolled to in it). Links are blue, photos green, Diskette's zones pink, HTML
+scrolled to in it). With no page open, or with **☰ Pages**, it's the list of
+every page instead, by kind (Winkipedia, fan wiki & forum, games archive...),
+each with ● unsaved changes, 💬 open comments and ◉ Diskette reactions, plus
+the pages that are linked to but missing (with **Create**); click one to open
+it in the game and here. Links are blue, photos green, Diskette's zones pink, HTML
 tags brown; typing `[[` suggests page names; Ctrl/Cmd-F finds, Ctrl/Cmd-Z
 undoes. The game shows edits as you type. The **?** has the short-form cheat
 sheet: `[[Tom Barry]]`, `[[the founder->Tom Barry]]`,
@@ -41,10 +55,14 @@ forum thread, games archive page, blank). Selecting something in game code
 (Mail, the NetCon ticket, READ_ME) shows that passage here read-only, with the
 selection marked. Unsaved edits are kept in this browser.
 
-**Comments.** Comments for whoever edits next. With a selection, its comments
-come first and a new comment is pinned to it (words, a photo, a thing, or game code);
-otherwise the open page's comments, and other pages' with **Go**. Comments
-highlight in the game while this tab is open; click one to open its thread.
+**Comments.** Comments for whoever edits next. With nothing selected, every
+comment in the game, grouped by page (the open one first), with **Open /
+Resolved / Mine** and a search box. With a selection, the comments on it (and
+any on that page whose words were edited away), and a new comment is pinned
+to it (words, a photo, a thing, or game code); **← All comments** goes back.
+**Show me** takes the game to a comment and selects what it's on. Comments
+highlight in the game while this tab is open; click one to select it and open
+its thread.
 **Reply**, **Resolve**/**Reopen**, **Delete** your own; if the pinned words are
 edited away, select new ones and **Re-pin**. Each comment is its own small
 commit to `comments.json` (the repository is public, so so are comments); the
@@ -54,16 +72,20 @@ first time, it asks your name (**My name…** changes it).
 (GUIDE.md 7.10). With a selection: her response to it, edited in place, or
 **◉ Diskette reacts here**, which makes a zone shaped to the selection (the
 words, the paragraph, the photo, the page) or, for a thing on the desktop,
-her line for that thing. Without one: every reaction, the open page first,
+her line for that thing. **+ Another response here** adds another response
+for the same spot that she says depending on what's happened (after or
+before an event, or "otherwise"): several responses for a spot are a
+numbered list, and she says the first one whose **only if** fits (▶ = what
+she'd say now; ↑ ↓ reorder; ⚠ never = one above always wins). Without one: every reaction, the open page first,
 then *Desktop & apps* and the other pages, drafts last, with a search box and
 **+ Line for something you can't point at** (off the screen, a poke in the
 eye, any page...). A card holds her line (**+ Another line**, or Enter, adds something
 else for when she's asked again; with more than one, **Asked again: In order /
-Loop / Random** appears and the header says e.g. *↻ 3 lines*), her reaction (hop, shake, wide eyes), the zone's slack or reach,
+Loop / Random** appears and the header says e.g. *↻ 3 lines*), her reaction (hop, shake, wide eyes, tremble), the zone's slack or reach,
 **only if** (events; `!name` = only before), what she says **after
 "Thanks"**, and **Make draft** / **Publish**, **Show me**, **Edit in markup**,
-**Delete**. Zones show in the game while this tab is open; click one to open
-its card.
+**Delete**. Zones show in the game while this tab is open; click one to select
+it and open its card.
 
 **Events.** The `GameEvents` list (GUIDE.md 7.16) with what has happened in
 this playthrough: ✓ happened, → next, ○ not yet, ⚠ out of order, plus every

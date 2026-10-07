@@ -73,6 +73,7 @@ tw-story {
 
 .browser-page-content,
 .mail-body,
+.mail-address,
 .recycle-file-content,
 tw-story input,
 tw-story textarea {
@@ -1273,104 +1274,11 @@ img.xp-dialog-icon {
   font: 13px/1.35 Arial, Helvetica, sans-serif;
 }
 
+/* The ticket's top: the NetCon 2004 banner (art, embedded). */
 .netcon-banner {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-  padding: 8px 10px 6px;
+  aspect-ratio: 1000 / 316;
   border-bottom: 2px solid #111;
-  background:
-    repeating-linear-gradient(-18deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 14px),
-    linear-gradient(to bottom, #e6e6e6, #cfcfcf);
-}
-
-.netcon-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 96px;
-  font-family: Anton, Impact, "Arial Narrow", sans-serif;
-}
-
-.netcon-logo-city {
-  letter-spacing: 3px;
-  font-size: 9px;
-  font-weight: bold;
-}
-
-.netcon-logo-mid {
-  display: flex;
-  align-items: stretch;
-  margin: 2px 0;
-}
-
-.netcon-logo-net {
-  padding: 2px 1px;
-  background: #ffe000;
-  color: #111;
-  font-size: 15px;
-  line-height: 1;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  box-shadow: inset 0 0 0 2px #111;
-}
-
-.netcon-logo-box {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 62px;
-  height: 56px;
-  background: #9aa3ad;
-  box-shadow: inset 0 0 0 2px #111;
-}
-
-.netcon-logo-con {
-  padding: 1px 4px;
-  background: #ffe000;
-  color: #111;
-  font-size: 19px;
-  line-height: 1;
-  box-shadow: inset 0 0 0 2px #111;
-}
-
-/* An arrow cursor where Comic-Con has its eye. */
-.netcon-logo-cursor {
-  position: absolute;
-  left: 22px;
-  top: 25px;
-  width: 0;
-  height: 0;
-  border-left: 11px solid #fff;
-  border-top: 0 solid transparent;
-  border-bottom: 18px solid transparent;
-  filter: drop-shadow(1px 0 0 #111) drop-shadow(-1px 0 0 #111) drop-shadow(0 1px 0 #111) drop-shadow(0 -1px 0 #111);
-}
-
-.netcon-logo-foot {
-  font-size: 10px;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-.netcon-title {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  font-family: Anton, Impact, "Arial Narrow", sans-serif;
-  line-height: 0.95;
-}
-
-.netcon-big {
-  font-size: 54px;
-  line-height: 1;
-}
-
-.netcon-sub {
-  margin-top: 4px;
-  font-size: 20px;
-  letter-spacing: 0.2px;
+  background: url("inline:netcon-banner.jpg") center / 100% 100% no-repeat;
 }
 
 .netcon-body {
@@ -1871,9 +1779,16 @@ tw-story .diskette-eye-hit:hover {
   display: none;
 }
 
-/* Moods: data-mood="hop" (the default), "shake" or "wide". */
+/* Moods: data-mood="hop" (the default), "shake", "wide" or "tremble". */
 .diskette-mood-hop .diskette-character {
-  animation: disketteHop 0.5s ease-out, disketteBob 2.8s ease-in-out 0.5s infinite;
+  transform-origin: 50% 100%;
+  animation: disketteHop 0.75s linear, disketteBob 2.8s ease-in-out 0.75s infinite;
+}
+
+/* a soft, fast, uneven shiver */
+.diskette-mood-tremble .diskette-character {
+  transform-origin: 50% 90%;
+  animation: disketteTremble 0.23s linear 7, disketteBob 2.8s ease-in-out 1.6s infinite;
 }
 
 .diskette-mood-shake .diskette-character {
@@ -1885,11 +1800,29 @@ tw-story .diskette-eye-hit:hover {
   scale: 1.3;
 }
 
+/* crouch, spring up, hang, drop, land with a squash, settle */
 @keyframes disketteHop {
-  0%, 100% { transform: translateY(0); }
-  35%      { transform: translateY(-14px); }
-  60%      { transform: translateY(0); }
-  75%      { transform: translateY(-4px); }
+  0%   { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in; }
+  14%  { transform: translateY(0) scale(1.1, 0.86); animation-timing-function: ease-out; }
+  24%  { transform: translateY(-6px) scale(0.92, 1.1); animation-timing-function: ease-out; }
+  44%  { transform: translateY(-26px) scale(0.98, 1.03); animation-timing-function: ease-in; }
+  50%  { transform: translateY(-27px) scale(1, 1); animation-timing-function: ease-in; }
+  68%  { transform: translateY(0) scale(0.95, 1.06); animation-timing-function: ease-out; }
+  76%  { transform: translateY(0) scale(1.12, 0.85); animation-timing-function: ease-out; }
+  88%  { transform: translateY(0) scale(0.97, 1.03); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes disketteTremble {
+  0%   { transform: translate(0, 0) rotate(0); }
+  13%  { transform: translate(-1.2px, 0.6px) rotate(-0.8deg); }
+  27%  { transform: translate(1px, -0.5px) rotate(0.5deg); }
+  38%  { transform: translate(-0.6px, -0.9px) rotate(-0.3deg); }
+  52%  { transform: translate(1.3px, 0.4px) rotate(0.9deg); }
+  61%  { transform: translate(-1px, 0.8px) rotate(-0.6deg); }
+  77%  { transform: translate(0.5px, -0.7px) rotate(0.4deg); }
+  89%  { transform: translate(-0.8px, 0.3px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0); }
 }
 
 @keyframes disketteShake {
@@ -1911,6 +1844,7 @@ tw-story .diskette-eye-hit:hover {
   .diskette-balloon,
   .diskette-mood-hop .diskette-character,
   .diskette-mood-shake .diskette-character,
+  .diskette-mood-tremble .diskette-character,
   .diskette-scan-box {
     animation: none;
   }
@@ -1934,6 +1868,23 @@ tw-story .diskette-eye-hit:hover {
   padding: 0;
   background:
     repeating-linear-gradient(to bottom, #d9d9d9 0px, #d9d9d9 2px, #cfcfcf 2px, #cfcfcf 3px);
+}
+
+.mail-address {
+  margin: 6px 12px 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  color: #555;
+  font: 12px/1.4 Arial, sans-serif;
+}
+
+/* The address can be selected and copied (one click selects all of it). */
+.mail-address-value {
+  color: #222;
+  font-weight: bold;
+  -webkit-user-select: all;
+  user-select: all;
+  cursor: text;
 }
 
 .mail-header {
@@ -2344,6 +2295,30 @@ span.xp-dialog-icon {
 .wiki-gamesarchive tw-link,
 .wiki-gamesarchive a {
   color: #4da4ff;
+}
+
+/* muzzythegrump's (mostly empty) creator page */
+.gga-banner-muzzy {
+  aspect-ratio: 1600 / 300;
+  margin: 0 0 6px;
+  background: url("inline:banner-muzzythegrump.png") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+.gga-empty {
+  color: #555;
+  font-style: italic;
+}
+
+.gga-tile {
+  width: 180px;
+  margin: 0 auto 4px;
+  background: center / 100% 100% no-repeat;
+}
+
+.gga-tile-killdiskette {
+  aspect-ratio: 366 / 300;
+  background-image: url("inline:icon-killdiskette.png");
 }
 
 /* Forum threads */
@@ -3135,6 +3110,7 @@ function initDesktopUI() {
     initDesktopIcons(playfield);
     initBinIcons(playfield);
     initWinkiWebResult(playfield);
+    initSiteFrames(playfield);
     initNotes(playfield);
     restoreBrowserScroll(playfield);
     updateClock(playfield);
@@ -3414,7 +3390,7 @@ function trackGameEvents() {
         <span class="diskette-page" data-say="..."></span>
    3. the DisketteLooks passage: a line for the app or thing
       you dropped on (see that passage for the keys).
-   Any of them can add data-mood="hop" (default), "shake" or
+   Any of them can add data-mood="hop" (default), "shake", "tremble" or
    "wide", and data-if="event, !other-event" to count only when
    those events have (or, with !, haven't) happened (see
    EVENTS). In the preview's article editor these are written
@@ -3442,7 +3418,6 @@ let disketteGazeFrame = 0;
 let disketteReaction = null;    /* { html, mood } while her answer is up */
 let disketteLook = null;        /* the drag in progress */
 let disketteLookLines = null;   /* key -> [{ html, mood }], from DisketteLooks */
-const disketteLastLine = {};
 
 function mountDisketteInspect(playfield) {
   const assistant = playfield.querySelector(".diskette-assistant");
@@ -3485,12 +3460,11 @@ function mountDisketteInspect(playfield) {
 }
 
 /* A short conversation. Her answer offers "Thanks, Diskette!" and "That's
-   enough, Diskette." (tucks her into the tray). Thanks brings her follow-up:
-   the answer's own data-then if it has one, else DISKETTE_FOLLOWUP, with
-   "Sure!" (she stays up, quiet, ready to look again) and "No, that's all."
-   (tray). The x on any bubble just leaves her up, quiet; clicking her
-   brings her menu. */
-const DISKETTE_FOLLOWUP = "Need me to look at anything else?";
+   enough, Diskette." (tucks her into the tray). Thanks just closes the
+   bubble and she stays up, quiet, ready to look again; if the answer has a
+   data-then, Thanks brings that follow-up instead, with "Sure!" (stays up,
+   quiet) and "No, that's all." (tray). The x on any bubble just leaves her
+   up, quiet; clicking her brings her menu. */
 
 function buildDisketteReaction(reaction) {
   const bubble = document.createElement("div");
@@ -3512,10 +3486,10 @@ function buildDisketteReaction(reaction) {
   }
   bubble.querySelector(".diskette-close").addEventListener("click", quiet);
   bubble.querySelector(".diskette-yes").addEventListener("click", function (e) {
-    if (reaction.followup) return quiet(e);
+    if (reaction.followup || !reaction.then) return quiet(e);
     e.preventDefault();
     e.stopPropagation();
-    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || DISKETTE_FOLLOWUP, followup: true };
+    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then, followup: true };
     document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   });
   bubble.querySelector(".diskette-enough").addEventListener("click", function (e) {
@@ -3754,6 +3728,25 @@ function findDisketteZone(playfield, hit, x, y) {
   return best;
 }
 
+/* Which site the browser's page belongs to, as a DisketteLooks key
+   (page-winkipedia, page-fanwiki, ...); "page" is the fallback. */
+function disketteSiteKey() {
+  const name = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
+  let tags = [];
+  try {
+    const passage = require("passages").get(name);
+    tags = (passage && passage.get("tags")) || [];
+  } catch (err) {}
+  if (name === "New Tab") return "page-newtab";
+  if (name === "Skunkpets.com") return "page-404";
+  if (/^(Forum:|FanWiki: Forum)/.test(name)) return "page-forum";
+  if (tags.indexOf("devlink") >= 0) return "page-devlink";
+  if (/^kraska1/.test(name)) return "page-kraska1";
+  if (tags.indexOf("gamesarchive") >= 0) return "page-gamesarchive";
+  if (tags.indexOf("fanwiki") >= 0) return "page-fanwiki";
+  return "page-winkipedia";
+}
+
 function findDisketteTarget(playfield, x, y) {
   const hit = document.elementFromPoint(x, y);
   if (!hit || !playfield.contains(hit)) {
@@ -3805,7 +3798,7 @@ function findDisketteTarget(playfield, x, y) {
       const page = Array.from(content.querySelectorAll(".diskette-page")).find(disketteUsable);
       const box = playfieldBox(playfield, content);
       if (page) return { say: page.dataset.say || "", mood: page.dataset.mood, cycle: page.dataset.cycle, then: page.dataset.then, box: box };
-      return { keys: ["page"], box: box };
+      return { keys: [disketteSiteKey(), "page"], box: box };
     }
     return { keys: [kind], box: playfieldBox(playfield, panel) };
   }
@@ -3846,11 +3839,9 @@ function pickDisketteLine(keys) {
   });
   const key = keys.concat(["anything"]).find(function (k) { return lines[k] && lines[k].length; });
   if (!key) return { html: "Hmm!" };
-  const options = lines[key];
-  let i = Math.floor(Math.random() * options.length);
-  if (options.length > 1 && options[i].html === disketteLastLine[key]) i = (i + 1) % options.length;
-  disketteLastLine[key] = options[i].html;
-  return options[i];
+  /* Several lines for a key: the first one whose condition fits, like
+     zones (conditional lines go before the plain one). */
+  return lines[key][0];
 }
 
 let disketteReactionSeq = 0;
@@ -3891,6 +3882,14 @@ function cycleDisketteLine(html, mode, id) {
   return options[Math.min(count, options.length - 1)];
 }
 
+/* Her lines may use the editor's short-form markup: ''bold'' and //italic//
+   (not the // in an http:// address). */
+function disketteMarkup(html) {
+  return String(html || "")
+    .replace(/''(.+?)''/g, "<b>$1</b>")
+    .replace(/(^|[^:\w])\/\/(?=\S)(.+?)\/\//g, "$1<i>$2</i>");
+}
+
 function sayDisketteReaction(found) {
   markGameEvent("diskette-first-look");
   let line = found.say !== undefined && found.say !== "" ? { html: found.say, mood: found.mood, cycle: found.cycle, then: found.then } : pickDisketteLine(found.keys || [found.key]);
@@ -3898,16 +3897,16 @@ function sayDisketteReaction(found) {
   const page = HarloweState && HarloweState.variables ? String(HarloweState.variables.browserPage || "") : "";
   const esc = page.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const then = line.then ? line.then.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
-  disketteReaction = { key: String(++disketteReactionSeq), html: line.html.replace(/\{page\}/g, esc), mood: line.mood || "hop", then: then };
+  disketteReaction = { key: String(++disketteReactionSeq), html: disketteMarkup(line.html.replace(/\{page\}/g, esc)), mood: line.mood || "hop", then: disketteMarkup(then) };
 
   document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   const assistant = document.querySelector(".diskette-assistant");
   if (!assistant) return;
-  ["hop", "shake", "wide"].forEach(function (m) { assistant.classList.remove("diskette-mood-" + m); });
+  ["hop", "shake", "wide", "tremble"].forEach(function (m) { assistant.classList.remove("diskette-mood-" + m); });
   void assistant.offsetWidth;  /* restart the animation */
   assistant.classList.add("diskette-mood-" + disketteReaction.mood);
   const mood = disketteReaction.mood;
-  setTimeout(function () { assistant.classList.remove("diskette-mood-" + mood); }, mood === "wide" ? 1400 : 600);
+  setTimeout(function () { assistant.classList.remove("diskette-mood-" + mood); }, { wide: 1400, tremble: 1650, hop: 780 }[mood] || 600);
   playDisketteVoice();
 }
 
@@ -4637,11 +4636,17 @@ document.addEventListener("click", function (e) {
   const q = input.value.toLowerCase().trim();
   if (!q) return;
 
-  const terms = ["kraska", "kraska1", "bad door", "deal with the devil"];
-  if (terms.some(function (t) { return q === t || q.includes(t); })) {
-    const navSpan = document.querySelector(".gga-nav-hidden");
-    const navLink = navSpan && navSpan.querySelector("tw-link");
-    if (navLink) { navLink.click(); return; }
+  /* Each creator: the search terms that find them, and their hidden link. */
+  const creators = [
+    [["kraska", "kraska1", "bad door", "deal with the devil"], ".gga-nav-hidden"],
+    [["muzzy", "muzzythegrump", "kill diskette", "grump", "diskette"], ".gga-nav-muzzy"],
+  ];
+  for (const [terms, nav] of creators) {
+    if (terms.some(function (t) { return q === t || q.includes(t); })) {
+      const navSpan = document.querySelector(nav);
+      const navLink = navSpan && navSpan.querySelector("tw-link");
+      if (navLink) { navLink.click(); return; }
+    }
   }
 
   const msg = document.querySelector('tw-hook[name="ggamsg"]');
@@ -4896,6 +4901,17 @@ function searchRealWikipedia(query, msg) {
       if (nav) nav.click();
     })
     .catch(miss);
+}
+
+/* Minigames hosted next to the game on leolion.com (e.g. KILL DISKETTE):
+   <iframe data-site-src="/building/skunkpets/minigames/..."> gets its src
+   through siteAsset, so the preview loads the preview's copy and the
+   tinypetgames copy loads leolion.com's. */
+function initSiteFrames(playfield) {
+  playfield.querySelectorAll("iframe[data-site-src]").forEach(function (frame) {
+    if (frame.getAttribute("src")) return;
+    frame.src = siteAsset(frame.dataset.siteSrc);
+  });
 }
 
 /* Called from initDesktopUI: point a freshly rendered result iframe at the
@@ -5500,7 +5516,7 @@ Battlemutts Online allowed players to create a controllable Battlemutt character
 The official release of the game was slated for July 2009, but the project entered development hiatus when Galveston left REV, and the full game was never released.
 
 <h2>Toys and Action Figures</h2>\
-(print:'<img src="' + $imgroot + 'mutts/battlemutts-toy.png" width="40%" style="float: left; margin-right:15px;">') Battlemutts collectible statues and action figures were manufactured by YoToy starting in 2000, starting with the Canis Collection, which featured members of the city's mutant undercity, and the Starborn Taskforce, which included robotic and alien invaders and select members of the Imperial Cyberguard. Later releases included fan-favorite characters like Jawbreaker, Willis Pinch, and Mother Canis Superior.
+(print:'<img src="' + $imgroot + 'mutts/battlemutts-toy.png" width="40%" style="float: left; margin-right:15px;">') Battlemutts collectible statues and action figures were manufactured by YoToy starting in 2000, starting with the Canis Collection, which featured members of the city's mutant undercity, and the Starborn Taskforce, which included robotic and alien invaders and select members of the Imperial Cyberguard. Later releases included fan-favorite characters like <span class="diskette-zone" data-radius="10" data-say="">Jawbreaker</span>, Willis Pinch, and Mother Canis Superior.
 </div>
 
 :: DESKTOP START
@@ -5522,12 +5538,12 @@ The official release of the game was slated for July 2009, but the project enter
 
 :: Diskette [wiki article] {"position":"725,100","size":"100,100"}
 <div class="wiki-article">\
-<h1>Diskette //(virtual assistant)//</h1>\
-<span class="diskette-page" data-say="Hey, that's my page!"></span>Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
+<h1><span class="diskette-zone" data-radius="10" data-say="Hey, thats my name! I hope it says nice things about me...">Diskette //(virtual assistant)//</span></h1>\
+Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
 
-<div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
+<div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><span class="diskette-zone" data-radius="10" data-on="[data-art='diskette-chyt.jpg']" data-say="Hey, that's a picture of me! Do my lashes look ok?"></span><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
-However, Diskette's Install CD was only in distribution for 6 months, after which she was <span class="diskette-zone" data-radius="10" data-mood="shake" data-say="Such an ugly word.">decommissioned</span>. Popular theories have circulated online that Diskette was shut off after she '<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="">attained sentience</span>,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
+However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned. Popular theories have circulated online that Diskette was shut off after she 'attained sentience,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
 
 <h2>"The Diskette Confession"</h2>\
@@ -6163,10 +6179,10 @@ After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a p
 NetCon 2004 was the third occurrence of NetCon, an annual convention for influencers, fans, executives, and online brands. The event primarily features prominent content creators from across the internet. It was founded by veteran YouTube creators Cole Ramsay and Lena Russel (TheSweetpeople), and was later acquired by Hi-Vis (now Paradigm) in 2018. Its offices remain in Montori, Montana, sharing a building with Thinkify. 
 
 <h2>Standout Presenters</h2>\
-NetCon '04 was held in Rosemont, Illinois. The theme was "Pioneer", spotlighting up-and-coming internet companies with innovative online engagement strategies. Out of 460 panelists and presenters, notable NetCon '04 presences included:
+NetCon '04 was held in Rosemont, Illinois. The theme was "Pioneer", spotlighting up-and-coming internet companies with innovative online engagement strategies. Out of 75 panelists and presenters, notable NetCon '04 presences included:
+* (link: "Skunkpets")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website where users could adopt creatures in the digital realm of Bin City, which had quadrupled its user base since its previous NetCon attendance in 2003.
+* (link: "Diskette")[(set: $navPending to "Diskette")(display: "func-navigate")], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
 * (link: "Global Games Archive")[(set: $navPending to "globalgamesarchive.co.uk")(display: "func-navigate")], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.
-* (link: "Diskette.net")[(set: $navPending to "Diskette")(display: "func-navigate")], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
-* (link: "Skunkpets.com")[(set: $navPending to "Skunkpets")(display: "func-navigate")], a virtual pet website where users could adopt creatures in the digital realm of Bin City, which had quadrupled its user base since its previous NetCon attendance in 2003.
 * ''FindPizzaKid.com'', a semi-parodic website dedicated to a crowdsourced effort to locate Dominic Desantos, a tween boy who was reported missing after appearing in a viral video entitled "Pizza Kid Freaks Out." The website initially featured discussion posts regarding Dominic's whereabouts, but was swiftly taken over as a general community discussion spaces for sharing photo edits, memes, and pizza recommendations.
 </div>
 
@@ -6188,7 +6204,7 @@ In 2010, Galveston became a regular lecturer in the Computer Science department 
 </div>
 
 :: Order of Refuse [wiki article] {"position":"100,350","size":"100,100"}
-<div class="wiki-article">\
+<span class="diskette-page" data-say="Oh, &lt;b&gt;Order of Refuse&lt;/b&gt;! Looks like Winkipedia doesn't have anything to say about this one."></span><div class="wiki-article">\
 <h1>Order of Refuse</h1>\
 Winkipedia does not have an article with this name, or the page has been ''deleted''.
 </div>
@@ -6491,6 +6507,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 
 :: RenderMailInbox
 {<div class="mail-header">Inbox</div>
+<div class="mail-address">Your email: <span class="mail-address-value" title="Click to select, then copy">user3294@openmail.net</span></div>
 <div class="mail-list">
 (if: $mailAll's length is 0)[<div class="mail-empty">Your inbox is empty</div>]
 (for: each _msg, ...$mailAll)[
@@ -6600,7 +6617,7 @@ In March 2009, several core team members including Nick Galveston left the compa
 </div>
 
 :: Songs for Family Learning [wiki article] {"position":"225,475","size":"100,100"}
-<div class="wiki-article">\
+<span class="diskette-page" data-say="Hey, I know &lt;b&gt;Songs for Family Learning&lt;/b&gt;! My favorite is “Takin' Dictation”."></span><div class="wiki-article">\
 <h1>Songs for Family Learning</h1>\
 <div class="article-art" data-art="songs-for-family-learning.jpg" role="img" aria-label="Songs for Family Learning logo"></div>\
 “Songs for Family Learning” is a series of albums released by (link: "Recast Entertainment Ventures")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.
@@ -6755,7 +6772,7 @@ The release dates mentioned pertain to the date of release in the United States.
 :: Tales of Prior Days [wiki article] {"position":"350,475","size":"100,100"}
 <div class="wiki-article">\
 <h1>Tales of Prior Days</h1>\
-<div class="article-art" data-art="title-1-ydmo.jpg" style="width: 30%" role="img" aria-label="Title(1)"></div><span class="diskette-zone" data-radius="10" data-on="[data-art='title-1-ydmo.jpg']" data-say="Nice wings..."></span>Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
+<div class="article-art" data-art="title-1-ydmo.jpg" style="width: 30%" role="img" aria-label="Title(1)"></div>Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
 
 Some of the tales included in these volumes:
 * The Wife of the Dead Soldier
@@ -6774,7 +6791,7 @@ Some of the tales included in these volumes:
 * Go I Know Not Whither and Fetch I Know Not What
 * The Girl of the Cliffs
 * Candle, Candle, Burn!
-* Great Old Radish
+* <span class="diskette-zone" data-radius="10" data-say="Я слышалa, как люди поют о великой старой редиске. О, редиска! Редиска! Позволь мне вытянуть тебя из черной земли и вкусить тебя!">Great Old Radish</span>
 * Sisters Morning, Noon, and Night
 * The Sleepy Murderer
 * The Language of the Pigs
@@ -7031,6 +7048,7 @@ Star button to bookmark a page.
 <div class="gga-msg">|gga-msg>[]</div>
 </div>
 <span class="gga-nav-hidden" style="display:none">(link: "·")[(set: $navPending to "kraska1")(display: "func-navigate")]</span>
+<span class="gga-nav-muzzy" style="display:none">(link: "·")[(set: $navPending to "muzzythegrump")(display: "func-navigate")]</span>
 </div>}
 
 :: img-fanwikibar {"position":"725,725","size":"100,100"}
@@ -7061,6 +7079,36 @@ some games i made. hope you like them''<br></div>\
 </tr><table><hr>
 (text-style:"underline")[''AUTHOR NOTES:'']<br>
 you can check out more of my work on (link-repeat: "http://devlink-userbase.skunkpets.com/login")[(set: $dialog to "You are exiting to external website<br>http://devlink-userbase.skunkpets.com/login.<br>Are you sure?")(set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "devlink")(set: $dialogCancel to true)(replace: ?desktoproot)[(display: "RenderDesktop")]]
+</div>
+
+:: muzzythegrump [wiki gamesarchive] {"position":"1350,725","size":"100,100"}
+<span class="diskette-page" data-mood="shake" data-say="Uhhh..."></span><div class="wiki-gamesarchive">\
+<div class="gga-banner-muzzy" role="img" aria-label="globalgamesarchive.co.uk: games by user muzzythegrump"></div>\
+<div width="100%" style="text-align:center">\
+(text-style:"underline")[''ABOUT ME'']<br>\
+<span class="gga-empty">old account got banned for the dogsh*t game but now im back</span><br></div>\
+<hr><table class="library-grid">\
+	<tr><td>\
+<span class="diskette-zone" data-radius="10" data-mood="wide" data-say="Uhhh...">    (link: '<div class="gga-tile gga-tile-killdiskette" role="img" aria-label="KILL DISKETTE"></div>KILL DISKETTE')[(set: $navPending to "muzzythegrump: KILL DISKETTE")(display: "func-navigate")]</span>
+	</td>
+	<td></td>
+	<td></td>
+</tr><table><hr>
+(text-style:"underline")[''AUTHOR NOTES:'']<br>
+<span class="gga-empty">none.</span>
+</div>
+
+:: muzzythegrump: KILL DISKETTE [wiki gamesarchive] {"position":"1475,725","size":"100,100"}
+<div class="wiki-gamesarchive">\
+<div class="gga-banner-muzzy" role="img" aria-label="globalgamesarchive.co.uk: games by user muzzythegrump"></div><hr>\
+<div style="width: 100%; height: 330px; background: black;">\
+  <iframe
+    data-site-src="/building/skunkpets/minigames/kill-diskette/"
+    style="width: 100%; height: 330px; border: none;"
+    class="minigame-frame"
+    title="KILL DISKETTE"
+  ></iframe>
+</div>\
 </div>
 
 :: kraska1: BAD DOOR [wiki gamesarchive] {"position":"1225,725","size":"100,100"}
@@ -7198,6 +7246,7 @@ deal with the devil
 (if: $disketteTopic is "")[
 (if: $events contains "diskette-first-look")[<p>Need me to look at anything else? <b>Drag from my eyes</b> to it!</p>](else:)[<p>Hi there! I'm <b>Diskette</b>, Your Secretary. Want to know about something on your screen? <b>Drag from my eyes</b> to it, and I'll tell you all about it!</p>]
 <div class="diskette-options">
+(link: "OK")[(set: $disketteQuiet to true)(set: $disketteTopic to "")(replace: ?desktoproot)[(display: "RenderDesktop")]]
 (link: "That's enough, Diskette.")[(display: "func-diskette-hide")]
 </div>
 (if: ($trashItems - (a: "readme"))'s length > 0)[<p class="diskette-note">There's still something in your Trash! Drag it onto the desktop and I can tell you about it too.</p>]
@@ -7226,12 +7275,16 @@ deal with the devil
      this, it's never shown as a page). Plain HTML only: Harlowe
      markup and variables don't work here, but <b> and <i> do.
 
-     One <p data-look="key"> per line. A key with several lines picks
-     one at random. data-mood="shake" or "wide" changes how she reacts
+     One <p data-look="key"> per line. A key with several lines says
+     the first one whose data-if fits (so put conditional lines before
+     the plain one). data-mood="shake", "wide" or "tremble" changes how she reacts
      (default: a little hop). {page} is the page open in the browser.
 
      Keys: self (herself), poke (a click on her eyes without a drag),
-     page (any browser page with no comment of its own), browser
+     page-winkipedia, page-fanwiki, page-forum, page-gamesarchive,
+     page-kraska1, page-devlink, page-404 (the Skunkpets.com 404),
+     page-newtab (a browser page with no comment of its own, by site),
+     page (any of those without a line of its own), browser
      (the browser's buttons and bars), mail, notes, readme, recycle,
      downloads, granmas, netcontkts (the open windows), icon-browser,
      icon-mail, icon-notes, icon-readme, icon-downloads, icon-diskette,
@@ -7246,24 +7299,29 @@ deal with the devil
      data-if="event, !other-event" makes a line count only when those
      events have (or, with !, haven't) happened; see GameEvents.
 
-     Repeats: several lines for the same key are picked at random (never
-     the same twice running). One line can also hold alternatives
-     separated by &gt;&gt; ("Hi! &gt;&gt; You again?"): she goes through
-     them in order and then keeps saying the last one; data-cycle="loop"
-     goes round and round, data-cycle="random" picks one.
+     Repeats: one line can hold alternatives separated by &gt;&gt;
+     ("Hi! &gt;&gt; You again?"): she goes through them in order and
+     then keeps saying the last one; data-cycle="loop" goes round and
+     round, data-cycle="random" picks one (never the same twice running).
 
      data-then="..." is her follow-up after "Thanks, Diskette!" for that
-     line (default: "Need me to look at anything else?"). A line
+     line (without one, Thanks just closes her bubble). A line
      with data-draft is a draft (the editor's Drafts) and is never said
      until it's published.
 
      A page can have its own comment, and any spot in a page its own
      response zone; see the script's DISKETTE INSPECTING. -->
 <p data-look="self icon-diskette">That's me! I'm <b>Diskette</b>, Your Secretary. I know all about the programs on this computer. Just ask!</p>
-<p data-look="poke" data-mood="shake">Ow!</p>
-<p data-look="poke" data-mood="shake">Hey! I need those to see!</p>
-<p data-look="page">Ooh, <b>{page}</b>! Winkipedia knows about everything.</p>
-<p data-look="page" data-mood="wide">So many words! Want me to look at something in particular? Aim right at it.</p>
+<p data-look="poke" data-mood="shake" data-cycle="random">Ow! &gt;&gt; Hey! I need those to see!</p>
+<p data-look="page-winkipedia" data-cycle="random">Ooh, <b>{page}</b>! Winkipedia knows about everything. &gt;&gt; So many words! Want me to look at something in particular? Aim right at it.</p>
+<p data-look="page-fanwiki" data-cycle="random">A fan wiki!</p>
+<p data-look="page-forum" data-cycle="random">A forum! Lots of people talking at once. Be nice to each other! &gt;&gt; I don't think I'm supposed to read other people's posts. ...Okay, just this once.</p>
+<p data-look="page-gamesarchive"><b>Global Games Archive</b>! Looks like a library for old games.</p>
+<p data-look="page-kraska1">A game designer's homepage.</p>
+<p data-look="page-devlink" data-mood="wide">This page is for developers. I don't think we're supposed to be here...</p>
+<p data-look="page-404" data-mood="shake">Hmm, this page isn't there anymore. Websites don't last forever, you know.</p>
+<p data-look="page-newtab">A blank new tab! Where should we go? The ★ has your bookmarks.</p>
+<p data-look="page">Ooh, <b>{page}</b>! Want me to look at something in particular? Aim right at it.</p>
 <p data-look="browser icon-browser"><b>Browse</b> is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.</p>
 <p data-look="mail icon-mail"><b>Mail</b> is where your email arrives. Click a message in your Inbox to read it.</p>
 <p data-look="notes icon-notes"><b>Notes</b> is a handy notepad. Jot down anything you want to remember.</p>
@@ -7275,7 +7333,7 @@ deal with the devil
 <p data-look="netcontkts">Remember NetCon 2004? What a weekend!</p>
 <p data-look="start">The <b>Start</b> button! Everything on this computer starts there.</p>
 <p data-look="clock">Is it that time already?</p>
-<p data-look="volume">That's the volume. Turn it up! I love this song.</p>
+<p data-look="volume">That's the volume.</p>
 <p data-look="taskbar">The taskbar shows every window you have open. Click one to bring it to the front!</p>
 <p data-look="dialog" data-mood="wide">Ooh, a message! You should probably read that.</p>
 <p data-look="desktop" data-mood="wide">Such beautiful green hills...</p>
@@ -7319,6 +7377,7 @@ deal with the devil
 <p data-event="visited:globalgamesarchive.co.uk" data-after="visited:Skunkpets">Left Winkipedia for the Global Games Archive.</p>
 <p data-event="archive-search-missed" data-after="visited:globalgamesarchive.co.uk">Searched the archive and found nothing.</p>
 <p data-event="visited:kraska1" data-after="visited:globalgamesarchive.co.uk, visited:Anya Krysina">Found kraska1 on the archive.</p>
+<p data-event="visited:muzzythegrump" data-after="visited:globalgamesarchive.co.uk">Found muzzythegrump (KILL DISKETTE) on the archive.</p>
 <p data-event="visited:devlink-userbase: login" data-after="visited:kraska1">Reached the devlink-userbase login.</p>
 <p data-event="login-failed" data-after="visited:devlink-userbase: login">A wrong username or password.</p>
 <p data-event="password-hint" data-after="login-failed">Answered the security question: hint "witchand".</p>
@@ -7357,14 +7416,7 @@ deal with the devil
 
 :: RenderNetconTicket
 {<div class="netcon-ticket">
-<div class="netcon-banner">
-<div class="netcon-logo">
-<div class="netcon-logo-city">ROSEMONT</div>
-<div class="netcon-logo-mid"><div class="netcon-logo-net">NET</div><div class="netcon-logo-box"><span class="netcon-logo-con">CON</span><span class="netcon-logo-cursor"></span></div></div>
-<div class="netcon-logo-foot">PIONEER&nbsp;&#8217;04</div>
-</div>
-<div class="netcon-title"><div class="netcon-big">NETCON&nbsp;2004</div><div class="netcon-sub">INTERNET CONVENTION: ROSEMONT, IL</div></div>
-</div>
+<div class="netcon-banner" role="img" aria-label="NETCON 2004: at the Donald E. Stephens Convention + Conference Center. Join us for a weekend of panels, presentations, and gamez!!!"></div>
 <div class="netcon-body">
 <p>Hello,</p>
 <p>Good news! Your payment to NetCon has been successfully processed. Your credit card has been charged for your recent purchase.</p>
@@ -7373,7 +7425,7 @@ deal with the devil
 <table class="netcon-table">
 <tr><th>Product(s)</th><td><div>NetCon 2004 Attendee Friday,</div><div>NetCon 2004 Attendee Saturday</div></td></tr>
 <tr><th>Amount</th><td>95.00</td></tr>
-<tr><th>Payment</th><td><span class="diskette-zone" data-radius="20" data-say="Somebody blacked that out."><span class="netcon-redact"></span></span></td></tr>
+<tr><th>Payment</th><td><span class="netcon-redact"></span></td></tr>
 <tr><th>Date Charged</th><td>2/9/2004</td></tr>
 <tr><th></th><td><span class="netcon-url">http:&#47;&#47;www.netcon04.com/tickets</span></td></tr>
 </table>

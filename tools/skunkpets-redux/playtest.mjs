@@ -112,7 +112,7 @@ await shot('03a-granmas');
 await click('.panel[data-window-template="granmas"] .panel-close');
 await dbl('.folder-file[data-file="netcontkts"]');
 const ticket = await text('.netcon-ticket');
-check('netcontkts.pdf opens the NetCon 2004 ticket', ticket.includes('NETCON 2004') && ticket.includes('NetCon 2004 Attendee Saturday') && ticket.includes('http://www.netcon04.com/tickets'), ticket.slice(0, 80));
+check('netcontkts.pdf opens the NetCon 2004 ticket', (await p.locator('.netcon-banner[aria-label^="NETCON 2004"]').count()) === 1 && ticket.includes('NetCon 2004 Attendee Saturday') && ticket.includes('http://www.netcon04.com/tickets'), ticket.slice(0, 80));
 await shot('03b-ticket');
 await click('.panel[data-window-template="netcontkts"] .panel-close');
 await click('.panel[data-window-template="downloads"] .panel-close');
@@ -142,7 +142,7 @@ const leftX = await pupilX();
 await p.mouse.move(1275, 400); await W(150);
 const rightX = await pupilX();
 check('her pupils follow the mouse', leftX < -1 && rightX > 1, `${leftX} / ${rightX}`);
-check('her menu says to drag from her eyes, with no list of apps', (await text('.diskette-bubble')).includes('Drag from my eyes') && (await text('.diskette-options')) === "That's enough, Diskette.", await text('.diskette-options'));
+check('her menu says to drag from her eyes, with no list of apps', (await text('.diskette-bubble')).includes('Drag from my eyes') && (await text('.diskette-options')) === "OK That's enough, Diskette.", await text('.diskette-options'));
 await look(await center('.desktop-icon[data-window-template="browser"]'));
 check('dragging from her eyes to an icon: she talks about it', (await reaction()).includes('web browser'), await reaction());
 check('...in place of her menu, and the arrow is gone', (await p.locator('.diskette-bubble:visible').count()) === 1 && (await p.locator('.diskette-look-layer').count()) === 0);
@@ -152,11 +152,13 @@ check('her answer stays up through a redraw', (await reaction()).includes('Brows
 const quietNow = async () => (await p.locator('.diskette-bubble').count()) === 0 && (await p.locator('.diskette-character').count()) === 1;
 check('her answer offers Thanks and That\'s enough', (await text('.diskette-reaction .diskette-options')) === "Thanks, Diskette! That's enough, Diskette.", await text('.diskette-reaction .diskette-options'));
 await click('.diskette-reaction .diskette-yes');
-check('Thanks brings her follow-up, offering Sure! and No', (await reaction()).includes('Need me to look at anything else?') && (await text('.diskette-reaction .diskette-options')) === "Sure! No, that's all.", await text('.diskette-reaction .diskette-options'));
-await click('.diskette-reaction .diskette-yes');
-check('Sure! leaves her up but quiet', await quietNow());
+check('Thanks just closes her bubble: she stays up, quiet', await quietNow());
 await click('.diskette-character');
 check('clicking her brings her menu back, as a follow-up now', (await text('.diskette-bubble')).includes('Need me to look at anything else?') && (await text('.diskette-bubble')).includes('Drag from my eyes'));
+check('...offering OK above That\'s enough', (await text('.diskette-bubble .diskette-options')).replace(/\s+/g, ' ').trim() === "OK That's enough, Diskette.", await text('.diskette-bubble .diskette-options'));
+await go('.diskette-bubble .diskette-options tw-link', 'OK');
+check('OK closes her bubble; she stays up', await quietNow());
+await click('.diskette-character');
 await click('.diskette-eye-hit-r'); await W(300);
 check('a poke in the eye', /Ow|see/.test(await reaction()), await reaction());
 await click('.diskette-reaction .diskette-close');
@@ -166,10 +168,8 @@ await look([640, 160]);
 check('she can still be shown things while quiet: the wallpaper', /hills/.test(await reaction()), await reaction());
 await dbl('.desktop-icon[data-window-template="downloads"]');
 await dbl('.folder-file[data-file="netcontkts"]');
-await look(await center('.netcon-redact'));
-check('a response zone in the ticket answers', (await reaction()).includes('blacked that out'), await reaction());
-await look(await center('.netcon-big'));
-check('the rest of the ticket gets the window\'s line', (await reaction()).includes('NetCon 2004'), await reaction());
+await look(await center('.netcon-banner'));
+check('the ticket gets the window\'s line', (await reaction()).includes('NetCon 2004'), await reaction());
 await click('.panel[data-window-template="netcontkts"] .panel-close');
 await click('.panel[data-window-template="downloads"] .panel-close');
 await dbl('.desktop-icon[data-window-template="browser"]');
@@ -178,11 +178,32 @@ await go('.bookmark-row tw-link', 'Winkipedia');
 await type('#winki-search-input', 'Diskette');
 await p.keyboard.press('Enter'); await W(500);
 await look(await center('.browser-page-content h1'));
+check('a page without its own comment gets her page line', /Winkipedia knows|So many words/.test(await reaction()), await reaction());
+// The pages have no zones of their own right now, so these checks add test
+// ones to the open page: a page comment, a words zone, an empty one, and
+// three responses stacked on one spot (the first whose data-if fits wins).
+await p.evaluate(() => {
+  const c = document.querySelector('.browser-page-content');
+  const box = document.createElement('div');
+  box.innerHTML = '<span class="diskette-page" data-say="Hey, that\'s my page!"></span>' +
+    '<p><span class="diskette-zone" data-radius="10" data-say="Such an ugly word.">decommissioned</span> and then ' +
+    '<span class="diskette-zone" data-radius="10" data-say="">sentience</span> and then ' +
+    '<span class="diskette-zone" data-radius="10" data-if="!game-started" data-say="Stacked: before the game started">' +
+    '<span class="diskette-zone" data-radius="10" data-if="game-started" data-say="Stacked: once the game started">' +
+    '<span class="diskette-zone" data-radius="10" data-say="Stacked: otherwise">stacked words</span></span></span> and then ' +
+    '<span class="diskette-zone" data-radius="10" data-say="I love \'\'Songs for Family Learning\'\' and //Takin\' Dictation//, see http://example.com">marked words</span></p>';
+  c.querySelector('h1').after(...box.childNodes);
+});
+await look(await center('.browser-page-content h1'));
 check('a page with its own comment', (await reaction()).includes('my page'), await reaction());
 // (zones are often empty markers: no size, so Playwright calls them hidden)
 const zoneAt = (says) => p.locator('.browser-page-content .diskette-zone').filter({ has: p.locator('xpath=self::*[contains(@data-say, "' + says + '")]') }).first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
 await look(await zoneAt('ugly word'));
 check('a response zone in an article', (await reaction()).includes('ugly word'), await reaction());
+await look(await zoneAt('Songs for Family'));
+check('her lines render the editor\'s markup (\'\'bold\'\', //italic//, not http://)', await p.evaluate(() => { const r = document.querySelector('.diskette-reaction p'); return !!r && !!r.querySelector('b') && r.querySelector('b').textContent === 'Songs for Family Learning' && !!r.querySelector('i') && r.textContent.includes('http://example.com'); }), await p.evaluate(() => document.querySelector('.diskette-reaction p')?.innerHTML));
+await look(await zoneAt('otherwise'));
+check('stacked responses: the first whose condition fits wins', (await reaction()).includes('once the game started'), await reaction());
 await look(await p.locator('.browser-page-content .diskette-zone[data-say=""]').first().evaluate((e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
 check('a zone with no line yet is ignored (she uses the page comment)', (await reaction()).includes('my page'), await reaction());
 await shot('03c-diskette-inspecting');
@@ -287,6 +308,18 @@ check('a new page starts at the top', (await p.evaluate(() => document.querySele
 await type('#gga-search-input', 'skunkpets');
 await p.keyboard.press('Enter'); await W(500);
 check('games archive search for "skunkpets" finds nothing', (await pageTitle()) !== 'kraska1' && (await text('.browser-page-content')).includes('No results found'));
+await p.locator('#gga-search-input').fill('');
+await type('#gga-search-input', 'diskette');
+await p.keyboard.press('Enter'); await W(500);
+check('games archive search for "diskette" finds muzzythegrump', (await pageTitle()) === 'muzzythegrump', await pageTitle());
+await go('.browser-page-content tw-link', 'KILL DISKETTE');
+check('his KILL DISKETTE page', (await pageTitle()) === 'muzzythegrump: KILL DISKETTE', await pageTitle());
+await W(1200);
+const kd = p.frameLocator('.browser-page-content iframe.minigame-frame');
+check('...embeds the minigame from next to the game', ((await p.getAttribute('.browser-page-content iframe.minigame-frame', 'src')) || '').endsWith('/building/skunkpets/minigames/kill-diskette/') && (await kd.locator('#start h1').innerText()) === 'KILL DISKETTE', await p.getAttribute('.browser-page-content iframe.minigame-frame', 'src'));
+await click('.panel[data-window-template="browser"] .browser-btn[title="Back"]'); await W(400);
+await click('.panel[data-window-template="browser"] .browser-btn[title="Back"]'); await W(400);
+check('Back returns to the archive', (await pageTitle()) === 'globalgamesarchive.co.uk', await pageTitle());
 await p.locator('#gga-search-input').fill('');
 await type('#gga-search-input', 'kraska');
 await p.keyboard.press('Enter'); await W(500);

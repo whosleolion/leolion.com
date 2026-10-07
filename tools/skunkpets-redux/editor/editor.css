@@ -1324,3 +1324,220 @@ body.ske-aiming .playfield * {
   line-height: 16px;
   white-space: nowrap;
 }
+
+/* Edit mode's bar over the game. */
+.ske-aimbar {
+  position: fixed;
+  top: 8px;
+  z-index: 2147483600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 4px 12px;
+  border-radius: 14px;
+  background: #316ac5;
+  color: #fff;
+  font: 12px system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.ske-aimbar button {
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: #316ac5;
+  font: 600 11px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+/* Tab badges and the save chip in the header. */
+.ske-tab-badge {
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #e3e8f4;
+  color: #2a4a8a;
+  font-size: 10px;
+  font-weight: 600;
+}
+.ske-tab-btn[data-tab="markup"] .ske-tab-badge {
+  padding: 0;
+  background: none;
+  color: #d07a00;
+}
+.ske-tab-btn[data-tab="diskette"] .ske-tab-badge { background: #eee; color: #666; }
+.ske-tab-btn[data-tab="events"] .ske-tab-badge { background: none; color: #c0392b; }
+.ske-panel .ske-save-chip {
+  padding: 1px 9px;
+  border-color: #d07a00;
+  border-radius: 10px;
+  background: #fff4e0;
+  color: #8a4b00;
+  font-size: 11px;
+  font-weight: 600;
+}
+.ske-panel .ske-save-chip:hover { background: #ffe6bd; }
+
+/* Markup: title row and the page index. */
+.ske-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ske-title-row .ske-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ske-panel .ske-pages-btn {
+  flex: none;
+  padding: 1px 8px;
+  font-size: 11px;
+}
+.ske-panel .ske-pages-btn.ske-pages-on {
+  border-color: #316ac5;
+  background: #e8eefc;
+}
+.ske-pageindex { display: none; }
+.ske-tab-markup.ske-index-mode .ske-pageindex {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ske-tab-markup.ske-index-mode .ske-tools,
+.ske-tab-markup.ske-index-mode .ske-cm,
+.ske-tab-markup.ske-index-mode .ske-rawview,
+.ske-tab-markup.ske-index-mode .ske-missing,
+.ske-tab-markup.ske-index-mode .ske-last-edit,
+.ske-tab-markup.ske-index-mode > .ske-actions {
+  display: none;
+}
+.ske-page-search { flex: 1; }
+.ske-page-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ske-page-list .ske-section-title { margin-top: 8px; }
+.ske-panel .ske-pi-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.ske-panel .ske-pi-row:hover { background: #e8eefc; }
+.ske-panel .ske-pi-current { background: #f0f4fc; font-weight: 600; }
+.ske-pi-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ske-pi-unsaved { color: #d07a00; }
+.ske-pi-tag {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #dff0d8;
+  color: #3c763d;
+  font-size: 10px;
+}
+.ske-pi-count { color: #666; font-size: 11px; }
+.ske-panel .ske-pi-missing { cursor: default; }
+.ske-panel .ske-pi-missing:hover { background: none; }
+.ske-pi-missing .ske-muted {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Comments: the inbox bar and page groups. */
+.ske-comment-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ske-comment-search { flex: 1; min-width: 100px; }
+.ske-comment-group {
+  margin-top: 6px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #ddd;
+  font-size: 12px;
+}
+.ske-panel .ske-back { margin-right: 4px; font-size: 12px; }
+
+/* Alternate responses for one spot: a numbered list, first fit wins. */
+.ske-spot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ske-spot-many {
+  padding: 6px;
+  border: 1px dashed #d9a3c0;
+  border-radius: 5px;
+  background: #fdf7fa;
+}
+.ske-spot + .ske-spot { margin-top: 8px; }
+.ske-panel .ske-add-alt { align-self: flex-start; }
+.ske-alt-rank {
+  flex: none;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e6e6e6;
+  color: #555;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+.ske-alt-rank.ske-alt-now {
+  background: #2e8b57;
+  color: #fff;
+}
+.ske-cond-chip {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: #e8eefc;
+  color: #2a4a8a;
+  font: 10px/16px ui-monospace, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ske-cond-chip.ske-cond-else {
+  background: #f0f0f0;
+  color: #777;
+  font-family: system-ui, sans-serif;
+  font-style: italic;
+}
+.ske-alt-never {
+  flex: none;
+  color: #c0392b;
+  font-size: 10px;
+  font-weight: 600;
+}
+.ske-alt-when { width: 100%; }
+.ske-aimbar.ske-selbar {
+  background: #333;
+}
+.ske-aimbar.ske-selbar button { color: #333; }
+.ske-selbar-label {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

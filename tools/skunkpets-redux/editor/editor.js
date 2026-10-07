@@ -39,7 +39,7 @@
   const PHOTO_RE = /<div class="article-art( article-art-left)?" data-art="([^"]+)"(?: style="width: ([\d.]+%)")? role="img" aria-label="([^"]*)"><\/div>/g;
   /* Diskette's response zones and whole-page comments (her "inspecting"
      mode; see DISKETTE INSPECTING in the game's script). */
-  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")?(?: data-if="([^"]*)")?(?: data-on="([^"]*)")?(?: data-cycle="(loop|random)")?(?: data-then="([^"]*)")?(?: data-draft="(1)")? data-say="([^"]*)">([^<>\[\]|]*)<\/span>/g;
+  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide|tremble)")?(?: data-if="([^"]*)")?(?: data-on="([^"]*)")?(?: data-cycle="(loop|random)")?(?: data-then="([^"]*)")?(?: data-draft="(1)")? data-say="([^"]*)">([^<>\[\]|]*)<\/span>/g;
   const PHOTO_ON_RE = /^\[data-art='([^']+)'\]$/;
   const ZONE_RADIUS = 60;
 
@@ -156,7 +156,7 @@
     while (parts.length > 1) {
       const x = parts[0];
       if (/^(page|\d+(px)?)$/.test(x)) { if (x === "page") f.kind = "page"; else f.radius = parseInt(x, 10); }
-      else if (/^(hop|shake|wide)$/.test(x)) f.mood = x;
+      else if (/^(hop|shake|wide|tremble)$/.test(x)) f.mood = x;
       else if (/^(loop|random)$/.test(x)) f.cycle = x;
       else if (x === "draft") f.draft = true;
       else if (x === "around") around = true;
@@ -1087,7 +1087,10 @@
             if (u.selectionSet || u.docChanged) updateQuoteHint();
           }),
           CM.EditorView.domEventHandlers({
+            /* Clicking into the markup to edit lets go of the game's selection. */
+            focus: function () { releaseSelection(); },
             mousedown: function (e) {
+              releaseSelection();
               const red = e.target.closest(".cm-ske-redlink");
               if (red && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openNewPageDialog(red.dataset.page); return true; }
               const mark = e.target.closest("[data-cid]");
@@ -1108,6 +1111,9 @@
   }
   const redecorate = () => view && view.dispatch({ effects: refreshDecorations.of(null) });
   function selectRange(from, to, focus) {
+    const len = view.state.doc.length;
+    from = Math.max(0, Math.min(from, len));
+    to = Math.max(0, Math.min(to, len));
     view.dispatch({ selection: { anchor: from, head: to }, effects: CM.EditorView.scrollIntoView(from, { y: "center" }) });
     if (focus) view.focus();
   }
@@ -1148,9 +1154,9 @@
   const CHEAT_SHEET = [
     ["Links", "[[Tom Barry]]   link to a page\n[[the founder->Tom Barry]]   link with other words\nType [[ for page names. Red = no such page yet: Ctrl/Cmd-click it to create it."],
     ["Photos", "[[photo: file.jpg | right | description]]\n[[photo: file.jpg | left | 36% | description]]\nMove a photo's line to move it; right after a heading puts it beside that section."],
-    ["Diskette", "[[diskette: 80 | Her line.]]   a point zone\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | ...]]   her comment on the page\nAdd shake or wide, loop or random, and if: events before her line. Line 1 >> line 2 = alternatives. then: … = her follow-up after Thanks. TODO … = still to write. More in the Diskette tab's ?."],
+    ["Diskette", "[[diskette: 80 | Her line.]]   a point zone\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | ...]]   her comment on the page\nAdd shake, wide or tremble, loop or random, and if: events before her line. Line 1 >> line 2 = alternatives. then: … = her follow-up after Thanks. TODO … = still to write. More in the Diskette tab's ?."],
     ["Text", "''bold''   //italic//   <h2>Heading</h2>\nA \\ at the end of a line joins it to the next one."],
-    ["Moving around", "Click words in the game to jump to them here. Ctrl/Cmd-F finds, Ctrl/Cmd-Z undoes."],
+    ["Moving around", "Drag across words in the game (or ⌖ Edit, then click a paragraph) to jump to them here. ☰ Pages lists every page. Ctrl/Cmd-F finds, Ctrl/Cmd-Z undoes."],
   ];
 
   function buildUi() {
@@ -1170,7 +1176,13 @@
     const commentInput = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "Leave a comment for whoever edits next…" });
     const quoteHint = el("div", { class: "ske-muted ske-quote-hint" });
 
-    const tabButton = (id, label) => el("button", { type: "button", class: "ske-tab-btn", "data-tab": id, text: label, onclick: () => setTab(id) });
+    const tabButton = (id, label) => el("button", { type: "button", class: "ske-tab-btn", "data-tab": id, onclick: () => setTab(id) }, [
+      el("span", { class: "ske-tab-label", text: label }),
+      el("span", { class: "ske-tab-badge ske-hidden" }),
+    ]);
+    const pageIndex = el("div", { class: "ske-pageindex" });
+    const pagesBtn = el("button", { type: "button", class: "ske-pages-btn", title: "Every page: open one, or see what needs work", text: "☰ Pages", onclick: () => { indexOpen = !indexOpen || !shownPage; updateMarkupMode(); } });
+    const saveChip = el("button", { type: "button", class: "ske-save-chip ske-hidden", title: "Review and save your changes to the preview", onclick: () => openReview() });
     const disketteTab = el("div", { class: "ske-tab ske-tab-diskette" });
     const statusTab = el("div", { class: "ske-tab ske-tab-events" });
     const crumbs = el("div", { class: "ske-crumbs ske-hidden" });
@@ -1193,8 +1205,9 @@
       ]),
     ]);
     const articleTab = el("div", { class: "ske-tab ske-tab-markup" }, [
-      title,
+      el("div", { class: "ske-title-row" }, [pagesBtn, title]),
       lastEdit,
+      pageIndex,
       el("div", { class: "ske-tools" }, [
         tool("Link", "Link the selected words: [[Page]] or [[words->Page]]", () => wrap("[[", "]]")),
         tool("Bold", "''bold''", () => wrap("''", "''")),
@@ -1216,6 +1229,7 @@
       el("div", { class: "ske-head" }, [
         el("b", { text: "Backend Editor" }),
         el("span", { class: "ske-head-tools" }, [
+          saveChip,
           el("button", { type: "button", class: "ske-aim-btn", title: "Edit mode: click things in the game to select them (E)", text: "⌖ Edit", onclick: () => setAiming(!aiming) }),
           el("button", { type: "button", class: "ske-github-btn", title: "GitHub access (needed to save and comment)", text: "GitHub", onclick: () => openGithubDialog() }),
           el("button", { type: "button", class: "ske-close", title: "Close the editor", text: "×", onclick: () => setOpen(false) }),
@@ -1242,7 +1256,7 @@
     ]);
     document.body.appendChild(toggle);
     document.body.appendChild(panel);
-    ui = { toggle, panel, title, lastEdit, status, pending, missing, commentsTitle, commentList, commentOthers, commentStatus, commentInput, quoteHint, disketteTab, statusTab, crumbs };
+    ui = { toggle, panel, title, lastEdit, status, pending, missing, commentsTitle, commentList, commentOthers, commentStatus, commentInput, quoteHint, disketteTab, statusTab, crumbs, pageIndex, pagesBtn, saveChip };
     view = makeEditor(editorBox);
     setTab(store.data.tab);
   }
@@ -1291,7 +1305,7 @@
 
   function setOpen(open) {
     store.data.open = open;
-    if (!open) { setAiming(false); sel = null; if (overlay) overlay.textContent = ""; }
+    if (!open) { setAiming(false); sel = null; topBar(); if (overlay) overlay.textContent = ""; }
     store.write();
     ui.panel.classList.toggle("ske-open", open);
     ui.toggle.classList.toggle("ske-toggle-on", open);
@@ -1319,6 +1333,57 @@
     if (clashing.length) lines.push("⚠ Changed by someone else since you started editing: " + clashing.join(", ") + ". Saving would undo their changes; check it, or Undo yours.");
     if (!getToken()) lines.push("Add a GitHub token (GitHub, top of the panel) to be able to save.");
     ui.pending.textContent = lines.join("\n");
+    scheduleBadges();
+  }
+
+  /* ---------- Tab badges and the save chip ---------- */
+
+  let badgeTimer = 0;
+  function scheduleBadges() {
+    if (badgeTimer || !ui) return;
+    badgeTimer = setTimeout(function () { badgeTimer = 0; updateBadges(); }, 80);
+  }
+
+  function eventsOutOfOrder() {
+    const events = hook.events ? hook.events() : null;
+    if (!events) return [];
+    const happened = new Set(events);
+    return findEvents(currentSource("GameEvents")).filter((d) => happened.has(d.id) && d.after.some((a) => !happened.has(a))).map((d) => d.id);
+  }
+
+  function setBadge(id, text, tip) {
+    const b = ui && ui.panel.querySelector('.ske-tab-btn[data-tab="' + id + '"] .ske-tab-badge');
+    if (!b) return;
+    b.textContent = text;
+    b.title = text ? tip : "";
+    b.classList.toggle("ske-hidden", !text);
+  }
+
+  function updateEventsBadge() {
+    const odd = eventsOutOfOrder();
+    setBadge("events", odd.length ? "⚠" : "", "Happened out of order: " + odd.join(", "));
+  }
+
+  function updateBadges() {
+    if (!ui) return;
+    const badge = function (id, text, tip) {
+      const b = ui.panel.querySelector('.ske-tab-btn[data-tab="' + id + '"] .ske-tab-badge');
+      if (!b) return;
+      b.textContent = text;
+      b.title = text ? tip : "";
+      b.classList.toggle("ske-hidden", !text);
+    };
+    const unsaved = Object.keys(store.data.drafts).length + Object.keys(store.data.photos).length;
+    badge("markup", unsaved ? "●" : "", unsaved + (unsaved === 1 ? " unsaved change" : " unsaved changes"));
+    const open = commentsLoaded ? openRoots().length : 0;
+    badge("comments", open ? String(open) : "", open + (open === 1 ? " open comment" : " open comments"));
+    const drafts = allReactions().filter((i) => i.draft).length;
+    badge("diskette", drafts ? drafts + (drafts === 1 ? " draft" : " drafts") : "", "Reactions that aren't in the game yet");
+    updateEventsBadge();
+    const pages = Object.keys(store.data.drafts).length;
+    ui.saveChip.textContent = unsaved + " unsaved · Save";
+    ui.saveChip.title = "Review and save: " + Object.keys(store.data.drafts).concat(Object.keys(store.data.photos).map((f) => "photo " + f)).join(", ");
+    ui.saveChip.classList.toggle("ske-hidden", !pages);
   }
 
   function ago(iso) {
@@ -1436,6 +1501,94 @@
     img.src = URL.createObjectURL(file);
   }
 
+  /* ---------- Markup: the page index ---------- */
+
+  let indexOpen = false;
+  let pageQuery = "";
+  const PAGE_KINDS = [["article", "Winkipedia"], ["fanwiki", "Fan wiki & forum"], ["gamesarchive", "Games archive"], ["devlink", "devlink"], ["", "Other pages"]];
+
+  /* The page the game's browser shows, or null when the browser isn't open. */
+  const gamePage = () => (document.querySelector(".browser-page-content") ? hook.currentPage() || null : null);
+
+  /* The index shows when no page is open (and no game code is selected), or
+     when ☰ Pages is pressed. */
+  function updateMarkupMode() {
+    if (!ui) return;
+    const tab = ui.panel.querySelector(".ske-tab-markup");
+    const raw = tab.classList.contains("ske-raw-mode");
+    const on = indexOpen || (!shownPage && !raw);
+    tab.classList.toggle("ske-index-mode", on);
+    ui.pagesBtn.classList.toggle("ske-pages-on", on);
+    ui.pagesBtn.disabled = on && !shownPage;
+    if (on) {
+      ui.title.textContent = "All pages";
+      renderPageIndex();
+    } else if (!raw) ui.title.textContent = shownPage || "";
+  }
+
+  function renderPageIndex() {
+    const box = ui.pageIndex;
+    let search = box.querySelector(".ske-page-search");
+    let list = box.querySelector(".ske-page-list");
+    if (!search) {
+      search = el("input", { type: "search", class: "ske-input ske-page-search", placeholder: "Find a page" });
+      search.addEventListener("input", () => { pageQuery = search.value; renderPageIndex(); });
+      list = el("div", { class: "ske-page-list" });
+      box.appendChild(el("div", { class: "ske-bar" }, [search, el("button", { type: "button", text: "+ New page", onclick: () => openNewPageDialog("") })]));
+      box.appendChild(list);
+    }
+    search.value = pageQuery;
+    list.textContent = "";
+    const q = pageQuery.trim().toLowerCase();
+    const names = wikiPageNames().filter((n) => !q || n.toLowerCase().indexOf(q) >= 0);
+    const reactions = {};
+    allReactions().forEach((r) => { if (r.type !== "look") reactions[r.passage] = (reactions[r.passage] || 0) + 1; });
+    const open = {};
+    openRoots().forEach((c) => (open[c.page] = (open[c.page] || 0) + 1));
+    const kindOf = (n) => (PAGE_KINDS.find((k) => k[0] && tagsOf(n).indexOf(k[0]) >= 0) || PAGE_KINDS[PAGE_KINDS.length - 1])[0];
+    PAGE_KINDS.forEach(function (k) {
+      const these = names.filter((n) => kindOf(n) === k[0]);
+      if (!these.length) return;
+      list.appendChild(el("div", { class: "ske-section-title ske-tiny", text: k[1] + " (" + these.length + ")" }));
+      these.forEach(function (n) {
+        const bits = [];
+        if (n in store.data.drafts) bits.push(el("span", { class: "ske-pi-unsaved", title: "Unsaved changes", text: "●" }));
+        if (isNewPage(n)) bits.push(el("span", { class: "ske-pi-tag", text: "new" }));
+        if (open[n]) bits.push(el("span", { class: "ske-pi-count", title: open[n] + " open comments", text: "💬 " + open[n] }));
+        if (reactions[n]) bits.push(el("span", { class: "ske-pi-count", title: reactions[n] + " Diskette reactions", text: "◉ " + reactions[n] }));
+        list.appendChild(el("button", { type: "button", class: "ske-pi-row" + (n === shownPage ? " ske-pi-current" : ""), title: "Open " + n + " in the game and here", onclick: () => openFromIndex(n) }, [
+          el("span", { class: "ske-pi-name", text: n }),
+        ].concat(bits)));
+      });
+    });
+    if (!names.length) list.appendChild(el("div", { class: "ske-muted", text: "No page called that. + New page makes one." }));
+    /* Pages linked to that don't exist yet. */
+    const missing = {};
+    wikiPageNames().forEach(function (n) {
+      linkTargets(n === shownPage ? getText() : friendlyOf(n)).forEach(function (l) {
+        if (!pageExists(l.target)) (missing[l.target] = missing[l.target] || new Set()).add(n);
+      });
+    });
+    const gaps = Object.keys(missing).filter((t) => !q || t.toLowerCase().indexOf(q) >= 0).sort();
+    if (gaps.length) {
+      list.appendChild(el("div", { class: "ske-section-title ske-tiny", text: "Linked to but missing (" + gaps.length + ")" }));
+      gaps.forEach(function (t) {
+        list.appendChild(el("div", { class: "ske-pi-row ske-pi-missing" }, [
+          el("span", { class: "ske-pi-name ske-redword", text: t }),
+          el("span", { class: "ske-muted ske-tiny", text: "from " + Array.from(missing[t]).join(", ") }),
+          el("button", { type: "button", text: "Create", onclick: () => openNewPageDialog(t) }),
+        ]));
+      });
+    }
+  }
+
+  function openFromIndex(name) {
+    if (name !== gamePage() && !hook.goTo(name)) { say("Get Browse out of the Trash first, then pages open from here.", "error"); return; }
+    indexOpen = false;
+    setTab("markup");
+    showPage(name, name !== shownPage);
+  }
+
   function showPage(name, force) {
     if (name === shownPage && !force) return;
     /* A selection on another page goes when the game moves on. */
@@ -1457,6 +1610,7 @@
     if (shownPage) checkPhotos();
     markGame();
     renderDiskette(false);
+    updateMarkupMode();
   }
 
   /* ---------- New pages ---------- */
@@ -1605,7 +1759,8 @@
       return;
     }
     const q = selectedQuote();
-    ui.quoteHint.textContent = q ? "Quoting: “" + (q.length > 60 ? q.slice(0, 60) + "…" : q) + "”" : "Tip: select words in the article first to pin your comment to them.";
+    if (!sel && !shownPage) { ui.quoteHint.textContent = "Select something in the game to comment on it."; return; }
+    ui.quoteHint.textContent = q ? "Quoting: “" + (q.length > 60 ? q.slice(0, 60) + "…" : q) + "”" : "Tip: select words first (in the game or the markup) to pin your comment to them.";
   }
 
   function commentsChanged() {
@@ -1614,59 +1769,142 @@
     markGame(true);
   }
 
+  let commentQuery = "";
+
+  /* What a comment is pinned to, as a selection (for Show me). */
+  function selectionForComment(c) {
+    if (c.about && c.about.indexOf("app:") === 0) return appSelection(c.about.slice(4));
+    if (c.about && c.about.indexOf("photo:") === 0) return { kind: "photo", passage: c.page, file: c.about.slice(6) };
+    if (!pageExists(c.page)) return null;
+    if (!isWikiPage(c.page)) {
+      const at = c.quote ? locateQuote(currentSource(c.page), c) : null;
+      return at ? { kind: "words", passage: c.page, raw: true, from: at.from, to: at.to } : null;
+    }
+    const at = c.quote ? locateQuote(friendlyOf(c.page), c) : null;
+    return at ? { kind: "words", passage: c.page, from: at.from, to: at.to } : { kind: "page", passage: c.page };
+  }
+
+  /* A desktop thing as a selection, from its DisketteLooks-style key. */
+  function appSelection(key) {
+    const fixed = { self: [".diskette-character", "Diskette"], start: [".start-button", "the Start button"], clock: [".taskbar-clock", "the clock"], volume: [".tray-volume", "the volume"], taskbar: [".taskbar", "the taskbar"], desktop: [".wallpaper", "the wallpaper"] };
+    if (fixed[key]) return { kind: "app", key: key, css: fixed[key][0], label: fixed[key][1] };
+    const icon = /^icon-(.+)$/.exec(key);
+    if (icon) return { kind: "app", key: key, css: '.desktop-icon[data-window-template="' + icon[1] + '"]', label: "the " + iconName(icon[1]) + " icon" };
+    return { kind: "app", key: key, css: '.panel[data-window-template="' + key + '"]', label: "the " + iconName(key) + " window", passage: WINDOW_PASSAGE[key] || null };
+  }
+
+  /* Takes the game to a comment and selects what it's pinned to. */
+  function showComment(c) {
+    const go = function () {
+      const s = selectionForComment(c);
+      if (s) setSelection(s);
+      focusComment(c.id, "panel");
+      if (s && !selectionRects(s).length) say(s.kind === "app" ? "Open " + s.label.replace(/^the /, "") + " in the game to see it." : "Open " + placeLabel(c.page) + " in the game to see it.", "");
+    };
+    if (isWikiPage(c.page) && hook.currentPage() !== c.page) {
+      if (!hook.goTo(c.page)) { say("Get Browse out of the Trash first, then Show me works.", "error"); return; }
+      setTimeout(go, 700);
+    } else go();
+  }
+
+  /* The text a comment's quote is found in (to number and check it). */
+  function commentText(page) {
+    if (page === shownPage) return getText();
+    if (!pageExists(page)) return "";
+    return isWikiPage(page) ? friendlyOf(page) : currentSource(page);
+  }
+
+  function commentMatches(c, q) {
+    if (!q) return true;
+    const hay = [c.text, c.quote, c.author, c.page, c.about].concat(repliesTo(c.id).map((r) => r.text + " " + r.author)).join(" ").toLowerCase();
+    return q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.indexOf(w) >= 0);
+  }
+
+  /* Comments: with a selection, the ones on it; otherwise every comment in
+     the game, grouped by page (the open one first), filtered and searchable. */
   function renderComments() {
     if (!ui) return;
-    const page = shownPage;
     const open = openRoots();
     ui.toggle.textContent = "✎ Backend" + (open.length ? " · " + open.length + (open.length === 1 ? " comment" : " comments") : "");
+    scheduleBadges();
     ui.commentList.textContent = "";
     ui.commentOthers.textContent = "";
+    const canPost = !!sel || !!shownPage;
+    ui.commentInput.disabled = !canPost;
+    ui.commentInput.placeholder = canPost ? "Leave a comment for whoever edits next…" : "Select something in the game (or open a page) to comment on it.";
     if (!getToken()) {
       ui.commentStatus.textContent = "Add a GitHub token (GitHub, top of the panel) to see and leave comments.";
       return;
     }
     if (!commentsLoaded) { ui.commentStatus.textContent = "Loading comments…"; return; }
     ui.commentStatus.textContent = "";
-    const roots = page ? rootsOn(page) : [];
-    const openHere = roots.filter((c) => !c.resolved);
-    const done = roots.filter((c) => c.resolved);
-    const text = page ? getText() : "";
+    /* Numbers match the badges in the game (quoted, open, on the open page). */
+    const numbered = shownPage ? rootsOn(shownPage).filter((c) => !c.resolved && c.quote) : [];
+    const numberOf = (c) => numbered.indexOf(c) + 1;
+    const thread = (c) => commentThread(c, numberOf(c), commentText(c.page));
+
     if (sel) {
-      /* Notes on the selection first. */
       const mine = notesFor(sel);
-      ui.commentsTitle.textContent = "Comments on " + selectionLabel(sel) + (mine.length ? " (" + mine.length + ")" : "");
+      const done = notesFor(sel, true);
+      /* Comments whose words were edited away, so they can be re-pinned here. */
+      const lostText = sel.kind === "app" || sel.kind === "photo" ? "" : commentText(sel.passage);
+      const lost = lostText ? rootsOn(sel.passage).filter((c) => !c.resolved && c.quote && mine.indexOf(c) < 0 && !locateQuote(lostText, c)) : [];
+      ui.commentsTitle.textContent = "";
+      ui.commentsTitle.appendChild(el("button", { type: "button", class: "ske-link-btn ske-back", title: "Every comment in the game (Esc clears the selection)", text: "← All comments", onclick: () => setSelection(null) }));
+      ui.commentsTitle.appendChild(el("span", { text: " Comments on " + selectionLabel(sel) + (mine.length ? " (" + mine.length + ")" : "") }));
       if (!mine.length) ui.commentList.appendChild(el("div", { class: "ske-muted", text: "None yet. Write one below; it's pinned to the selection." }));
-      const selText = sel.raw ? currentSource(sel.passage) : sel.passage === page ? text : friendlyOf(sel.passage);
-      mine.forEach((c, i) => ui.commentList.appendChild(commentThread(c, i + 1, selText)));
-      const rest = openHere.filter((c) => mine.indexOf(c) < 0);
-      if (rest.length) ui.commentList.appendChild(el("div", { class: "ske-section-title ske-tiny", text: "Other comments on this page (" + rest.length + ")" }));
-      rest.forEach((c, i) => ui.commentList.appendChild(commentThread(c, mine.length + i + 1, text)));
-    } else {
-      ui.commentsTitle.textContent = "Comments" + (page ? " on " + page : "") + (openHere.length ? " (" + openHere.length + ")" : "");
-      if (page && !roots.length) ui.commentList.appendChild(el("div", { class: "ske-muted", text: "No comments on this page yet. Select something in the game to pin one to it." }));
-      openHere.forEach((c, i) => ui.commentList.appendChild(commentThread(c, i + 1, text)));
+      mine.forEach((c) => ui.commentList.appendChild(thread(c)));
+      if (lost.length) {
+        ui.commentList.appendChild(el("div", { class: "ske-section-title ske-tiny", text: "Lost their words on this page (" + lost.length + ")" }));
+        lost.forEach((c) => ui.commentList.appendChild(thread(c)));
+      }
+      if (done.length) {
+        const d = el("details", { class: "ske-resolved" }, [el("summary", { text: "Resolved (" + done.length + ")" })]);
+        done.forEach((c) => d.appendChild(thread(c)));
+        ui.commentList.appendChild(d);
+      }
+      return;
     }
-    if (done.length) {
-      const d = el("details", { class: "ske-resolved" }, [el("summary", { text: "Resolved (" + done.length + ")" })]);
-      done.forEach((c) => d.appendChild(commentThread(c, 0, text)));
-      ui.commentList.appendChild(d);
+
+    const me = getName();
+    const roots = comments.filter((c) => !c.parent);
+    const FILTERS = [
+      ["open", "Open", (c) => !c.resolved],
+      ["resolved", "Resolved", (c) => c.resolved],
+      ["mine", "Mine", (c) => !!me && (c.author === me || repliesTo(c.id).some((r) => r.author === me))],
+    ];
+    const filter = FILTERS.find((f) => f[0] === store.data.commentFilter) || FILTERS[0];
+    ui.commentsTitle.textContent = "All comments";
+    const search = el("input", { type: "search", class: "ske-input ske-small ske-comment-search", placeholder: "Search comments", value: commentQuery });
+    search.addEventListener("input", function () {
+      commentQuery = search.value;
+      renderComments();
+      const again = ui.commentList.querySelector(".ske-comment-search");
+      if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+    });
+    ui.commentList.appendChild(el("div", { class: "ske-comment-bar" }, [
+      el("div", { class: "ske-cycle ske-filter" }, FILTERS.map((f) => el("button", {
+        type: "button", class: "ske-cycle-btn" + (f === filter ? " ske-cycle-on" : ""), text: f[1] + " " + roots.filter(f[2]).length,
+        onclick: () => { store.data.commentFilter = f[0]; store.write(); renderComments(); },
+      }))),
+      search,
+    ]));
+    const shown = roots.filter((c) => filter[2](c) && commentMatches(c, commentQuery));
+    if (!shown.length) {
+      ui.commentList.appendChild(el("div", { class: "ske-muted", text: commentQuery ? "No comments match." : filter[0] === "open" ? "No open comments. Select something in the game to leave one." : "None." }));
+      return;
     }
-    const elsewhere = {};
-    open.forEach(function (c) { if (c.page !== page) elsewhere[c.page] = (elsewhere[c.page] || 0) + 1; });
-    const pages = Object.keys(elsewhere).sort();
-    if (pages.length) {
-      ui.commentOthers.appendChild(el("div", { class: "ske-muted", text: "Open comments on other pages:" }));
-      pages.forEach(function (p) {
-        ui.commentOthers.appendChild(el("div", { class: "ske-other" }, [
-          el("span", { text: p + " (" + elsewhere[p] + ")" }),
-          el("button", { type: "button", text: "Go", onclick: function () {
-            if (!hook.goTo(p)) { say("Get Browse out of the Trash first, then Go works.", "error"); return; }
-            const first = openRoots().find((c) => c.page === p);
-            if (first) setTimeout(() => focusComment(first.id, "panel"), 600);
-          } }),
-        ]));
-      });
-    }
+    const byPage = {};
+    shown.forEach((c) => (byPage[c.page] = byPage[c.page] || []).push(c));
+    const pages = Object.keys(byPage).sort((a, b) => (a === shownPage ? -1 : b === shownPage ? 1 : a.localeCompare(b)));
+    pages.forEach(function (p) {
+      const here = p === shownPage;
+      ui.commentList.appendChild(el("div", { class: "ske-comment-group" }, [
+        el("b", { text: placeLabel(p) }),
+        el("span", { class: "ske-muted", text: " · " + byPage[p].length + (here ? " · open now" : "") }),
+      ]));
+      byPage[p].sort((a, b) => numberOf(a) - numberOf(b) || a.at.localeCompare(b.at)).forEach((c) => ui.commentList.appendChild(thread(c)));
+    });
   }
 
   function commentBody(c) {
@@ -1681,6 +1919,7 @@
     const orphan = c.quote && !c.resolved && !locateQuote(text, c);
     const replyBox = el("div", { class: "ske-reply ske-hidden" });
     const actions = [
+      el("button", { type: "button", title: "Take the game there and select what it's pinned to", text: "Show me", onclick: (e) => { e.stopPropagation(); showComment(c); } }),
       el("button", { type: "button", text: "Reply", onclick: function (e) {
         e.stopPropagation();
         replyBox.classList.toggle("ske-hidden");
@@ -1710,7 +1949,7 @@
     }
     const children = [
       number ? el("span", { class: "ske-comment-num", text: String(number) }) : null,
-      c.quote ? el("div", { class: "ske-comment-quote", text: "“" + c.quote + "”" }) : c.about ? el("div", { class: "ske-comment-quote", text: c.about.replace(/^app:/, "on ").replace(/^photo:/, "on photo ") }) : null,
+      c.quote ? el("div", { class: "ske-comment-quote", text: "“" + c.quote + "”" }) : c.about ? el("div", { class: "ske-comment-quote", text: c.about.indexOf("app:") === 0 ? "on " + appSelection(c.about.slice(4)).label : c.about.replace(/^photo:/, "on photo ") }) : null,
       orphan ? el("div", { class: "ske-orphan", text: "⚠ These words aren't in the page any more. Select new ones and Re-pin, or Resolve it." }) : null,
     ].concat(commentBody(c));
     repliesTo(c.id).forEach(function (r) {
@@ -1883,6 +2122,30 @@
     try { return scope ? Array.from(scope.querySelectorAll(z.dataset.on)) : []; } catch (e) { return []; }
   }
 
+  /* What a reaction covers, as a selection: its words, its photo, its page,
+     or (a point, or a zone around more than words) its paragraph. */
+  function selectionForItem(item) {
+    if (item.type === "look") return null;
+    if (item.photo) return { kind: "photo", passage: item.passage, file: item.photo };
+    if (item.type === "page") return { kind: "page", passage: item.passage };
+    if (!isWikiPage(item.passage)) {
+      const src = currentSource(item.passage);
+      const close = matchingClose(src, item.from);
+      return { kind: "words", passage: item.passage, raw: true, from: item.from, to: close > item.to ? close + 7 : item.to };
+    }
+    const src = currentSource(item.passage);
+    const text = friendlyOf(item.passage);
+    const from = toFriendly(src.slice(0, item.from)).length;
+    /* Words (also an "around" zone, or one stacked around another): from
+       its marker to its end. */
+    if (item.shape === "words") {
+      const end = toFriendly(src.slice(0, zoneEnd(src, item))).length;
+      if (end > from) return { kind: "words", passage: item.passage, from: from, to: end };
+    }
+    const line = lineAround(text, from);
+    return { kind: "paragraph", passage: item.passage, from: line.from, to: line.to };
+  }
+
   /* Clicking a zone in the game (Diskette tab) selects what it covers. */
   function openZoneCard(z) {
     const content = z.closest(".browser-page-content");
@@ -1896,9 +2159,8 @@
     if (!item) { say("Couldn't find that zone in the markup.", "error"); return; }
     focusAfterRender = { passage: item.passage, index: item.index };
     expandedCards.add(item.passage + "#" + item.index);
-    setSelection(null);
     if (store.data.tab !== "diskette") setTab("diskette");
-    else renderDiskette(true);
+    setSelection(selectionForItem(item));
     z.classList.remove("ske-zone-flash");
     void z.offsetWidth;
     z.classList.add("ske-zone-flash");
@@ -1926,9 +2188,9 @@
   }
 
   /* Clicks in the game while the panel is open. In Edit mode they select
-     (and do nothing else). Otherwise: a zone opens its card (Diskette tab),
-     a note's highlight opens its thread (Comments tab), red links offer to
-     create the page, and clicking words moves the markup cursor there. */
+     (and do nothing else). Otherwise the game plays, except on what the
+     editor itself shows: a zone (Diskette tab) or a comment's highlight
+     (Comments tab) selects it, and a red link offers to create the page. */
   function onGameClick(e) {
     if (!store.data.open) return;
     if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); return; }
@@ -1939,6 +2201,8 @@
       const fromDrag = selectionFromGame();
       const t = fromDrag || aimTarget(e.clientX, e.clientY);
       if (t) setSelection(t);
+      /* One pick per Edit. */
+      if (t) setAiming(false);
       return;
     }
     if (store.data.tab === "diskette" && e.target.closest(".playfield") && !e.target.closest(".diskette-assistant")) {
@@ -1948,18 +2212,15 @@
     if (!e.target.closest(".browser-page-content")) return;
     const red = e.target.closest(".ske-redlink");
     if (red) { e.preventDefault(); e.stopPropagation(); openNewPageDialog(red.dataset.page); return; }
+    /* A comment's highlight selects its words and opens its thread. */
     const mark = e.target.closest(".ske-mark-badge, .ske-mark");
     if (mark && (mark.classList.contains("ske-mark-badge") || !mark.closest("tw-link, tw-enchantment"))) {
+      const c = comments.find((x) => x.id === mark.dataset.cid);
+      const at = c && shownPage ? locateQuote(getText(), c) : null;
+      if (at) setSelection({ kind: "words", passage: shownPage, from: at.from, to: at.to });
       focusComment(mark.dataset.cid, "game");
-      return;
     }
-    if (e.target.closest("tw-link, tw-enchantment, a, button, input") || !shownPage) return;
-    const ws = window.getSelection();
-    if (ws && !ws.isCollapsed) return;
-    if (store.data.tab === "markup") {
-      const pos = textPosAt(e.clientX, e.clientY);
-      if (pos !== null) selectRange(pos, pos, true);
-    }
+    /* Anything else plays the game. */
   }
 
   /* Where a point in the game's page is in the markup (by matching the words
@@ -2010,9 +2271,32 @@
     const btn = ui && ui.panel.querySelector(".ske-aim-btn");
     if (btn) btn.classList.toggle("ske-aim-on", aiming);
     drawHover(null);
-    if (aiming) say("Edit mode: click a paragraph, a photo or anything in the game to select it; drag across words for just those. E or Esc to stop.", "");
-    else if (ui && /^Edit mode/.test(ui.status.textContent)) say("");
+    topBar();
   }
+
+  /* A slim bar over the game: Edit mode while it's on, otherwise what's
+     selected (and that Esc lets go of it). */
+  function topBar() {
+    let bar = document.querySelector(".ske-aimbar");
+    const show = store.data.open && (aiming || sel);
+    if (!show) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = el("div", { class: "ske-aimbar" });
+      document.body.appendChild(bar);
+    }
+    bar.textContent = "";
+    bar.classList.toggle("ske-selbar", !aiming);
+    if (aiming) {
+      bar.appendChild(el("span", { text: "⌖ Click something in the game to select it" }));
+      bar.appendChild(el("button", { type: "button", text: "Done (Esc)", onclick: () => setAiming(false) }));
+    } else {
+      const label = selectionLabel(sel);
+      bar.appendChild(el("span", { class: "ske-selbar-label", text: "Selected: " + (label.length > 50 ? label.slice(0, 50) + "…" : label) }));
+      bar.appendChild(el("button", { type: "button", title: "Let go of the selection", text: "Esc to deselect", onclick: () => setSelection(null) }));
+    }
+    bar.style.left = Math.round((window.innerWidth - (store.data.open ? PANEL_WIDTH : 0)) / 2) + "px";
+  }
+
 
   /* The short-form text of a passage as it is now. */
   function friendlyOf(name) {
@@ -2203,6 +2487,7 @@
     const box = ui.crumbs;
     box.textContent = "";
     box.classList.toggle("ske-hidden", !sel);
+    topBar();
     if (!sel) return;
     const crumb = (label, s, current) => el(current ? "b" : "button", current ? { class: "ske-crumb", text: label } : { type: "button", class: "ske-crumb ske-crumb-link", text: label, title: "Select this instead", onclick: () => setSelection(s) });
     const parts = [];
@@ -2290,9 +2575,9 @@
     return items.filter((i) => i.passage === s.passage && i.type === "zone" && !i.photo && i.from >= r.from - 1 && i.from <= r.to);
   }
 
-  function notesFor(s) {
+  function notesFor(s, resolved) {
     if (!s) return [];
-    const roots = openRoots().filter((c) => c.page === s.passage || (s.kind === "app" && c.about === "app:" + s.key));
+    const roots = comments.filter((c) => !c.parent && !c.resolved === !resolved).filter((c) => c.page === s.passage || (s.kind === "app" && c.about === "app:" + s.key));
     if (s.kind === "app") return roots.filter((c) => c.about === "app:" + s.key);
     if (s.kind === "photo") return roots.filter((c) => c.about === "photo:" + s.file);
     if (s.kind === "page") return roots;
@@ -2315,7 +2600,7 @@
     const line = first ? gameText((first.say || first.text || "").replace(/\s*(>>|&gt;&gt;)\s*/g, " / ")) : "";
     const canMarkup = sel.kind !== "app" || !!sel.passage;
     const pop = el("div", { class: "ske-pop" }, [
-      el("button", { type: "button", class: "ske-pop-btn", title: canMarkup ? "Show it in the page's markup" : "No markup for this", text: "✎ Markup", onclick: () => setTab("markup") }),
+      el("button", { type: "button", class: "ske-pop-btn", title: canMarkup ? "Show it in the page's markup" : "No markup for this", text: "✎ Markup", onclick: () => editSelectionInMarkup() }),
       el("button", { type: "button", class: "ske-pop-btn", title: notes.length ? "Its comments" : "Leave a comment on it", text: "💬 " + (notes.length ? notes.length + (notes.length === 1 ? " comment" : " comments") : "Comment") , onclick: () => { setTab("comments"); ui.commentInput.focus(); } }),
       el("button", { type: "button", class: "ske-pop-btn ske-pop-diskette", title: first ? "Her response here" : "Make Diskette react to this", text: first ? "◉ “" + (line.length > 26 ? line.slice(0, 26) + "…" : line || "…") + "”" + (reactions.length > 1 ? " +" + (reactions.length - 1) : "") : "◉ Diskette +", onclick: function () {
         if (!first) createReactionFor(sel);
@@ -2325,14 +2610,51 @@
     ]);
     pop.dataset.sig = popSignature();
     if (!canMarkup) pop.firstChild.disabled = true;
+    /* Doing something with the selection ends Edit mode. */
+    pop.addEventListener("click", (e) => { if (e.target.closest("button")) setAiming(false); });
     pop.addEventListener("mousedown", (e) => e.stopPropagation());
     return pop;
+  }
+
+  /* Drops the shared selection without moving the markup (for editing). */
+  function releaseSelection() {
+    if (!sel || sel.raw || (sel.kind === "app" && sel.passage)) return;
+    sel = null;
+    renderCrumbs();
+    drawSelection();
+    const tab = store.data.tab;
+    if (tab === "comments") { renderComments(); updateQuoteHint(); }
+    if (tab === "diskette") renderDiskette(true);
+    if (tab === "events") renderStatus(true);
+  }
+
+  /* ✎ Markup: straight to editing it there, its text selected; the game's
+     selection goes (game code stays selected: it's read-only there). */
+  function editSelectionInMarkup() {
+    const s = sel;
+    if (!s) return;
+    if (s.raw || s.kind === "app" || s.passage !== shownPage) { setTab("markup"); return; }
+    const text = getText();
+    let r = null;
+    if (s.kind === "words" || s.kind === "paragraph") r = expandRange(text, s.from, Math.min(s.to, text.length));
+    else if (s.kind === "photo") {
+      const i = text.indexOf("[[photo: " + s.file);
+      if (i >= 0) r = { from: i, to: text.indexOf("]]", i) + 2 };
+    }
+    sel = null;
+    indexOpen = false;
+    renderCrumbs();
+    drawSelection();
+    setTab("markup");
+    if (r) selectRange(r.from, r.to, true);
+    else view.focus();
   }
 
   /* ---------- Changing it ---------- */
 
   function setSelection(s) {
     sel = s;
+    if (s) indexOpen = false;
     if (!ui) return;
     renderCrumbs();
     drawSelection();
@@ -2371,8 +2693,10 @@
       raw.appendChild(pre);
       const mark = pre.querySelector("mark");
       if (mark && to > from) setTimeout(() => mark.scrollIntoView({ block: "center" }), 0);
+      updateMarkupMode();
       return;
     }
+    updateMarkupMode();
     if (sel && !sel.raw && sel.from !== undefined && sel.passage === shownPage) selectRange(sel.from, sel.to, false);
   }
 
@@ -2461,8 +2785,8 @@
     if (!store.data.open) return;
     const typing = e.target.closest && e.target.closest("input, textarea, [contenteditable='true'], .cm-editor");
     if (e.key === "Escape") {
-      if (sel) setSelection(null);
-      else if (aiming) setAiming(false);
+      if (aiming) setAiming(false);
+      else if (sel) setSelection(null);
       return;
     }
     if (!typing && (e.key === "e" || e.key === "E") && !e.metaKey && !e.ctrlKey && !e.altKey) setAiming(!aiming);
@@ -2473,7 +2797,9 @@
 
   /* What each DisketteLooks key is (the game's DISKETTE INSPECTING reads them). */
   const LOOK_KEYS = [
-    ["self", "Diskette herself"], ["poke", "a click on her eyes, no drag"], ["page", "any browser page without its own comment"],
+    ["self", "Diskette herself"], ["poke", "a click on her eyes, no drag"], ["page-winkipedia", "a Winkipedia page (no comment of its own)"], ["page-fanwiki", "a fan wiki page"], ["page-forum", "a fan wiki forum thread"],
+    ["page-gamesarchive", "the Global Games Archive"], ["page-kraska1", "Anya's kraska1 pages"], ["page-devlink", "the devlink pages"],
+    ["page-404", "the Skunkpets.com 404 page"], ["page-newtab", "a new tab"], ["page", "any browser page without a line of its own"],
     ["browser", "the Browse window's bars and buttons"], ["icon-browser", "the Browse icon"],
     ["mail", "the Mail window"], ["icon-mail", "the Mail icon"], ["notes", "the Notes window"], ["icon-notes", "the Notes icon"],
     ["readme", "the READ_ME window"], ["icon-readme", "the READ_ME icon"], ["recycle", "the Trash window"], ["icon-recycle", "the Trash icon"],
@@ -2556,7 +2882,7 @@
 
   function moodSelect(value, onchange) {
     const s = el("select", { class: "ske-input ske-small", title: "How she reacts", onchange: onchange });
-    [["hop", "hop"], ["shake", "shake her head"], ["wide", "wide eyes"]].forEach(function (m) {
+    [["hop", "hop"], ["shake", "shake her head"], ["wide", "wide eyes"], ["tremble", "tremble"]].forEach(function (m) {
       const o = el("option", { value: m[0], text: m[1] });
       if (m[0] === value) o.selected = true;
       s.appendChild(o);
@@ -2657,7 +2983,9 @@
     } catch (err) { return item; }
   }
 
-  function reactionCard(item) {
+  /* alt (optional): { rank, total, now, never, move(dir) } when it's one of
+     several responses for the same spot. */
+  function reactionCard(item, alt) {
     const isLook = item.type === "look";
     const cardKey = item.passage + "#" + item.index;
     const card = el("div", { class: "ske-react" + (item.todo ? " ske-react-todo" : "") });
@@ -2672,6 +3000,12 @@
     const head = el("div", { class: "ske-react-head", title: "Click to " + (expandedCards.has(cardKey) ? "fold" : "edit") });
     if (item.draft) head.appendChild(el("span", { class: "ske-prio ske-draft-badge", title: "A draft: she doesn't say it until it's published", text: "draft" }));
     if (item.todo) head.appendChild(el("span", { class: "ske-prio ske-prio-" + item.todo.prio, title: "P1: needed to solve the demo. P2: story. P3: flavor.", text: item.todo.prio < 9 ? "P" + item.todo.prio + (item.todo.num < 999 ? "-" + String(item.todo.num).padStart(2, "0") : "") : "TODO" }));
+    if (alt) {
+      head.appendChild(el("span", { class: "ske-alt-rank" + (alt.now ? " ske-alt-now" : ""), title: alt.now ? "What she says here now, in this playthrough" : "Number " + alt.rank + " of " + alt.total + ": she says the first one whose “only if” fits", text: (alt.now ? "▶ " : "") + alt.rank }));
+    }
+    if (item.cond) head.appendChild(el("span", { class: "ske-cond-chip", title: "Only if: " + item.cond, text: "if " + item.cond.replace(/\s*,\s*/g, ", ").replace(/(^|, )!/g, "$1not ") }));
+    else if (alt) head.appendChild(el("span", { class: "ske-cond-chip ske-cond-else", title: "No condition: she says it whenever the ones above don't fit", text: "otherwise" }));
+    if (alt && alt.never) head.appendChild(el("span", { class: "ske-alt-never", title: "Never said: a response above has no condition, so it always wins. Give that one a condition, or move this one up.", text: "⚠ never" }));
     head.appendChild(el("span", { class: "ske-react-title", text: title }));
     const altCount = (was || "").split(ALT_SPLIT).filter((x) => x.trim()).length;
     if (altCount > 1 && !item.todo) head.appendChild(el("span", { class: "ske-alt-badge", title: altCount + " lines, " + (CYCLES.find((c) => c[0] === (item.cycle || "order")) || CYCLES[0])[2].toLowerCase(), text: (item.cycle === "random" ? "⤮ " : item.cycle === "loop" ? "↻ " : "") + altCount + " lines" }));
@@ -2679,7 +3013,7 @@
     head.addEventListener("click", function () {
       if (expandedCards.has(cardKey)) expandedCards.delete(cardKey);
       else expandedCards.add(cardKey);
-      card.replaceWith(reactionCard(freshItem(item)));
+      card.replaceWith(reactionCard(freshItem(item), alt));
     });
     card.appendChild(head);
     if (!expandedCards.has(cardKey)) return card;
@@ -2693,7 +3027,7 @@
     const selector = item.shape === "element" && !item.photo ? el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.on, title: "CSS selector of what it covers, in the same page or window" }) : null;
     const cond = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.cond, placeholder: "only if: event, !event", title: "Only when these events have happened (!name = only before). See the Events tab." });
     const condNote = el("div", { class: "ske-muted ske-cond-note", text: conditionNow(item.cond) });
-    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks: Need me to look at anything else?", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
+    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks (optional): her follow-up", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
     let timer = null;
     const apply = function () {
       clearTimeout(timer);
@@ -2739,6 +3073,8 @@
     card.appendChild(condNote);
     const iconBtn = (label, tip, fn) => el("button", { type: "button", class: "ske-icon-btn", title: tip, text: label, onclick: fn });
     card.appendChild(el("div", { class: "ske-react-row ske-react-actions" }, [
+      alt && alt.rank > 1 ? iconBtn("↑", "Move up: she checks it before the one above", () => alt.move(-1)) : null,
+      alt && alt.rank < alt.total ? iconBtn("↓", "Move down: she checks it after the one below", () => alt.move(1)) : null,
       isLook ? null : iconBtn("Show me", "Take the game there and flash it", () => showReaction(item)),
       isLook || !isWikiPage(item.passage) ? null : iconBtn("Edit in markup", "Select it in the Article tab", () => editInMarkup(item)),
       iconBtn(item.draft ? "Publish" : "Make draft", item.draft ? "Put it in the game" : "Take it out of the game (she won't say it) but keep it here", function () {
@@ -2803,10 +3139,7 @@
   }
 
   function countTodos() {
-    const n = allReactions().filter((i) => i.draft).length;
-    const btn = ui.panel.querySelector('.ske-tab-btn[data-tab="diskette"]');
-    if (btn) btn.textContent = n ? "Diskette (" + n + " drafts)" : "Diskette";
-    return n;
+    scheduleBadges();
   }
 
   function openLookDialog() {
@@ -2850,9 +3183,10 @@
     ["What she says", "Drag from Diskette's eyes to anything in the game and she reacts. First match wins: a zone where you let go, then the page's comment (browser pages), then her line for the thing under the arrow (a window, an icon, the clock, herself...)."],
     ["Making one", "Select something in the game: drag across words, or turn on ⌖ Edit (or press E) and click a paragraph, a photo or a thing. Then ◉ in the little popup (or “Diskette reacts here” in this tab). The zone takes the shape of what you selected; for things on the desktop it's her line for that thing. Selecting the page itself (the first step of the breadcrumb) gives her comment on the whole page."],
     ["Several lines", "“+ Another line” (or Enter at the end of one) gives her something else to say when she's asked about the same spot again. With more than one, “Asked again” picks which: In order (then she keeps saying the last), Loop, or Random. The card's header shows how many (e.g. ↻ 3 lines). In the markup they're separated by >>."],
+    ["Several responses", "One spot can have several responses, each with its own “only if”: she says the first one that fits (one without a condition always fits, so it goes last, as the “otherwise”). “+ Another response here” asks when she should say it and puts it in place; the cards are numbered, ▶ marks what she'd say now in this playthrough, ↑ ↓ reorder them, and ⚠ never means one above always wins first."],
     ["Only if (events)", "Event names from the Events tab, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
-    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks brings her follow-up: the reaction's own (the “after Thanks” box), otherwise “Need me to look at anything else?”, offering “Sure!” and “No, that's all.”."],
+    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks just closes the bubble (she stays up, quiet); if the reaction has an “after Thanks” line, Thanks brings that follow-up instead, offering “Sure!” and “No, that's all.”."],
     ["Drafts", "New reactions are live straight away. “Make draft” takes one out of the game while you work on it; drafts are listed last, and “Publish” puts one back."],
     ["In the game", "On this tab, zones show in the game: points as a dot and dashed circle, words and elements outlined; drafts dashed grey. Click a zone to open it here."],
     ["In the markup", "[[diskette: 80 | Her line.]]   a point\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | around | Her line.]] … [[/diskette]]   around a whole paragraph\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | Her line.]]"],
@@ -2878,22 +3212,201 @@
     }
   }
 
-  /* With a selection: her response to it, or one button to make one. */
+  /* With a selection: her responses to it, grouped by spot. Several
+     responses for one spot are a numbered list: she says the first one
+     whose "only if" fits. */
   function renderDisketteForSelection(tab) {
     const items = reactionsFor(sel);
+    const groups = spotGroups(items);
     tab.appendChild(el("div", { class: "ske-bar" }, [
       el("span", { class: "ske-muted", text: items.length ? "Her response to the selection:" : "She has nothing to say about this yet." }),
       helpButton("How Diskette's reactions work", DISKETTE_HELP),
     ]));
     if (focusAfterRender) expandedCards.add(focusAfterRender.passage + "#" + focusAfterRender.index);
-    items.forEach(function (item) {
-      expandedCards.add(item.passage + "#" + item.index);
-      tab.appendChild(reactionCard(item));
+    groups.forEach(function (group) {
+      const box = el("div", { class: "ske-spot" + (group.length > 1 ? " ske-spot-many" : "") });
+      if (group.length > 1) box.appendChild(el("div", { class: "ske-spot-head ske-muted ske-tiny", text: group.length + " responses here: she says the first one whose “only if” fits" }));
+      const info = altInfo(group);
+      group.forEach(function (item, i) {
+        expandedCards.add(item.passage + "#" + item.index);
+        box.appendChild(reactionCard(item, group.length > 1 ? Object.assign(info[i], { move: (dir) => moveAlternate(group, i, dir) }) : null));
+      });
+      box.appendChild(el("button", { type: "button", class: "ske-link-btn ske-tiny ske-add-alt", title: "Something else she says here, depending on what's happened in the game", text: "+ Another response here", onclick: () => openAlternateDialog(group) }));
+      tab.appendChild(box);
     });
     tab.appendChild(el("div", { class: "ske-actions" }, [
-      el("button", { type: "button", class: items.length ? "" : "ske-save", text: items.length ? "◉ Another response here" : "◉ Diskette reacts here", onclick: () => createReactionFor(sel) }),
+      selIsOneSpot(groups) ? null : el("button", { type: "button", class: items.length ? "" : "ske-save", text: items.length ? "◉ New response on the selection" : "◉ Diskette reacts here", onclick: () => createReactionFor(sel) }),
       el("button", { type: "button", text: "See all her reactions", onclick: () => setSelection(null) }),
     ]));
+  }
+
+  /* ---------- Alternate responses for one spot ---------- */
+
+  /* Where a zone ends (after its </span>). */
+  function zoneEnd(src, item) {
+    const close = matchingClose(src, item.from);
+    return close >= 0 ? close + 7 : item.to;
+  }
+  const plainWords = (html) => gameText((html || "").replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim();
+
+  /* Does it answer for the same spot as last (the latest one in its group)? */
+  function sameSpot(first, last, it) {
+    if (first.passage !== it.passage || first.type !== it.type) return false;
+    if (it.type === "look") return first.keys.slice().sort().join(" ") === it.keys.slice().sort().join(" ");
+    if (it.type === "page") return true;
+    if (first.shape !== it.shape) return false;
+    if (it.shape === "element") return first.on === it.on;
+    const src = currentSource(it.passage);
+    if (it.shape === "point") return src.slice(zoneEnd(src, last), it.from).trim() === "";
+    return it.from >= last.to && it.from < matchingClose(src, last.from) && plainWords(it.words) === plainWords(last.words);
+  }
+
+  function spotGroups(items) {
+    const groups = [];
+    items.slice().sort((a, b) => (a.passage === b.passage ? a.from - b.from : a.passage.localeCompare(b.passage))).forEach(function (it) {
+      const g = groups.find((x) => sameSpot(x[0], x[x.length - 1], it));
+      if (g) g.push(it);
+      else groups.push([it]);
+    });
+    return groups;
+  }
+
+  /* Is the selection exactly one group's spot (so a new response there is
+     an alternate, not a new zone)? */
+  function selIsOneSpot(groups) {
+    if (groups.length !== 1) return false;
+    if (sel.kind === "app" || sel.kind === "photo" || sel.kind === "page") return true;
+    const g = groups[0][0];
+    if (g.shape !== "words") return false;
+    const full = sel.raw ? currentSource(sel.passage) : friendlyOf(sel.passage);
+    const r = sel.raw ? sel : expandRange(full, sel.from, Math.min(sel.to, full.length));
+    const vis = (sel.raw ? plainWords(full.slice(r.from, r.to)) : visibleMap(full.slice(r.from, r.to)).vis).replace(/\s+/g, " ").trim();
+    const words = plainWords(g.words);
+    /* (allowing for a stray character of punctuation at either end) */
+    return !!words && vis.indexOf(words) >= 0 && vis.length - words.length <= 2;
+  }
+
+  /* For each response in a group: its rank, whether it's what she'd say now,
+     and whether it can never be said (an unconditional one is above it). */
+  function altInfo(group) {
+    let nowFound = false;
+    let blocked = false;
+    return group.map(function (item, i) {
+      const said = item.type === "look" ? item.text : item.say;
+      const live = !item.draft && (said || "").trim() !== "" && !item.todo;
+      const now = live && !nowFound && !conditionNow(item.cond);
+      if (now) nowFound = true;
+      const info = { rank: i + 1, total: group.length, now: now, never: blocked && live };
+      if (live && !item.cond) blocked = true;
+      return info;
+    });
+  }
+
+  /* The shared selection keeps covering the spot after its source changes. */
+  function keepSelection(passage, before) {
+    if (!sel || sel.passage !== passage || sel.from === undefined) return;
+    const after = sel.raw ? currentSource(passage).length : friendlyOf(passage).length;
+    sel = Object.assign({}, sel, { to: Math.max(sel.from, sel.to + after - before) });
+  }
+  const selLength = (passage) => (sel && sel.raw ? currentSource(passage).length : isWikiPage(passage) ? friendlyOf(passage).length : 0);
+
+  /* Asks when she should say it, then adds it to the spot. */
+  function openAlternateDialog(group) {
+    const defs = findEvents(currentSource("GameEvents"));
+    const happened = new Set((hook.events && hook.events()) || []);
+    const when = el("select", { class: "ske-input ske-alt-when" });
+    when.appendChild(el("option", { value: "?", text: "Choose when…" }));
+    const after = el("optgroup", { label: "Once this has happened" });
+    const before = el("optgroup", { label: "Until this happens" });
+    defs.forEach(function (d) {
+      const desc = d.text.replace(/<[^>]*>/g, "").replace(/&#95;/g, "_");
+      const short = d.id + " — " + (desc.length > 50 ? desc.slice(0, 50) + "…" : desc) + (happened.has(d.id) ? " ✓" : "");
+      after.appendChild(el("option", { value: d.id, text: "after " + short }));
+      before.appendChild(el("option", { value: "!" + d.id, text: "before " + short }));
+    });
+    when.appendChild(after);
+    when.appendChild(before);
+    when.appendChild(el("option", { value: "", text: "Otherwise (no condition; goes last)" }));
+    const text = el("textarea", { class: "ske-comment-input", rows: "2", placeholder: "What she says then (you can write it later)" });
+    const hint = el("div", { class: "ske-muted ske-tiny", text: "A response with a condition goes first, so it wins when it fits; the others are what she says otherwise. Reorder with ↑ ↓ on the cards; more conditions (a, !b) in its “only if” box." });
+    openModal("Another response here", [
+      el("label", { class: "ske-field" }, [el("span", { text: "She says it" }), when]),
+      el("label", { class: "ske-field" }, [el("span", { text: "Her line" }), text]),
+      hint,
+    ], [
+      el("button", { type: "button", class: "ske-save", text: "Add it", onclick: function () {
+        if (when.value === "?") { when.focus(); say("Choose when she says it.", "error"); return; }
+        closeModal();
+        addAlternate(group, when.value, text.value.trim());
+      } }),
+      el("button", { type: "button", text: "Cancel", onclick: closeModal }),
+    ]);
+    when.focus();
+  }
+
+  /* Adds a response to a spot: with a condition, first (it wins when it
+     fits); without, last (the "otherwise"). */
+  function addAlternate(group, cond, line) {
+    const first = group[0];
+    const last = group[group.length - 1];
+    const passage = first.passage;
+    const before = selLength(passage);
+    const src = currentSource(passage);
+    let out;
+    let at;
+    if (first.type === "look") {
+      const row = lookLine({ keys: first.keys, cond: cond, text: line.replace(/\n+/g, " &gt;&gt; ") });
+      if (cond) { at = first.from; out = src.slice(0, at) + row + "\n" + src.slice(at); }
+      else { at = last.to + 1; out = src.slice(0, last.to) + "\n" + row + src.slice(last.to); }
+      setSource(passage, out);
+      focusAfterRender = { passage: passage, index: findLooks(out).findIndex((l) => l.from === at) };
+    } else {
+      const tag = zoneTag({ kind: first.kind, radius: first.radius, on: first.on, cond: cond, say: line.replace(/\n+/g, " >> ") });
+      if (first.shape === "words") {
+        if (cond) {
+          at = first.from;
+          const end = zoneEnd(src, first);
+          out = src.slice(0, at) + tag + src.slice(at, end) + "</span>" + src.slice(end);
+        } else {
+          at = last.to;
+          const close = matchingClose(src, last.from);
+          out = src.slice(0, at) + tag + src.slice(at, close) + "</span>" + src.slice(close);
+        }
+      } else {
+        at = cond ? first.from : zoneEnd(src, last);
+        out = src.slice(0, at) + tag + "</span>" + src.slice(at);
+      }
+      setSource(passage, out);
+      focusAfterRender = { passage: passage, index: findReactions(out).findIndex((r) => r.from === at) };
+    }
+    keepSelection(passage, before);
+    renderCrumbs();
+    drawSelection();
+    renderDiskette(true);
+    say(cond ? "Added: she says it " + (cond.charAt(0) === "!" ? "until " + cond.slice(1) : "once " + cond) + " (it's first, so it wins then)." : "Added as the otherwise, last.", "ok");
+  }
+
+  /* Swaps a response with the one above (-1) or below (+1) it. */
+  function moveAlternate(group, i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= group.length) return;
+    const a = group[Math.min(i, j)];
+    const b = group[Math.max(i, j)];
+    const passage = a.passage;
+    const before = selLength(passage);
+    const src = currentSource(passage);
+    /* Zones: swap their opening tags (nesting stays); lines: swap lines. */
+    const A = src.slice(a.from, a.to);
+    const B = src.slice(b.from, b.to);
+    setSource(passage, src.slice(0, a.from) + B + src.slice(a.to, b.from) + A + src.slice(b.to));
+    keepSelection(passage, before);
+    const moved = group[i];
+    const newFrom = dir < 0 ? a.from : a.from + (b.to - b.from) + (b.from - a.to);
+    const list = moved.type === "look" ? findLooks(currentSource(passage)) : findReactions(currentSource(passage));
+    focusAfterRender = { passage: passage, index: list.findIndex((r) => r.from === newFrom) };
+    renderCrumbs();
+    drawSelection();
+    renderDiskette(true);
   }
 
   /* No selection: everything she says, this page first, then by place; drafts last. */
@@ -3019,16 +3532,16 @@
     document.addEventListener("mouseup", onGameMouseUp, true);
     document.addEventListener("keydown", onKey, true);
     document.addEventListener("scroll", redrawSoon, true);
-    window.addEventListener("resize", redrawSoon);
+    window.addEventListener("resize", function () { redrawSoon(); topBar(); });
     new MutationObserver(function () {
       if (store.data.open) requestAnimationFrame(() => markGame(false));
       requestAnimationFrame(showZones);
       redrawSoon();
     }).observe(document.body, { childList: true, subtree: true });
-    setInterval(function () { if (store.data.open) renderStatus(false); }, 1000);
+    setInterval(function () { if (store.data.open) { renderStatus(false); updateEventsBadge(); } }, 1000);
     setInterval(function () {
       if (!store.data.open) return;
-      const page = hook.currentPage() || null;
+      const page = gamePage();
       if (page !== lastSeenPage) {
         lastSeenPage = page;
         showPage(page, true);
@@ -3036,7 +3549,7 @@
     }, 400);
     /* Pick up the other person's comments and saves while the panel is open. */
     setInterval(function () { if (store.data.open) { loadComments(); loadHistory(); } }, 60000);
-    window.SkunkpetsEditorDebug = { getText: getText, setText: (t) => { setText(t); onInput(); }, select: (a, b) => selectRange(a, b, true), cursor: () => view.state.selection.main.head };
+    window.SkunkpetsEditorDebug = { getText: getText, setText: (t) => { setText(t); onInput(); }, select: (a, b) => { releaseSelection(); selectRange(a, b, true); }, cursor: () => view.state.selection.main.head };
   }
 
   if (window.SkunkpetsEditorHook) start();
