@@ -575,8 +575,13 @@ Add `article` to its tags if it should be findable in Winkipedia.
   and one game, **KILL DISKETTE** (`muzzythegrump: KILL DISKETTE`): Diskette
   pops out of one of nine holes, shoot her (crosshair, gunshot) before she
   drops back and she shatters (a random glass break and one of her screams,
-  robot-voiced), the kill counter goes up and she gets faster; each pop-up
-  says one of her "hmm" whirrs. The banner is `banner-muzzythegrump.png`
+  robot-voiced), the kill counter goes up and she gets a little faster
+  (`SPEEDUP`); each pop-up says one of her "hmm" whirrs. About a third of
+  pop-ups use one of Leo's other drawings of her (gasp, X eyes, "Et tu,
+  Brutus?", "Nyaa!", "stop."; `make-art.py` cuts them out to one size).
+  Rounds last a minute; then it shows your kills and the high score (kept in
+  that browser). The background slowly cycles through bright colours so her
+  limbs show. The banner is `banner-muzzythegrump.png`
   (embedded). The sounds come from
   `tools/skunkpets-redux/kill-diskette/make-sounds.py` (recordings in its
   `sources/`; every clip brought to the same quiet level, and the game's
@@ -727,8 +732,9 @@ What she says, first match wins:
    comment lists every key. A browser page without its own comment gets its site's line (`page-winkipedia`, `page-fanwiki`, `page-forum`, `page-gamesarchive`, `page-kraska1`, `page-devlink`, `page-404`, `page-newtab`; the script's `disketteSiteKey` decides), else the plain `page` line. `{page}` is the page open in the browser. Plain HTML only there (it's
    read by the script, never shown as a page).
 
-Any of them can add `data-mood="shake"` or `"wide"` (editor:
-`[[diskette: 80 | shake | ...]]`); the default is a hop. Don't put a
+Any of them can add `data-mood="shake"`, `"wide"` or `"tremble"` (a soft,
+fast shiver; editor: `[[diskette: 80 | shake | ...]]`); the default is a
+hop (crouch, spring, land with a squash). Don't put a
 straight double quote in `data-say` (Harlowe breaks the tag on `&quot;`);
 the editor turns them into curly quotes for you. Her lines can use the short-form `''bold''` and `//italic//` (the script's `disketteMarkup` turns them into `<b>`/`<i>`; `http://` is left alone), or plain `<b>`/`<i>` in DisketteLooks.
 
@@ -752,11 +758,12 @@ numbered list (▶ = what she'd say now in this playthrough) with ↑/↓ to
 reorder, and **+ Another response here** asks when she should say it.
 
 **Thanks / That's enough:** every answer offers **Thanks, Diskette!** and
-**That's enough, Diskette.** (tucks her into the tray). Thanks brings her
-follow-up: the answer's own `data-then` (friendly `then: Ugh, can we look
-at something nicer?`), else "Want me to stick around?", offering
-**Sure!** (she stays up, quiet, ready to look again) and **No, that's
-all.** (tray). The × on any bubble just quiets her. Once she's looked at anything
+**That's enough, Diskette.** (tucks her into the tray). Thanks just closes
+the bubble: she stays up, quiet, ready to look again. If the answer has a
+`data-then` (friendly `then: Ugh, can we look at something nicer?`), Thanks
+brings that follow-up instead, offering **Sure!** (stays up, quiet) and
+**No, that's all.** (tray). Her opening bubble (click her) offers **OK**
+(closes it; she stays up) and **That's enough, Diskette.**. The × on any bubble just quiets her. Once she's looked at anything
 (`diskette-first-look`), her menu opens with "Need me to look at anything
 else?" instead of introducing herself again.
 

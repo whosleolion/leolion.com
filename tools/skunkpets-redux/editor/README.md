@@ -81,7 +81,7 @@ then *Desktop & apps* and the other pages, drafts last, with a search box and
 **+ Line for something you can't point at** (off the screen, a poke in the
 eye, any page...). A card holds her line (**+ Another line**, or Enter, adds something
 else for when she's asked again; with more than one, **Asked again: In order /
-Loop / Random** appears and the header says e.g. *↻ 3 lines*), her reaction (hop, shake, wide eyes), the zone's slack or reach,
+Loop / Random** appears and the header says e.g. *↻ 3 lines*), her reaction (hop, shake, wide eyes, tremble), the zone's slack or reach,
 **only if** (events; `!name` = only before), what she says **after
 "Thanks"**, and **Make draft** / **Publish**, **Show me**, **Edit in markup**,
 **Delete**. Zones show in the game while this tab is open; click one to select

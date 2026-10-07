@@ -41,12 +41,22 @@
     position: relative;
     width: 100%;
     height: 100%;
-    background:
-      radial-gradient(ellipse at 50% 120%, #2b1d10 0%, #120c06 55%, #000 100%);
+    /* slowly fades round the rainbow, bright, so her black limbs show */
+    background-color: hsl(0, 95%, 58%);
+    animation: rainbow 30s linear infinite;
     cursor: none;
     touch-action: manipulation;
   }
-  #game.shake { animation: shake 0.12s linear; }
+  #game.shake { animation: rainbow 30s linear infinite, shake 0.12s linear; }
+  @keyframes rainbow {
+    0%    { background-color: hsl(0, 95%, 58%); }
+    16.6% { background-color: hsl(55, 95%, 55%); }
+    33.3% { background-color: hsl(120, 85%, 52%); }
+    50%   { background-color: hsl(185, 95%, 52%); }
+    66.6% { background-color: hsl(240, 90%, 66%); }
+    83.3% { background-color: hsl(300, 90%, 62%); }
+    100%  { background-color: hsl(360, 95%, 58%); }
+  }
   @keyframes shake {
     0% { transform: translate(0, 0); }
     25% { transform: translate(-3px, 2px); }
@@ -65,12 +75,15 @@
     display: flex;
     justify-content: space-between;
     pointer-events: none;
-    text-shadow: 2px 2px 0 #000;
+    color: #fff;
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 2px 0 #000;
   }
-  #kills { color: var(--red); font-size: 20px; letter-spacing: 1px; }
+  #kills { font-size: 20px; letter-spacing: 1px; }
+  #timer { font-size: 20px; letter-spacing: 1px; }
+  #timer.low { color: #ff3b3b; }
   #kills.bump { animation: bump 0.25s ease-out; }
   @keyframes bump { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
-  #title-small { color: #777; font-size: 11px; align-self: center; }
+  #title-small { color: #fff; font-size: 11px; align-self: center; }
 
   /* The nine holes */
   #field {
@@ -108,14 +121,16 @@
     box-sizing: border-box;
     pointer-events: none;
   }
-  /* her window: she slides up into it from below the hole's middle */
+  /* her window: she slides up into it from below the hole's middle. It has
+     her pictures' shape (422 x 372, with room on the right for a speech
+     bubble), shifted so her body (about 36% across) is over the hole. */
   .pop {
     position: absolute;
     left: 50%;
     bottom: 17%;
-    width: 56%;
     height: 120%;
-    transform: translateX(-50%);
+    aspect-ratio: 422 / 372;
+    transform: translateX(-36%);
     overflow: hidden;
     z-index: 2;
     pointer-events: none;
@@ -216,6 +231,8 @@
   #start .blink { color: #fff; animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   #start .by { color: #666; font-size: 11px; }
+  #start .best { color: #ffd23a; }
+  #start .new-best { color: #ffd23a; font-size: 18px; animation: blink 0.5s steps(2) infinite; }
 </style>
 </head>
 <body>
@@ -223,12 +240,15 @@
   <div id="hud">
     <div id="kills">KILLS: 0</div>
     <div id="title-small">KILL DISKETTE</div>
+    <div id="timer">1:00</div>
   </div>
   <div id="field"></div>
   <div id="xhair"><span></span></div>
   <div id="start">
     <h1>KILL DISKETTE</h1>
     <p>she won't stop popping up. make her stop.</p>
+    <p>how many can you kill in one minute?</p>
+    <p class="best"></p>
     <p class="blink">CLICK TO START</p>
     <p class="by">a game by muzzythegrump</p>
   </div>
@@ -249,6 +269,7 @@
   for (let i = 0; i < 9; i++) {
     const cell = document.createElement("div");
     cell.className = "cell";
+    cell.style.zIndex = String(1 + Math.floor(i / 3));   /* lower rows in front, so a hole's rim never covers her from the row below */
     cell.innerHTML = '<div class="hole"></div><div class="pop"><div class="dk"></div></div><div class="lip"></div>';
     field.appendChild(cell);
     holes.push(cell.querySelector(".dk"));
@@ -264,8 +285,23 @@
   let nextTimer = 0;
 
   /* She speeds up with every kill: shorter up, shorter wait. */
-  const upTime = () => Math.max(360, 1300 * Math.pow(0.93, kills));
-  const gapTime = () => Math.max(140, (450 + Math.random() * 500) * Math.pow(0.93, kills));
+  /* She speeds up a little with every kill: shorter up, shorter wait. */
+  const SPEEDUP = 0.968;
+  const upTime = () => Math.max(480, 1300 * Math.pow(SPEEDUP, kills));
+  const gapTime = () => Math.max(200, (450 + Math.random() * 500) * Math.pow(SPEEDUP, kills));
+
+  /* Now and then she pops up as one of Leo's other drawings of her
+     (never the same variant twice running). */
+  const VARIANTS = ["diskette-gasp.png", "diskette-x-eyes.png", "diskette-brutus.png", "diskette-nyaa.png", "diskette-stop.png"];
+  const VARIANT_CHANCE = 0.35;
+  let lastVariant = "";
+  function pickPicture() {
+    if (Math.random() >= VARIANT_CHANCE) return "diskette.png";
+    const options = VARIANTS.filter((v) => v !== lastVariant);
+    lastVariant = options[Math.floor(Math.random() * options.length)];
+    return lastVariant;
+  }
+  VARIANTS.forEach((v) => { new Image().src = v; });   /* preload */
 
   function popUp() {
     if (!running) return;
@@ -273,6 +309,9 @@
     do { i = Math.floor(Math.random() * 9); } while (i === last);
     last = i;
     current = holes[i];
+    const pic = pickPicture();
+    current.dataset.pic = pic;
+    current.style.backgroundImage = 'url("' + pic + '")';
     current.classList.remove("dead");
     current.classList.add("up");
     whirr();
@@ -327,13 +366,13 @@
     const g = game.getBoundingClientRect();
     const b = dk.getBoundingClientRect();
     /* where the picture actually sits inside the element (contain, bottom) */
-    const ratio = 354 / 372;   /* diskette.png */
+    const ratio = 422 / 372;   /* diskette*.png (all the same size) */
     let w = b.width;
     let h = w / ratio;
     if (h > b.height) { h = b.height; w = h * ratio; }
     const left = b.left - g.left + (b.width - w) / 2;
     const top = b.top - g.top + (b.height - h);
-    const cx = 0.45 + Math.random() * 0.1;
+    const cx = 0.33 + Math.random() * 0.08;   /* her body is the left part (room for a speech bubble) */
     const cy = 0.4 + Math.random() * 0.1;
     const rim = [];
     const n = 11;
@@ -351,6 +390,7 @@
       s.style.width = w + "px";
       s.style.height = h + "px";
       s.style.backgroundSize = w + "px " + h + "px";
+      s.style.backgroundImage = 'url("' + (dk.dataset.pic || "diskette.png") + '")';
       const pct = (p) => (p[0] * 100).toFixed(1) + "% " + (p[1] * 100).toFixed(1) + "%";
       s.style.clipPath = "polygon(" + pct([cx, cy]) + ", " + pct(p1) + ", " + pct(p2) + ")";
       const mx = (p1[0] + p2[0]) / 2 - cx;
@@ -443,17 +483,73 @@
     e.preventDefault();
     moveCrosshair(e.clientX, e.clientY);
     if (!running) {
+      if (Date.now() < restartAt) return;
       audio();
-      running = true;
-      start.style.display = "none";
-      nextTimer = setTimeout(popUp, 700);
+      startRound();
       return;
     }
     shoot(e.clientX, e.clientY, document.elementFromPoint(e.clientX, e.clientY));
   });
 
-  /* For tests: window.killDiskette.state() */
-  window.killDiskette = { state: () => ({ kills: kills, running: running, up: current ? holes.indexOf(current) : -1, upTime: upTime() }) };
+  /* ---------- One-minute rounds and the high score ---------- */
+
+  const ROUND_SECONDS = 60;
+  const BEST_KEY = "kill-diskette-best";
+  const timerEl = document.getElementById("timer");
+  const bestEl = start.querySelector(".best");
+  let endsAt = 0;
+  let tick = 0;
+  let restartAt = 0;      /* ignore clicks just after time's up */
+
+  function getBest() { try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) { return 0; } }
+  function setBest(n) { try { localStorage.setItem(BEST_KEY, String(n)); } catch (e) {} }
+  function showBest() { const b = getBest(); bestEl.textContent = b ? "HIGH SCORE: " + b : ""; }
+  showBest();
+
+  function showTime(ms) {
+    const sec = Math.max(0, Math.ceil(ms / 1000));
+    timerEl.textContent = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+    timerEl.classList.toggle("low", sec <= 10);
+  }
+
+  function startRound() {
+    kills = 0;
+    killsEl.textContent = "KILLS: 0";
+    running = true;
+    start.style.display = "none";
+    endsAt = Date.now() + ROUND_SECONDS * 1000;
+    showTime(ROUND_SECONDS * 1000);
+    clearInterval(tick);
+    tick = setInterval(function () {
+      const left = endsAt - Date.now();
+      showTime(left);
+      if (left <= 0) endRound();
+    }, 200);
+    nextTimer = setTimeout(popUp, 700);
+  }
+
+  function endRound() {
+    clearInterval(tick);
+    clearTimeout(nextTimer);
+    clearTimeout(downTimer);
+    running = false;
+    if (current) current.classList.remove("up");
+    current = null;
+    const best = getBest();
+    const isNew = kills > best;
+    if (isNew) setBest(kills);
+    start.innerHTML =
+      "<h1>TIME'S UP!</h1>" +
+      "<p>you killed her <b>" + kills + "</b> time" + (kills === 1 ? "" : "s") + ".</p>" +
+      (isNew ? '<p class="new-best">NEW HIGH SCORE!</p>' : "<p>HIGH SCORE: " + best + "</p>") +
+      '<p class="blink">CLICK TO PLAY AGAIN</p>' +
+      '<p class="by">a game by muzzythegrump</p>';
+    start.style.display = "";
+    restartAt = Date.now() + 900;
+  }
+
+  /* For tests: window.killDiskette.state(), .endRound() */
+  window.killDiskette = { state: () => ({ kills: kills, running: running, up: current ? holes.indexOf(current) : -1, pic: current ? current.dataset.pic : "", upTime: upTime(), timeLeft: running ? endsAt - Date.now() : 0, best: getBest() }), endRound: () => endRound() };
 })();
 </script>
 </body>

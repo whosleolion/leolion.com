@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="8475637b186b">
+<meta name="skunkpets-build" content="77ccf1aec378">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "8475637b186b";
+  var mine = "77ccf1aec378";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -100,6 +100,7 @@ tw-story {
 
 .browser-page-content,
 .mail-body,
+.mail-address,
 .recycle-file-content,
 tw-story input,
 tw-story textarea {
@@ -1805,9 +1806,16 @@ tw-story .diskette-eye-hit:hover {
   display: none;
 }
 
-/* Moods: data-mood="hop" (the default), "shake" or "wide". */
+/* Moods: data-mood="hop" (the default), "shake", "wide" or "tremble". */
 .diskette-mood-hop .diskette-character {
-  animation: disketteHop 0.5s ease-out, disketteBob 2.8s ease-in-out 0.5s infinite;
+  transform-origin: 50% 100%;
+  animation: disketteHop 0.75s linear, disketteBob 2.8s ease-in-out 0.75s infinite;
+}
+
+/* a soft, fast, uneven shiver */
+.diskette-mood-tremble .diskette-character {
+  transform-origin: 50% 90%;
+  animation: disketteTremble 0.23s linear 7, disketteBob 2.8s ease-in-out 1.6s infinite;
 }
 
 .diskette-mood-shake .diskette-character {
@@ -1819,11 +1827,29 @@ tw-story .diskette-eye-hit:hover {
   scale: 1.3;
 }
 
+/* crouch, spring up, hang, drop, land with a squash, settle */
 @keyframes disketteHop {
-  0%, 100% { transform: translateY(0); }
-  35%      { transform: translateY(-14px); }
-  60%      { transform: translateY(0); }
-  75%      { transform: translateY(-4px); }
+  0%   { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in; }
+  14%  { transform: translateY(0) scale(1.1, 0.86); animation-timing-function: ease-out; }
+  24%  { transform: translateY(-6px) scale(0.92, 1.1); animation-timing-function: ease-out; }
+  44%  { transform: translateY(-26px) scale(0.98, 1.03); animation-timing-function: ease-in; }
+  50%  { transform: translateY(-27px) scale(1, 1); animation-timing-function: ease-in; }
+  68%  { transform: translateY(0) scale(0.95, 1.06); animation-timing-function: ease-out; }
+  76%  { transform: translateY(0) scale(1.12, 0.85); animation-timing-function: ease-out; }
+  88%  { transform: translateY(0) scale(0.97, 1.03); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes disketteTremble {
+  0%   { transform: translate(0, 0) rotate(0); }
+  13%  { transform: translate(-1.2px, 0.6px) rotate(-0.8deg); }
+  27%  { transform: translate(1px, -0.5px) rotate(0.5deg); }
+  38%  { transform: translate(-0.6px, -0.9px) rotate(-0.3deg); }
+  52%  { transform: translate(1.3px, 0.4px) rotate(0.9deg); }
+  61%  { transform: translate(-1px, 0.8px) rotate(-0.6deg); }
+  77%  { transform: translate(0.5px, -0.7px) rotate(0.4deg); }
+  89%  { transform: translate(-0.8px, 0.3px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0); }
 }
 
 @keyframes disketteShake {
@@ -1845,6 +1871,7 @@ tw-story .diskette-eye-hit:hover {
   .diskette-balloon,
   .diskette-mood-hop .diskette-character,
   .diskette-mood-shake .diskette-character,
+  .diskette-mood-tremble .diskette-character,
   .diskette-scan-box {
     animation: none;
   }
@@ -1871,9 +1898,20 @@ tw-story .diskette-eye-hit:hover {
 }
 
 .mail-address {
-  margin: 0 6px 4px;
+  margin: 6px 12px 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   color: #555;
-  font: 11px Arial, sans-serif;
+  font: 12px/1.4 Arial, sans-serif;
+}
+
+/* The address can be selected and copied (one click selects all of it). */
+.mail-address-value {
+  color: #222;
+  font-weight: bold;
+  -webkit-user-select: all;
+  user-select: all;
+  cursor: text;
 }
 
 .mail-header {
@@ -3385,7 +3423,7 @@ function trackGameEvents() {
         <span class="diskette-page" data-say="..."></span>
    3. the DisketteLooks passage: a line for the app or thing
       you dropped on (see that passage for the keys).
-   Any of them can add data-mood="hop" (default), "shake" or
+   Any of them can add data-mood="hop" (default), "shake", "tremble" or
    "wide", and data-if="event, !other-event" to count only when
    those events have (or, with !, haven't) happened (see
    EVENTS). In the preview's article editor these are written
@@ -3455,12 +3493,11 @@ function mountDisketteInspect(playfield) {
 }
 
 /* A short conversation. Her answer offers "Thanks, Diskette!" and "That's
-   enough, Diskette." (tucks her into the tray). Thanks brings her follow-up:
-   the answer's own data-then if it has one, else DISKETTE_FOLLOWUP, with
-   "Sure!" (she stays up, quiet, ready to look again) and "No, that's all."
-   (tray). The x on any bubble just leaves her up, quiet; clicking her
-   brings her menu. */
-const DISKETTE_FOLLOWUP = "Want me to stick around?";
+   enough, Diskette." (tucks her into the tray). Thanks just closes the
+   bubble and she stays up, quiet, ready to look again; if the answer has a
+   data-then, Thanks brings that follow-up instead, with "Sure!" (stays up,
+   quiet) and "No, that's all." (tray). The x on any bubble just leaves her
+   up, quiet; clicking her brings her menu. */
 
 function buildDisketteReaction(reaction) {
   const bubble = document.createElement("div");
@@ -3482,10 +3519,10 @@ function buildDisketteReaction(reaction) {
   }
   bubble.querySelector(".diskette-close").addEventListener("click", quiet);
   bubble.querySelector(".diskette-yes").addEventListener("click", function (e) {
-    if (reaction.followup) return quiet(e);
+    if (reaction.followup || !reaction.then) return quiet(e);
     e.preventDefault();
     e.stopPropagation();
-    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then || disketteMarkup(DISKETTE_FOLLOWUP), followup: true };
+    disketteReaction = { key: String(++disketteReactionSeq), html: reaction.then, followup: true };
     document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   });
   bubble.querySelector(".diskette-enough").addEventListener("click", function (e) {
@@ -3898,11 +3935,11 @@ function sayDisketteReaction(found) {
   document.querySelectorAll(".playfield").forEach(mountDisketteInspect);
   const assistant = document.querySelector(".diskette-assistant");
   if (!assistant) return;
-  ["hop", "shake", "wide"].forEach(function (m) { assistant.classList.remove("diskette-mood-" + m); });
+  ["hop", "shake", "wide", "tremble"].forEach(function (m) { assistant.classList.remove("diskette-mood-" + m); });
   void assistant.offsetWidth;  /* restart the animation */
   assistant.classList.add("diskette-mood-" + disketteReaction.mood);
   const mood = disketteReaction.mood;
-  setTimeout(function () { assistant.classList.remove("diskette-mood-" + mood); }, mood === "wide" ? 1400 : 600);
+  setTimeout(function () { assistant.classList.remove("diskette-mood-" + mood); }, { wide: 1400, tremble: 1650, hop: 780 }[mood] || 600);
   playDisketteVoice();
 }
 
@@ -6137,7 +6174,7 @@ Galveston attended Ellory College in Pennsylvania for 1998-2001, majoring in und
 Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing &#39;artistic differences&#39;. Although it was widely speculated that this transition was due to conflicts with the project&#39;s leadership at (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)], Galveston since commented that he &#39;simply moved on to other projects&#39;.
 
 In 2010, Galveston became a regular lecturer in the Computer Science department at Ellory College, where he still teaches.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="21" name="Order of Refuse" tags="wiki article" position="100,350" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="21" name="Order of Refuse" tags="wiki article" position="100,350" size="100,100">&lt;span class=&quot;diskette-page&quot; data-say=&quot;Oh, &amp;lt;b&amp;gt;Order of Refuse&amp;lt;/b&amp;gt;! Looks like Winkipedia doesn&#39;t have anything to say about this one.&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Order of Refuse&lt;/h1&gt;\
 Winkipedia does not have an article with this name, or the page has been &#39;&#39;deleted&#39;&#39;.
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="22" name="PageHeader" tags="header" position="100,100" size="100,100">&lt;button class=&quot;fullscreen-toggle&quot; type=&quot;button&quot; title=&quot;Toggle fullscreen&quot;&gt;&amp;#91;⤢&amp;#93;&lt;/button&gt;</tw-passagedata><tw-passagedata pid="23" name="REV (Recast Entertainment Ventures)" tags="wiki article" position="350,350" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
@@ -6422,7 +6459,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 
 &lt;div class=&quot;crt&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="27" name="RenderMailInbox" tags="" position="100,100" size="100,100">{&lt;div class=&quot;mail-header&quot;&gt;Inbox&lt;/div&gt;
-&lt;div class=&quot;mail-address&quot;&gt;Your email: user3294@openmail.net&lt;/div&gt;
+&lt;div class=&quot;mail-address&quot;&gt;Your email: &lt;span class=&quot;mail-address-value&quot; title=&quot;Click to select, then copy&quot;&gt;user3294@openmail.net&lt;/span&gt;&lt;/div&gt;
 &lt;div class=&quot;mail-list&quot;&gt;
 (if: $mailAll&#39;s length is 0)[&lt;div class=&quot;mail-empty&quot;&gt;Your inbox is empty&lt;/div&gt;]
 (for: each _msg, ...$mailAll)[
@@ -6688,7 +6725,7 @@ Some of the tales included in these volumes:
 * Go I Know Not Whither and Fetch I Know Not What
 * The Girl of the Cliffs
 * Candle, Candle, Burn!
-* Great Old Radish
+* &lt;span class=&quot;diskette-zone&quot; data-radius=&quot;10&quot; data-say=&quot;Я слышалa, как люди поют о великой старой редиске. О, редиска! Редиска! Позволь мне вытянуть тебя из черной земли и вкусить тебя!&quot;&gt;Great Old Radish&lt;/span&gt;
 * Sisters Morning, Noon, and Night
 * The Sleepy Murderer
 * The Language of the Pigs
@@ -7020,6 +7057,7 @@ deal with the devil
 (if: $disketteTopic is &quot;&quot;)[
 (if: $events contains &quot;diskette-first-look&quot;)[&lt;p&gt;Need me to look at anything else? &lt;b&gt;Drag from my eyes&lt;/b&gt; to it!&lt;/p&gt;](else:)[&lt;p&gt;Hi there! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. Want to know about something on your screen? &lt;b&gt;Drag from my eyes&lt;/b&gt; to it, and I&#39;ll tell you all about it!&lt;/p&gt;]
 &lt;div class=&quot;diskette-options&quot;&gt;
+(link: &quot;OK&quot;)[(set: $disketteQuiet to true)(set: $disketteTopic to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link: &quot;That&#39;s enough, Diskette.&quot;)[(display: &quot;func-diskette-hide&quot;)]
 &lt;/div&gt;
 (if: ($trashItems - (a: &quot;readme&quot;))&#39;s length &gt; 0)[&lt;p class=&quot;diskette-note&quot;&gt;There&#39;s still something in your Trash! Drag it onto the desktop and I can tell you about it too.&lt;/p&gt;]
@@ -7044,7 +7082,7 @@ deal with the devil
 
      One &lt;p data-look=&quot;key&quot;&gt; per line. A key with several lines says
      the first one whose data-if fits (so put conditional lines before
-     the plain one). data-mood=&quot;shake&quot; or &quot;wide&quot; changes how she reacts
+     the plain one). data-mood=&quot;shake&quot;, &quot;wide&quot; or &quot;tremble&quot; changes how she reacts
      (default: a little hop). {page} is the page open in the browser.
 
      Keys: self (herself), poke (a click on her eyes without a drag),
@@ -7072,7 +7110,7 @@ deal with the devil
      round, data-cycle=&quot;random&quot; picks one (never the same twice running).
 
      data-then=&quot;...&quot; is her follow-up after &quot;Thanks, Diskette!&quot; for that
-     line (default: &quot;Want me to stick around?&quot;). A line
+     line (without one, Thanks just closes her bubble). A line
      with data-draft is a draft (the editor&#39;s Drafts) and is never said
      until it&#39;s published.
 

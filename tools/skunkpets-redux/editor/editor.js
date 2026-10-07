@@ -39,7 +39,7 @@
   const PHOTO_RE = /<div class="article-art( article-art-left)?" data-art="([^"]+)"(?: style="width: ([\d.]+%)")? role="img" aria-label="([^"]*)"><\/div>/g;
   /* Diskette's response zones and whole-page comments (her "inspecting"
      mode; see DISKETTE INSPECTING in the game's script). */
-  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide)")?(?: data-if="([^"]*)")?(?: data-on="([^"]*)")?(?: data-cycle="(loop|random)")?(?: data-then="([^"]*)")?(?: data-draft="(1)")? data-say="([^"]*)">([^<>\[\]|]*)<\/span>/g;
+  const ZONE_RE = /<span class="diskette-(zone|page)"(?: data-radius="(\d+)")?(?: data-mood="(hop|shake|wide|tremble)")?(?: data-if="([^"]*)")?(?: data-on="([^"]*)")?(?: data-cycle="(loop|random)")?(?: data-then="([^"]*)")?(?: data-draft="(1)")? data-say="([^"]*)">([^<>\[\]|]*)<\/span>/g;
   const PHOTO_ON_RE = /^\[data-art='([^']+)'\]$/;
   const ZONE_RADIUS = 60;
 
@@ -156,7 +156,7 @@
     while (parts.length > 1) {
       const x = parts[0];
       if (/^(page|\d+(px)?)$/.test(x)) { if (x === "page") f.kind = "page"; else f.radius = parseInt(x, 10); }
-      else if (/^(hop|shake|wide)$/.test(x)) f.mood = x;
+      else if (/^(hop|shake|wide|tremble)$/.test(x)) f.mood = x;
       else if (/^(loop|random)$/.test(x)) f.cycle = x;
       else if (x === "draft") f.draft = true;
       else if (x === "around") around = true;
@@ -1154,7 +1154,7 @@
   const CHEAT_SHEET = [
     ["Links", "[[Tom Barry]]   link to a page\n[[the founder->Tom Barry]]   link with other words\nType [[ for page names. Red = no such page yet: Ctrl/Cmd-click it to create it."],
     ["Photos", "[[photo: file.jpg | right | description]]\n[[photo: file.jpg | left | 36% | description]]\nMove a photo's line to move it; right after a heading puts it beside that section."],
-    ["Diskette", "[[diskette: 80 | Her line.]]   a point zone\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | ...]]   her comment on the page\nAdd shake or wide, loop or random, and if: events before her line. Line 1 >> line 2 = alternatives. then: … = her follow-up after Thanks. TODO … = still to write. More in the Diskette tab's ?."],
+    ["Diskette", "[[diskette: 80 | Her line.]]   a point zone\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | ...]]   her comment on the page\nAdd shake, wide or tremble, loop or random, and if: events before her line. Line 1 >> line 2 = alternatives. then: … = her follow-up after Thanks. TODO … = still to write. More in the Diskette tab's ?."],
     ["Text", "''bold''   //italic//   <h2>Heading</h2>\nA \\ at the end of a line joins it to the next one."],
     ["Moving around", "Drag across words in the game (or ⌖ Edit, then click a paragraph) to jump to them here. ☰ Pages lists every page. Ctrl/Cmd-F finds, Ctrl/Cmd-Z undoes."],
   ];
@@ -2882,7 +2882,7 @@
 
   function moodSelect(value, onchange) {
     const s = el("select", { class: "ske-input ske-small", title: "How she reacts", onchange: onchange });
-    [["hop", "hop"], ["shake", "shake her head"], ["wide", "wide eyes"]].forEach(function (m) {
+    [["hop", "hop"], ["shake", "shake her head"], ["wide", "wide eyes"], ["tremble", "tremble"]].forEach(function (m) {
       const o = el("option", { value: m[0], text: m[1] });
       if (m[0] === value) o.selected = true;
       s.appendChild(o);
@@ -3027,7 +3027,7 @@
     const selector = item.shape === "element" && !item.photo ? el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.on, title: "CSS selector of what it covers, in the same page or window" }) : null;
     const cond = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.cond, placeholder: "only if: event, !event", title: "Only when these events have happened (!name = only before). See the Events tab." });
     const condNote = el("div", { class: "ske-muted ske-cond-note", text: conditionNow(item.cond) });
-    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks: Want me to stick around?", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
+    const then = el("input", { type: "text", class: "ske-input ske-small ske-cond", value: item.then || "", placeholder: "after Thanks (optional): her follow-up", title: "Her follow-up after “Thanks, Diskette!” (it offers Sure! and No, that's all.)" });
     let timer = null;
     const apply = function () {
       clearTimeout(timer);
@@ -3186,7 +3186,7 @@
     ["Several responses", "One spot can have several responses, each with its own “only if”: she says the first one that fits (one without a condition always fits, so it goes last, as the “otherwise”). “+ Another response here” asks when she should say it and puts it in place; the cards are numbered, ▶ marks what she'd say now in this playthrough, ↑ ↓ reorder them, and ⚠ never means one above always wins first."],
     ["Only if (events)", "Event names from the Events tab, comma-separated: the reaction counts only when they've all happened. !name means only before it. e.g. zoom-started, !visited:kraska1."],
     ["Reactions", "hop (default), shake her head, or wide eyes."],
-    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks brings her follow-up: the reaction's own (the “after Thanks” box), otherwise “Want me to stick around?”, offering “Sure!” and “No, that's all.”."],
+    ["Thanks / That's enough", "Every answer offers “Thanks, Diskette!” and “That's enough, Diskette.”. Thanks just closes the bubble (she stays up, quiet); if the reaction has an “after Thanks” line, Thanks brings that follow-up instead, offering “Sure!” and “No, that's all.”."],
     ["Drafts", "New reactions are live straight away. “Make draft” takes one out of the game while you work on it; drafts are listed last, and “Publish” puts one back."],
     ["In the game", "On this tab, zones show in the game: points as a dot and dashed circle, words and elements outlined; drafts dashed grey. Click a zone to open it here."],
     ["In the markup", "[[diskette: 80 | Her line.]]   a point\n[[diskette: 10 | on: these words | Her line.]]\n[[diskette: 10 | around | Her line.]] … [[/diskette]]   around a whole paragraph\n[[diskette: 10 | on photo: file.jpg | Her line.]]\n[[diskette: page | Her line.]]"],
