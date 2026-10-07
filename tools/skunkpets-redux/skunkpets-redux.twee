@@ -5558,7 +5558,7 @@ Battlemutts Online allowed players to create a controllable Battlemutt character
 The official release of the game was slated for July 2009, but the project entered development hiatus when Galveston left REV, and the full game was never released.
 
 <h2>Toys and Action Figures</h2>\
-(print:'<img src="' + $imgroot + 'mutts/battlemutts-toy.png" width="40%" style="float: left; margin-right:15px;">') Battlemutts collectible statues and action figures were manufactured by YoToy starting in 2000, starting with the Canis Collection, which featured members of the city's mutant undercity, and the Starborn Taskforce, which included robotic and alien invaders and select members of the Imperial Cyberguard. Later releases included fan-favorite characters like Jawbreaker, Willis Pinch, and Mother Canis Superior.
+(print:'<img src="' + $imgroot + 'mutts/battlemutts-toy.png" width="40%" style="float: left; margin-right:15px;">') Battlemutts collectible statues and action figures were manufactured by YoToy starting in 2000, starting with the Canis Collection, which featured members of the city's mutant undercity, and the Starborn Taskforce, which included robotic and alien invaders and select members of the Imperial Cyberguard. Later releases included fan-favorite characters like <span class="diskette-zone" data-radius="10" data-say="">Jawbreaker</span>, Willis Pinch, and Mother Canis Superior.
 </div>
 
 :: DESKTOP START
@@ -5580,10 +5580,10 @@ The official release of the game was slated for July 2009, but the project enter
 
 :: Diskette [wiki article] {"position":"725,100","size":"100,100"}
 <div class="wiki-article">\
-<h1>Diskette //(virtual assistant)//</h1>\
+<h1><span class="diskette-zone" data-radius="10" data-say="Hey, thats my name! I hope it says nice things about me...">Diskette //(virtual assistant)//</span></h1>\
 Diskette was a virtual assistant created by OverSoft in 2004, capable of guiding users step-by-step through office tasks such as composing emails, arranging spreadsheet formulas, and structuring budgets. The Diskette mascot, a friendly and pretty CD-ROM, spoke in approachable conversational dialogue, was fluent in 20 languages, and would tell a variety of randomized jokes and anecdotes according to the user's preference.
 
-<div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
+<div class="article-art article-art-left" data-art="diskette-chyt.jpg" style="width: 28%" role="img" aria-label="diskette"></div><span class="diskette-zone" data-radius="10" data-on="[data-art='diskette-chyt.jpg']" data-say="Hey, that's a picture of me! Do my lashes look ok?"></span><p>Diskette was launched by OverSoft in an attempt to create an operating-system-wide alternative to software-specific help clients. She was marketed as "//Your Secretary//", a tagline made famous by her launch expo at (link: "NetCon 2004")[(set: $navPending to "NetCon 2004")(display: "func-navigate")]. 
 
 However, Diskette's Install CD was only in distribution for 6 months, after which she was decommissioned. Popular theories have circulated online that Diskette was shut off after she 'attained sentience,' with many users citing a viral dialogue posted online in November 2004 (//"The Diskette Confession"//) as evidence that she had 'gone rogue'.</p></div>OverSoft declined to comment on these rumors, stating that the software was discontinued due to a lack of funding and competition from similar platforms. In 2006, the Diskette domain, trademark, and associated technology was sold to (link: "REV (Recast Entertainment Ventures)")[(set: $navPending to "REV (Recast Entertainment Ventures)")(display: "func-navigate")].
 </div>
@@ -7123,7 +7123,7 @@ you can check out more of my work on (link-repeat: "http://devlink-userbase.skun
 </div>
 
 :: muzzythegrump [wiki gamesarchive] {"position":"1350,725","size":"100,100"}
-<div class="wiki-gamesarchive">\
+<span class="diskette-page" data-mood="shake" data-say="Uhhh..."></span><div class="wiki-gamesarchive">\
 <div class="gga-banner-muzzy" role="img" aria-label="globalgamesarchive.co.uk: games by user muzzythegrump"></div>\
 <div width="100%" style="text-align:center">\
 (text-style:"underline")[''ABOUT ME'']<br>\
