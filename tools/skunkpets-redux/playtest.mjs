@@ -142,6 +142,17 @@ const leftX = await pupilX();
 await p.mouse.move(1275, 400); await W(150);
 const rightX = await pupilX();
 check('her pupils follow the mouse', leftX < -1 && rightX > 1, `${leftX} / ${rightX}`);
+check('image guard: no right-click menu or dragging on the game\'s pictures, but right-click works on selected text', await p.evaluate(() => {
+  const img = document.querySelector('tw-story img');
+  const fire = (el, type) => { const ev = new MouseEvent(type, { bubbles: true, cancelable: true }); el.dispatchEvent(ev); return ev.defaultPrevented; };
+  const drag = (el) => { const ev = new DragEvent('dragstart', { bubbles: true, cancelable: true }); el.dispatchEvent(ev); return ev.defaultPrevented; };
+  const host = document.createElement('div'); host.className = 'mail-body'; host.textContent = 'user3294@openmail.net';   /* a selectable area */
+  document.querySelector('tw-story').appendChild(host);
+  const r = document.createRange(); r.selectNodeContents(host); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  const textOk = !fire(host, 'contextmenu');
+  sel.removeAllRanges(); host.remove();
+  return !!img && fire(img, 'contextmenu') && drag(img) && textOk;
+}));
 check('her menu says to drag from her eyes, with no list of apps', (await text('.diskette-bubble')).includes('Drag from my eyes') && (await text('.diskette-options')) === "OK That's enough, Diskette.", await text('.diskette-options'));
 await look(await center('.desktop-icon[data-window-template="browser"]'));
 check('dragging from her eyes to an icon: she talks about it', (await reaction()).includes('web browser'), await reaction());

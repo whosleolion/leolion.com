@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="ce216df793a1">
+<meta name="skunkpets-build" content="d292c905a658">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "ce216df793a1";
+  var mine = "d292c905a658";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -96,6 +96,13 @@ tw-transition-container {
 tw-story {
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;   /* no long-press "save image" menu on phones */
+}
+
+/* Pictures can't be dragged out of the game (see IMAGE GUARD in the script). */
+tw-story img {
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 .browser-page-content,
@@ -4671,6 +4678,32 @@ document.addEventListener("click", function (e) {
   const scale = playfield ? getPlayfieldScale(playfield) : 1;
   content.scrollTop += (targetRect.top - contentRect.top) / scale;
 });
+
+
+/* =========================================================
+   IMAGE GUARD
+   ---------------------------------------------------------
+   Makes it harder to lift the game's art: pictures can't be
+   dragged out, and there's no right-click menu (Save image
+   as..., Copy image) inside the game, except on selected
+   text (so the email address etc. can still be copied) and in
+   text boxes. (Not a lock: anyone determined can still get
+   files from the browser's developer tools.)
+   ========================================================= */
+
+document.addEventListener("dragstart", function (e) {
+  const t = e.target;
+  if (t && t.closest && t.closest("tw-story") && (t.tagName === "IMG" || t.tagName === "IFRAME")) e.preventDefault();
+}, true);
+
+document.addEventListener("contextmenu", function (e) {
+  const t = e.target;
+  if (!t || !t.closest || !t.closest("tw-story")) return;
+  if (t.closest("input, textarea, [contenteditable='true']")) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.toString().trim()) return;
+  e.preventDefault();
+}, true);
 
 
 /* =========================================================

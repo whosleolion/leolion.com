@@ -69,6 +69,13 @@ tw-transition-container {
 tw-story {
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;   /* no long-press "save image" menu on phones */
+}
+
+/* Pictures can't be dragged out of the game (see IMAGE GUARD in the script). */
+tw-story img {
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 .browser-page-content,
@@ -4638,6 +4645,32 @@ document.addEventListener("click", function (e) {
   const scale = playfield ? getPlayfieldScale(playfield) : 1;
   content.scrollTop += (targetRect.top - contentRect.top) / scale;
 });
+
+
+/* =========================================================
+   IMAGE GUARD
+   ---------------------------------------------------------
+   Makes it harder to lift the game's art: pictures can't be
+   dragged out, and there's no right-click menu (Save image
+   as..., Copy image) inside the game, except on selected
+   text (so the email address etc. can still be copied) and in
+   text boxes. (Not a lock: anyone determined can still get
+   files from the browser's developer tools.)
+   ========================================================= */
+
+document.addEventListener("dragstart", function (e) {
+  const t = e.target;
+  if (t && t.closest && t.closest("tw-story") && (t.tagName === "IMG" || t.tagName === "IFRAME")) e.preventDefault();
+}, true);
+
+document.addEventListener("contextmenu", function (e) {
+  const t = e.target;
+  if (!t || !t.closest || !t.closest("tw-story")) return;
+  if (t.closest("input, textarea, [contenteditable='true']")) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.toString().trim()) return;
+  e.preventDefault();
+}, true);
 
 
 /* =========================================================
