@@ -42,7 +42,7 @@ h1,h2,h3{font-family:"Fraunces",Georgia,serif;line-height:1.05;margin:0 0 .4em;f
 .hero .script.lede{font-size:1.8rem;line-height:1.2;margin:0 0 18px}
 .hero .lede{font-size:1.2rem;max-width:34ch;margin-bottom:0}
 .poster{position:relative;transform:rotate(2.5deg);border:8px solid var(--paper);box-shadow:10px 12px 0 rgba(31,26,99,.35);border-radius:4px}
-.poster-wrap{position:relative;max-width:460px;justify-self:center;width:100%}
+.poster-wrap{position:relative;max-width:500px;justify-self:center;width:100%}
 .torn{position:absolute;left:0;right:0;bottom:-1px;height:46px;background:var(--paper);clip-path:polygon(0 60%,8% 45%,18% 70%,30% 40%,44% 65%,57% 35%,70% 62%,83% 38%,93% 58%,100% 40%,100% 100%,0 100%)}
 
 /* sections */
@@ -115,7 +115,7 @@ html,body{overflow-x:hidden}
   .hero h1{margin:18px 0 12px}
   .hero .script.lede{font-size:1.6rem;margin-bottom:16px}
   .hero .lede{max-width:none}
-  .poster-wrap{max-width:290px;margin:0 auto}
+  .poster-wrap{max-width:340px;margin:0 auto}
   .poster{transform:rotate(1.5deg);border-width:6px;box-shadow:6px 8px 0 rgba(31,26,99,.35)}
   .torn{height:30px}
   .page-head{padding:26px 0 38px}
