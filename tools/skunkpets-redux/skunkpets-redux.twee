@@ -2197,6 +2197,12 @@ span.xp-dialog-icon {
   width: 100%;
 }
 
+/* embedded thumbnails (div tiles) sit like the <img> ones: full column width */
+.browser-page-content .library-grid .gga-tile {
+  width: 100%;
+  margin: 0;
+}
+
 .browser-page-content .wikitable {
   border-collapse: collapse;
   font-size: 90%;

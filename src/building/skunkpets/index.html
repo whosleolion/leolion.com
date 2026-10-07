@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="ff3b4268ec7f">
+<meta name="skunkpets-build" content="6c7c73601f1c">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "ff3b4268ec7f";
+  var mine = "6c7c73601f1c";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -2222,6 +2222,12 @@ span.xp-dialog-icon {
 
 .browser-page-content .library-grid img {
   width: 100%;
+}
+
+/* embedded thumbnails (div tiles) sit like the <img> ones: full column width */
+.browser-page-content .library-grid .gga-tile {
+  width: 100%;
+  margin: 0;
 }
 
 .browser-page-content .wikitable {
