@@ -1273,104 +1273,11 @@ img.xp-dialog-icon {
   font: 13px/1.35 Arial, Helvetica, sans-serif;
 }
 
+/* The ticket's top: the NetCon 2004 banner (art, embedded). */
 .netcon-banner {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-  padding: 8px 10px 6px;
+  aspect-ratio: 1000 / 316;
   border-bottom: 2px solid #111;
-  background:
-    repeating-linear-gradient(-18deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 14px),
-    linear-gradient(to bottom, #e6e6e6, #cfcfcf);
-}
-
-.netcon-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 96px;
-  font-family: Anton, Impact, "Arial Narrow", sans-serif;
-}
-
-.netcon-logo-city {
-  letter-spacing: 3px;
-  font-size: 9px;
-  font-weight: bold;
-}
-
-.netcon-logo-mid {
-  display: flex;
-  align-items: stretch;
-  margin: 2px 0;
-}
-
-.netcon-logo-net {
-  padding: 2px 1px;
-  background: #ffe000;
-  color: #111;
-  font-size: 15px;
-  line-height: 1;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  box-shadow: inset 0 0 0 2px #111;
-}
-
-.netcon-logo-box {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 62px;
-  height: 56px;
-  background: #9aa3ad;
-  box-shadow: inset 0 0 0 2px #111;
-}
-
-.netcon-logo-con {
-  padding: 1px 4px;
-  background: #ffe000;
-  color: #111;
-  font-size: 19px;
-  line-height: 1;
-  box-shadow: inset 0 0 0 2px #111;
-}
-
-/* An arrow cursor where Comic-Con has its eye. */
-.netcon-logo-cursor {
-  position: absolute;
-  left: 22px;
-  top: 25px;
-  width: 0;
-  height: 0;
-  border-left: 11px solid #fff;
-  border-top: 0 solid transparent;
-  border-bottom: 18px solid transparent;
-  filter: drop-shadow(1px 0 0 #111) drop-shadow(-1px 0 0 #111) drop-shadow(0 1px 0 #111) drop-shadow(0 -1px 0 #111);
-}
-
-.netcon-logo-foot {
-  font-size: 10px;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-.netcon-title {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  font-family: Anton, Impact, "Arial Narrow", sans-serif;
-  line-height: 0.95;
-}
-
-.netcon-big {
-  font-size: 54px;
-  line-height: 1;
-}
-
-.netcon-sub {
-  margin-top: 4px;
-  font-size: 20px;
-  letter-spacing: 0.2px;
+  background: url("inline:netcon-banner.jpg") center / 100% 100% no-repeat;
 }
 
 .netcon-body {
@@ -7456,14 +7363,7 @@ deal with the devil
 
 :: RenderNetconTicket
 {<div class="netcon-ticket">
-<div class="netcon-banner">
-<div class="netcon-logo">
-<div class="netcon-logo-city">ROSEMONT</div>
-<div class="netcon-logo-mid"><div class="netcon-logo-net">NET</div><div class="netcon-logo-box"><span class="netcon-logo-con">CON</span><span class="netcon-logo-cursor"></span></div></div>
-<div class="netcon-logo-foot">PIONEER&nbsp;&#8217;04</div>
-</div>
-<div class="netcon-title"><div class="netcon-big">NETCON&nbsp;2004</div><div class="netcon-sub">INTERNET CONVENTION: ROSEMONT, IL</div></div>
-</div>
+<div class="netcon-banner" role="img" aria-label="NETCON 2004: at the Donald E. Stephens Convention + Conference Center. Join us for a weekend of panels, presentations, and gamez!!!"></div>
 <div class="netcon-body">
 <p>Hello,</p>
 <p>Good news! Your payment to NetCon has been successfully processed. Your credit card has been charged for your recent purchase.</p>
