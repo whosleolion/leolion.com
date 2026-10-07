@@ -2,7 +2,8 @@
 # writes them next to the minigame (src/building/skunkpets/minigames/kill-diskette/):
 #   diskette.png              the usual one
 #   diskette-<name>.png       the variants she sometimes pops up as
-# The white paper around her is made transparent (a flood fill from the
+# The disc's centre hole (white with black rings) is painted over in the
+# disc's grey (Leo asked for it gone). The white paper around her is made transparent (a flood fill from the
 # edges, so her eyes and the hole in the middle stay white), and every
 # picture is cropped to the same box, so she's the same size and in the same
 # place whichever one pops up.
@@ -23,8 +24,15 @@ PICTURES = {
     'diskette-stop.png': 'variant-stop.png',
 }
 
+# Where the centre hole is in every drawing (same canvas): centre and radii, px.
+HOLE = (248, 180, 45, 46)
+DISC_GREY = (217, 221, 222, 255)
+
 def cut_out(path):
     a = np.array(Image.open(path).convert('RGBA'))
+    yy, xx = np.mgrid[0:a.shape[0], 0:a.shape[1]]
+    cx, cy, rx, ry = HOLE
+    a[((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 1] = DISC_GREY
     h, w = a.shape[:2]
     light = a[:, :, :3].astype(int).min(axis=2) > 200
     bg = np.zeros((h, w), bool)
