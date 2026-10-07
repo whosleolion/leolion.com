@@ -18,12 +18,6 @@
   <rect width="800" height="450" fill="url(#sky)"/>
   <rect y="300" width="800" height="150" fill="#9ccc7a"/>
 
-  <!-- sun -->
-  <circle cx="70" cy="70" r="34" fill="#ffd54a"/>
-  <g stroke="#ffd54a" stroke-width="5" stroke-linecap="round">
-    <path d="M70 18v-12M70 122v12M18 70H6M122 70h12M33 33l-9-9M107 107l9 9M107 33l9-9M33 107l-9 9"/>
-  </g>
-
   <!-- shadow: a plane, flattened onto the ground, starting at the house -->
   <g fill="#2f4a2a" opacity="0.55">
     <rect x="290" y="318" width="40" height="14"/>
