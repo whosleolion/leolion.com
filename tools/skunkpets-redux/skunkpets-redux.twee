@@ -2189,6 +2189,7 @@ span.xp-dialog-icon {
 .browser-page-content .library-grid th,
 .browser-page-content .library-grid td {
   text-align: center;
+  vertical-align: top;
   width: 30%;
   padding: 0.5%;
 }
@@ -2197,10 +2198,13 @@ span.xp-dialog-icon {
   width: 100%;
 }
 
-/* embedded thumbnails (div tiles) sit like the <img> ones: full column width */
+/* embedded thumbnails sit exactly like the <img> ones: full column width,
+   inline on the line, label on the next line */
 .browser-page-content .library-grid .gga-tile {
+  display: inline-block;
   width: 100%;
   margin: 0;
+  vertical-align: baseline;
 }
 
 .browser-page-content .wikitable {
@@ -2322,8 +2326,10 @@ span.xp-dialog-icon {
   background: center / 100% 100% no-repeat;
 }
 
+/* stretched a touch to kraska1's other thumbnails' shape (about 405 x 329,
+   measured from the BAD DOOR / riddles images) so the row lines up */
 .gga-tile-mousecafe {
-  aspect-ratio: 373 / 300;
+  aspect-ratio: 405 / 329;
   background-image: url("inline:icon-mousecafe.png");
 }
 
@@ -7087,7 +7093,7 @@ some games i made. hope you like them''<br></div>\
     (link: '<img src="' + $imgroot + 'ui/kraska1-riddles.png" width="180px"><br>answer my riddles?</div>')[(set: $navPending to "kraska1: riddles")(display: "func-navigate")]
     </td>
     <td>\
-    (link: '<div class="gga-tile gga-tile-mousecafe" role="img" aria-label="mouse cafe"></div>mouse cafe')[(set: $navPending to "kraska1: mouse cafe")(display: "func-navigate")]
+    (link: '<span class="gga-tile gga-tile-mousecafe" role="img" aria-label="mouse cafe"></span><br>mouse cafe')[(set: $navPending to "kraska1: mouse cafe")(display: "func-navigate")]
     </td>
 </tr><table><hr>
 (text-style:"underline")[''AUTHOR NOTES:'']<br>
