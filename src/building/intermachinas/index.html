@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#dde2e8">
+<link rel="icon" href="data:,">
+<title>INTERMACHINAS — white-box build</title>
+<style>
+  :root { --ink: #111; --paper: #f4f4f2; --red: #d63a2f; --yellow: #f2b705; --green: #2fae66; --gold: #d4a017; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #dde2e8; color: var(--ink);
+    font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; -webkit-user-select: none; user-select: none;
+    touch-action: none; overscroll-behavior: none; }
+  canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { position: fixed; pointer-events: none; text-transform: uppercase; letter-spacing: .12em; }
+
+  #tl { top: max(16px, env(safe-area-inset-top)); left: 16px; width: min(260px, 45vw); }
+  #hp { height: 8px; background: rgba(0,0,0,.25); outline: 1px solid rgba(255,255,255,.7); }
+  #hp-fill { height: 100%; width: 100%; background: #fff; transition: width .15s; }
+  #hp-fill.low { background: var(--red); }
+  #flow { height: 3px; margin-top: 3px; background: rgba(0,0,0,.18); }
+  #flow-fill { height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+  #combo { right: 24px; top: 38%; font-size: 30px; font-weight: 800; color: #fff; letter-spacing: .08em;
+    text-shadow: 0 2px 0 var(--ink), 0 0 12px rgba(0,0,0,.35); }
+  #combo.flow { color: var(--gold); }
+  #combo.pop { animation: pop .18s ease-out; }
+  @keyframes pop { from { transform: scale(1.35); } to { transform: scale(1); } }
+  #speedlines { inset: 0; opacity: 0; transition: opacity .25s;
+    background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0) 0deg 5deg, rgba(255,255,255,.55) 5.4deg 5.8deg, rgba(255,255,255,0) 6.2deg 11deg);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 38%, #000 80%); mask-image: radial-gradient(circle at 50% 50%, transparent 38%, #000 80%); }
+  #arrows { left: 50%; top: 50%; width: 0; height: 0; }
+  .arrow { position: absolute; left: -9px; top: -14px; width: 18px; height: 14px; clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    background: rgba(255,255,255,.35); transform-origin: 50% 50%; }
+  .arrow i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--yellow); }
+  .arrow[data-s="combat"] { background: var(--red); } .arrow[data-s="combat"] i { background: var(--red); }
+  .arrow[data-s="windup"] { background: #fff; animation: blink .12s infinite alternate; } .arrow[data-s="windup"] i { background: var(--red); height: 100% !important; }
+  @keyframes blink { to { opacity: .35; } }
+  #status { margin-top: 8px; font-weight: 700; font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  #status.red { color: var(--red); } #status.yellow { color: var(--yellow); } #status.green { color: var(--green); }
+  #objective { top: max(16px, env(safe-area-inset-top)); right: 16px; max-width: min(420px, 48vw); text-align: right;
+    color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); font-size: 11px; }
+  #prompt { left: 50%; bottom: 22%; transform: translateX(-50%); font-weight: 700; font-size: 16px; color: #fff;
+    background: rgba(0,0,0,.55); padding: 6px 14px; white-space: nowrap; }
+  #prompt:empty { display: none; }
+  #prompt.counter { background: var(--red); animation: pulse .25s infinite alternate; }
+  #prompt.gold { background: var(--gold); color: var(--ink); }
+  @keyframes pulse { to { transform: translateX(-50%) scale(1.08); } }
+  #hint { left: 50%; bottom: 12%; transform: translate(-50%, 8px); max-width: min(640px, 92vw); text-align: center;
+    color: #fff; background: rgba(17,17,17,.7); padding: 8px 14px; font-size: 11px; opacity: 0; transition: opacity .3s, transform .3s; }
+  #hint.on { opacity: 1; transform: translate(-50%, 0); }
+  #toast { left: 50%; top: 18%; transform: translateX(-50%); color: #fff; font-weight: 700; font-size: 13px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8); opacity: 0; transition: opacity .25s; }
+  #toast.on { opacity: 1; }
+  #bannerbox { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity .4s; }
+  #bannerbox.on { opacity: 1; }
+  #banner { font-size: clamp(26px, 6vw, 64px); font-weight: 800; letter-spacing: .25em; color: #fff;
+    text-shadow: 0 2px 0 var(--ink), 0 0 30px rgba(0,0,0,.35); text-align: center; padding: 0 16px; }
+  #banner-sub { margin-top: 10px; color: #fff; background: rgba(0,0,0,.6); padding: 4px 12px; font-size: 12px; text-align: center; max-width: 92vw; }
+  #banner-sub:empty { display: none; }
+  #vignette { inset: 0; box-shadow: inset 0 0 160px rgba(214,58,47,.0); }
+  #vignette.hit { animation: hit .5s; }
+  @keyframes hit { from { box-shadow: inset 0 0 160px rgba(214,58,47,.85); } to { box-shadow: inset 0 0 160px rgba(214,58,47,0); } }
+  #crosshair { left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(255,255,255,.6); border-radius: 50%; }
+
+  #markers { inset: 0; }
+  .marker { position: absolute; left: 0; top: 0; width: 14px; height: 18px; margin: -18px 0 0 -7px;
+    clip-path: polygon(50% 100%, 0 0, 100% 0); background: rgba(255,255,255,.35); }
+  .marker i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: var(--yellow); }
+  .marker b { position: absolute; left: 0; right: 0; top: -1px; text-align: center; font-size: 11px; color: var(--ink); font-style: normal; }
+  .marker[data-s="calm"] { background: rgba(255,255,255,.4); }
+  .marker[data-s="calm"] i { background: #fff; }
+  .marker[data-s="combat"] { background: var(--red); }
+  .marker[data-s="combat"] i { background: var(--red); }
+  .marker[data-s="windup"] { background: #fff; animation: blink .1s infinite alternate; transform-origin: 50% 100%; }
+  .marker[data-s="windup"] i { background: var(--red); height: 100% !important; }
+  .marker[data-s="broken"] { background: var(--gold); }
+  .marker[data-s="broken"] i { background: var(--gold); }
+  .marker.target { clip-path: polygon(50% 100%, 0 40%, 50% 0, 100% 40%); background: var(--gold); width: 16px; height: 20px; margin-left: -8px; }
+
+  #debug { left: 16px; bottom: 16px; white-space: pre; font-size: 11px; color: #fff; text-shadow: 0 1px 2px #000; letter-spacing: 0; text-transform: none; }
+  .btn-corner { position: fixed; top: max(48px, calc(env(safe-area-inset-top) + 40px)); right: 16px; z-index: 5; display: flex; gap: 6px; }
+  .btn-corner button { font: inherit; font-size: 13px; width: 32px; height: 32px; background: rgba(255,255,255,.75); border: 1px solid var(--ink); cursor: pointer; }
+
+  /* overlay */
+  #overlay { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center;
+    background: rgba(244,244,242,.82); backdrop-filter: blur(3px); overflow: auto; padding: 16px; }
+  #overlay.on { display: flex; }
+  .card { max-width: 720px; width: 100%; }
+  .card h1 { font-size: clamp(30px, 8vw, 68px); letter-spacing: .2em; font-weight: 800; line-height: 1; }
+  .card .sub { margin: 10px 0 22px; letter-spacing: .15em; text-transform: uppercase; font-size: 11px; opacity: .7; }
+  .card .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; margin-bottom: 22px; }
+  .card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12px; }
+  .card dt { font-weight: 700; white-space: nowrap; }
+  .card h3 { font-size: 11px; letter-spacing: .2em; margin: 10px 0 6px; opacity: .6; }
+  .card .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .card button { font: inherit; font-weight: 700; letter-spacing: .2em; padding: 12px 26px; border: 2px solid var(--ink);
+    background: var(--ink); color: var(--paper); cursor: pointer; }
+  .card button.ghost { background: transparent; color: var(--ink); }
+  .card .credits { margin-top: 18px; font-size: 10px; opacity: .55; line-height: 1.6; }
+  .card .credits a { color: inherit; }
+  .card .touch-only { display: none; } body.touch .card .touch-only { display: block; } body.touch .card .kbm-only { display: none; }
+
+  /* tuning */
+  #tuning { position: fixed; top: 0; right: 0; bottom: 0; width: min(330px, 92vw); z-index: 8; background: rgba(244,244,242,.95);
+    border-left: 2px solid var(--ink); overflow: auto; padding: 14px 16px; display: none; font-size: 11px; }
+  #tuning.on { display: block; }
+  #tuning header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  #tuning header b { letter-spacing: .2em; }
+  #tuning button { font: inherit; border: 1px solid var(--ink); background: none; padding: 3px 8px; cursor: pointer; }
+  #tuning h4 { margin: 12px 0 4px; letter-spacing: .2em; font-size: 10px; opacity: .6; text-transform: uppercase; }
+  #tuning label { display: grid; grid-template-columns: 110px 1fr 40px; gap: 6px; align-items: center; }
+  #tuning label.changed span { font-weight: 700; color: var(--red); }
+  #tuning output { text-align: right; }
+  #tuning input { width: 100%; }
+
+  /* touch controls */
+  #touch { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+  #touch .stick { position: absolute; left: 30px; bottom: 40px; width: 120px; height: 120px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.6); background: rgba(0,0,0,.12); opacity: .45; }
+  #touch .stick.on { opacity: 1; }
+  #touch .knob { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.8); }
+  #touch .btns { position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom));
+    display: grid; grid-template-columns: repeat(3, 58px); gap: 10px; pointer-events: auto; }
+  #touch button { width: 58px; height: 58px; border-radius: 50%; border: 2px solid #fff; background: rgba(17,17,17,.45);
+    color: #fff; font: 700 11px ui-monospace, monospace; letter-spacing: .05em; }
+  #touch button.on { background: rgba(214,58,47,.8); }
+</style>
+</head>
+<body>
+<canvas id="game" tabindex="0"></canvas>
+
+<div class="hud" id="speedlines"></div>
+<div class="hud" id="vignette"></div>
+<div class="hud" id="arrows"></div>
+<div class="hud" id="combo"></div>
+<div class="hud" id="markers"></div>
+<div class="hud" id="crosshair"></div>
+<div class="hud" id="tl"><div id="hp"><div id="hp-fill"></div></div><div id="flow" title="momentum"><div id="flow-fill"></div></div><div id="status"></div></div>
+<div class="hud" id="objective"></div>
+<div class="hud" id="prompt"></div>
+<div class="hud" id="hint"></div>
+<div class="hud" id="toast"></div>
+<div class="hud" id="bannerbox"><div id="banner"></div><div id="banner-sub"></div></div>
+<div class="hud" id="debug"></div>
+<div class="btn-corner"><button id="tune-btn" title="Tuning (`)">⚙</button><button id="pause-btn" title="Pause (P / Esc)">II</button></div>
+
+<div id="tuning">
+  <header><b>TUNING</b><span><button class="reset">reset</button> <button class="close">×</button></span></header>
+  <div class="rows"></div>
+</div>
+
+<div id="overlay" class="on">
+  <div class="card">
+    <h1>INTERMACHINAS</h1>
+    <div class="sub">stealth · freerun · combat — mechanical white-box build v0.2</div>
+    <div class="cols kbm-only">
+      <div>
+        <h3>MOVE</h3>
+        <dl>
+          <dt>WASD</dt><dd>move · mouse look</dd>
+          <dt>SHIFT</dt><dd>freerun · fast-climb (hold)</dd>
+          <dt>SPACE</dt><dd>jump (hold = higher) · climb leap</dd>
+          <dt>C</dt><dd>crouch · slide · let go</dd>
+          <dt>C in air</dt><dd>landing roll</dd>
+          <dt>S+SPACE</dt><dd>eject off a wall</dd>
+          <dt>crouch off edge</dt><dd>drop down &amp; hang</dd>
+        </dl>
+      </div>
+      <div>
+        <h3>FIGHT / KILL</h3>
+        <dl>
+          <dt>LMB</dt><dd>light (×3 combo)</dd>
+          <dt>RMB</dt><dd>heavy · breaks guard</dd>
+          <dt>L L R</dt><dd>spin launcher</dd>
+          <dt>F</dt><dd>assassinate · counter · execute · chain</dd>
+          <dt>Q</dt><dd>dodge</dd>
+          <dt>V</dt><dd>whistle (lure a guard)</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="cols touch-only">
+      <dl>
+        <dt>left thumb</dt><dd>move (push far to freerun)</dd>
+        <dt>right thumb</dt><dd>look</dd>
+        <dt>buttons</dt><dd>JMP · ATK · HVY · DGE · C (crouch) · F (assassinate / counter / execute / sync) · WHS (whistle) · RUN</dd>
+      </dl>
+    </div>
+    <p style="font-size:12px;margin:-8px 0 20px;opacity:.8">Gamepad: sticks · A jump · X light · Y heavy · B crouch · RB F-actions · RT freerun · LB dodge · D-pad up whistle.
+      Climb anything. Hide in green. Land hits to build a combo — ×4 is FREEFLOW. Guard flashing red = <b>F</b> to counter; gold = guard broken, <b>F</b> to execute.
+      After an F-kill, <b>F</b> again chains to the next. ` opens the tuning panel.</p>
+    <div class="actions"><button id="play">PLAY</button><button id="restart" class="ghost">RESTART MISSION</button></div>
+    <div class="credits">
+      Prototype textures: <a href="https://kenney.nl/assets/prototype-textures" target="_blank" rel="noopener">Kenney</a> (CC0) ·
+      Character kitbash: <a href="https://polyhaven.com/a/old_gas_mask" target="_blank" rel="noopener">Old Gas Mask</a> (Michał Wiśniewski),
+      <a href="https://polyhaven.com/a/hessian_380" target="_blank" rel="noopener">Hessian 380</a>,
+      <a href="https://polyhaven.com/a/brown_leather" target="_blank" rel="noopener">Brown Leather</a>,
+      <a href="https://polyhaven.com/a/green_metal_rust" target="_blank" rel="noopener">Green Metal Rust</a> via Poly Haven (CC0) ·
+      Engine: <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> (MIT) · placeholder everything else
+      (<a href="assets/CREDITS.md" target="_blank" rel="noopener">credits</a>).
+    </div>
+  </div>
+</div>
+
+<script>if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

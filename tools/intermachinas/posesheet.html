@@ -1,0 +1,79 @@
+<!doctype html>
+<!-- INTERMACHINAS pose contact sheet: one move, N frames side by side (serve the repo root).
+     /tools/intermachinas/posesheet.html?move=run&n=8&look=player&yaw=1.5708
+     moves: idle run sprint stalk jump roll climb leap wallrun vault mantle slide dodge stance
+            L1 L2 L3 H LAUNCH COUNTER ASSASSIN AIR EXECUTE march CLUB THROW -->
+<html><head><meta charset="utf-8"><title>INTERMACHINAS pose sheet</title>
+<style>html,body{margin:0;background:#dde2e8;overflow:hidden}canvas{display:block}
+#lab{position:absolute;left:10px;top:6px;font:bold 15px monospace;color:#223}</style></head>
+<body><div id="lab"></div><script type="module">
+import * as THREE from '../../src/building/intermachinas/js/vendor/three.module.min.js';
+import { Rig, Poses } from '../../src/building/intermachinas/js/rig.js';
+const q = new URLSearchParams(location.search);
+const move = q.get('move') || 'run', n = +(q.get('n') || 8), look = q.get('look') || 'player';
+const gap = +(q.get('gap') || 1.3), yaw = +(q.get('yaw') ?? Math.PI / 2);
+const W = +(q.get('w') || 1600), H = +(q.get('h') || 380);
+document.getElementById('lab').textContent = q.get('label') || move;
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(W, H); renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xdde2e8);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8f96a3, 1.6));
+const sun = new THREE.DirectionalLight(0xfff4e0, 2.2); sun.position.set(-6, 20, 14); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 1024); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 4, bottom: -4, near: 1, far: 60 }); scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 20), new THREE.MeshStandardMaterial({ color: 0xb9bec6, roughness: 1 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+// frame u in [0,1] -> { pose, y (root height), speed (m/s for cloth), tag }
+const P = Poses;
+const M = {
+  idle: (u) => ({ p: P.idle(u * 14) }),
+  run: (u) => ({ p: P.run(u * Math.PI * 2, 0.55), speed: 5 }),
+  sprint: (u) => ({ p: P.run(u * Math.PI * 2, 1, 0, 1), speed: 10 }),
+  stalk: (u) => ({ p: P.run(u * Math.PI * 2, 0, 1), speed: 1.5 }),
+  jump: (u) => { // push-off -> rise -> tuck -> fall -> land (big)
+    if (u < 0.72) { const t = u / 0.72 * 1.4, vy = 7 - 11 * t; return { p: P.air(vy, t), y: Math.max(0, 7 * t - 5.5 * t * t) * 0.35, speed: 6 }; }
+    return { p: P.land(1 - (u - 0.72) / 0.28 * 0.9, true) };
+  },
+  roll: (u) => ({ p: P.roll(u), speed: 6 }),
+  climb: (u) => ({ p: P.climb(u * Math.PI * 2, {}), y: 0.15 }),
+  leap: (u) => ({ p: P.climb(0, { leap: 1 - u }), y: 0.1 + u * 0.15 }),
+  hang: (u) => ({ p: P.climb(0, { still: 1, t: u * 6 }), y: 0.15 }),
+  wallrun: (u) => ({ p: P.wallrun(u * Math.PI * 2, 1), speed: 9 }),
+  vault: (u) => ({ p: P.vault(u), y: Math.sin(u * Math.PI) * 0.6, speed: 6 }),
+  mantle: (u) => ({ p: P.mantle(u), y: u * 0.3 }),
+  slide: () => ({ p: P.slide(), speed: 8 }),
+  dodge: (u) => ({ p: P.dodge(u, [0, 1]) }),
+  dodgeback: (u) => ({ p: P.dodge(u, [-1, 0]) }),
+  land: (u) => ({ p: P.land(1 - u, true) }),
+  stance: (u) => ({ p: P.stance(u * 3) }),
+  march: (u) => ({ p: P.march(u * Math.PI * 2, 0.4), speed: 2 }),
+};
+const mk = (name) => (u) => ({ p: P.attack(name, u) });
+const fn = M[move] || mk(move);
+const isGuard = look !== 'player';
+const rigs = [];
+for (let i = 0; i < n; i++) {
+  const r = new Rig({ look, club: isGuard && look !== 'sentry', scale: look === 'bodyguard' ? 1.08 : 1 });
+  const u = n === 1 ? 0 : i / (n - 1);
+  const f = fn(u);
+  const x = (i - (n - 1) / 2) * gap;
+  r.root.position.set(x, f.y || 0, 0); r.root.rotation.y = yaw;
+  scene.add(r.root);
+  // settle cloth chains as if moving at f.speed
+  const dt = 1 / 30, sp = f.speed || 0;
+  for (let s = 0; s < 40; s++) {
+    r.root.position.x += Math.sin(yaw) * sp * dt; r.root.position.z += Math.cos(yaw) * sp * dt;
+    r.apply(f.p, dt, 60);
+  }
+  r.root.position.set(x, f.y || 0, 0);
+  r.applyNow(f.p);
+  rigs.push(r);
+}
+const cam = new THREE.PerspectiveCamera(16, W / H, 0.1, 200);
+const span = n * gap;
+const tn = Math.tan((16 * Math.PI / 180) / 2);
+const dist = Math.max((span / 2) / (tn * (W / H)) * 1.02, 1.3 / tn);
+cam.position.set(0, 1.15, dist); cam.lookAt(0, 1.05, 0);
+setTimeout(() => { renderer.render(scene, cam); setTimeout(() => { renderer.render(scene, cam); document.title = 'done'; }, 300); }, 1500);
+</script></body></html>
