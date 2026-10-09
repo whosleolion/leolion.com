@@ -282,7 +282,19 @@
     .gallery-arrow:hover { background: var(--accent); color: #000; }
     .gallery-arrow--prev { left: 0.5rem; } .gallery-arrow--next { right: 0.5rem; }
     .gallery-arrow[hidden] { display: none; }
-    @media (max-width: 900px) { .gallery-arrow { display: none; } .gallery-card { flex-basis: 72vw; } }
+    .gallery-dots { display: none; }
+    .gallery-hint { display: none; }
+    @media (max-width: 900px) {
+      .gallery-arrow { display: none; }
+      .gallery { gap: 0.75rem; scroll-padding-left: 0; scrollbar-width: none; }
+      .gallery::-webkit-scrollbar { display: none; }
+      .gallery-card { flex-basis: 82%; }
+      .gallery-dots { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; }
+      .gallery-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
+      .gallery-dots span.is-active { background: var(--accent); transform: scale(1.25); }
+      .gallery-hint { display: block; text-align: center; margin-top: 0.6rem; font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); transition: opacity 0.4s; }
+      .gallery-hint.is-gone { opacity: 0; }
+    }
 
     /* (legacy) Tight 3-up preview: Spy Show, Liar's Night, Help Me */
     .portfolio-grid {
@@ -333,8 +345,9 @@
       .portfolio-grid { grid-template-columns: 1fr; }
       #projects .section-header, #praise .section-header { display: block; text-align: center; }
       #contact-heading { text-align: center; }
-      .portfolio-links__row { flex-direction: column; }
-      .portfolio-links__row .btn { width: 100%; text-align: center; }
+      .portfolio-links { margin-top: 1.75rem; }
+      .portfolio-links__row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .portfolio-links__row .btn { width: 100%; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.68rem; }
     }
   </style>
 </head>
@@ -449,6 +462,8 @@
         </div>
         <button class="gallery-arrow gallery-arrow--next" type="button" aria-label="Scroll projects right">&rsaquo;</button>
       </div>
+      <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
+      <p class="gallery-hint" id="galleryHint" aria-hidden="true">Swipe &rarr;</p>
 
       <div class="portfolio-links">
         <span class="subsection-label">Full Portfolios</span>
@@ -671,6 +686,17 @@
   function step(d) { g.scrollBy({ left: d * g.clientWidth * 0.8, behavior: 'smooth' }); }
   prev.addEventListener('click', function () { step(-1); });
   next.addEventListener('click', function () { step(1); });
+  var cards = g.querySelectorAll('.gallery-card'), dotsEl = document.getElementById('galleryDots'), hint = document.getElementById('galleryHint');
+  cards.forEach(function () { dotsEl.appendChild(document.createElement('span')); });
+  var dots = dotsEl.children;
+  function dotsUpd() {
+    var i = 0, best = 1e9;
+    cards.forEach(function (c, n) { var d = Math.abs(c.offsetLeft - g.offsetLeft - g.scrollLeft); if (d < best) { best = d; i = n; } });
+    if (g.scrollLeft + g.clientWidth >= g.scrollWidth - 8) i = cards.length - 1;
+    for (var n = 0; n < dots.length; n++) dots[n].classList.toggle('is-active', n === i);
+    if (g.scrollLeft > 20) hint.classList.add('is-gone');
+  }
+  g.addEventListener('scroll', dotsUpd, { passive: true }); dotsUpd();
   g.addEventListener('scroll', upd, { passive: true }); window.addEventListener('resize', upd); upd();
 })();
 </script>
