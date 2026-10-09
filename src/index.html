@@ -264,7 +264,27 @@
       display: block; margin-bottom: 0.75rem;
     }
 
-    /* Tight 3-up preview: Spy Show, Liar's Night, Help Me */
+    /* Horizontal project gallery */
+    .gallery-wrap { position: relative; margin-top: 1.5rem; }
+    .gallery {
+      display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory;
+      scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-bottom: 0.75rem;
+      scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+    }
+    .gallery-card { flex: 0 0 clamp(240px, 30vw, 380px); scroll-snap-align: start; display: block; overflow: hidden; border: 1px solid var(--border); background: var(--near-black); }
+    .gallery-card img { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; transition: transform 0.5s var(--ease-out-expo); }
+    .gallery-card:hover img, .gallery-card:focus-visible img { transform: scale(1.04); }
+    .gallery-arrow {
+      position: absolute; top: calc(50% - 1.5rem); width: 2.75rem; height: 2.75rem; border-radius: 50%;
+      background: rgba(10,10,10,0.8); color: var(--white); border: 1px solid var(--border);
+      font-size: 1.6rem; line-height: 1; cursor: pointer; z-index: 2; transition: background 0.2s, color 0.2s;
+    }
+    .gallery-arrow:hover { background: var(--accent); color: #000; }
+    .gallery-arrow--prev { left: 0.5rem; } .gallery-arrow--next { right: 0.5rem; }
+    .gallery-arrow[hidden] { display: none; }
+    @media (max-width: 900px) { .gallery-arrow { display: none; } .gallery-card { flex-basis: 72vw; } }
+
+    /* (legacy) Tight 3-up preview: Spy Show, Liar's Night, Help Me */
     .portfolio-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
       background: var(--border); border: 1px solid var(--border); margin-top: 1.5rem;
@@ -402,34 +422,32 @@
     </div>
 
     <div class="subsection">
-      <div class="portfolio-grid">
-        <div class="portfolio-card" data-fade>
-          <img class="portfolio-card__img" src="images/cards/spyshow.png" alt="" loading="lazy" />
-          <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">I WAS NEVER HERE</h3>
-            <span class="portfolio-card__subtitle">(there is no spy show)</span>
-            <p class="portfolio-card__desc">This sleeper agent is on a mission to save the world. Only one problem: he has no idea what the mission is. A 5-Star Edinburgh Fringe World Premiere.</p>
-            <a href="https://spy.show/#dates" target="_blank" rel="noopener" class="link-underline">See Tour Dates &rarr;</a>
-          </div>
+      <div class="gallery-wrap">
+        <button class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Scroll projects left">&lsaquo;</button>
+        <div class="gallery" id="projectGallery" tabindex="0" role="region" aria-label="Projects gallery">
+        <a class="gallery-card" href="https://spy.show/" target="_blank" rel="noopener" aria-label="I Was Never Here — There Is No Spy Show">
+          <img src="images/portfolio/spy.jpg" alt="I Was Never Here — There Is No Spy Show" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="trouble-feature.html" aria-label="Trouble Feature — The Horror Movie RPG">
+          <img src="images/portfolio/troublefeature.jpg" alt="Trouble Feature — The Horror Movie RPG" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="liars-night.html" aria-label="Liar's Night — An Immersive Murder Mystery">
+          <img src="images/portfolio/liarsnight.jpg" alt="Liar's Night — An Immersive Murder Mystery" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="helpme/" aria-label="Help Me!!!! — An Interactive Mime Séance">
+          <img src="images/portfolio/helpme.jpg" alt="Help Me!!!! — An Interactive Mime Séance" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="scandalton.html" aria-label="Scandalton: Live!">
+          <img src="images/portfolio/scandalton.jpg" alt="Scandalton: Live!" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="insomnia.html" aria-label="Insomnia">
+          <img src="images/portfolio/insomnia.jpg" alt="Insomnia" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="metamorphosis.html" aria-label="KafkaTech Metamorphosis">
+          <img src="images/portfolio/metamorphosis.jpg" alt="KafkaTech Metamorphosis" width="720" height="720" loading="lazy" />
+        </a>
         </div>
-        <div class="portfolio-card" data-fade style="--delay:0.08s">
-          <img class="portfolio-card__img" src="images/cards/liarsnight.png" alt="" loading="lazy" />
-          <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">LIAR'S NIGHT</h3>
-            <span class="portfolio-card__subtitle">(an immersive murder mystery)</span>
-            <p class="portfolio-card__desc"><em>In thirteen minutes, the clock will strike midnight. Can you find the killer at this carnival before time runs out?</em> A multidimensional night of social deduction.</p>
-            <a href="https://liarsnight.com" target="_blank" rel="noopener" class="link-underline">Learn More &rarr;</a>
-          </div>
-        </div>
-        <div class="portfolio-card" data-fade style="--delay:0.16s">
-          <img class="portfolio-card__img" src="images/cards/helpme.png" alt="" loading="lazy" />
-          <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">HELP ME!!!!</h3>
-            <span class="portfolio-card__subtitle">(an interactive mime séance)</span>
-            <p class="portfolio-card__desc"><em>Thank goodness you're here! A dead mime needs help!</em> An interactive séance where audiences solve puzzles, play charades, and pierce the veil between life and death. 5-Star Premiere at Edinburgh Fringe 2025, toured to 10+ US stages &amp; festivals.</p>
-            <a href="helpme/" class="link-underline">Learn More &rarr;</a>
-          </div>
-        </div>
+        <button class="gallery-arrow gallery-arrow--next" type="button" aria-label="Scroll projects right">&rsaquo;</button>
       </div>
 
       <div class="portfolio-links">
@@ -642,6 +660,18 @@
 
   render();
   start();
+})();
+</script>
+<script>
+(function () {
+  var g = document.getElementById('projectGallery');
+  if (!g) return;
+  var prev = document.querySelector('.gallery-arrow--prev'), next = document.querySelector('.gallery-arrow--next');
+  function upd() { prev.hidden = g.scrollLeft < 8; next.hidden = g.scrollLeft + g.clientWidth >= g.scrollWidth - 8; }
+  function step(d) { g.scrollBy({ left: d * g.clientWidth * 0.8, behavior: 'smooth' }); }
+  prev.addEventListener('click', function () { step(-1); });
+  next.addEventListener('click', function () { step(1); });
+  g.addEventListener('scroll', upd, { passive: true }); window.addEventListener('resize', upd); upd();
 })();
 </script>
 </body>
