@@ -264,6 +264,21 @@
       display: block; margin-bottom: 0.75rem;
     }
 
+    /* Video lightbox */
+    .vbox { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.88); }
+    .vbox.is-open { display: flex; }
+    .vbox__panel { width: min(960px, 100%); }
+    .vbox__frame { position: relative; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--border); }
+    .vbox__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .vbox__bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+    .vbox__title { font-family: 'Etna', var(--font-display); font-size: clamp(1.1rem, 2.5vw, 1.5rem); color: var(--white); }
+    .vbox__more { font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.85rem 1.4rem; background: var(--accent); color: #000; border: 1px solid var(--accent); transition: background 0.2s, color 0.2s; }
+    .vbox__more:hover { background: transparent; color: var(--accent); }
+    .vbox__close { position: absolute; top: 0.75rem; right: 1rem; width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 1px solid var(--border); background: rgba(10,10,10,0.8); color: var(--white); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+    .vbox__close:hover { background: var(--accent); color: #000; }
+    .gallery-card[data-video]::after { content: "\25B6"; position: absolute; right: 0.75rem; bottom: 0.75rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(10,10,10,0.75); color: var(--white); border: 1px solid rgba(240,237,230,0.5); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; padding-left: 0.15rem; pointer-events: none; }
+    .gallery-card { position: relative; }
+
     /* Horizontal project gallery */
     .gallery-wrap { position: relative; margin-top: 1.5rem; }
     .gallery {
@@ -441,22 +456,22 @@
         <a class="gallery-card" href="https://spy.show/" target="_blank" rel="noopener" aria-label="I Was Never Here — There Is No Spy Show">
           <img src="images/portfolio/spy.jpg" alt="I Was Never Here — There Is No Spy Show" width="720" height="720" loading="lazy" />
         </a>
-        <a class="gallery-card" href="https://thefirebirdproject.org/trouble-feature" target="_blank" rel="noopener" aria-label="Trouble Feature — The Horror Movie RPG">
+        <a class="gallery-card" href="https://thefirebirdproject.org/trouble-feature" target="_blank" rel="noopener" aria-label="Trouble Feature — The Horror Movie RPG" data-video="https://www.youtube.com/embed/4pRvs74FrQM?rel=0" data-title="Trouble Feature" data-more="https://thefirebirdproject.org/trouble-feature" data-more-ext>
           <img src="images/portfolio/troublefeature.jpg" alt="Trouble Feature — The Horror Movie RPG" width="720" height="720" loading="lazy" />
         </a>
         <a class="gallery-card" href="liars-night.html" aria-label="Liar's Night — An Immersive Murder Mystery">
           <img src="images/portfolio/liarsnight.jpg" alt="Liar's Night — An Immersive Murder Mystery" width="720" height="720" loading="lazy" />
         </a>
-        <a class="gallery-card" href="https://helpmetheshow.com" target="_blank" rel="noopener" aria-label="Help Me!!!! — An Interactive Mime Séance">
+        <a class="gallery-card" href="https://helpmetheshow.com" target="_blank" rel="noopener" aria-label="Help Me!!!! — An Interactive Mime Séance" data-video="https://www.youtube.com/embed/d1ls1y6hMdE?rel=0&modestbranding=1" data-title="HELP ME!!!!" data-more="https://helpmetheshow.com" data-more-ext>
           <img src="images/portfolio/helpme.jpg" alt="Help Me!!!! — An Interactive Mime Séance" width="720" height="720" loading="lazy" />
         </a>
         <a class="gallery-card" href="scandalton.html" aria-label="Scandalton: Live!">
           <img src="images/portfolio/scandalton.jpg" alt="Scandalton: Live!" width="720" height="720" loading="lazy" />
         </a>
-        <a class="gallery-card" href="insomnia.html" aria-label="Insomnia">
+        <a class="gallery-card" href="insomnia.html" aria-label="Insomnia" data-video="https://www.youtube.com/embed/urkLhv217JQ?rel=0" data-title="Insomnia" data-more="insomnia.html">
           <img src="images/portfolio/insomnia.jpg" alt="Insomnia" width="720" height="720" loading="lazy" />
         </a>
-        <a class="gallery-card" href="metamorphosis.html" aria-label="KafkaTech Metamorphosis">
+        <a class="gallery-card" href="metamorphosis.html" aria-label="KafkaTech Metamorphosis" data-video="https://player.vimeo.com/video/957204640?h=5aa8ce83a8&title=0&byline=0&portrait=0" data-title="KafkaTech Metamorphosis" data-more="metamorphosis.html">
           <img src="images/portfolio/metamorphosis.jpg" alt="KafkaTech Metamorphosis" width="720" height="720" loading="lazy" />
         </a>
         </div>
@@ -698,6 +713,45 @@
   }
   g.addEventListener('scroll', dotsUpd, { passive: true }); dotsUpd();
   g.addEventListener('scroll', upd, { passive: true }); window.addEventListener('resize', upd); upd();
+})();
+</script>
+<div class="vbox" id="vbox" role="dialog" aria-modal="true" aria-labelledby="vboxTitle" hidden>
+  <button class="vbox__close" type="button" aria-label="Close video">&times;</button>
+  <div class="vbox__panel">
+    <div class="vbox__frame" id="vboxFrame"></div>
+    <div class="vbox__bar">
+      <span class="vbox__title" id="vboxTitle"></span>
+      <a class="vbox__more" id="vboxMore" href="#">See more about this show &rarr;</a>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var box = document.getElementById('vbox'); if (!box) return;
+  var frame = document.getElementById('vboxFrame'), title = document.getElementById('vboxTitle'), more = document.getElementById('vboxMore');
+  var closeBtn = box.querySelector('.vbox__close'), opener = null;
+  function open(card) {
+    opener = card;
+    var src = card.dataset.video + (card.dataset.video.indexOf('?') > -1 ? '&' : '?') + 'autoplay=1';
+    var f = document.createElement('iframe');
+    f.src = src; f.title = card.dataset.title + ' \u2014 video';
+    f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; f.allowFullscreen = true;
+    frame.appendChild(f);
+    title.textContent = card.dataset.title;
+    more.href = card.dataset.more;
+    if (card.hasAttribute('data-more-ext')) { more.target = '_blank'; more.rel = 'noopener'; } else { more.removeAttribute('target'); more.removeAttribute('rel'); }
+    box.hidden = false; box.classList.add('is-open'); document.body.style.overflow = 'hidden'; closeBtn.focus();
+  }
+  function close() {
+    box.classList.remove('is-open'); box.hidden = true; frame.innerHTML = ''; document.body.style.overflow = '';
+    if (opener) opener.focus();
+  }
+  document.querySelectorAll('.gallery-card[data-video]').forEach(function (c) {
+    c.addEventListener('click', function (e) { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); open(c); });
+  });
+  closeBtn.addEventListener('click', close);
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.classList.contains('is-open')) close(); });
 })();
 </script>
 </body>
