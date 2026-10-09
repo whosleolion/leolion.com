@@ -274,6 +274,12 @@
     .vbox__title { font-family: 'Etna', var(--font-display); font-size: clamp(1.1rem, 2.5vw, 1.5rem); color: var(--white); }
     .vbox__more { font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.85rem 1.4rem; background: var(--accent); color: #000; border: 1px solid var(--accent); transition: background 0.2s, color 0.2s; }
     .vbox__more:hover { background: transparent; color: var(--accent); }
+    .vbox__heading { display: flex; flex-direction: column; gap: 0.2rem; }
+    .vbox__when { font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .vbox__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .vbox__more--ghost { background: transparent; color: var(--white); border-color: rgba(240,237,230,0.35); }
+    .vbox__more--ghost:hover { color: var(--white); border-color: var(--white); }
+    @media (max-width: 600px) { .vbox__actions { width: 100%; } .vbox__actions .vbox__more { flex: 1 1 100%; text-align: center; } }
     .vbox__close { position: absolute; top: 0.75rem; right: 1rem; width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 1px solid var(--border); background: rgba(10,10,10,0.8); color: var(--white); font-size: 1.5rem; line-height: 1; cursor: pointer; }
     .vbox__close:hover { background: var(--accent); color: #000; }
     .gallery-card[data-video]::after { content: "\25B6"; position: absolute; right: 0.75rem; bottom: 0.75rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(10,10,10,0.75); color: var(--white); border: 1px solid rgba(240,237,230,0.5); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; padding-left: 0.15rem; pointer-events: none; }
@@ -453,10 +459,10 @@
       <div class="gallery-wrap">
         <button class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Scroll projects left">&lsaquo;</button>
         <div class="gallery" id="projectGallery" tabindex="0" role="region" aria-label="Projects gallery">
-        <a class="gallery-card" href="https://spy.show/" target="_blank" rel="noopener" aria-label="I Was Never Here — There Is No Spy Show" data-video="https://www.youtube.com/embed/QyOZSXAx7Jo?rel=0" data-title="I WAS NEVER HERE" data-more="https://spy.show/" data-more-ext>
+        <a class="gallery-card" href="https://spy.show/" target="_blank" rel="noopener" aria-label="I Was Never Here — There Is No Spy Show" data-video="https://www.youtube.com/embed/QyOZSXAx7Jo?rel=0" data-title="I WAS NEVER HERE" data-tix="https://phoenixtheatreensembleorg.thundertix.com/events/265974" data-tix-label="Oct 16 · Nyack, NY" data-more="https://spy.show/" data-more-ext>
           <img src="images/portfolio/spy.jpg" alt="I Was Never Here — There Is No Spy Show" width="720" height="720" loading="lazy" />
         </a>
-        <a class="gallery-card" href="https://thefirebirdproject.org/trouble-feature" target="_blank" rel="noopener" aria-label="Trouble Feature — The Horror Movie RPG" data-video="https://www.youtube.com/embed/4pRvs74FrQM?rel=0" data-title="Trouble Feature" data-more="https://thefirebirdproject.org/trouble-feature" data-more-ext>
+        <a class="gallery-card" href="https://thefirebirdproject.org/trouble-feature" target="_blank" rel="noopener" aria-label="Trouble Feature — The Horror Movie RPG" data-video="https://www.youtube.com/embed/4pRvs74FrQM?rel=0" data-title="Trouble Feature" data-tix="https://collections.humanitix.com/trouble-feature" data-tix-label="Oct 22–Nov 1 · Seattle" data-more="https://thefirebirdproject.org/trouble-feature" data-more-ext>
           <img src="images/portfolio/troublefeature.jpg" alt="Trouble Feature — The Horror Movie RPG" width="720" height="720" loading="lazy" />
         </a>
         <a class="gallery-card" href="https://liarsnight.com" target="_blank" rel="noopener" aria-label="Liar's Night — An Immersive Murder Mystery" data-video="https://www.youtube.com/embed/EAAreUNWreE?rel=0" data-title="LIAR'S NIGHT" data-more="https://liarsnight.com" data-more-ext>
@@ -720,15 +726,21 @@
   <div class="vbox__panel">
     <div class="vbox__frame" id="vboxFrame"></div>
     <div class="vbox__bar">
-      <span class="vbox__title" id="vboxTitle"></span>
-      <a class="vbox__more" id="vboxMore" href="#">See more about this show &rarr;</a>
+      <div class="vbox__heading">
+        <span class="vbox__title" id="vboxTitle"></span>
+        <span class="vbox__when" id="vboxWhen" hidden></span>
+      </div>
+      <div class="vbox__actions">
+        <a class="vbox__more" id="vboxTix" href="#" target="_blank" rel="noopener" hidden>Get Tickets &rarr;</a>
+        <a class="vbox__more" id="vboxMore" href="#">See more about this show &rarr;</a>
+      </div>
     </div>
   </div>
 </div>
 <script>
 (function () {
   var box = document.getElementById('vbox'); if (!box) return;
-  var frame = document.getElementById('vboxFrame'), title = document.getElementById('vboxTitle'), more = document.getElementById('vboxMore');
+  var frame = document.getElementById('vboxFrame'), title = document.getElementById('vboxTitle'), more = document.getElementById('vboxMore'), tix = document.getElementById('vboxTix'), when = document.getElementById('vboxWhen');
   var closeBtn = box.querySelector('.vbox__close'), opener = null;
   function open(card) {
     opener = card;
@@ -739,6 +751,10 @@
     frame.appendChild(f);
     title.textContent = card.dataset.title;
     more.href = card.dataset.more;
+    var hasTix = !!card.dataset.tix;
+    tix.hidden = !hasTix; when.hidden = !hasTix;
+    if (hasTix) { tix.href = card.dataset.tix; when.textContent = card.dataset.tixLabel || ''; }
+    more.classList.toggle('vbox__more--ghost', hasTix);
     if (card.hasAttribute('data-more-ext')) { more.target = '_blank'; more.rel = 'noopener'; } else { more.removeAttribute('target'); more.removeAttribute('rel'); }
     box.hidden = false; box.classList.add('is-open'); document.body.style.overflow = 'hidden'; closeBtn.focus();
   }
