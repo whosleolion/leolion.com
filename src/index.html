@@ -264,7 +264,60 @@
       display: block; margin-bottom: 0.75rem;
     }
 
-    /* Tight 3-up preview: Spy Show, Liar's Night, Help Me */
+    /* Video lightbox */
+    .vbox { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.88); }
+    .vbox.is-open { display: flex; }
+    .vbox__panel { width: min(960px, 100%); }
+    .vbox__frame { position: relative; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--border); }
+    .vbox__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .vbox__bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+    .vbox__title { font-family: 'Etna', var(--font-display); font-size: clamp(1.1rem, 2.5vw, 1.5rem); color: var(--white); }
+    .vbox__more { font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.85rem 1.4rem; background: var(--accent); color: #000; border: 1px solid var(--accent); transition: background 0.2s, color 0.2s; }
+    .vbox__more:hover { background: transparent; color: var(--accent); }
+    .vbox__heading { display: flex; flex-direction: column; gap: 0.2rem; }
+    .vbox__when { font-family: var(--font-ui); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .vbox__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .vbox__more--ghost { background: transparent; color: var(--white); border-color: rgba(240,237,230,0.35); }
+    .vbox__more--ghost:hover { color: var(--white); border-color: var(--white); }
+    @media (max-width: 600px) { .vbox__actions { width: 100%; } .vbox__actions .vbox__more { flex: 1 1 100%; text-align: center; } }
+    .vbox__close { position: absolute; top: 0.75rem; right: 1rem; width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 1px solid var(--border); background: rgba(10,10,10,0.8); color: var(--white); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+    .vbox__close:hover { background: var(--accent); color: #000; }
+    .gallery-card[data-video]::after { content: ""; position: absolute; right: 0.75rem; bottom: 0.75rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(10,10,10,0.75) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23f0ede6' d='M9 6.5v11l9-5.5z'/%3E%3C/svg%3E") center / 1.3rem no-repeat; border: 1px solid rgba(240,237,230,0.5); pointer-events: none; }
+    .gallery-card { position: relative; }
+
+    /* Horizontal project gallery */
+    .gallery-wrap { position: relative; margin-top: 1.5rem; }
+    .gallery {
+      display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory;
+      scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-bottom: 0.75rem;
+      scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+    }
+    .gallery-card { flex: 0 0 clamp(240px, 30vw, 380px); scroll-snap-align: start; display: block; overflow: hidden; border: 1px solid var(--border); background: var(--near-black); }
+    .gallery-card img { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; transition: transform 0.5s var(--ease-out-expo); }
+    .gallery-card:hover img, .gallery-card:focus-visible img { transform: scale(1.04); }
+    .gallery-arrow {
+      position: absolute; top: calc(50% - 1.5rem); width: 2.75rem; height: 2.75rem; border-radius: 50%;
+      background: rgba(10,10,10,0.8); color: var(--white); border: 1px solid var(--border);
+      font-size: 1.6rem; line-height: 1; cursor: pointer; z-index: 2; transition: background 0.2s, color 0.2s;
+    }
+    .gallery-arrow:hover { background: var(--accent); color: #000; }
+    .gallery-arrow--prev { left: 0.5rem; } .gallery-arrow--next { right: 0.5rem; }
+    .gallery-arrow[hidden] { display: none; }
+    .gallery-dots { display: none; }
+    .gallery-hint { display: none; }
+    @media (max-width: 900px) {
+      .gallery-arrow { display: none; }
+      .gallery { gap: 0.75rem; scroll-padding-left: 0; scrollbar-width: none; }
+      .gallery::-webkit-scrollbar { display: none; }
+      .gallery-card { flex-basis: 82%; }
+      .gallery-dots { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; }
+      .gallery-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: background 0.2s, transform 0.2s; }
+      .gallery-dots span.is-active { background: var(--accent); transform: scale(1.25); }
+      .gallery-hint { display: block; text-align: center; margin-top: 0.6rem; font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); transition: opacity 0.4s; }
+      .gallery-hint.is-gone { opacity: 0; }
+    }
+
+    /* (legacy) Tight 3-up preview: Spy Show, Liar's Night, Help Me */
     .portfolio-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
       background: var(--border); border: 1px solid var(--border); margin-top: 1.5rem;
@@ -313,8 +366,9 @@
       .portfolio-grid { grid-template-columns: 1fr; }
       #projects .section-header, #praise .section-header { display: block; text-align: center; }
       #contact-heading { text-align: center; }
-      .portfolio-links__row { flex-direction: column; }
-      .portfolio-links__row .btn { width: 100%; text-align: center; }
+      .portfolio-links { margin-top: 1.75rem; }
+      .portfolio-links__row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .portfolio-links__row .btn { width: 100%; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.68rem; }
     }
   </style>
 </head>
@@ -402,35 +456,35 @@
     </div>
 
     <div class="subsection">
-      <div class="portfolio-grid">
-        <div class="portfolio-card" data-fade>
-          <img class="portfolio-card__img" src="images/cards/spyshow.png" alt="" loading="lazy" />
-          <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">I WAS NEVER HERE</h3>
-            <span class="portfolio-card__subtitle">(there is no spy show)</span>
-            <p class="portfolio-card__desc">This sleeper agent is on a mission to save the world. Only one problem: he has no idea what the mission is. A 5-Star Edinburgh Fringe World Premiere.</p>
-            <a href="https://spy.show/#dates" target="_blank" rel="noopener" class="link-underline">See Tour Dates &rarr;</a>
-          </div>
+      <div class="gallery-wrap">
+        <button class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Scroll projects left">&lsaquo;</button>
+        <div class="gallery" id="projectGallery" tabindex="0" role="region" aria-label="Projects gallery">
+        <a class="gallery-card" href="https://spy.show/" target="_blank" rel="noopener" aria-label="I Was Never Here — There Is No Spy Show" data-video="https://www.youtube.com/embed/QyOZSXAx7Jo?rel=0" data-title="I WAS NEVER HERE" data-tix="https://phoenixtheatreensembleorg.thundertix.com/events/265974" data-tix-label="Oct 16 · Nyack, NY" data-more="https://spy.show/" data-more-ext>
+          <img src="images/portfolio/spy.jpg" alt="I Was Never Here — There Is No Spy Show" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="https://thefirebirdproject.org/trouble-feature" target="_blank" rel="noopener" aria-label="Trouble Feature — The Horror Movie RPG" data-video="https://www.youtube.com/embed/4pRvs74FrQM?rel=0" data-title="Trouble Feature" data-tix="https://collections.humanitix.com/trouble-feature" data-tix-label="Oct 22–Nov 1 · Seattle" data-more="https://thefirebirdproject.org/trouble-feature" data-more-ext>
+          <img src="images/portfolio/troublefeature.jpg" alt="Trouble Feature — The Horror Movie RPG" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="https://liarsnight.com" target="_blank" rel="noopener" aria-label="Liar's Night — An Immersive Murder Mystery" data-video="https://www.youtube.com/embed/EAAreUNWreE?rel=0" data-title="LIAR'S NIGHT" data-more="https://liarsnight.com" data-more-ext>
+          <img src="images/portfolio/liarsnight.jpg" alt="Liar's Night — An Immersive Murder Mystery" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="https://helpmetheshow.com" target="_blank" rel="noopener" aria-label="Help Me!!!! — An Interactive Mime Séance" data-video="https://www.youtube.com/embed/d1ls1y6hMdE?rel=0&modestbranding=1" data-title="HELP ME!!!!" data-more="https://helpmetheshow.com" data-more-ext>
+          <img src="images/portfolio/helpme.jpg" alt="Help Me!!!! — An Interactive Mime Séance" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="scandalton.html" aria-label="Scandalton: Live!">
+          <img src="images/portfolio/scandalton.jpg" alt="Scandalton: Live!" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="insomnia.html" aria-label="Insomnia" data-video="https://www.youtube.com/embed/urkLhv217JQ?rel=0" data-title="Insomnia" data-more="insomnia.html">
+          <img src="images/portfolio/insomnia.jpg" alt="Insomnia" width="720" height="720" loading="lazy" />
+        </a>
+        <a class="gallery-card" href="metamorphosis.html" aria-label="KafkaTech Metamorphosis" data-video="https://player.vimeo.com/video/957204640?h=5aa8ce83a8&title=0&byline=0&portrait=0" data-title="KafkaTech Metamorphosis" data-more="metamorphosis.html">
+          <img src="images/portfolio/metamorphosis.jpg" alt="KafkaTech Metamorphosis" width="720" height="720" loading="lazy" />
+        </a>
         </div>
-        <div class="portfolio-card" data-fade style="--delay:0.08s">
-          <img class="portfolio-card__img" src="images/cards/liarsnight.png" alt="" loading="lazy" />
-          <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">LIAR'S NIGHT</h3>
-            <span class="portfolio-card__subtitle">(an immersive murder mystery)</span>
-            <p class="portfolio-card__desc"><em>In thirteen minutes, the clock will strike midnight. Can you find the killer at this carnival before time runs out?</em> A multidimensional night of social deduction.</p>
-            <a href="https://liarsnight.com" target="_blank" rel="noopener" class="link-underline">Learn More &rarr;</a>
-          </div>
-        </div>
-        <div class="portfolio-card" data-fade style="--delay:0.16s">
-          <img class="portfolio-card__img" src="images/cards/helpme.png" alt="" loading="lazy" />
-          <div class="portfolio-card__body">
-            <h3 class="portfolio-card__title">HELP ME!!!!</h3>
-            <span class="portfolio-card__subtitle">(an interactive mime séance)</span>
-            <p class="portfolio-card__desc"><em>Thank goodness you're here! A dead mime needs help!</em> An interactive séance where audiences solve puzzles, play charades, and pierce the veil between life and death. 5-Star Premiere at Edinburgh Fringe 2025, toured to 10+ US stages &amp; festivals.</p>
-            <a href="helpme/" class="link-underline">Learn More &rarr;</a>
-          </div>
-        </div>
+        <button class="gallery-arrow gallery-arrow--next" type="button" aria-label="Scroll projects right">&rsaquo;</button>
       </div>
+      <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
+      <p class="gallery-hint" id="galleryHint" aria-hidden="true">Swipe &rarr;</p>
 
       <div class="portfolio-links">
         <span class="subsection-label">Full Portfolios</span>
@@ -576,7 +630,7 @@
         <a href="playwriting.html">Playwriting</a>
         <a href="workshops.html">Workshops</a>
         <a href="updates.html">Updates</a>
-        <a href="helpme/">HELP ME!!!!</a>
+        <a href="https://helpmetheshow.com">HELP ME!!!!</a>
         <a href="https://thefirebirdproject.org" target="_blank" rel="noopener">Firebird Project</a>
         <a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">Download CV</a>
       </nav>
@@ -642,6 +696,78 @@
 
   render();
   start();
+})();
+</script>
+<script>
+(function () {
+  var g = document.getElementById('projectGallery');
+  if (!g) return;
+  var prev = document.querySelector('.gallery-arrow--prev'), next = document.querySelector('.gallery-arrow--next');
+  function upd() { prev.hidden = g.scrollLeft < 8; next.hidden = g.scrollLeft + g.clientWidth >= g.scrollWidth - 8; }
+  function step(d) { g.scrollBy({ left: d * g.clientWidth * 0.8, behavior: 'smooth' }); }
+  prev.addEventListener('click', function () { step(-1); });
+  next.addEventListener('click', function () { step(1); });
+  var cards = g.querySelectorAll('.gallery-card'), dotsEl = document.getElementById('galleryDots'), hint = document.getElementById('galleryHint');
+  cards.forEach(function () { dotsEl.appendChild(document.createElement('span')); });
+  var dots = dotsEl.children;
+  function dotsUpd() {
+    var i = 0, best = 1e9;
+    cards.forEach(function (c, n) { var d = Math.abs(c.offsetLeft - g.offsetLeft - g.scrollLeft); if (d < best) { best = d; i = n; } });
+    if (g.scrollLeft + g.clientWidth >= g.scrollWidth - 8) i = cards.length - 1;
+    for (var n = 0; n < dots.length; n++) dots[n].classList.toggle('is-active', n === i);
+    if (g.scrollLeft > 20) hint.classList.add('is-gone');
+  }
+  g.addEventListener('scroll', dotsUpd, { passive: true }); dotsUpd();
+  g.addEventListener('scroll', upd, { passive: true }); window.addEventListener('resize', upd); upd();
+})();
+</script>
+<div class="vbox" id="vbox" role="dialog" aria-modal="true" aria-labelledby="vboxTitle" hidden>
+  <button class="vbox__close" type="button" aria-label="Close video">&times;</button>
+  <div class="vbox__panel">
+    <div class="vbox__frame" id="vboxFrame"></div>
+    <div class="vbox__bar">
+      <div class="vbox__heading">
+        <span class="vbox__title" id="vboxTitle"></span>
+        <span class="vbox__when" id="vboxWhen" hidden></span>
+      </div>
+      <div class="vbox__actions">
+        <a class="vbox__more" id="vboxTix" href="#" target="_blank" rel="noopener" hidden>Get Tickets &rarr;</a>
+        <a class="vbox__more" id="vboxMore" href="#">See more about this show &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var box = document.getElementById('vbox'); if (!box) return;
+  var frame = document.getElementById('vboxFrame'), title = document.getElementById('vboxTitle'), more = document.getElementById('vboxMore'), tix = document.getElementById('vboxTix'), when = document.getElementById('vboxWhen');
+  var closeBtn = box.querySelector('.vbox__close'), opener = null;
+  function open(card) {
+    opener = card;
+    var src = card.dataset.video + (card.dataset.video.indexOf('?') > -1 ? '&' : '?') + 'autoplay=1';
+    var f = document.createElement('iframe');
+    f.src = src; f.title = card.dataset.title + ' \u2014 video';
+    f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media'; f.allowFullscreen = true;
+    frame.appendChild(f);
+    title.textContent = card.dataset.title;
+    more.href = card.dataset.more;
+    var hasTix = !!card.dataset.tix;
+    tix.hidden = !hasTix; when.hidden = !hasTix;
+    if (hasTix) { tix.href = card.dataset.tix; when.textContent = card.dataset.tixLabel || ''; }
+    more.classList.toggle('vbox__more--ghost', hasTix);
+    if (card.hasAttribute('data-more-ext')) { more.target = '_blank'; more.rel = 'noopener'; } else { more.removeAttribute('target'); more.removeAttribute('rel'); }
+    box.hidden = false; box.classList.add('is-open'); document.body.style.overflow = 'hidden'; closeBtn.focus();
+  }
+  function close() {
+    box.classList.remove('is-open'); box.hidden = true; frame.innerHTML = ''; document.body.style.overflow = '';
+    if (opener) opener.focus();
+  }
+  document.querySelectorAll('.gallery-card[data-video]').forEach(function (c) {
+    c.addEventListener('click', function (e) { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); open(c); });
+  });
+  closeBtn.addEventListener('click', close);
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.classList.contains('is-open')) close(); });
 })();
 </script>
 </body>
