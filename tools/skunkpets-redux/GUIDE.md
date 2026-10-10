@@ -568,8 +568,14 @@ Add `article` to its tags if it should be findable in Winkipedia.
   "bad door" (and a few others; not "skunkpets") presses a hidden link to `kraska1`;
   "muzzy", "muzzythegrump", "grump", "diskette" or "kill diskette" to `muzzythegrump`
   (each creator: its terms and hidden link in the script's `creators` list).
-- **kraska1** pages embed the minigames in `<iframe>`s from
-  tinypetgames.neocities.org. The "devlink-userbase" link shows an "exiting to
+- **Image guard** (script section `IMAGE GUARD`, plus CSS): pictures can't be
+  dragged out of the game and there's no right-click/long-press menu inside
+  it, except on selected text and in text boxes. The minigame pages do the
+  same. It only deters casual saving; files are still reachable from the
+  browser's developer tools.
+- **kraska1** pages embed the minigames (BAD DOOR, answer my riddles?, mouse
+  cafe) in `<iframe>`s from tinypetgames.neocities.org; mouse cafe's
+  thumbnail is `icon-mousecafe.png` (embedded). The "devlink-userbase" link shows an "exiting to
   external website" popup first.
 - **muzzythegrump** is another archive creator, with an almost empty profile
   and one game, **KILL DISKETTE** (`muzzythegrump: KILL DISKETTE`): Diskette

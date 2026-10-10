@@ -36,6 +36,7 @@
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;   /* no long-press "save image" */
   }
   #game {
     position: relative;
@@ -547,6 +548,10 @@
     start.style.display = "";
     restartAt = Date.now() + 900;
   }
+
+  /* No right-click menu or dragging her pictures out of the game. */
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("dragstart", (e) => e.preventDefault());
 
   /* For tests: window.killDiskette.state(), .endRound() */
   window.killDiskette = { state: () => ({ kills: kills, running: running, up: current ? holes.indexOf(current) : -1, pic: current ? current.dataset.pic : "", upTime: upTime(), timeLeft: running ? endsAt - Date.now() : 0, best: getBest() }), endRound: () => endRound() };

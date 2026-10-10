@@ -69,6 +69,13 @@ tw-transition-container {
 tw-story {
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;   /* no long-press "save image" menu on phones */
+}
+
+/* Pictures can't be dragged out of the game (see IMAGE GUARD in the script). */
+tw-story img {
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 .browser-page-content,
@@ -2189,12 +2196,22 @@ span.xp-dialog-icon {
 .browser-page-content .library-grid th,
 .browser-page-content .library-grid td {
   text-align: center;
+  vertical-align: top;
   width: 30%;
   padding: 0.5%;
 }
 
 .browser-page-content .library-grid img {
   width: 100%;
+}
+
+/* embedded thumbnails sit exactly like the <img> ones: full column width,
+   inline on the line, label on the next line */
+.browser-page-content .library-grid .gga-tile {
+  display: inline-block;
+  width: 100%;
+  margin: 0;
+  vertical-align: baseline;
 }
 
 .browser-page-content .wikitable {
@@ -2314,6 +2331,13 @@ span.xp-dialog-icon {
   width: 180px;
   margin: 0 auto 4px;
   background: center / 100% 100% no-repeat;
+}
+
+/* stretched a touch to kraska1's other thumbnails' shape (about 405 x 329,
+   measured from the BAD DOOR / riddles images) so the row lines up */
+.gga-tile-mousecafe {
+  aspect-ratio: 405 / 329;
+  background-image: url("inline:icon-mousecafe.png");
 }
 
 .gga-tile-killdiskette {
@@ -4624,6 +4648,32 @@ document.addEventListener("click", function (e) {
 
 
 /* =========================================================
+   IMAGE GUARD
+   ---------------------------------------------------------
+   Makes it harder to lift the game's art: pictures can't be
+   dragged out, and there's no right-click menu (Save image
+   as..., Copy image) inside the game, except on selected
+   text (so the email address etc. can still be copied) and in
+   text boxes. (Not a lock: anyone determined can still get
+   files from the browser's developer tools.)
+   ========================================================= */
+
+document.addEventListener("dragstart", function (e) {
+  const t = e.target;
+  if (t && t.closest && t.closest("tw-story") && (t.tagName === "IMG" || t.tagName === "IFRAME")) e.preventDefault();
+}, true);
+
+document.addEventListener("contextmenu", function (e) {
+  const t = e.target;
+  if (!t || !t.closest || !t.closest("tw-story")) return;
+  if (t.closest("input, textarea, [contenteditable='true']")) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.toString().trim()) return;
+  e.preventDefault();
+}, true);
+
+
+/* =========================================================
    GLOBAL GAMES ARCHIVE — SEARCH
    ========================================================= */
 
@@ -4638,7 +4688,7 @@ document.addEventListener("click", function (e) {
 
   /* Each creator: the search terms that find them, and their hidden link. */
   const creators = [
-    [["kraska", "kraska1", "bad door", "deal with the devil"], ".gga-nav-hidden"],
+    [["kraska", "kraska1", "bad door", "deal with the devil", "mouse cafe", "mousecafe"], ".gga-nav-hidden"],
     [["muzzy", "muzzythegrump", "kill diskette", "grump", "diskette"], ".gga-nav-muzzy"],
   ];
   for (const [terms, nav] of creators) {
@@ -7075,7 +7125,9 @@ some games i made. hope you like them''<br></div>\
     <td>\
     (link: '<img src="' + $imgroot + 'ui/kraska1-riddles.png" width="180px"><br>answer my riddles?</div>')[(set: $navPending to "kraska1: riddles")(display: "func-navigate")]
     </td>
-	<td></td>
+    <td>\
+    (link: '<span class="gga-tile gga-tile-mousecafe" role="img" aria-label="mouse cafe"></span><br>mouse cafe')[(set: $navPending to "kraska1: mouse cafe")(display: "func-navigate")]
+    </td>
 </tr><table><hr>
 (text-style:"underline")[''AUTHOR NOTES:'']<br>
 you can check out more of my work on (link-repeat: "http://devlink-userbase.skunkpets.com/login")[(set: $dialog to "You are exiting to external website<br>http://devlink-userbase.skunkpets.com/login.<br>Are you sure?")(set: $dialogTitle to "Alert")(set: $dialogIcon to "info")(set: $dialogOk to "OK")(set: $dialogAction to "devlink")(set: $dialogCancel to true)(replace: ?desktoproot)[(display: "RenderDesktop")]]
@@ -7133,6 +7185,19 @@ you can check out more of my work on (link-repeat: "http://devlink-userbase.skun
 deal with the devil
   </div>
 </div></div>
+
+:: kraska1: mouse cafe [wiki gamesarchive] {"position":"350,975","size":"100,100"}
+<div class="wiki-gamesarchive">\
+(display:"img-kraskabar")<hr>\
+<div style="width: 100%; height: 330px; background: black;">\
+  <iframe
+    src="https://tinypetgames.neocities.org/mousecafe/mousecafe"
+    style="width: 100%; height: 330px; border: none;"
+    class="minigame-frame"
+    loading="lazy"
+  ></iframe>
+</div>\
+</div>
 
 :: kraska1: riddles [wiki gamesarchive] {"position":"225,850","size":"100,100"}
 <div class="wiki-gamesarchive">\
