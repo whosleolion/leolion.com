@@ -2390,6 +2390,14 @@ span.xp-dialog-icon {
   border: 1px solid #444;
 }
 
+/* photos attached to a post: thumbnails that open in the lightbox */
+.forum-photo {
+  display: inline-block;
+  margin: 6px 6px 0 0;
+  border: 1px solid #444;
+  cursor: pointer;
+}
+
 .forum-post-username {
   font-weight: bold;
   margin-bottom: 4px;
@@ -4953,14 +4961,19 @@ function searchRealWikipedia(query, msg) {
     .catch(miss);
 }
 
-/* Minigames hosted next to the game on leolion.com (e.g. KILL DISKETTE):
-   <iframe data-site-src="/building/skunkpets/minigames/..."> gets its src
+/* Minigames and pictures hosted next to the game on leolion.com (e.g. KILL
+   DISKETTE, the forum's roommate photos): <iframe data-site-src="...">,
+   <img data-site-src="..."> and lightbox data-full-site="..." gets its src
    through siteAsset, so the preview loads the preview's copy and the
    tinypetgames copy loads leolion.com's. */
 function initSiteFrames(playfield) {
-  playfield.querySelectorAll("iframe[data-site-src]").forEach(function (frame) {
+  playfield.querySelectorAll("iframe[data-site-src], img[data-site-src]").forEach(function (frame) {
     if (frame.getAttribute("src")) return;
     frame.src = siteAsset(frame.dataset.siteSrc);
+  });
+  /* Lightbox photos hosted here too (data-full-site -> data-full). */
+  playfield.querySelectorAll("[data-full-site]").forEach(function (thumb) {
+    if (!thumb.dataset.full) thumb.dataset.full = siteAsset(thumb.dataset.fullSite);
   });
 }
 
@@ -5636,6 +5649,10 @@ In November 2004, an anonymous post circulated the web featuring a timestamped d
     <a class='thread-title'>Problem feeding my Sporgrin</a>
     <div class='thread-subtitle'>By bruce1 · 6 June 2009</div>
   </div>")[(set: $navPending to "Forum: Feeding")(display: "func-navigate")]\
+  (link: "<div class='thread-row'>
+    <a class='thread-title'>my roommate put this in our bathroom</a>
+    <div class='thread-subtitle'>By oldmadison · 12 August 2009</div>
+  </div>")[(set: $navPending to "Forum: Roommate")(display: "func-navigate")]\
   </div>\
 </div>
 
@@ -6060,6 +6077,80 @@ looks like the Exhausted condition. it doesn't always show up on your vitals but
           		<span class="forum-post-number">#5</span></div>\
         		<div class="forum-post-content">\
 Bruce here. That did it! Thank you so much!
+        		</div></div></div>\
+<!--POST END-->\
+	</div>\
+</div>
+
+:: Forum: Roommate [wiki fanwiki] {"position":"600,225","size":"100,100"}
+<div class="wiki-fanwiki">\
+(display:"img-fanwikibar")\
+<h1>my roommate put this in our bathroom</h1>\
+	<div class="forum-thread">\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-oldmadison")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 12 Aug 2009, 21:47</span>\
+          		<span class="forum-post-number">#1</span></div>\
+        		<div class="forum-post-content">\
+its not working that well so far<br><img class="lightbox-thumb forum-photo" data-site-src="/building/skunkpets/forum/roommate-bathroom-thumb.jpg" data-full-site="/building/skunkpets/forum/roommate-bathroom.jpg" width="100" alt="photo"><img class="lightbox-thumb forum-photo" data-site-src="/building/skunkpets/forum/roommate-sign-thumb.jpg" data-full-site="/building/skunkpets/forum/roommate-sign.jpg" width="100" alt="photo">
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-Moped_Guy")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 12 Aug 2009, 21:52</span>\
+          		<span class="forum-post-number">#2</span></div>\
+        		<div class="forum-post-content">\
+lololololololololololo
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-Starr")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 12 Aug 2009, 22:10</span>\
+          		<span class="forum-post-number">#3</span></div>\
+        		<div class="forum-post-content">\
+pretty good
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-ali")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 12 Aug 2009, 22:31</span>\
+          		<span class="forum-post-number">#4</span></div>\
+        		<div class="forum-post-content">\
+10/10
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-jargon")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 12 Aug 2009, 23:05</span>\
+          		<span class="forum-post-number">#5</span></div>\
+        		<div class="forum-post-content">\
+nicee
+        		</div></div></div>\
+<!--POST END-->\
+<!--POST-->\
+    	<div class="forum-post">\
+			(display:"forum-user-silv3rrrr")
+			<div class="forum-post-body">\
+        		<div class="forum-post-headerline">\
+				<span>Posted: 13 Aug 2009, 00:18</span>\
+          		<span class="forum-post-number">#6</span></div>\
+        		<div class="forum-post-content">\
+yeah he would
         		</div></div></div>\
 <!--POST END-->\
 	</div>\
@@ -6925,6 +7016,51 @@ Star button to bookmark a page.
 </div>
 <span class="devlink-nav-login" style="display:none">(link: "·")[(set: $navPending to "devlink-userbase: logged in")(display: "func-navigate")]</span>
 </div>}
+
+:: forum-user-oldmadison {"position":"1100,475","size":"100,100"}
+<div class="forum-post-user">\
+        		<div class="forum-post-avatar forum-post-avatar-none"></div>\
+        		<div class="forum-post-username">oldmadison</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2008<br>\
+          		Posts: 37
+</div></div>
+
+:: forum-user-Moped_Guy {"position":"975,475","size":"100,100"}
+<div class="forum-post-user">\
+        		<div class="forum-post-avatar forum-post-avatar-none"></div>\
+        		<div class="forum-post-username">Moped&#95;Guy</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2005<br>\
+          		Posts: 902
+</div></div>
+
+:: forum-user-Starr {"position":"850,475","size":"100,100"}
+<div class="forum-post-user">\
+        		<div class="forum-post-avatar forum-post-avatar-none"></div>\
+        		<div class="forum-post-username">Starr</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2007<br>\
+          		Posts: 148
+</div></div>
+
+:: forum-user-ali {"position":"725,475","size":"100,100"}
+<div class="forum-post-user">\
+        		<div class="forum-post-avatar forum-post-avatar-none"></div>\
+        		<div class="forum-post-username">ali</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2009<br>\
+          		Posts: 6
+</div></div>
+
+:: forum-user-silv3rrrr {"position":"600,475","size":"100,100"}
+<div class="forum-post-user">\
+        		<div class="forum-post-avatar forum-post-avatar-none"></div>\
+        		<div class="forum-post-username">silv3rrrr</div>\
+        		<div class="forum-post-meta">\
+          		Joined: 2006<br>\
+          		Posts: 233
+</div></div>
 
 :: forum-user-Peacemeal {"position":"1225,475","size":"100,100"}
 <div class="forum-post-user">\

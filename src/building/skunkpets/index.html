@@ -5,13 +5,13 @@
 <meta name="robots" content="noindex">
 <title>Skunkpets Redux (in progress)</title>
 <!-- cache-buster -->
-<meta name="skunkpets-build" content="d292c905a658">
+<meta name="skunkpets-build" content="62d55a221fa6">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
 (function () {
-  var mine = "d292c905a658";
+  var mine = "62d55a221fa6";
   function check() {
     fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.text() : ""; })
@@ -2415,6 +2415,14 @@ span.xp-dialog-icon {
   margin: 0 auto 6px;
   background: #111;
   border: 1px solid #444;
+}
+
+/* photos attached to a post: thumbnails that open in the lightbox */
+.forum-photo {
+  display: inline-block;
+  margin: 6px 6px 0 0;
+  border: 1px solid #444;
+  cursor: pointer;
 }
 
 .forum-post-username {
@@ -4986,14 +4994,19 @@ function searchRealWikipedia(query, msg) {
     .catch(miss);
 }
 
-/* Minigames hosted next to the game on leolion.com (e.g. KILL DISKETTE):
-   <iframe data-site-src="/building/skunkpets/minigames/..."> gets its src
+/* Minigames and pictures hosted next to the game on leolion.com (e.g. KILL
+   DISKETTE, the forum's roommate photos): <iframe data-site-src="...">,
+   <img data-site-src="..."> and lightbox data-full-site="..." gets its src
    through siteAsset, so the preview loads the preview's copy and the
    tinypetgames copy loads leolion.com's. */
 function initSiteFrames(playfield) {
-  playfield.querySelectorAll("iframe[data-site-src]").forEach(function (frame) {
+  playfield.querySelectorAll("iframe[data-site-src], img[data-site-src]").forEach(function (frame) {
     if (frame.getAttribute("src")) return;
     frame.src = siteAsset(frame.dataset.siteSrc);
+  });
+  /* Lightbox photos hosted here too (data-full-site -> data-full). */
+  playfield.querySelectorAll("[data-full-site]").forEach(function (thumb) {
+    if (!thumb.dataset.full) thumb.dataset.full = siteAsset(thumb.dataset.fullSite);
   });
 }
 
@@ -5648,6 +5661,10 @@ In November 2004, an anonymous post circulated the web featuring a timestamped d
     &lt;a class=&#39;thread-title&#39;&gt;Problem feeding my Sporgrin&lt;/a&gt;
     &lt;div class=&#39;thread-subtitle&#39;&gt;By bruce1 · 6 June 2009&lt;/div&gt;
   &lt;/div&gt;&quot;)[(set: $navPending to &quot;Forum: Feeding&quot;)(display: &quot;func-navigate&quot;)]\
+  (link: &quot;&lt;div class=&#39;thread-row&#39;&gt;
+    &lt;a class=&#39;thread-title&#39;&gt;my roommate put this in our bathroom&lt;/a&gt;
+    &lt;div class=&#39;thread-subtitle&#39;&gt;By oldmadison · 12 August 2009&lt;/div&gt;
+  &lt;/div&gt;&quot;)[(set: $navPending to &quot;Forum: Roommate&quot;)(display: &quot;func-navigate&quot;)]\
   &lt;/div&gt;\
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="8" name="FanWiki: Junkmates" tags="wiki fanwiki" position="975,100" size="100,100">&lt;div class=&quot;wiki-fanwiki&quot;&gt;\
 (display:&quot;img-fanwikibar&quot;)\
@@ -6057,7 +6074,78 @@ Bruce here. That did it! Thank you so much!
         		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
 &lt;!--POST END--&gt;\
 	&lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="14" name="Forum: Hacked" tags="wiki fanwiki" position="475,225" size="100,100">&lt;div class=&quot;wiki-fanwiki&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="14" name="Forum: Roommate" tags="wiki fanwiki" position="600,225" size="100,100">&lt;div class=&quot;wiki-fanwiki&quot;&gt;\
+(display:&quot;img-fanwikibar&quot;)\
+&lt;h1&gt;my roommate put this in our bathroom&lt;/h1&gt;\
+	&lt;div class=&quot;forum-thread&quot;&gt;\
+&lt;!--POST--&gt;\
+    	&lt;div class=&quot;forum-post&quot;&gt;\
+			(display:&quot;forum-user-oldmadison&quot;)
+			&lt;div class=&quot;forum-post-body&quot;&gt;\
+        		&lt;div class=&quot;forum-post-headerline&quot;&gt;\
+				&lt;span&gt;Posted: 12 Aug 2009, 21:47&lt;/span&gt;\
+          		&lt;span class=&quot;forum-post-number&quot;&gt;#1&lt;/span&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-content&quot;&gt;\
+its not working that well so far&lt;br&gt;&lt;img class=&quot;lightbox-thumb forum-photo&quot; data-site-src=&quot;/building/skunkpets/forum/roommate-bathroom-thumb.jpg&quot; data-full-site=&quot;/building/skunkpets/forum/roommate-bathroom.jpg&quot; width=&quot;100&quot; alt=&quot;photo&quot;&gt;&lt;img class=&quot;lightbox-thumb forum-photo&quot; data-site-src=&quot;/building/skunkpets/forum/roommate-sign-thumb.jpg&quot; data-full-site=&quot;/building/skunkpets/forum/roommate-sign.jpg&quot; width=&quot;100&quot; alt=&quot;photo&quot;&gt;
+        		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
+&lt;!--POST END--&gt;\
+&lt;!--POST--&gt;\
+    	&lt;div class=&quot;forum-post&quot;&gt;\
+			(display:&quot;forum-user-Moped_Guy&quot;)
+			&lt;div class=&quot;forum-post-body&quot;&gt;\
+        		&lt;div class=&quot;forum-post-headerline&quot;&gt;\
+				&lt;span&gt;Posted: 12 Aug 2009, 21:52&lt;/span&gt;\
+          		&lt;span class=&quot;forum-post-number&quot;&gt;#2&lt;/span&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-content&quot;&gt;\
+lololololololololololo
+        		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
+&lt;!--POST END--&gt;\
+&lt;!--POST--&gt;\
+    	&lt;div class=&quot;forum-post&quot;&gt;\
+			(display:&quot;forum-user-Starr&quot;)
+			&lt;div class=&quot;forum-post-body&quot;&gt;\
+        		&lt;div class=&quot;forum-post-headerline&quot;&gt;\
+				&lt;span&gt;Posted: 12 Aug 2009, 22:10&lt;/span&gt;\
+          		&lt;span class=&quot;forum-post-number&quot;&gt;#3&lt;/span&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-content&quot;&gt;\
+pretty good
+        		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
+&lt;!--POST END--&gt;\
+&lt;!--POST--&gt;\
+    	&lt;div class=&quot;forum-post&quot;&gt;\
+			(display:&quot;forum-user-ali&quot;)
+			&lt;div class=&quot;forum-post-body&quot;&gt;\
+        		&lt;div class=&quot;forum-post-headerline&quot;&gt;\
+				&lt;span&gt;Posted: 12 Aug 2009, 22:31&lt;/span&gt;\
+          		&lt;span class=&quot;forum-post-number&quot;&gt;#4&lt;/span&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-content&quot;&gt;\
+10/10
+        		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
+&lt;!--POST END--&gt;\
+&lt;!--POST--&gt;\
+    	&lt;div class=&quot;forum-post&quot;&gt;\
+			(display:&quot;forum-user-jargon&quot;)
+			&lt;div class=&quot;forum-post-body&quot;&gt;\
+        		&lt;div class=&quot;forum-post-headerline&quot;&gt;\
+				&lt;span&gt;Posted: 12 Aug 2009, 23:05&lt;/span&gt;\
+          		&lt;span class=&quot;forum-post-number&quot;&gt;#5&lt;/span&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-content&quot;&gt;\
+nicee
+        		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
+&lt;!--POST END--&gt;\
+&lt;!--POST--&gt;\
+    	&lt;div class=&quot;forum-post&quot;&gt;\
+			(display:&quot;forum-user-silv3rrrr&quot;)
+			&lt;div class=&quot;forum-post-body&quot;&gt;\
+        		&lt;div class=&quot;forum-post-headerline&quot;&gt;\
+				&lt;span&gt;Posted: 13 Aug 2009, 00:18&lt;/span&gt;\
+          		&lt;span class=&quot;forum-post-number&quot;&gt;#6&lt;/span&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-content&quot;&gt;\
+yeah he would
+        		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
+&lt;!--POST END--&gt;\
+	&lt;/div&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="15" name="Forum: Hacked" tags="wiki fanwiki" position="475,225" size="100,100">&lt;div class=&quot;wiki-fanwiki&quot;&gt;\
 (display:&quot;img-fanwikibar&quot;)\
 &lt;h1&gt;Hacked Again?&lt;/h1&gt;\
 	&lt;div class=&quot;forum-thread&quot;&gt;\
@@ -6128,7 +6216,7 @@ Not supposed to be discussed on the forums. Archiving this thread.
         		&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;\
 &lt;!--POST END--&gt;\
 	&lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="15" name="GameStart" tags="startup" position="100,100" size="100,100">{(set: $imgroot to &quot;https://tinypetgames.neocities.org/assets/img/&quot;)
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="16" name="GameStart" tags="startup" position="100,100" size="100,100">{(set: $imgroot to &quot;https://tinypetgames.neocities.org/assets/img/&quot;)
 (set: $artroot to &quot;https://tinypetgames.neocities.org/skunkpets/img/&quot;)
 (set: $openWindows to (a:))
 (set: $openPending to &quot;&quot;)
@@ -6164,7 +6252,7 @@ Not supposed to be discussed on the forums. Archiving this thread.
 (set: $dialogCancel to false)
 (set: $exitPending to &quot;&quot;)
 (set: $exitUrl to &quot;&quot;)
-(set: $exitOk to false)}</tw-passagedata><tw-passagedata pid="16" name="Henrietta Winetraub" tags="wiki article" position="725,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+(set: $exitOk to false)}</tw-passagedata><tw-passagedata pid="17" name="Henrietta Winetraub" tags="wiki article" position="725,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Henrietta Winetraub&lt;/h1&gt;\
 Henrietta Winetraub is an American musician and media investor. She served at (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)] as Chairwoman of the Board and Head of the Music and Audio Entertainment division. While at Recast, she was instrumental in the creation of the (link: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)] album series.
 
@@ -6184,7 +6272,7 @@ After the third SFFL album saw poor commercial returns in 2001, Winetraub was br
 Her work at REV continued after she was discharged early the following year. A fourth SFFL album was released in 2006. 
 
 Winetraub left REV in 2006 to retire in upstate New York.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="17" name="Lawrence Oregon" tags="wiki article" position="850,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="18" name="Lawrence Oregon" tags="wiki article" position="850,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Lawrence Oregon&lt;/h1&gt;\
 Lawrence Oregon (born c. 1967) is a Canadian business executive. He was the president and co-founder of (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)], an American media investment firm, from 1994 to 2008. Before REV, Oregon spent 16 years working in small business management for a series of commercial spiritual organizations.
 
@@ -6203,7 +6291,7 @@ Skunkpets was shut down in May 2009.
 
 &lt;h2&gt;Later Career&lt;/h2&gt;\
 After REV filed for Chapter 7 bankrupcy in 2009, Lawrence Oregon returned to a prior career position as the spokesperson for a for-profit spiritual organization known as (link: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)].
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="18" name="NetCon 2004" tags="wiki article" position="975,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="19" name="NetCon 2004" tags="wiki article" position="975,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;NetCon 2004&lt;/h1&gt;\
 NetCon 2004 was the third occurrence of NetCon, an annual convention for influencers, fans, executives, and online brands. The event primarily features prominent content creators from across the internet. It was founded by veteran YouTube creators Cole Ramsay and Lena Russel (TheSweetpeople), and was later acquired by Hi-Vis (now Paradigm) in 2018. Its offices remain in Montori, Montana, sharing a building with Thinkify. 
 
@@ -6213,7 +6301,7 @@ NetCon &#39;04 was held in Rosemont, Illinois. The theme was &quot;Pioneer&quot;
 * (link: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)], a friendly digital office assistant capable of helping users with complex administrative tasks in word processors and spreadsheet managers.
 * (link: &quot;Global Games Archive&quot;)[(set: $navPending to &quot;globalgamesarchive.co.uk&quot;)(display: &quot;func-navigate&quot;)], a worldwide online repository for indie games, made their second NetCon appearance this year, hosting a 24-hour game jam for indie developers.
 * &#39;&#39;FindPizzaKid.com&#39;&#39;, a semi-parodic website dedicated to a crowdsourced effort to locate Dominic Desantos, a tween boy who was reported missing after appearing in a viral video entitled &quot;Pizza Kid Freaks Out.&quot; The website initially featured discussion posts regarding Dominic&#39;s whereabouts, but was swiftly taken over as a general community discussion spaces for sharing photo edits, memes, and pizza recommendations.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="19" name="New Tab" tags="wiki" position="1100,225" size="100,100">&lt;div class=&quot;new-tab-page&quot;&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="20" name="Nick Galveston" tags="wiki article" position="1225,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="20" name="New Tab" tags="wiki" position="1100,225" size="100,100">&lt;div class=&quot;new-tab-page&quot;&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="21" name="Nick Galveston" tags="wiki article" position="1225,225" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Nick Galveston (computer scientist)&lt;/h1&gt;\
 Nickolas Galveston (born 1 April 1982) is an American computer programmer. He was the co-founder of (link: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)], a virtual pet website that was active online 2001-2009.
 
@@ -6224,10 +6312,10 @@ Galveston attended Ellory College in Pennsylvania for 1998-2001, majoring in und
 Galveston worked on Skunkpets from 2001-2009, after which he left the project, citing &#39;artistic differences&#39;. Although it was widely speculated that this transition was due to conflicts with the project&#39;s leadership at (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)], Galveston since commented that he &#39;simply moved on to other projects&#39;.
 
 In 2010, Galveston became a regular lecturer in the Computer Science department at Ellory College, where he still teaches.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="21" name="Order of Refuse" tags="wiki article" position="100,350" size="100,100">&lt;span class=&quot;diskette-page&quot; data-say=&quot;Oh, &amp;lt;b&amp;gt;Order of Refuse&amp;lt;/b&amp;gt;! Looks like Winkipedia doesn&#39;t have anything to say about this one.&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="22" name="Order of Refuse" tags="wiki article" position="100,350" size="100,100">&lt;span class=&quot;diskette-page&quot; data-say=&quot;Oh, &amp;lt;b&amp;gt;Order of Refuse&amp;lt;/b&amp;gt;! Looks like Winkipedia doesn&#39;t have anything to say about this one.&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Order of Refuse&lt;/h1&gt;\
 Winkipedia does not have an article with this name, or the page has been &#39;&#39;deleted&#39;&#39;.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="22" name="PageHeader" tags="header" position="100,100" size="100,100">&lt;button class=&quot;fullscreen-toggle&quot; type=&quot;button&quot; title=&quot;Toggle fullscreen&quot;&gt;&amp;#91;⤢&amp;#93;&lt;/button&gt;</tw-passagedata><tw-passagedata pid="23" name="REV (Recast Entertainment Ventures)" tags="wiki article" position="350,350" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="23" name="PageHeader" tags="header" position="100,100" size="100,100">&lt;button class=&quot;fullscreen-toggle&quot; type=&quot;button&quot; title=&quot;Toggle fullscreen&quot;&gt;&amp;#91;⤢&amp;#93;&lt;/button&gt;</tw-passagedata><tw-passagedata pid="24" name="REV (Recast Entertainment Ventures)" tags="wiki article" position="350,350" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;REV (Recast Entertainment Ventures)&lt;/h1&gt;\
 &lt;div class=&quot;article-art&quot; data-art=&quot;rev-storefront.jpg&quot; role=&quot;img&quot; aria-label=&quot;Recast Entertainment Ventures storefront, Glen Cove&quot;&gt;&lt;/div&gt;\
 Recast Entertainment Ventures was an American media investment firm based in Glen Cove, New York. Originally formed by (link: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)], (link: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)] and (link: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)] out of a Glen Cove storefront in 1987, the company established a nationwide development team through a series of media property acquisitions in the late 1990s and early-to-mid 2000s.
@@ -6246,7 +6334,7 @@ Froom 2003-2006, REV&#39;s Entertainment Technologies division made moves to exp
 
 &lt;h3&gt;2006-2009: Decline and bankruptcy&lt;/h3&gt;\
 In 2006, founding board members Barry and Winetraub left REV, reportedly to pursue other venture projects. During the period following their exit, the firm&#39;s operations became more erratic and were regularly stalled by internal strategy disputes regarding outsized, overambitious projects. Internal reports suggested that the company was hemmoraging large sums of money to upkeep redundant computer servers. After poor financial returns in their 2008 fiscal year, REV filed for Chapter 7 bankruptcy. Properties owned by REV were subsequently auctioned off to various parties.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="24" name="RenderBookmarks" tags="" position="475,350" size="100,100">&lt;div class=&quot;bookmark-dropdown&quot;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="25" name="RenderBookmarks" tags="" position="475,350" size="100,100">&lt;div class=&quot;bookmark-dropdown&quot;&gt;
 
 (if: (passage: $browserPage)&#39;s tags contains &quot;wiki&quot; and not ($navBlocked contains $browserPage))[
   (if: $uiBookmarks contains $browserPage)[
@@ -6267,7 +6355,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
   ]
 ]
 
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="25" name="RenderBrowserChrome" tags="" position="600,350" size="100,100">&lt;div class=&quot;browser-chrome&quot;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="26" name="RenderBrowserChrome" tags="" position="600,350" size="100,100">&lt;div class=&quot;browser-chrome&quot;&gt;
 {
 (if: $navHistory&#39;s length &gt; 0)[
   |browser-back&gt;[&lt;button type=&quot;button&quot; class=&quot;browser-btn&quot; title=&quot;Back&quot;&gt;◀&lt;/button&gt;]
@@ -6297,7 +6385,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
     (click: ?starbar-overlay)[(set: $starbarOpen to false)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
     (display: &quot;RenderBookmarks&quot;)
   ]
-]</tw-passagedata><tw-passagedata pid="26" name="RenderDesktop" tags="" position="100,100" size="100,100">&lt;div class=&quot;monitor&quot;&gt;&lt;div class=&quot;monitor-glow&quot;&gt;&lt;/div&gt;&lt;div class=&quot;playfield&quot;&gt;
+]</tw-passagedata><tw-passagedata pid="27" name="RenderDesktop" tags="" position="100,100" size="100,100">&lt;div class=&quot;monitor&quot;&gt;&lt;div class=&quot;monitor-glow&quot;&gt;&lt;/div&gt;&lt;div class=&quot;playfield&quot;&gt;
 &lt;div class=&quot;wallpaper&quot;&gt;&lt;/div&gt;
 (print: &#39;&lt;span class=&quot;focus-request&quot; hidden data-win=&quot;&#39; + $focusWin + &#39;&quot; data-seq=&quot;&#39; + (str: $focusSeq) + &#39;&quot;&gt;&lt;/span&gt;&#39;)
 
@@ -6508,7 +6596,7 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
 ]
 
 &lt;div class=&quot;crt&quot;&gt;&lt;/div&gt;
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="27" name="RenderMailInbox" tags="" position="100,100" size="100,100">{&lt;div class=&quot;mail-header&quot;&gt;Inbox&lt;/div&gt;
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="28" name="RenderMailInbox" tags="" position="100,100" size="100,100">{&lt;div class=&quot;mail-header&quot;&gt;Inbox&lt;/div&gt;
 &lt;div class=&quot;mail-address&quot;&gt;Your email: &lt;span class=&quot;mail-address-value&quot; title=&quot;Click to select, then copy&quot;&gt;user3294@openmail.net&lt;/span&gt;&lt;/div&gt;
 &lt;div class=&quot;mail-list&quot;&gt;
 (if: $mailAll&#39;s length is 0)[&lt;div class=&quot;mail-empty&quot;&gt;Your inbox is empty&lt;/div&gt;]
@@ -6523,11 +6611,11 @@ In 2006, founding board members Barry and Winetraub left REV, reportedly to purs
     (if: $mailOpen is _msg&#39;s id)[&lt;div class=&quot;mail-body&quot;&gt;(if: _msg&#39;s id is 4)[stop this now or its (link: &quot;game over&quot;)[(go-to: &quot;DemoEnd&quot;)]](else:)[(print: _msg&#39;s body)]&lt;/div&gt;]
   &lt;/div&gt;
 ]
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="28" name="Saint Detritus Commercial Fellowship" tags="wiki article" position="975,350" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="29" name="Saint Detritus Commercial Fellowship" tags="wiki article" position="975,350" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Saint Detritus Commercial Fellowship&lt;/h1&gt;\
 Wiki does not have an article with this exact name, or the page has been &#39;&#39;deleted&#39;&#39;.
 Please check for alternative titles or spellings.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="29" name="Second Page" tags="wiki" position="1100,350" size="100,100"># Second Page
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="30" name="Second Page" tags="wiki" position="1100,350" size="100,100"># Second Page
 
 This is a second wiki article, reached via a link from the
 (link: &quot;Welcome Page&quot;)[(set: $navPending to &quot;Welcome Page&quot;)(display: &quot;func-navigate&quot;)].
@@ -6538,7 +6626,7 @@ back here.
 
 ---
 
-Looking for something more substantial to read? Try the (link: &quot;SkunkPets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)] wiki article.</tw-passagedata><tw-passagedata pid="30" name="Skunkpets Fan Wiki" tags="wiki fanwiki" position="1225,350" size="100,100">&lt;div class=&quot;wiki-fanwiki&quot;&gt;\
+Looking for something more substantial to read? Try the (link: &quot;SkunkPets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)] wiki article.</tw-passagedata><tw-passagedata pid="31" name="Skunkpets Fan Wiki" tags="wiki fanwiki" position="1225,350" size="100,100">&lt;div class=&quot;wiki-fanwiki&quot;&gt;\
 (display:&quot;img-fanwikibar&quot;)
 {&lt;table class=&quot;library-grid&quot;&gt;
 	&lt;tr&gt;
@@ -6576,7 +6664,7 @@ Bin City, the heart of Terra Purgamenti, was a virtual realm of junkyard-inspire
 
 This wiki was created to catalogue all things Skunkpets, as well as keep users abreast of new features like games, items, and events, as well as provide a place for users to chat. As of last year, that is clearly no longer necessary. Although we the Skunkpets Community will not be updating this wiki anymore, we decided to preserve it as a historical record of what we loved. Thanks for the memories. 
 -Peacemeal, January 22, 2010 
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="31" name="Skunkpets" tags="wiki article" position="100,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;&lt;span class=&quot;zoom-trigger&quot; hidden&gt;&lt;/span&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="32" name="Skunkpets" tags="wiki article" position="100,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;&lt;span class=&quot;zoom-trigger&quot; hidden&gt;&lt;/span&gt;\
 &lt;h1&gt;SkunkPets™ (website)&lt;/h1&gt;\
 &lt;div class=&quot;article-art&quot; data-art=&quot;skunkpets-6-lw2v.jpg&quot; role=&quot;img&quot; aria-label=&quot;Skunkpets(6)&quot;&gt;&lt;/div&gt;
 SkunkPets™ was a free-to-play virtual pet website. First launched in 2001, the website allowed users to own virtual pets (&quot;SkunkPets&quot;) in a virtual realm called Bin City. Players could buy digital food, accessories, and customizations to keep their pets happy. Players could also interact with each other through social features like message boards, guilds, and item trades, and have their pets battle in the &quot;Scrapyard&quot; to win titles and prizes. 
@@ -6604,7 +6692,7 @@ In March 2009, several core team members including Nick Galveston left the compa
 &lt;h2&gt;Controversy&lt;/h2&gt;\
 //This section has been edited and is pending review.//
 
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="32" name="Songs for Family Learning" tags="wiki article" position="225,475" size="100,100">&lt;span class=&quot;diskette-page&quot; data-say=&quot;Hey, I know &amp;lt;b&amp;gt;Songs for Family Learning&amp;lt;/b&amp;gt;! My favorite is “Takin&#39; Dictation”.&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="33" name="Songs for Family Learning" tags="wiki article" position="225,475" size="100,100">&lt;span class=&quot;diskette-page&quot; data-say=&quot;Hey, I know &amp;lt;b&amp;gt;Songs for Family Learning&amp;lt;/b&amp;gt;! My favorite is “Takin&#39; Dictation”.&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Songs for Family Learning&lt;/h1&gt;\
 &lt;div class=&quot;article-art&quot; data-art=&quot;songs-for-family-learning.jpg&quot; role=&quot;img&quot; aria-label=&quot;Songs for Family Learning logo&quot;&gt;&lt;/div&gt;\
 “Songs for Family Learning” is a series of albums released by (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)]  from 1992 to 2006. The albums featured compilations of songs by various artists, primarily consisting of educational and instructional music for young children. The albums were released on CD and magnetic cassette, with special vinyl editions made available for the series’ 10th anniversary.
@@ -6754,7 +6842,7 @@ The release dates mentioned pertain to the date of release in the United States.
     &lt;/tr&gt;
   &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="33" name="Tales of Prior Days" tags="wiki article" position="350,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="34" name="Tales of Prior Days" tags="wiki article" position="350,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Tales of Prior Days&lt;/h1&gt;\
 &lt;div class=&quot;article-art&quot; data-art=&quot;title-1-ydmo.jpg&quot; style=&quot;width: 30%&quot; role=&quot;img&quot; aria-label=&quot;Title(1)&quot;&gt;&lt;/div&gt;Tales of Prior Days `(Russian: Истории Прошлих Дней, variously translated; English titles include also Long Ago Stories)` is a collection of nearly 300 fairy and folktales, collected and published by Dmitry Kanisev between 1860 and 1879. The collection contained fairy and folk tales from Ukraine, Belarus, Poland, Estonia, Moldova, Latvia, and Serbia. 
 
@@ -6788,7 +6876,7 @@ Little is known of many of these tales, other than their titles. Some stories, s
 
 &lt;h2&gt;References&lt;/h2&gt;\
 Silverman, Barbara R. (1997). Kononenko, Natalie O. (ed.). Tsarevich Ivan and the Fat Wolf, and other tales from Latvia. World folklore series. Englewood, Colo: Libr. Unlimited. pp. xxi. Halsin, Jack M. (2014). &quot;Introduction: D.I. Kanisev His Life and Works&quot;. In Halsin, Jack M. (ed.). The Complete Folktales of D.I. Kanisev. Vol. I.: University Press of Michigan. pp. xxiv, xxvii. Barry Family Record (2001). Article XI, &quot;Witch and the Goldwoman and Other Tales&quot;.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="34" name="Tom Barry" tags="wiki article" position="475,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="35" name="Tom Barry" tags="wiki article" position="475,475" size="100,100">&lt;div class=&quot;wiki-article&quot;&gt;\
 &lt;h1&gt;Tom Barry&lt;/h1&gt;\
 Tom Barry //(born Thomas Melnyk)// is an American businessman and media moghul, known for his work with (link: &quot;Recast Entertainment Ventures&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)] and his legacy in folk tale IP litigation. He grew up in Cleveland, Ohio, son of copyright lawyers Elys Melnyk and Melina Barrarro. When both parents were killed in an industrial accident, fourteen-year-old Thomas moved to Upstate New York to live with his cousins until he was of age to manage the family trust.
 
@@ -6802,14 +6890,14 @@ Barry&#39;s many IP lawsuits yielded the seed funding for (link: &quot;Recast En
 
 &lt;h2&gt;Later career&lt;/h2&gt;\
 After leaving REV, Barry made several attempts to purchase small subsections of major animation studios, likely to complete his still-unproduced Goldwoman film. During this time, he reportedly contacted the head of animal reference photography at Disney Animation to inquire whether &quot;the animal guys over there `[were]` ready for something `[expletive]` serious yet.&quot; Barry continues to work independently as a media investor and IP lawyer at his firm Tom Barry Associates, which he manages with his two sons.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="35" name="WIN" tags="" position="100,100" size="100,100">&lt;div class=&quot;win-screen&quot;&gt;&lt;div class=&quot;endcard&quot;&gt;&lt;div class=&quot;endcard-line endcard-line-1&quot;&gt;THANK YOU FOR PLAYING&lt;h2&gt;//REMEMBER SKUNKPETS?//&lt;/h2&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-line-2&quot;&gt;Please click here to fill out our &lt;a href=&quot;https://forms.gle/xSDvMgE87h34RBjPA&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&#39;&#39;playtest exit survey.&#39;&#39;&lt;/a&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-credit&quot;&gt;&quot;Comfortable Mystery&quot; Kevin MacLeod (incompetech.com)&lt;br&gt;Licensed under Creative Commons: By Attribution 4.0 License&lt;br&gt;&lt;a href=&quot;https://creativecommons.org/licenses/by/4.0/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;creativecommons.org/licenses/by/4.0&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="36" name="Welcome Page" tags="wiki" position="725,475" size="100,100"># Welcome
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="36" name="WIN" tags="" position="100,100" size="100,100">&lt;div class=&quot;win-screen&quot;&gt;&lt;div class=&quot;endcard&quot;&gt;&lt;div class=&quot;endcard-line endcard-line-1&quot;&gt;THANK YOU FOR PLAYING&lt;h2&gt;//REMEMBER SKUNKPETS?//&lt;/h2&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-line-2&quot;&gt;Please click here to fill out our &lt;a href=&quot;https://forms.gle/xSDvMgE87h34RBjPA&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&#39;&#39;playtest exit survey.&#39;&#39;&lt;/a&gt;&lt;/div&gt;&lt;div class=&quot;endcard-line endcard-credit&quot;&gt;&quot;Comfortable Mystery&quot; Kevin MacLeod (incompetech.com)&lt;br&gt;Licensed under Creative Commons: By Attribution 4.0 License&lt;br&gt;&lt;a href=&quot;https://creativecommons.org/licenses/by/4.0/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;creativecommons.org/licenses/by/4.0&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="37" name="Welcome Page" tags="wiki" position="725,475" size="100,100"># Welcome
 
 This is the home page of the in-game wiki, loaded inside the **Browser**
 window.
 
 Try following a link to the (link: &quot;Second Page&quot;)[(set: $navPending to &quot;Second Page&quot;)(display: &quot;func-navigate&quot;)], then use the Back and
 Forward buttons in the browser&#39;s title area to navigate, and use the
-Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="devlink-userbase: logged in" tags="wiki devlink" position="100,100" size="100,100">{&lt;div class=&quot;skunkpets-loading&quot;&gt;(print: &#39;&lt;img src=&quot;&#39; + $artroot + &#39;ui/loading.gif&quot; alt=&quot;Loading&quot;&gt;&#39;)&lt;/div&gt;
+Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="38" name="devlink-userbase: logged in" tags="wiki devlink" position="100,100" size="100,100">{&lt;div class=&quot;skunkpets-loading&quot;&gt;(print: &#39;&lt;img src=&quot;&#39; + $artroot + &#39;ui/loading.gif&quot; alt=&quot;Loading&quot;&gt;&#39;)&lt;/div&gt;
 (unless: $mail4Sent)[(live: 4s)[
   (stop:)
   (set: $mail4Sent to true)
@@ -6822,7 +6910,7 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
   (set: $dialogAction to &quot;openmail&quot;)
   (set: $dialogCancel to false)
   (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]]}</tw-passagedata><tw-passagedata pid="38" name="devlink-userbase: login" tags="wiki devlink" position="100,100" size="100,100">{&lt;div class=&quot;wiki-devlink&quot;&gt;
+]]}</tw-passagedata><tw-passagedata pid="39" name="devlink-userbase: login" tags="wiki devlink" position="100,100" size="100,100">{&lt;div class=&quot;wiki-devlink&quot;&gt;
 &lt;div class=&quot;devlink-url&quot;&gt;http://devlink-userbase.skunkpets.com/login&lt;/div&gt;
 &lt;div class=&quot;login-box&quot;&gt;
 (print: &#39;&lt;img class=&quot;login-icon&quot; src=&quot;&#39; + $artroot + &#39;ui/login-icon.png&quot; alt=&quot;&quot;&gt;&#39;)
@@ -6843,7 +6931,37 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;span class=&quot;devlink-nav-login&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;devlink-userbase: logged in&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="39" name="forum-user-Peacemeal" tags="" position="1225,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="40" name="forum-user-oldmadison" tags="" position="1100,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+        		&lt;div class=&quot;forum-post-avatar forum-post-avatar-none&quot;&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-username&quot;&gt;oldmadison&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-meta&quot;&gt;\
+          		Joined: 2008&lt;br&gt;\
+          		Posts: 37
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="41" name="forum-user-Moped_Guy" tags="" position="975,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+        		&lt;div class=&quot;forum-post-avatar forum-post-avatar-none&quot;&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-username&quot;&gt;Moped&amp;#95;Guy&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-meta&quot;&gt;\
+          		Joined: 2005&lt;br&gt;\
+          		Posts: 902
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="42" name="forum-user-Starr" tags="" position="850,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+        		&lt;div class=&quot;forum-post-avatar forum-post-avatar-none&quot;&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-username&quot;&gt;Starr&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-meta&quot;&gt;\
+          		Joined: 2007&lt;br&gt;\
+          		Posts: 148
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="43" name="forum-user-ali" tags="" position="725,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+        		&lt;div class=&quot;forum-post-avatar forum-post-avatar-none&quot;&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-username&quot;&gt;ali&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-meta&quot;&gt;\
+          		Joined: 2009&lt;br&gt;\
+          		Posts: 6
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="44" name="forum-user-silv3rrrr" tags="" position="600,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+        		&lt;div class=&quot;forum-post-avatar forum-post-avatar-none&quot;&gt;&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-username&quot;&gt;silv3rrrr&lt;/div&gt;\
+        		&lt;div class=&quot;forum-post-meta&quot;&gt;\
+          		Joined: 2006&lt;br&gt;\
+          		Posts: 233
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="45" name="forum-user-Peacemeal" tags="" position="1225,475" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/6.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;Peacemeal&lt;/div&gt;\
@@ -6851,91 +6969,91 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
           		★ Moderator
 				Joined: 2003&lt;br&gt;\
           		Posts: 1211
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="40" name="forum-user-bruce1" tags="" position="100,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="46" name="forum-user-bruce1" tags="" position="100,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/4.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;bruce1&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2005&lt;br&gt;\
           		Posts: 412
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="41" name="forum-user-frankersore" tags="" position="225,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="47" name="forum-user-frankersore" tags="" position="225,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/2.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;frankersore&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2004&lt;br&gt;\
           		Posts: 81
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="42" name="forum-user-hailtheorder" tags="" position="350,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="48" name="forum-user-hailtheorder" tags="" position="350,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/9.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;hailtheorder&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2008&lt;br&gt;\
           		Posts: 10
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="43" name="forum-user-jargon" tags="" position="475,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="49" name="forum-user-jargon" tags="" position="475,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/5.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;jargon&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2006&lt;br&gt;\
           		Posts: 12
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="44" name="forum-user-kayG" tags="" position="600,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="50" name="forum-user-kayG" tags="" position="600,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/11.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;kayG&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2007&lt;br&gt;\
           		Posts: 2
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="45" name="forum-user-konundrum" tags="" position="725,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="51" name="forum-user-konundrum" tags="" position="725,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/3.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;konundrum&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2006&lt;br&gt;\
           		Posts: 12
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="46" name="forum-user-michellewashere" tags="" position="850,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="52" name="forum-user-michellewashere" tags="" position="850,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/1.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;michellewashere&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2004&lt;br&gt;\
           		Posts: 18
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="47" name="forum-user-plainseeds" tags="" position="975,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="53" name="forum-user-plainseeds" tags="" position="975,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/13.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;plainseeds&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2005&lt;br&gt;\
           		Posts: 161
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="48" name="forum-user-unleash_nova" tags="" position="1100,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="54" name="forum-user-unleash_nova" tags="" position="1100,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/10.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;`unleash_nova`&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2007&lt;br&gt;\
           		Posts: 30
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="49" name="forum-user-vivica" tags="" position="1225,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="55" name="forum-user-vivica" tags="" position="1225,600" size="100,100">&lt;div class=&quot;forum-post-user&quot;&gt;\
         		(print:&#39;&lt;img class=&quot;forum-post-avatar&quot;
 		src=&quot;&#39;+$imgroot+&#39;avatars/12.png&quot;&gt;&#39;)\
         		&lt;div class=&quot;forum-post-username&quot;&gt;vivica&lt;/div&gt;\
         		&lt;div class=&quot;forum-post-meta&quot;&gt;\
           		Joined: 2005&lt;br&gt;\
           		Posts: 101
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="50" name="func-back" tags="" position="100,725" size="100,100">{(if: $navHistory&#39;s length &gt; 0)[
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="56" name="func-back" tags="" position="100,725" size="100,100">{(if: $navHistory&#39;s length &gt; 0)[
 (set: _navBack to $navHistory&#39;s last)
 (set: $navHistory to (subarray: $navHistory, 1, $navHistory&#39;s length - 1))
 (set: $navForward to (a: $browserPage) + $navForward)
 (set: $browserPage to _navBack)
 (set: $starbarOpen to false)
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="51" name="func-forward" tags="" position="225,725" size="100,100">{(if: $navForward&#39;s length &gt; 0)[
+]}</tw-passagedata><tw-passagedata pid="57" name="func-forward" tags="" position="225,725" size="100,100">{(if: $navForward&#39;s length &gt; 0)[
 (set: _navTarget to $navForward&#39;s 1st)
 (set: $navHistory to $navHistory + (a: $browserPage))
 (if: $navForward&#39;s length is 1)[(set: $navForward to (a:))](else:)[(set: $navForward to (subarray: $navForward, 2, $navForward&#39;s length))]
 (set: $browserPage to _navTarget)
 (set: $starbarOpen to false)
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="52" name="func-navigate" tags="" position="350,725" size="100,100">{(set: $exitUrl to &quot;&quot;)
+]}</tw-passagedata><tw-passagedata pid="58" name="func-navigate" tags="" position="350,725" size="100,100">{(set: $exitUrl to &quot;&quot;)
 (if: $exitOk is not true and $navPending is not $browserPage)[
   (set: _fromTags to (passage: $browserPage)&#39;s tags)
   (set: _toTags to (passage: $navPending)&#39;s tags)
@@ -6961,7 +7079,7 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
 ]
 (set: $starbarOpen to false)
 (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="53" name="func-screenshot-bruce" tags="" position="475,725" size="100,100">(print: &#39;&lt;img class=&quot;lightbox-thumb&quot; data-full=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce.png&quot; src=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce-thumb.png&quot; width=&quot;100&quot; style=&quot;display:block;margin-top:4px&quot;&gt;&#39;)</tw-passagedata><tw-passagedata pid="54" name="globalgamesarchive.co.uk" tags="wiki gamesarchive" position="100,100" size="100,100">{&lt;div class=&quot;wiki-gamesarchive&quot;&gt;
+]}</tw-passagedata><tw-passagedata pid="59" name="func-screenshot-bruce" tags="" position="475,725" size="100,100">(print: &#39;&lt;img class=&quot;lightbox-thumb&quot; data-full=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce.png&quot; src=&quot;&#39; + $imgroot + &#39;misc/screenshot-bruce-thumb.png&quot; width=&quot;100&quot; style=&quot;display:block;margin-top:4px&quot;&gt;&#39;)</tw-passagedata><tw-passagedata pid="60" name="globalgamesarchive.co.uk" tags="wiki gamesarchive" position="100,100" size="100,100">{&lt;div class=&quot;wiki-gamesarchive&quot;&gt;
 (display:&quot;img-gamesarch&quot;)
 &lt;div class=&quot;search-area&quot;&gt;
 &lt;input type=&quot;text&quot; id=&quot;gga-search-input&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot;&gt;
@@ -6970,8 +7088,8 @@ Star button to bookmark a page.</tw-passagedata><tw-passagedata pid="37" name="d
 &lt;/div&gt;
 &lt;span class=&quot;gga-nav-hidden&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;kraska1&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
 &lt;span class=&quot;gga-nav-muzzy&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;muzzythegrump&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="55" name="img-fanwikibar" tags="" position="725,725" size="100,100">[(print: &#39;&lt;img src=&quot;&#39; + $imgroot + &#39;ui/banner-fanwiki.jpg&quot; width=&quot;100%&quot;&gt;&#39;)]&lt;fanwikibar|
-(click: ?fanwikibar)[(set: $navPending to &quot;Skunkpets Fan Wiki&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata><tw-passagedata pid="56" name="img-gamesarch" tags="" position="850,725" size="100,100">(print: &quot;&lt;img src=&#39;&quot; + $imgroot + &quot;ui/banner-gamesarch.png&#39; width=&#39;100%&#39;&gt;&quot;)</tw-passagedata><tw-passagedata pid="57" name="img-kraskabar" tags="" position="975,725" size="100,100">(print: &quot;&lt;img src=&#39;&quot; + $imgroot + &quot;ui/banner-kraska1.png&#39; width=&#39;100%&#39;&gt;&quot;)</tw-passagedata><tw-passagedata pid="58" name="kraska1" tags="wiki gamesarchive" position="1100,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="61" name="img-fanwikibar" tags="" position="725,725" size="100,100">[(print: &#39;&lt;img src=&quot;&#39; + $imgroot + &#39;ui/banner-fanwiki.jpg&quot; width=&quot;100%&quot;&gt;&#39;)]&lt;fanwikibar|
+(click: ?fanwikibar)[(set: $navPending to &quot;Skunkpets Fan Wiki&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata><tw-passagedata pid="62" name="img-gamesarch" tags="" position="850,725" size="100,100">(print: &quot;&lt;img src=&#39;&quot; + $imgroot + &quot;ui/banner-gamesarch.png&#39; width=&#39;100%&#39;&gt;&quot;)</tw-passagedata><tw-passagedata pid="63" name="img-kraskabar" tags="" position="975,725" size="100,100">(print: &quot;&lt;img src=&#39;&quot; + $imgroot + &quot;ui/banner-kraska1.png&#39; width=&#39;100%&#39;&gt;&quot;)</tw-passagedata><tw-passagedata pid="64" name="kraska1" tags="wiki gamesarchive" position="1100,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)
 &lt;div width=&quot;100%&quot; style=&quot;text-align:center&quot;&gt;\
 (text-style:&quot;underline&quot;)[&#39;&#39;ABOUT ME&#39;&#39;]&lt;br&gt;\
@@ -6990,7 +7108,7 @@ some games i made. hope you like them&#39;&#39;&lt;br&gt;&lt;/div&gt;\
 &lt;/tr&gt;&lt;table&gt;&lt;hr&gt;
 (text-style:&quot;underline&quot;)[&#39;&#39;AUTHOR NOTES:&#39;&#39;]&lt;br&gt;
 you can check out more of my work on (link-repeat: &quot;http://devlink-userbase.skunkpets.com/login&quot;)[(set: $dialog to &quot;You are exiting to external website&lt;br&gt;http://devlink-userbase.skunkpets.com/login.&lt;br&gt;Are you sure?&quot;)(set: $dialogTitle to &quot;Alert&quot;)(set: $dialogIcon to &quot;info&quot;)(set: $dialogOk to &quot;OK&quot;)(set: $dialogAction to &quot;devlink&quot;)(set: $dialogCancel to true)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="59" name="muzzythegrump" tags="wiki gamesarchive" position="1350,725" size="100,100">&lt;span class=&quot;diskette-page&quot; data-mood=&quot;shake&quot; data-say=&quot;Uhhh...&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="65" name="muzzythegrump" tags="wiki gamesarchive" position="1350,725" size="100,100">&lt;span class=&quot;diskette-page&quot; data-mood=&quot;shake&quot; data-say=&quot;Uhhh...&quot;&gt;&lt;/span&gt;&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 &lt;div class=&quot;gga-banner-muzzy&quot; role=&quot;img&quot; aria-label=&quot;globalgamesarchive.co.uk: games by user muzzythegrump&quot;&gt;&lt;/div&gt;\
 &lt;div width=&quot;100%&quot; style=&quot;text-align:center&quot;&gt;\
 (text-style:&quot;underline&quot;)[&#39;&#39;ABOUT ME&#39;&#39;]&lt;br&gt;\
@@ -7004,7 +7122,7 @@ you can check out more of my work on (link-repeat: &quot;http://devlink-userbase
 &lt;/tr&gt;&lt;table&gt;&lt;hr&gt;
 (text-style:&quot;underline&quot;)[&#39;&#39;AUTHOR NOTES:&#39;&#39;]&lt;br&gt;
 &lt;span class=&quot;gga-empty&quot;&gt;none.&lt;/span&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="60" name="muzzythegrump: KILL DISKETTE" tags="wiki gamesarchive" position="1475,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="66" name="muzzythegrump: KILL DISKETTE" tags="wiki gamesarchive" position="1475,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 &lt;div class=&quot;gga-banner-muzzy&quot; role=&quot;img&quot; aria-label=&quot;globalgamesarchive.co.uk: games by user muzzythegrump&quot;&gt;&lt;/div&gt;&lt;hr&gt;\
 &lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
   &lt;iframe
@@ -7014,7 +7132,7 @@ you can check out more of my work on (link-repeat: &quot;http://devlink-userbase
     title=&quot;KILL DISKETTE&quot;
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="61" name="kraska1: BAD DOOR" tags="wiki gamesarchive" position="1225,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="67" name="kraska1: BAD DOOR" tags="wiki gamesarchive" position="1225,725" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)&lt;hr&gt;\
 &lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
   &lt;iframe
@@ -7024,14 +7142,14 @@ you can check out more of my work on (link-repeat: &quot;http://devlink-userbase
     loading=&quot;lazy&quot;
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="62" name="kraska1: deal with the devil" tags="wiki gamesarchive" position="100,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="68" name="kraska1: deal with the devil" tags="wiki gamesarchive" position="100,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)\
 &lt;div class=&quot;minigame-devil-frame&quot;&gt;\
 	[(print: &#39;&lt;img class=&quot;minigame-devil-img&quot; src=&quot;&#39; + $imgroot + &#39;devil/devil1.png&quot;&gt;&#39;)]&lt;gamebg|
 	&lt;div class=&quot;minigame-devil-bar&quot;&gt;\
 deal with the devil
   &lt;/div&gt;
-&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="63" name="kraska1: mouse cafe" tags="wiki gamesarchive" position="350,975" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;&lt;/div&gt;</tw-passagedata><tw-passagedata pid="69" name="kraska1: mouse cafe" tags="wiki gamesarchive" position="350,975" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)&lt;hr&gt;\
 &lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
   &lt;iframe
@@ -7041,7 +7159,7 @@ deal with the devil
     loading=&quot;lazy&quot;
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="64" name="kraska1: riddles" tags="wiki gamesarchive" position="225,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="70" name="kraska1: riddles" tags="wiki gamesarchive" position="225,850" size="100,100">&lt;div class=&quot;wiki-gamesarchive&quot;&gt;\
 (display:&quot;img-kraskabar&quot;)&lt;hr&gt;\
 &lt;div style=&quot;width: 100%; height: 330px; background: black;&quot;&gt;\
   &lt;iframe
@@ -7051,12 +7169,12 @@ deal with the devil
     loading=&quot;lazy&quot;
   &gt;&lt;/iframe&gt;
 &lt;/div&gt;\
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="65" name="sound-demo-end" tags="" position="350,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/1b40d647-0d6c-4432-a679-7240a6e51893/demo-end.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="66" name="sound-email" tags="" position="475,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/fac56ba7-9c8f-414f-ab78-2376193e1985/email.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="67" name="func-open" tags="" position="100,100" size="100,100">{(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="71" name="sound-demo-end" tags="" position="350,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/1b40d647-0d6c-4432-a679-7240a6e51893/demo-end.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="72" name="sound-email" tags="" position="475,850" size="100,100">{&lt;audio src=&quot;https://audio.squarespace-cdn.com/content/v2/namespaces/website/libraries/640fa7267ced4b222f26b019/assets/fac56ba7-9c8f-414f-ab78-2376193e1985/email.mp3&quot; autoplay&gt;&lt;/audio&gt;}</tw-passagedata><tw-passagedata pid="73" name="func-open" tags="" position="100,100" size="100,100">{(unless: $openWindows contains $openPending)[(set: $openWindows to it + (a: $openPending))]
 (if: $openPending is &quot;diskette&quot;)[(set: $disketteShown to true)(set: $disketteQuiet to false)(set: $disketteNotice to &quot;&quot;)]
 (set: $focusWin to $openPending)
 (set: $focusSeq to it + 1)
 (set: $startOpen to false)
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="68" name="func-dialog-ok" tags="" position="100,100" size="100,100">{(set: _action to $dialogAction)
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="74" name="func-dialog-ok" tags="" position="100,100" size="100,100">{(set: _action to $dialogAction)
 (set: $dialog to &quot;&quot;)
 (set: $dialogAction to &quot;&quot;)
 (if: _action is &quot;openmail&quot;)[
@@ -7072,7 +7190,7 @@ deal with the devil
   (display: &quot;func-navigate&quot;)
 ](else:)[
   (replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]
-]}</tw-passagedata><tw-passagedata pid="69" name="DesktopActions" tags="" position="100,100" size="100,100">&lt;div class=&quot;js-actions&quot; hidden&gt;
+]}</tw-passagedata><tw-passagedata pid="75" name="DesktopActions" tags="" position="100,100" size="100,100">&lt;div class=&quot;js-actions&quot; hidden&gt;
 (link-repeat: &quot;restore:browser&quot;)[(set: $restorePending to &quot;browser&quot;)(display: &quot;func-restore&quot;)]
 (link-repeat: &quot;restore:mail&quot;)[(set: $restorePending to &quot;mail&quot;)(display: &quot;func-restore&quot;)]
 (link-repeat: &quot;restore:notes&quot;)[(set: $restorePending to &quot;notes&quot;)(display: &quot;func-restore&quot;)]
@@ -7089,30 +7207,30 @@ deal with the devil
 (link-repeat: &quot;diskette:hide&quot;)[(display: &quot;func-diskette-hide&quot;)]
 (link-repeat: &quot;diskette:talk&quot;)[(set: $disketteQuiet to false)(set: $disketteTopic to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 (link-repeat: &quot;trash-hint&quot;)[(set: $dialog to &quot;This item is in the Trash. To use it, drag it out onto the desktop first.&quot;)(set: $dialogTitle to &quot;Trash&quot;)(set: $dialogIcon to &quot;info&quot;)(set: $dialogOk to &quot;OK&quot;)(set: $dialogAction to &quot;&quot;)(set: $dialogCancel to false)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="70" name="func-restore" tags="" position="100,100" size="100,100">{(set: $trashItems to it - (a: $restorePending))
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="76" name="func-restore" tags="" position="100,100" size="100,100">{(set: $trashItems to it - (a: $restorePending))
 (unless: $desktopItems contains $restorePending)[(set: $desktopItems to it + (a: $restorePending))]
 (if: $openWindows contains &quot;diskette&quot; and not $disketteShown and (a: &quot;browser&quot;, &quot;mail&quot;, &quot;notes&quot;, &quot;downloads&quot;) contains $restorePending)[(set: $disketteNotice to $restorePending)]
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="71" name="Winkipedia" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki&quot;&gt;
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="77" name="Winkipedia" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki&quot;&gt;
 &lt;div class=&quot;winki-logo&quot;&gt;&lt;div class=&quot;winki-name&quot;&gt;Winkipedia&lt;/div&gt;&lt;div class=&quot;winki-tag&quot;&gt;The Free Encyclopedia&lt;/div&gt;&lt;/div&gt;
 &lt;div class=&quot;winki-search&quot;&gt;&lt;input type=&quot;text&quot; id=&quot;winki-search-input&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot; placeholder=&quot;Search Winkipedia&quot;&gt;&lt;button type=&quot;button&quot; id=&quot;winki-search-btn&quot; class=&quot;xp-button&quot;&gt;Search&lt;/button&gt;&lt;/div&gt;
 &lt;div class=&quot;winki-msg&quot; id=&quot;winki-msg&quot;&gt;&lt;/div&gt;
 &lt;span class=&quot;winki-nav&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
 &lt;div class=&quot;winki-index&quot; hidden&gt;(display: &quot;WinkiIndex&quot;)&lt;/div&gt;
 &lt;span class=&quot;winki-web-nav&quot; style=&quot;display:none&quot;&gt;(link: &quot;·&quot;)[(set: $navPending to &quot;Winkipedia Search Result&quot;)(display: &quot;func-navigate&quot;)]&lt;/span&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="72" name="Skunkpets.com" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;http-404&quot;&gt;
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="78" name="Skunkpets.com" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;http-404&quot;&gt;
 &lt;h1&gt;404 Not Found&lt;/h1&gt;
 &lt;p&gt;The page you are looking for no longer exists.&lt;/p&gt;
 &lt;p&gt;The requested URL http://www.skunkpets.com/ was not found on this server.&lt;/p&gt;
 &lt;hr&gt;
 &lt;address&gt;Apache/2.2.14 (Unix) Server at www.skunkpets.com Port 80&lt;/address&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="73" name="func-trash" tags="" position="100,100" size="100,100">{(set: $desktopItems to it - (a: $trashPending))
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="79" name="func-trash" tags="" position="100,100" size="100,100">{(set: $desktopItems to it - (a: $trashPending))
 (unless: $trashItems contains $trashPending)[(set: $trashItems to it + (a: $trashPending))]
 (set: $openWindows to it - (a: $trashPending))
 (if: $trashPending is &quot;diskette&quot;)[(set: $disketteShown to false)(set: $disketteNotice to &quot;&quot;)]
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="74" name="Winkipedia Search Result" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki-web&quot;&gt;
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="80" name="Winkipedia Search Result" tags="wiki" position="100,100" size="100,100">{&lt;div class=&quot;winki-web&quot;&gt;
 &lt;div class=&quot;winki-web-bar&quot;&gt;&lt;span class=&quot;winki-web-brand&quot;&gt;Winkipedia&lt;/span&gt; &lt;span class=&quot;winki-web-title&quot; id=&quot;winki-web-title&quot;&gt;&lt;/span&gt;&lt;/div&gt;
 &lt;iframe class=&quot;winki-web-frame&quot; id=&quot;winki-web-frame&quot; sandbox=&quot;allow-scripts allow-same-origin allow-popups&quot; referrerpolicy=&quot;no-referrer&quot;&gt;&lt;/iframe&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="75" name="RenderDiskette" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-assistant&quot;&gt;
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="81" name="RenderDiskette" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-assistant&quot;&gt;
 (unless: $disketteQuiet)[&lt;div class=&quot;diskette-bubble&quot;&gt;
 |diskette-close&gt;[&lt;button class=&quot;diskette-close&quot; type=&quot;button&quot; aria-label=&quot;Close&quot; title=&quot;Close (she stays; click her to talk again)&quot;&gt;&amp;times;&lt;/button&gt;]
 (click: ?diskette-close)[(set: $disketteQuiet to true)(set: $disketteTopic to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
@@ -7132,12 +7250,12 @@ deal with the devil
 ]
 &lt;/div&gt;]
 &lt;div class=&quot;diskette-character&quot; title=&quot;Click me to talk. Drag from my eyes to show me something.&quot;&gt;&lt;div class=&quot;diskette-eyes&quot;&gt;&lt;div class=&quot;diskette-pupil diskette-pupil-l&quot;&gt;&lt;/div&gt;&lt;div class=&quot;diskette-pupil diskette-pupil-r&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;diskette-eye-hit diskette-eye-hit-l&quot; title=&quot;Drag from my eyes to show me something&quot;&gt;&lt;/div&gt;&lt;div class=&quot;diskette-eye-hit diskette-eye-hit-r&quot; title=&quot;Drag from my eyes to show me something&quot;&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="76" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.]
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="82" name="DisketteTopic" tags="" position="100,100" size="100,100">{(if: $disketteTopic is &quot;browser&quot;)[&lt;b&gt;Browse&lt;/b&gt; is your web browser! Use the ◀ and ▶ buttons to go back and forward. The ★ button shows your bookmarks.]
 (else-if: $disketteTopic is &quot;mail&quot;)[&lt;b&gt;Mail&lt;/b&gt; is where your email arrives. Click a message in your Inbox to read it.]
 (else-if: $disketteTopic is &quot;downloads&quot;)[&lt;b&gt;Downloads&lt;/b&gt; is a folder of files saved from the internet.]
 (else-if: $disketteTopic is &quot;notes&quot;)[&lt;b&gt;Notes&lt;/b&gt; is a handy notepad. Jot down anything you want to remember.]
 (else-if: $disketteTopic is &quot;recycle&quot;)[The &lt;b&gt;Trash&lt;/b&gt; holds things that were thrown away. Drag an item out onto the desktop to get it back, or drag an icon onto the Trash to throw it away.]
-(else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="77" name="DisketteLooks" tags="" position="100,100" size="100,100">&lt;!-- What Diskette says when you drag from her eyes onto something
+(else-if: $disketteTopic is &quot;diskette&quot;)[That&#39;s me! I&#39;m &lt;b&gt;Diskette&lt;/b&gt;, Your Secretary. I know all about the programs on this computer. Just ask!]}</tw-passagedata><tw-passagedata pid="83" name="DisketteLooks" tags="" position="100,100" size="100,100">&lt;!-- What Diskette says when you drag from her eyes onto something
      (her &quot;inspecting&quot; mode; the script&#39;s DISKETTE INSPECTING reads
      this, it&#39;s never shown as a page). Plain HTML only: Harlowe
      markup and variables don&#39;t work here, but &lt;b&gt; and &lt;i&gt; do.
@@ -7205,7 +7323,7 @@ deal with the devil
 &lt;p data-look=&quot;dialog&quot; data-mood=&quot;wide&quot;&gt;Ooh, a message! You should probably read that.&lt;/p&gt;
 &lt;p data-look=&quot;desktop&quot; data-mood=&quot;wide&quot;&gt;Such beautiful green hills...&lt;/p&gt;
 &lt;p data-look=&quot;outside monitor&quot; data-mood=&quot;shake&quot;&gt;Hmm? I can&#39;t see anything out there.&lt;/p&gt;
-&lt;p data-look=&quot;anything&quot;&gt;Hmm! I&#39;m not sure what that is.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="78" name="GameEvents" tags="" position="100,100" size="100,100">&lt;!-- The events that matter, in story order: shown (with which have
+&lt;p data-look=&quot;anything&quot;&gt;Hmm! I&#39;m not sure what that is.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="84" name="GameEvents" tags="" position="100,100" size="100,100">&lt;!-- The events that matter, in story order: shown (with which have
      happened) in the preview Backend Editor&#39;s Events tab. Read by the
      editor, never shown in the game. See the script&#39;s EVENTS section
      for what marks them; a new one is marked from Harlowe with
@@ -7248,15 +7366,15 @@ deal with the devil
 &lt;p data-event=&quot;visited:devlink-userbase: logged in&quot; data-after=&quot;visited:devlink-userbase: login, visited:Forum: Hacked&quot;&gt;Logged in as bruce1.&lt;/p&gt;
 &lt;p data-event=&quot;email-arrived&quot; data-after=&quot;visited:devlink-userbase: logged in&quot;&gt;The &quot;stop&quot; email arrived.&lt;/p&gt;
 &lt;p data-event=&quot;stop-mail-opened&quot; data-after=&quot;email-arrived&quot;&gt;Opened the &quot;stop&quot; email.&lt;/p&gt;
-&lt;p data-event=&quot;ending&quot; data-after=&quot;stop-mail-opened&quot;&gt;Clicked &quot;game over&quot;: the ending.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="79" name="func-diskette-hide" tags="" position="100,100" size="100,100">{(set: $disketteTopic to &quot;&quot;)
+&lt;p data-event=&quot;ending&quot; data-after=&quot;stop-mail-opened&quot;&gt;Clicked &quot;game over&quot;: the ending.&lt;/p&gt;</tw-passagedata><tw-passagedata pid="85" name="func-diskette-hide" tags="" position="100,100" size="100,100">{(set: $disketteTopic to &quot;&quot;)
 (set: $disketteShown to false)
 (set: $disketteQuiet to false)
 (unless: $disketteToldTray)[(set: $disketteNotice to &quot;hello&quot;)(set: $disketteToldTray to true)]
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="80" name="func-diskette-show" tags="" position="100,100" size="100,100">{(set: $disketteShown to true)
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="86" name="func-diskette-show" tags="" position="100,100" size="100,100">{(set: $disketteShown to true)
 (set: $disketteQuiet to false)
 (if: $disketteNotice is not &quot;&quot; and $disketteNotice is not &quot;hello&quot;)[(set: $disketteTopic to $disketteNotice)](else:)[(set: $disketteTopic to &quot;&quot;)]
 (set: $disketteNotice to &quot;&quot;)
-(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="81" name="RenderDisketteBalloon" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-balloon&quot;&gt;
+(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]}</tw-passagedata><tw-passagedata pid="87" name="RenderDisketteBalloon" tags="" position="100,100" size="100,100">{&lt;div class=&quot;diskette-balloon&quot;&gt;
 |balloon-close&gt;[&lt;button class=&quot;diskette-balloon-close&quot; type=&quot;button&quot; aria-label=&quot;Close&quot;&gt;&amp;times;&lt;/button&gt;]
 (click: ?balloon-close)[(set: $disketteNotice to &quot;&quot;)(replace: ?desktoproot)[(display: &quot;RenderDesktop&quot;)]]
 |balloon-body&gt;[&lt;div class=&quot;diskette-balloon-title&quot;&gt;&lt;span class=&quot;diskette-icon diskette-icon-balloon&quot;&gt;&lt;/span&gt;Diskette&lt;/div&gt;
@@ -7267,7 +7385,7 @@ deal with the devil
 (else-if: $disketteNotice is &quot;downloads&quot;)[&lt;p&gt;Psst! I can tell you about &lt;b&gt;Downloads&lt;/b&gt;.&lt;/p&gt;]
 (else:)[&lt;p&gt;Psst! Click me!&lt;/p&gt;]]
 (click: ?balloon-body)[(display: &quot;func-diskette-show&quot;)]
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="82" name="RenderNetconTicket" tags="" position="100,100" size="100,100">{&lt;div class=&quot;netcon-ticket&quot;&gt;
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="88" name="RenderNetconTicket" tags="" position="100,100" size="100,100">{&lt;div class=&quot;netcon-ticket&quot;&gt;
 &lt;div class=&quot;netcon-banner&quot; role=&quot;img&quot; aria-label=&quot;NETCON 2004: at the Donald E. Stephens Convention + Conference Center. Join us for a weekend of panels, presentations, and gamez!!!&quot;&gt;&lt;/div&gt;
 &lt;div class=&quot;netcon-body&quot;&gt;
 &lt;p&gt;Hello,&lt;/p&gt;
@@ -7284,7 +7402,7 @@ deal with the devil
 &lt;p&gt;Thank you for your support!&lt;/p&gt;
 &lt;p&gt;NetCon&lt;/p&gt;
 &lt;/div&gt;
-&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="83" name="WinkiIndex" tags="" position="100,100" size="100,100">(link-repeat: &quot;Anya Krysina&quot;)[(set: $navPending to &quot;Anya Krysina&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Battlemutts&quot;)[(set: $navPending to &quot;Battlemutts&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Nick Galveston&quot;)[(set: $navPending to &quot;Nick Galveston&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tales of Prior Days&quot;)[(set: $navPending to &quot;Tales of Prior Days&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata></tw-storydata>
+&lt;/div&gt;}</tw-passagedata><tw-passagedata pid="89" name="WinkiIndex" tags="" position="100,100" size="100,100">(link-repeat: &quot;Anya Krysina&quot;)[(set: $navPending to &quot;Anya Krysina&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Battlemutts&quot;)[(set: $navPending to &quot;Battlemutts&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Diskette&quot;)[(set: $navPending to &quot;Diskette&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Henrietta Winetraub&quot;)[(set: $navPending to &quot;Henrietta Winetraub&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Lawrence Oregon&quot;)[(set: $navPending to &quot;Lawrence Oregon&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;NetCon 2004&quot;)[(set: $navPending to &quot;NetCon 2004&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Nick Galveston&quot;)[(set: $navPending to &quot;Nick Galveston&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Order of Refuse&quot;)[(set: $navPending to &quot;Order of Refuse&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;REV (Recast Entertainment Ventures)&quot;)[(set: $navPending to &quot;REV (Recast Entertainment Ventures)&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Saint Detritus Commercial Fellowship&quot;)[(set: $navPending to &quot;Saint Detritus Commercial Fellowship&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Skunkpets&quot;)[(set: $navPending to &quot;Skunkpets&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Songs for Family Learning&quot;)[(set: $navPending to &quot;Songs for Family Learning&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tales of Prior Days&quot;)[(set: $navPending to &quot;Tales of Prior Days&quot;)(display: &quot;func-navigate&quot;)](link-repeat: &quot;Tom Barry&quot;)[(set: $navPending to &quot;Tom Barry&quot;)(display: &quot;func-navigate&quot;)]</tw-passagedata></tw-storydata>
 
 <script title="Twine engine code" data-main="harlowe">"use strict";function _defineProperty(e,t,n){return t in e?Object.defineProperty(e,t,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[t]=n,e}function _toConsumableArray(e){if(Array.isArray(e)){for(var t=0,n=Array(e.length);t<e.length;t++)n[t]=e[t];return n}return Array.from(e)}var _slicedToArray=function(){function e(e,t){var n=[],r=!0,i=!1,o=void 0;try{for(var a,s=e[Symbol.iterator]();!(r=(a=s.next()).done)&&(n.push(a.value),!t||n.length!==t);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&s.return&&s.return()}finally{if(i)throw o}}return n}return function(t,n){if(Array.isArray(t))return t;if(Symbol.iterator in Object(t))return e(t,n);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),_typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};!function(){/**
  * @license almond 0.3.3 Copyright jQuery Foundation and other contributors.
