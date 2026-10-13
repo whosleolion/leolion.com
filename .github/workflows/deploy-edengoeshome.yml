@@ -1,0 +1,43 @@
+name: Deploy Eden Goes Home to Neocities
+
+# Uploads src/building/edengoeshome/ to the root of the `edengoeshome` Neocities site
+# (edengoeshome.com). Needs the repo secret NEOCITIES_API_KEY_EDENGOESHOME.
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - "src/building/edengoeshome/**"
+      - ".github/workflows/deploy-edengoeshome.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload to Neocities
+        env:
+          NEOCITIES_API_KEY: ${{ secrets.NEOCITIES_API_KEY_EDENGOESHOME }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NEOCITIES_API_KEY:-}" ]; then
+            echo "NEOCITIES_API_KEY_EDENGOESHOME secret is not set." >&2
+            exit 1
+          fi
+          root=src/building/edengoeshome
+          batch=(); size=0
+          flush() {
+            [ "${#batch[@]}" -eq 0 ] && return
+            args=(); for e in "${batch[@]}"; do args+=(-F "${e%%|*}=@${e#*|}"); done
+            code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' -H "Authorization: Bearer ${NEOCITIES_API_KEY}" "${args[@]}" https://neocities.org/api/upload)
+            cat /tmp/resp.json; echo
+            [ "$code" -eq 200 ] || { echo "Neocities upload failed: HTTP $code" >&2; exit 1; }
+            batch=(); size=0
+          }
+          while IFS= read -r -d '' f; do
+            s=$(stat -c%s "$f")
+            if [ "${#batch[@]}" -ge 20 ] || [ $((size + s)) -gt 20000000 ]; then flush; fi
+            batch+=("${f#$root/}|$f"); size=$((size + s))
+          done < <(find "$root" -type f -print0)
+          flush
