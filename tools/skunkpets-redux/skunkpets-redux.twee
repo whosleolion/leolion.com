@@ -7019,8 +7019,7 @@ Star button to bookmark a page.
 
 :: forum-user-oldmadison {"position":"1100,475","size":"100,100"}
 <div class="forum-post-user">\
-        		(print:'<img class="forum-post-avatar"
-		src="'+$imgroot+'avatars/1.png">')\
+        		<img class="forum-post-avatar" data-site-src="/building/skunkpets/forum/avatars/oldmadison.jpg" alt="">\
         		<div class="forum-post-username">oldmadison</div>\
         		<div class="forum-post-meta">\
           		Joined: 2008<br>\
@@ -7029,8 +7028,7 @@ Star button to bookmark a page.
 
 :: forum-user-Moped_Guy {"position":"975,475","size":"100,100"}
 <div class="forum-post-user">\
-        		(print:'<img class="forum-post-avatar"
-		src="'+$imgroot+'avatars/2.png">')\
+        		<img class="forum-post-avatar" data-site-src="/building/skunkpets/forum/avatars/moped-guy.jpg" alt="">\
         		<div class="forum-post-username">Moped&#95;Guy</div>\
         		<div class="forum-post-meta">\
           		Joined: 2005<br>\
@@ -7039,8 +7037,7 @@ Star button to bookmark a page.
 
 :: forum-user-Starr {"position":"850,475","size":"100,100"}
 <div class="forum-post-user">\
-        		(print:'<img class="forum-post-avatar"
-		src="'+$imgroot+'avatars/12.png">')\
+        		<img class="forum-post-avatar" data-site-src="/building/skunkpets/forum/avatars/starr.jpg" alt="">\
         		<div class="forum-post-username">Starr</div>\
         		<div class="forum-post-meta">\
           		Joined: 2007<br>\
@@ -7049,8 +7046,7 @@ Star button to bookmark a page.
 
 :: forum-user-ali {"position":"725,475","size":"100,100"}
 <div class="forum-post-user">\
-        		(print:'<img class="forum-post-avatar"
-		src="'+$imgroot+'avatars/13.png">')\
+        		<img class="forum-post-avatar" data-site-src="/building/skunkpets/forum/avatars/ali.jpg" alt="">\
         		<div class="forum-post-username">ali</div>\
         		<div class="forum-post-meta">\
           		Joined: 2009<br>\
@@ -7059,8 +7055,7 @@ Star button to bookmark a page.
 
 :: forum-user-silv3rrrr {"position":"600,475","size":"100,100"}
 <div class="forum-post-user">\
-        		(print:'<img class="forum-post-avatar"
-		src="'+$imgroot+'avatars/10.png">')\
+        		<img class="forum-post-avatar" data-site-src="/building/skunkpets/forum/avatars/silv3rrrr.jpg" alt="">\
         		<div class="forum-post-username">silv3rrrr</div>\
         		<div class="forum-post-meta">\
           		Joined: 2006<br>\
