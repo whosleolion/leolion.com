@@ -80,6 +80,34 @@
     }
     .custom-note { font-size: 0.9rem; color: var(--muted); max-width: 640px; margin-top: 1.75rem; line-height: 1.6; }
 
+    /* Inquiry form */
+    .inquiry-form {
+      display: flex; flex-direction: column; gap: 1rem;
+      max-width: 480px; margin: 0 auto; text-align: left;
+    }
+    .inquiry-form label {
+      font-family: var(--font-ui); font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+      display: block; margin-bottom: 0.4rem;
+    }
+    .inquiry-form input, .inquiry-form textarea {
+      width: 100%; background: var(--card); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.8em 1em; font-family: var(--font-body);
+      font-size: 0.9rem; color: var(--white); outline: none;
+      transition: border-color 0.2s;
+    }
+    .inquiry-form input::placeholder, .inquiry-form textarea::placeholder { color: var(--muted); opacity: 0.7; }
+    .inquiry-form input:focus, .inquiry-form textarea:focus { border-color: var(--accent); }
+    .inquiry-form textarea { min-height: 130px; resize: vertical; font-family: var(--font-body); }
+    .inquiry-form button {
+      align-self: flex-start; background: var(--accent); color: var(--black);
+      font-family: var(--font-ui); font-weight: 700; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase; padding: 0.9em 1.75em;
+      border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;
+    }
+    .inquiry-form button:hover { background: #13a884; }
+    .inquiry-note { font-size: 0.72rem; color: var(--muted); margin-top: 0.9rem; opacity: 0.7; text-align: center; }
+
     @media (max-width: 900px) {
       .shot-grid, .shot-grid--2 { grid-template-columns: 1fr; }
       .services-list { grid-template-columns: 1fr; }
@@ -137,6 +165,19 @@
 
       <p class="sites-label">Project Sites</p>
       <div class="shot-grid" data-fade>
+        <a class="shot-card" href="https://edengoeshome.com" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">edengoeshome.com</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/edengoeshome.jpg" alt="edengoeshome.com homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">edengoeshome.com</h3>
+            <p class="shot-card__desc">Built for Lena Streitwieser's new musical, running at Teatro LATEA this December. Ticket sales, countdown, donate button.</p>
+          </div>
+        </a>
         <a class="shot-card" href="https://spy.show" target="_blank" rel="noopener">
           <div class="shot-card__chrome">
             <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
@@ -161,19 +202,6 @@
           <div class="shot-card__body">
             <h3 class="shot-card__title">helpmetheshow.com</h3>
             <p class="shot-card__desc">One-page site for Help Me!!!!, my solo mime show.</p>
-          </div>
-        </a>
-        <a class="shot-card" href="https://edengoeshome.com" target="_blank" rel="noopener">
-          <div class="shot-card__chrome">
-            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
-            <span class="shot-card__url">edengoeshome.com</span>
-          </div>
-          <div class="shot-card__imgwrap">
-            <img class="shot-card__img" src="images/webdesign/edengoeshome.jpg" alt="edengoeshome.com homepage" width="1280" height="800" loading="lazy" />
-          </div>
-          <div class="shot-card__body">
-            <h3 class="shot-card__title">edengoeshome.com</h3>
-            <p class="shot-card__desc">Built for Lena Streitwieser's new musical, running at Teatro LATEA this December. Ticket sales, countdown, donate button.</p>
           </div>
         </a>
       </div>
@@ -263,10 +291,26 @@
     <div class="container">
       <span class="label">Let's Talk</span>
       <h2 class="section-title" id="webdesign-contact-heading" style="margin-bottom:1rem;">GET IN<br>TOUCH</h2>
-      <p class="contact-desc">New site, redesign, or just a fix &mdash; email me and tell me what you need.</p>
-      <div class="contact-ctas">
-        <a href="mailto:leo@firebird.nyc?subject=Web Design Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
-      </div>
+      <p class="contact-desc">Tell me what you need and I'll get back to you.</p>
+
+      <form class="inquiry-form" aria-label="Web design inquiry" action="https://formspree.io/f/mkjwkzjr" method="POST">
+        <input type="hidden" name="_subject" value="Web Design Inquiry — leolion.com" />
+        <div>
+          <label for="inq-name">Name</label>
+          <input type="text" id="inq-name" name="name" required autocomplete="name" />
+        </div>
+        <div>
+          <label for="inq-email">Email</label>
+          <input type="email" id="inq-email" name="email" required autocomplete="email" />
+        </div>
+        <div>
+          <label for="inq-details">What do you need?</label>
+          <textarea id="inq-details" name="details" required placeholder="New site, redesign, a feature you need added — whatever it is, describe it here."></textarea>
+        </div>
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none" />
+        <button type="submit">Send &rarr;</button>
+      </form>
+      <p class="inquiry-note">Or email me directly: <a href="mailto:leo@firebird.nyc?subject=Web Design Inquiry">leo@firebird.nyc</a></p>
     </div>
   </section>
 

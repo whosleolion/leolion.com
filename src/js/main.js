@@ -78,6 +78,43 @@
   });
 })();
 
+/* Inquiry forms (e.g. web-design.html) — posts to the form's action (Formspree) via fetch */
+(function () {
+  document.querySelectorAll('.inquiry-form').forEach(form => {
+    form.addEventListener('submit', async e => {
+      const btn = form.querySelector('button');
+      const fields = form.querySelectorAll('input, textarea');
+      if (!form.action) return; // no endpoint wired up — let the browser handle it
+
+      e.preventDefault();
+      const label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const done = (text, bg) => {
+        btn.textContent = text;
+        btn.style.background = bg;
+      };
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error('Request failed: ' + res.status);
+        done('Sent!', '#22c55e');
+        form.reset();
+        fields.forEach(f => (f.disabled = true));
+      } catch (err) {
+        done('Try again', '#ef4444');
+        btn.disabled = false;
+        setTimeout(() => done(label, ''), 3000);
+      }
+    });
+  });
+})();
+
 /* Fade-in on scroll */
 (function () {
   const els = document.querySelectorAll('[data-fade]');
