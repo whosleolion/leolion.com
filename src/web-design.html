@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Leo Lion — Web design and development. Full site builds, design, administration, and revisions for shows, companies, and people, with custom features like forms, calendars, and registration built in." />
+  <title>Web Design — Leo Lion</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --accent: #16c79a; --accent-dim: rgba(22,199,154,0.1); }
+    [data-fade] {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      transition-delay: var(--delay, 0s);
+    }
+    [data-fade].visible { opacity: 1; transform: none; }
+
+    /* Site cards */
+    .sites-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 1.5rem;
+    }
+    .sites-grid--2 { grid-template-columns: repeat(2, 1fr); }
+    .site-card {
+      background: var(--near-black);
+      padding: 2rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: background 0.2s;
+    }
+    .site-card:hover { background: var(--card); }
+    .site-card__eyebrow {
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+    }
+    .site-card__title {
+      font-family: var(--font-display); font-weight: 700;
+      font-size: clamp(1.25rem, 1.8vw, 1.6rem);
+      line-height: 1.05; letter-spacing: 0.01em;
+    }
+    .site-card__desc {
+      font-size: 0.83rem; color: var(--muted); line-height: 1.6; flex: 1;
+    }
+    .site-card__link {
+      display: inline-flex; align-items: center; gap: 0.4em;
+      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+      transition: gap 0.2s; margin-top: auto;
+    }
+    .site-card__link:hover { gap: 0.75em; }
+
+    /* Subsection labels within the sites block */
+    .sites-label {
+      font-family: var(--font-ui); font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+      margin-top: 2.5rem; margin-bottom: 0;
+      padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+    }
+    .sites-label:first-child { margin-top: 0; }
+    .sites-label span { color: var(--accent); }
+
+    /* Offerings (Build / Design / Administer / Revise) */
+    .offerings-list {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border); border: 1px solid var(--border);
+    }
+    .offering-row {
+      background: var(--near-black); padding: 1.75rem 2rem;
+      display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: center;
+      transition: background 0.2s;
+    }
+    .offering-row:hover { background: var(--card); }
+    .offering-row__title {
+      font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: 0.02em;
+    }
+    .offering-row__track {
+      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-top: 0.25rem;
+    }
+    .offering-row__desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* Feature chips */
+    .feature-chips { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.5rem; }
+    .feature-chip {
+      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+      padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 999px;
+      color: var(--muted); background: var(--near-black);
+    }
+
+    .philosophy-block { max-width: 720px; margin: 0 auto; text-align: center; }
+    .philosophy-block p {
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.8; color: var(--muted); font-style: italic;
+    }
+    .philosophy-block p strong { color: var(--white); font-style: normal; }
+
+    .section { padding: clamp(2rem, 4vw, 3rem) 0; }
+
+    @media (max-width: 900px) {
+      .sites-grid, .sites-grid--2 { grid-template-columns: 1fr; }
+      .offering-row { grid-template-columns: 1fr; gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">LEO LION</a>
+    <button class="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#projects">Projects</a></li>
+      <li><a href="index.html#praise">Press</a></li>
+      <li><a href="leo-lion-cv-2026.pdf" target="_blank" rel="noopener">CV</a></li>
+      <li><a href="https://spy.show/#dates" target="_blank" rel="noopener" class="nav-cta">SPY SHOW</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div>
+      <span class="label">Leo Lion · Design &amp; Development</span>
+      <h1 class="page-header__title">WEB DESIGN</h1>
+    </div>
+    <div class="page-header__meta">
+      <p>Build · Design · Administer · Revise</p>
+      <p>Sites for shows, companies &amp; people</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- INTRO -->
+  <section class="section" style="border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="philosophy-block" data-fade>
+        <p>Every site on this page is mine, start to finish &mdash; I designed it, built it, and I'm usually still the one keeping it running. Some are for my own work: <strong>spy.show</strong> has to publicize a show that insists it doesn't exist. Some are for other people's: a new musical needed ticket links and a donate button before rehearsals started, a youth theater needed class registration that wouldn't break every semester. If a project needs a website &mdash; a show, a company, a person &mdash; I'll design it, build it, and keep it running, custom features included.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SITES -->
+  <section class="section" aria-labelledby="sites-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title section-title--etna" id="sites-heading">Sites I've Built</h2>
+      </div>
+
+      <p class="sites-label">Project Sites</p>
+      <div class="sites-grid" data-fade>
+        <a class="site-card" href="https://spy.show" target="_blank" rel="noopener">
+          <span class="site-card__eyebrow">Immersive Spy Show · Edinburgh Fringe 2026</span>
+          <h3 class="site-card__title">spy.show</h3>
+          <p class="site-card__desc">A show that insists it doesn't exist needs a site willing to play along &mdash; tour dates, ticket links, and a hero built to deny everything.</p>
+          <span class="site-card__link">Visit spy.show &rarr;</span>
+        </a>
+        <a class="site-card" href="https://helpmetheshow.com" target="_blank" rel="noopener">
+          <span class="site-card__eyebrow">Interactive Mime S&eacute;ance</span>
+          <h3 class="site-card__title">helpmetheshow.com</h3>
+          <p class="site-card__desc">One page, one bit, committed all the way down: a s&eacute;ance you can actually buy a ticket to.</p>
+          <span class="site-card__link">Visit helpmetheshow.com &rarr;</span>
+        </a>
+        <a class="site-card" href="https://edengoeshome.com" target="_blank" rel="noopener">
+          <span class="site-card__eyebrow">New Musical · Lena Streitwieser</span>
+          <h3 class="site-card__title">edengoeshome.com</h3>
+          <p class="site-card__desc">Built for a fellow writer's Winterfest run at Teatro LATEA &mdash; ticket sales and a donate button, live before rehearsals started.</p>
+          <span class="site-card__link">Visit edengoeshome.com &rarr;</span>
+        </a>
+      </div>
+
+      <p class="sites-label">Personal Sites</p>
+      <div class="sites-grid sites-grid--2" data-fade>
+        <a class="site-card" href="index.html">
+          <span class="site-card__eyebrow">You Are Here</span>
+          <h3 class="site-card__title">leolion.com</h3>
+          <p class="site-card__desc">Yes, this one too &mdash; design, code, and the newsletter form at the bottom of the homepage.</p>
+          <span class="site-card__link">Back to Homepage &rarr;</span>
+        </a>
+        <a class="site-card" href="https://edwin-torres.com" target="_blank" rel="noopener">
+          <span class="site-card__eyebrow">Personal Site · Eddie Torres</span>
+          <h3 class="site-card__title">edwin-torres.com</h3>
+          <p class="site-card__desc">President &amp; CEO of Grantmakers in the Arts, formerly NYC's Deputy Commissioner of Cultural Affairs &mdash; a site built to carry that track record without reading like a resume PDF.</p>
+          <span class="site-card__link">Visit edwin-torres.com &rarr;</span>
+        </a>
+      </div>
+
+      <p class="sites-label">Company Sites</p>
+      <div class="sites-grid sites-grid--2" data-fade>
+        <a class="site-card" href="https://firebird.nyc" target="_blank" rel="noopener">
+          <span class="site-card__eyebrow">The Firebird Project</span>
+          <h3 class="site-card__title">firebird.nyc</h3>
+          <p class="site-card__desc">Home base for an entire company's original shows, classes, and donate page &mdash; plus the line everything else points back to: "You had to be there."</p>
+          <span class="site-card__link">Visit firebird.nyc &rarr;</span>
+        </a>
+        <a class="site-card" href="https://youth.firebird.nyc" target="_blank" rel="noopener">
+          <span class="site-card__eyebrow">Firebird Youth Theater</span>
+          <h3 class="site-card__title">youth.firebird.nyc</h3>
+          <p class="site-card__desc">Class schedules, registration, and payment for a youth theater program serving ages 8&ndash;18 since 2013 &mdash; built so enrollment doesn't live in a Google Form.</p>
+          <span class="site-card__link">Visit youth.firebird.nyc &rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="services-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title section-title--etna" id="services-heading">What I Do</h2>
+      </div>
+
+      <div class="offerings-list" data-fade>
+        <div class="offering-row">
+          <div>
+            <h3 class="offering-row__title">Build</h3>
+            <p class="offering-row__track">From Scratch</p>
+          </div>
+          <p class="offering-row__desc">A new site, start to finish &mdash; from a single show-announcement page to a multi-program site with registration and payment built in.</p>
+        </div>
+        <div class="offering-row">
+          <div>
+            <h3 class="offering-row__title">Design</h3>
+            <p class="offering-row__track">Visual Identity</p>
+          </div>
+          <p class="offering-row__desc">A look that's actually specific to the thing it's for &mdash; not a template with a new name dropped in.</p>
+        </div>
+        <div class="offering-row">
+          <div>
+            <h3 class="offering-row__title">Administer</h3>
+            <p class="offering-row__track">Ongoing</p>
+          </div>
+          <p class="offering-row__desc">Updates, hosting, and the unglamorous maintenance that keeps a site from quietly rotting after launch.</p>
+        </div>
+        <div class="offering-row">
+          <div>
+            <h3 class="offering-row__title">Revise</h3>
+            <p class="offering-row__track">Rebuilds &amp; Fixes</p>
+          </div>
+          <p class="offering-row__desc">A redesign, a rebuild, or just a fix for a site that already exists but isn't working anymore.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:2.5rem;border-top:1px solid var(--border);padding-top:1.5rem;">
+        <p style="font-family:var(--font-ui);font-size:0.62rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);">Custom Features, Already Built</p>
+        <p style="font-size:0.82rem;color:var(--muted);margin-top:0.5rem;max-width:640px;">Whatever a project needs, there's a decent chance I've already built something like it:</p>
+        <div class="feature-chips">
+          <span class="feature-chip">Ticket links &amp; countdowns</span>
+          <span class="feature-chip">Class registration &amp; payment</span>
+          <span class="feature-chip">Donate buttons</span>
+          <span class="feature-chip">Newsletter signups</span>
+          <span class="feature-chip">Calendars &amp; scheduling</span>
+          <span class="feature-chip">Custom galleries &amp; video embeds</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="section contact-section" aria-labelledby="webdesign-contact-heading">
+    <div class="container">
+      <span class="label">Let's Build Something</span>
+      <h2 class="section-title" id="webdesign-contact-heading" style="margin-bottom:1rem;">GET IN<br>TOUCH</h2>
+      <p class="contact-desc">Starting from zero, fixing something that already exists, or just need a feature added &mdash; reach out and tell me what you've got.</p>
+      <div class="contact-ctas">
+        <a href="mailto:leo@firebird.nyc?subject=Web Design Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
+      </div>
+      <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--muted);">leo@firebird.nyc</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <a href="index.html" class="footer-logo">LEO LION</a>
+        <p class="footer-tagline">Director &middot; Performer &middot; Educator &middot; Game Artist &middot; Brooklyn, NY</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="directing.html">Directing</a>
+        <a href="playwriting.html">Playwriting</a>
+        <a href="workshops.html">Workshops</a>
+        <a href="web-design.html">Web Design</a>
+        <a href="https://helpmetheshow.com">HELP ME!!!!</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Leo Lion. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/whosleolion" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/@whosleolion" target="_blank" rel="noopener">TikTok</a>
+        <a href="mailto:leo@firebird.nyc">Email</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
