@@ -108,9 +108,16 @@
     .inquiry-form button:hover { background: #13a884; }
     .inquiry-note { font-size: 0.72rem; color: var(--muted); margin-top: 0.9rem; opacity: 0.7; text-align: center; }
 
+    /* This page's header: no eyebrow/subtitle, so drop the divider and tighten it up */
+    .page-header { border-bottom: none; padding-bottom: 1.5rem; }
+
     @media (max-width: 900px) {
       .shot-grid, .shot-grid--2 { grid-template-columns: 1fr; }
       .services-list { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .page-header { padding-top: calc(var(--nav-h) + 1.5rem); padding-bottom: 1rem; }
     }
   </style>
 </head>
@@ -134,13 +141,7 @@
 
 <header class="page-header">
   <div class="container">
-    <div>
-      <span class="label">Leo Lion</span>
-      <h1 class="page-header__title">WEB DESIGN</h1>
-    </div>
-    <div class="page-header__meta">
-      <p>Sites I've built</p>
-    </div>
+    <h1 class="page-header__title">WEB DESIGN</h1>
   </div>
 </header>
 
