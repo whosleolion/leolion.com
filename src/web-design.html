@@ -3,108 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Leo Lion — Web design and development. Full site builds, design, administration, and revisions for shows, companies, and people, with custom features like forms, calendars, and registration built in." />
+  <meta name="description" content="Leo Lion — Web design. Sites I've built for my own shows, Firebird, and other people's projects. I can build, design, or fix a site for you too." />
   <title>Web Design — Leo Lion</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
     :root { --accent: #16c79a; --accent-dim: rgba(22,199,154,0.1); }
     [data-fade] {
-      opacity: 0; transform: translateY(20px);
-      transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
       transition-delay: var(--delay, 0s);
     }
     [data-fade].visible { opacity: 1; transform: none; }
 
-    /* Site cards */
-    .sites-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      margin-top: 1.5rem;
-    }
-    .sites-grid--2 { grid-template-columns: repeat(2, 1fr); }
-    .site-card {
-      background: var(--near-black);
-      padding: 2rem 1.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      transition: background 0.2s;
-    }
-    .site-card:hover { background: var(--card); }
-    .site-card__eyebrow {
-      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
-    }
-    .site-card__title {
-      font-family: var(--font-display); font-weight: 700;
-      font-size: clamp(1.25rem, 1.8vw, 1.6rem);
-      line-height: 1.05; letter-spacing: 0.01em;
-    }
-    .site-card__desc {
-      font-size: 0.83rem; color: var(--muted); line-height: 1.6; flex: 1;
-    }
-    .site-card__link {
-      display: inline-flex; align-items: center; gap: 0.4em;
-      font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
-      transition: gap 0.2s; margin-top: auto;
-    }
-    .site-card__link:hover { gap: 0.75em; }
+    .section { padding: clamp(2rem, 4vw, 3.5rem) 0; }
 
-    /* Subsection labels within the sites block */
+    .intro-block { max-width: 640px; }
+    .intro-block p {
+      font-size: clamp(1rem, 1.6vw, 1.15rem);
+      line-height: 1.7; color: var(--muted);
+    }
+    .intro-block p + p { margin-top: 1rem; }
+
     .sites-label {
       font-family: var(--font-ui); font-size: 0.65rem; font-weight: 700;
       letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
-      margin-top: 2.5rem; margin-bottom: 0;
-      padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+      margin: 3rem 0 1.25rem;
     }
-    .sites-label:first-child { margin-top: 0; }
-    .sites-label span { color: var(--accent); }
+    .sites-label:first-of-type { margin-top: 0; }
 
-    /* Offerings (Build / Design / Administer / Revise) */
-    .offerings-list {
-      display: flex; flex-direction: column; gap: 1px;
-      background: var(--border); border: 1px solid var(--border);
+    /* Screenshot cards, framed like a browser window */
+    .shot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
     }
-    .offering-row {
-      background: var(--near-black); padding: 1.75rem 2rem;
-      display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: center;
-      transition: background 0.2s;
+    .shot-grid--2 { grid-template-columns: repeat(2, 1fr); }
+    .shot-card {
+      display: block;
+      background: var(--near-black);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
     }
-    .offering-row:hover { background: var(--card); }
-    .offering-row__title {
-      font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: 0.02em;
+    .shot-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .shot-card__chrome {
+      display: flex; align-items: center; gap: 5px;
+      padding: 9px 11px; background: var(--card);
+      border-bottom: 1px solid var(--border);
     }
-    .offering-row__track {
-      font-family: var(--font-ui); font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--accent); margin-top: 0.25rem;
+    .shot-card__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex: none; }
+    .shot-card__url {
+      margin-left: 6px; font-family: var(--font-ui); font-size: 0.68rem; color: var(--muted);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .offering-row__desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+    .shot-card__imgwrap { aspect-ratio: 16 / 10; overflow: hidden; background: var(--card); }
+    .shot-card__img {
+      width: 100%; height: 100%; object-fit: cover; object-position: top;
+      display: block; transition: transform 0.5s var(--ease-out-expo);
+    }
+    .shot-card:hover .shot-card__img { transform: scale(1.04); }
+    .shot-card__body { padding: 1.1rem 1.25rem 1.3rem; }
+    .shot-card__title {
+      font-family: var(--font-display); font-weight: 700; font-size: 1.15rem;
+    }
+    .shot-card__desc { font-size: 0.83rem; color: var(--muted); line-height: 1.55; margin-top: 0.4rem; }
 
-    /* Feature chips */
-    .feature-chips { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.5rem; }
-    .feature-chip {
-      font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
-      padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 999px;
-      color: var(--muted); background: var(--near-black);
+    /* Services, plain list */
+    .services-list {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem 2rem;
+      max-width: 640px;
     }
-
-    .philosophy-block { max-width: 720px; margin: 0 auto; text-align: center; }
-    .philosophy-block p {
-      font-size: clamp(1.05rem, 2vw, 1.3rem);
-      line-height: 1.8; color: var(--muted); font-style: italic;
+    .services-list li {
+      font-size: 0.95rem; color: var(--white); padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
     }
-    .philosophy-block p strong { color: var(--white); font-style: normal; }
-
-    .section { padding: clamp(2rem, 4vw, 3rem) 0; }
+    .custom-note { font-size: 0.9rem; color: var(--muted); max-width: 640px; margin-top: 1.75rem; line-height: 1.6; }
 
     @media (max-width: 900px) {
-      .sites-grid, .sites-grid--2 { grid-template-columns: 1fr; }
-      .offering-row { grid-template-columns: 1fr; gap: 0.75rem; }
+      .shot-grid, .shot-grid--2 { grid-template-columns: 1fr; }
+      .services-list { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -129,12 +107,11 @@
 <header class="page-header">
   <div class="container">
     <div>
-      <span class="label">Leo Lion · Design &amp; Development</span>
+      <span class="label">Leo Lion</span>
       <h1 class="page-header__title">WEB DESIGN</h1>
     </div>
     <div class="page-header__meta">
-      <p>Build · Design · Administer · Revise</p>
-      <p>Sites for shows, companies &amp; people</p>
+      <p>Sites I've built</p>
     </div>
   </div>
 </header>
@@ -144,8 +121,9 @@
   <!-- INTRO -->
   <section class="section" style="border-bottom:1px solid var(--border);">
     <div class="container">
-      <div class="philosophy-block" data-fade>
-        <p>Every site on this page is mine, start to finish &mdash; I designed it, built it, and I'm usually still the one keeping it running. Some are for my own work: <strong>spy.show</strong> has to publicize a show that insists it doesn't exist. Some are for other people's: a new musical needed ticket links and a donate button before rehearsals started, a youth theater needed class registration that wouldn't break every semester. If a project needs a website &mdash; a show, a company, a person &mdash; I'll design it, build it, and keep it running, custom features included.</p>
+      <div class="intro-block" data-fade>
+        <p>I built every site below myself &mdash; my own shows, Firebird's sites, and a couple of projects for people I work with. Design, code, hosting, all of it.</p>
+        <p>If you need a site built, redesigned, or fixed, I can do that for you too.</p>
       </div>
     </div>
   </section>
@@ -158,56 +136,105 @@
       </div>
 
       <p class="sites-label">Project Sites</p>
-      <div class="sites-grid" data-fade>
-        <a class="site-card" href="https://spy.show" target="_blank" rel="noopener">
-          <span class="site-card__eyebrow">Immersive Spy Show · Edinburgh Fringe 2026</span>
-          <h3 class="site-card__title">spy.show</h3>
-          <p class="site-card__desc">A show that insists it doesn't exist needs a site willing to play along &mdash; tour dates, ticket links, and a hero built to deny everything.</p>
-          <span class="site-card__link">Visit spy.show &rarr;</span>
+      <div class="shot-grid" data-fade>
+        <a class="shot-card" href="https://spy.show" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">spy.show</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/spy-show.jpg" alt="spy.show homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">spy.show</h3>
+            <p class="shot-card__desc">Site for I Was Never Here, my spy show that premiered at Edinburgh Fringe. Ticket links, tour dates, press.</p>
+          </div>
         </a>
-        <a class="site-card" href="https://helpmetheshow.com" target="_blank" rel="noopener">
-          <span class="site-card__eyebrow">Interactive Mime S&eacute;ance</span>
-          <h3 class="site-card__title">helpmetheshow.com</h3>
-          <p class="site-card__desc">One page, one bit, committed all the way down: a s&eacute;ance you can actually buy a ticket to.</p>
-          <span class="site-card__link">Visit helpmetheshow.com &rarr;</span>
+        <a class="shot-card" href="https://helpmetheshow.com" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">helpmetheshow.com</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/helpmetheshow.jpg" alt="helpmetheshow.com homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">helpmetheshow.com</h3>
+            <p class="shot-card__desc">One-page site for Help Me!!!!, my solo mime show.</p>
+          </div>
         </a>
-        <a class="site-card" href="https://edengoeshome.com" target="_blank" rel="noopener">
-          <span class="site-card__eyebrow">New Musical · Lena Streitwieser</span>
-          <h3 class="site-card__title">edengoeshome.com</h3>
-          <p class="site-card__desc">Built for a fellow writer's Winterfest run at Teatro LATEA &mdash; ticket sales and a donate button, live before rehearsals started.</p>
-          <span class="site-card__link">Visit edengoeshome.com &rarr;</span>
+        <a class="shot-card" href="https://edengoeshome.com" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">edengoeshome.com</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/edengoeshome.jpg" alt="edengoeshome.com homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">edengoeshome.com</h3>
+            <p class="shot-card__desc">Built for Lena Streitwieser's new musical, running at Teatro LATEA this December. Ticket sales, countdown, donate button.</p>
+          </div>
         </a>
       </div>
 
       <p class="sites-label">Personal Sites</p>
-      <div class="sites-grid sites-grid--2" data-fade>
-        <a class="site-card" href="index.html">
-          <span class="site-card__eyebrow">You Are Here</span>
-          <h3 class="site-card__title">leolion.com</h3>
-          <p class="site-card__desc">Yes, this one too &mdash; design, code, and the newsletter form at the bottom of the homepage.</p>
-          <span class="site-card__link">Back to Homepage &rarr;</span>
+      <div class="shot-grid shot-grid--2" data-fade>
+        <a class="shot-card" href="index.html">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">leolion.com</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/leolion.jpg" alt="leolion.com homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">leolion.com</h3>
+            <p class="shot-card__desc">This site.</p>
+          </div>
         </a>
-        <a class="site-card" href="https://edwin-torres.com" target="_blank" rel="noopener">
-          <span class="site-card__eyebrow">Personal Site · Eddie Torres</span>
-          <h3 class="site-card__title">edwin-torres.com</h3>
-          <p class="site-card__desc">President &amp; CEO of Grantmakers in the Arts, formerly NYC's Deputy Commissioner of Cultural Affairs &mdash; a site built to carry that track record without reading like a resume PDF.</p>
-          <span class="site-card__link">Visit edwin-torres.com &rarr;</span>
+        <a class="shot-card" href="https://edwin-torres.com" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">edwin-torres.com</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/edwin-torres.jpg" alt="edwin-torres.com homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">edwin-torres.com</h3>
+            <p class="shot-card__desc">Bio site for Eddie Torres, president of Grantmakers in the Arts and former NYC Deputy Commissioner of Cultural Affairs.</p>
+          </div>
         </a>
       </div>
 
       <p class="sites-label">Company Sites</p>
-      <div class="sites-grid sites-grid--2" data-fade>
-        <a class="site-card" href="https://firebird.nyc" target="_blank" rel="noopener">
-          <span class="site-card__eyebrow">The Firebird Project</span>
-          <h3 class="site-card__title">firebird.nyc</h3>
-          <p class="site-card__desc">Home base for an entire company's original shows, classes, and donate page &mdash; plus the line everything else points back to: "You had to be there."</p>
-          <span class="site-card__link">Visit firebird.nyc &rarr;</span>
+      <div class="shot-grid shot-grid--2" data-fade>
+        <a class="shot-card" href="https://firebird.nyc" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">firebird.nyc</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/firebird-nyc.jpg" alt="firebird.nyc homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">firebird.nyc</h3>
+            <p class="shot-card__desc">Firebird's main site &mdash; shows, classes, donations.</p>
+          </div>
         </a>
-        <a class="site-card" href="https://youth.firebird.nyc" target="_blank" rel="noopener">
-          <span class="site-card__eyebrow">Firebird Youth Theater</span>
-          <h3 class="site-card__title">youth.firebird.nyc</h3>
-          <p class="site-card__desc">Class schedules, registration, and payment for a youth theater program serving ages 8&ndash;18 since 2013 &mdash; built so enrollment doesn't live in a Google Form.</p>
-          <span class="site-card__link">Visit youth.firebird.nyc &rarr;</span>
+        <a class="shot-card" href="https://youth.firebird.nyc" target="_blank" rel="noopener">
+          <div class="shot-card__chrome">
+            <span class="shot-card__dot"></span><span class="shot-card__dot"></span><span class="shot-card__dot"></span>
+            <span class="shot-card__url">youth.firebird.nyc</span>
+          </div>
+          <div class="shot-card__imgwrap">
+            <img class="shot-card__img" src="images/webdesign/youth-firebird.jpg" alt="youth.firebird.nyc homepage" width="1280" height="800" loading="lazy" />
+          </div>
+          <div class="shot-card__body">
+            <h3 class="shot-card__title">youth.firebird.nyc</h3>
+            <p class="shot-card__desc">Firebird Youth Theater's site. Class schedules and registration for ages 8&ndash;18.</p>
+          </div>
         </a>
       </div>
     </div>
@@ -220,62 +247,26 @@
         <h2 class="section-title section-title--etna" id="services-heading">What I Do</h2>
       </div>
 
-      <div class="offerings-list" data-fade>
-        <div class="offering-row">
-          <div>
-            <h3 class="offering-row__title">Build</h3>
-            <p class="offering-row__track">From Scratch</p>
-          </div>
-          <p class="offering-row__desc">A new site, start to finish &mdash; from a single show-announcement page to a multi-program site with registration and payment built in.</p>
-        </div>
-        <div class="offering-row">
-          <div>
-            <h3 class="offering-row__title">Design</h3>
-            <p class="offering-row__track">Visual Identity</p>
-          </div>
-          <p class="offering-row__desc">A look that's actually specific to the thing it's for &mdash; not a template with a new name dropped in.</p>
-        </div>
-        <div class="offering-row">
-          <div>
-            <h3 class="offering-row__title">Administer</h3>
-            <p class="offering-row__track">Ongoing</p>
-          </div>
-          <p class="offering-row__desc">Updates, hosting, and the unglamorous maintenance that keeps a site from quietly rotting after launch.</p>
-        </div>
-        <div class="offering-row">
-          <div>
-            <h3 class="offering-row__title">Revise</h3>
-            <p class="offering-row__track">Rebuilds &amp; Fixes</p>
-          </div>
-          <p class="offering-row__desc">A redesign, a rebuild, or just a fix for a site that already exists but isn't working anymore.</p>
-        </div>
-      </div>
+      <ul class="services-list" data-fade>
+        <li>Build a new site from scratch</li>
+        <li>Design how it looks</li>
+        <li>Keep it running and updated</li>
+        <li>Fix or redesign a site you already have</li>
+      </ul>
 
-      <div style="margin-top:2.5rem;border-top:1px solid var(--border);padding-top:1.5rem;">
-        <p style="font-family:var(--font-ui);font-size:0.62rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);">Custom Features, Already Built</p>
-        <p style="font-size:0.82rem;color:var(--muted);margin-top:0.5rem;max-width:640px;">Whatever a project needs, there's a decent chance I've already built something like it:</p>
-        <div class="feature-chips">
-          <span class="feature-chip">Ticket links &amp; countdowns</span>
-          <span class="feature-chip">Class registration &amp; payment</span>
-          <span class="feature-chip">Donate buttons</span>
-          <span class="feature-chip">Newsletter signups</span>
-          <span class="feature-chip">Calendars &amp; scheduling</span>
-          <span class="feature-chip">Custom galleries &amp; video embeds</span>
-        </div>
-      </div>
+      <p class="custom-note">Plus whatever custom stuff it needs: registration forms, ticket links, countdown timers, donation buttons, newsletter signups, calendars, galleries. If you need a feature, I'll build it.</p>
     </div>
   </section>
 
   <!-- CONTACT -->
   <section class="section contact-section" aria-labelledby="webdesign-contact-heading">
     <div class="container">
-      <span class="label">Let's Build Something</span>
+      <span class="label">Let's Talk</span>
       <h2 class="section-title" id="webdesign-contact-heading" style="margin-bottom:1rem;">GET IN<br>TOUCH</h2>
-      <p class="contact-desc">Starting from zero, fixing something that already exists, or just need a feature added &mdash; reach out and tell me what you've got.</p>
+      <p class="contact-desc">New site, redesign, or just a fix &mdash; email me and tell me what you need.</p>
       <div class="contact-ctas">
         <a href="mailto:leo@firebird.nyc?subject=Web Design Inquiry" class="btn btn--primary">leo@firebird.nyc</a>
       </div>
-      <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--muted);">leo@firebird.nyc</p>
     </div>
   </section>
 
