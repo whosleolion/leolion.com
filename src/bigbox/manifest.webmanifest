@@ -1,6 +1,6 @@
 {
-  "name": "Inside The Big-Box",
-  "short_name": "Big-Box",
+  "name": "Bigbox",
+  "short_name": "Bigbox",
   "start_url": "/bigbox/",
   "scope": "/bigbox/",
   "display": "standalone",
