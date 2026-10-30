@@ -7,8 +7,11 @@
 <meta name="theme-color" content="#4e65ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Inside The Big-Box</title>
-<link rel="icon" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+<script>
+// Cache buster: ?v=<signature> makes every asset URL new, so a home-screen copy can't serve stale files.
+var BB_V = new URLSearchParams(location.search).get('v') || '';
+document.write('<link rel="icon" href="logo.png?v=' + BB_V + '"><link rel="apple-touch-icon" href="logo.png?v=' + BB_V + '">');
+</script>
 <style>
 :root{--blue:#4e65ff;--navy:#1b2470;--white:#fff;--yellow:#ffd93d;--font:"Arial Rounded MT Bold","Avenir Next Rounded","Avenir Next","Nunito","Trebuchet MS",system-ui,sans-serif}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -33,11 +36,14 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 #gear{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;margin-left:auto}
 #gear:active{background:rgba(255,255,255,.2)}
 #gear svg{width:26px;height:26px}
-#timer{height:44px;min-width:92px;padding:0 18px;border-radius:22px;background:var(--white);color:var(--blue);font-size:24px;letter-spacing:.04em;font-variant-numeric:tabular-nums;display:none;align-items:center;justify-content:center}
-#timer.show{display:inline-flex}
+#timerbox{display:none;align-items:center;gap:10px}
+#timerbox.show{display:flex}
+#timer{height:48px;min-width:104px;padding:0 20px;border-radius:24px;background:var(--white);color:var(--blue);font-size:26px;letter-spacing:.04em;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;justify-content:center}
+#skip{height:48px;padding:0 22px;border-radius:24px;border:3px dashed rgba(255,255,255,.75);font-size:15px;letter-spacing:.08em;text-transform:uppercase}
+#skip:active{background:rgba(255,255,255,.2)}
+#again.time{background:var(--yellow);color:var(--navy);border-color:var(--yellow);animation:pulse .5s ease-in-out 4 alternate}
 #timer.paused{opacity:.65}
 #timer.low{animation:pulse .5s ease-in-out infinite alternate}
-#timer.done{background:var(--yellow);color:var(--navy);animation:pulse .3s ease-in-out infinite alternate}
 @keyframes pulse{to{transform:scale(1.12)}}
 #again{height:48px;padding:0 26px;border-radius:24px;border:3px dashed rgba(255,255,255,.75);font-size:16px;letter-spacing:.08em;text-transform:uppercase}
 #again:active{background:rgba(255,255,255,.2)}
@@ -60,6 +66,10 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .card .inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.4em}
 .card .lab{font-size:15px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;font-weight:900}
 .card .txt{width:100%;font-weight:900;line-height:1.04;text-transform:uppercase;overflow-wrap:normal}
+.card .tab{margin-top:.5em;padding:.3em .9em;border-radius:999px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;line-height:1.1;transform:rotate(-2deg);white-space:nowrap}
+.card .tab i{font-style:normal;opacity:.7;margin-right:.45em;font-size:.72em;letter-spacing:.14em}
+.card.a .tab{background:var(--blue);color:#fff}
+.card.b .tab{background:var(--navy);color:var(--yellow)}
 .card .sub{font-weight:900;text-transform:uppercase;letter-spacing:.08em;opacity:.75;line-height:1.1}
 
 /* settings */
@@ -79,23 +89,23 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 #lens button{min-width:62px;height:42px;border-radius:21px;border:2.5px solid var(--blue);color:var(--blue);font-size:17px;padding:0 12px}
 #lens button[aria-pressed=true]{background:var(--blue);color:#fff}
 #done{display:block;width:100%;height:52px;border-radius:26px;background:var(--blue);color:#fff;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-top:12px}
-#how{margin:14px 2px 0;font-size:14px;line-height:1.4;color:rgba(27,36,112,.7);font-family:system-ui,sans-serif}
+#how,#fx{margin:14px 2px 0;font-size:14px;line-height:1.4;color:rgba(27,36,112,.7);font-family:system-ui,sans-serif}
+#fx[hidden]{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="stage"></div>
-  <div class="card a" id="cardA"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div></div></div>
-  <div class="card b" id="cardB"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div></div></div>
+  <div class="card a" id="cardA"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div><div class="tab"></div></div></div>
+  <div class="card b" id="cardB"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div><div class="tab"></div></div></div>
 
   <div class="bar off" id="top">
-    <button id="timer" aria-label="Round timer, tap to pause or resume">0:00</button>
     <button id="gear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
-  <div class="bar off" id="bottom"><button id="again">Shake to roll again</button></div>
+  <div class="bar off" id="bottom"><button id="again">Shake to roll again</button><div id="timerbox"><button id="timer" aria-label="Round timer, tap to pause or resume">0:00</button><button id="skip">Skip timer</button></div></div>
 
-  <div id="title"><img src="logo.png" alt="Inside The Big-Box"><p id="hint">Tap to start</p></div>
+  <div id="title"><img id="logo" alt="Inside The Big-Box"><p id="hint">Tap to start</p></div>
 
   <div id="sheet" role="dialog" aria-modal="true" aria-label="Settings">
     <div id="panel">
@@ -105,12 +115,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
       <div class="row"><span>Sound</span><button class="sw" id="swSound" role="switch" aria-checked="true" aria-label="Sound"></button></div>
       <button id="done">Done</button>
       <p id="how">Shake your phone to roll. One die says what you're shopping for, the other is your constraint. Walk the store and find what you'd buy.</p>
+      <p id="fx" hidden>Firefox on iPhone also reacts to shaking. In Firefox go to Settings → Page Summaries and turn off Shake to Summarize so it stays out of your game.</p>
     </div>
   </div>
   <div class="sr" id="sr" aria-live="polite"></div>
 </div>
 
-<script src="options.js"></script>
+<script>document.write('<script src="options.js?v=' + BB_V + '"><\/script>');</script>
 <script>
 (() => {
 'use strict';
@@ -170,7 +181,11 @@ const FACE_N = [[0,0,1], [0,0,-1], [1,0,0], [-1,0,0], [0,-1,0], [0,1,0]];
 const LIGHT = (() => { const v = [-0.35, -0.55, 0.8], n = Math.hypot(...v); return v.map(x => x / n); })();
 
 /* ---------- text filling ---------- */
-const FILL = (s) => s.replace(/\[[^\]]+\]/g, k => OPT.fillers[k] ? pick(OPT.fillers[k]) : k);
+const BLANK = s => s.replace(/\[[^\]]+\]/g, '___');
+function variable(s) {   // the first [token] in a prompt -> a tab {k, v} with a random value
+  const m = s.match(/\[[^\]]+\]/);
+  return m && OPT.fillers[m[0]] ? { k: OPT.tabs[m[0]] || m[0].slice(1, -1), v: pick(OPT.fillers[m[0]]) } : null;
+}
 const splitSub = s => { const m = s.match(/^(.*?)\s*\((.*)\)\s*$/); return m ? [m[1], m[2]] : [s, '']; };
 function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function dieFontSize(text, s) {
@@ -230,8 +245,7 @@ function loadDie(d, text, pool) {
   const others = shuffled(pool.filter(p => p !== text)).slice(0, 5);
   let k = 0;
   d.faces.forEach((f, i) => {
-    const t = i === d.face ? text : FILL(others[k++]);
-    const label = splitSub(t)[0] + (splitSub(t)[1] ? '' : '');
+    const label = splitSub(BLANK(i === d.face ? text : others[k++]))[0];
     const sp = f.firstChild;
     sp.textContent = label;
     f.style.fontSize = dieFontSize(label, S) + 'px';
@@ -257,13 +271,14 @@ function cardRects() {
 }
 let rects = [];
 function fitCard(card, r) {
-  const inner = card.querySelector('.inner'), t = card.querySelector('.txt'), sub = card.querySelector('.sub');
+  const inner = card.querySelector('.inner'), t = card.querySelector('.txt'), sub = card.querySelector('.sub'), tab = card.querySelector('.tab');
   const iw = r.w - 56, ih = r.h - 48;
   inner.style.width = iw + 'px'; inner.style.height = ih + 'px';
   let lo = 14, hi = Math.min(ih * 0.62, iw * 0.42, 130);
   const ok = fs => {
     t.style.fontSize = fs + 'px';
     sub.style.fontSize = Math.max(14, fs * 0.38) + 'px';
+    tab.style.fontSize = Math.max(18, fs * 0.5) + 'px';
     return inner.scrollHeight <= inner.clientHeight + 1 && t.scrollWidth <= t.clientWidth + 1;
   };
   if (ok(hi)) return;
@@ -279,15 +294,19 @@ function placeCards() {
     if (c.querySelector('.txt').textContent) fitCard(c, r);
   });
 }
-function fillCards(a, b) {
-  const [ta, sa] = splitSub(a), [tb, sb] = splitSub(b);
-  [[cardA, OPT.headings[0], ta, sa], [cardB, OPT.headings[1], tb, sb]].forEach(([c, lab, t, s]) => {
+function fillCards(a, b, va, vb) {
+  const [ta, sa] = splitSub(BLANK(a)), [tb, sb] = splitSub(BLANK(b));
+  [[cardA, OPT.headings[0], ta, sa, va], [cardB, OPT.headings[1], tb, sb, vb]].forEach(([c, lab, t, s, v]) => {
+    const tab = c.querySelector('.tab');
+    tab.innerHTML = ''; tab.style.display = v ? '' : 'none';
+    if (v) { const i = document.createElement('i'); i.textContent = v.k; tab.append(i, v.v); }
     c.querySelector('.lab').textContent = lab;
     c.querySelector('.txt').textContent = t;
     c.querySelector('.sub').textContent = s;
     c.querySelector('.sub').style.display = s ? '' : 'none';
   });
-  $('#sr').textContent = `${OPT.headings[0]}: ${a}. ${OPT.headings[1]}: ${b}.`;
+  const say = (x, v) => v ? BLANK(x).replace('___', v.v) : x;
+  $('#sr').textContent = `${OPT.headings[0]}: ${say(a, va)}. ${OPT.headings[1]}: ${say(b, vb)}.`;
   placeCards();
 }
 
@@ -370,11 +389,12 @@ function pickTargets() {
 }
 
 async function roll() {
+  if (stale && phase === 'cards') return applyUpdate();
   const id = ++rollId;
   const wasCards = phase === 'cards';
   phase = 'throw';
   topBar.classList.add('off'); bottomBar.classList.add('off');
-  stopTimer(); timerEl.classList.remove('done', 'low');
+  stopTimer(); timerEl.classList.remove('low');
   if (wasCards) {
     cards.forEach(c => c.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.9)' }], { duration: 220, easing: 'ease-in', fill: 'forwards' }));
     await wait(230);
@@ -386,10 +406,9 @@ async function roll() {
   do { a = pick(OPT.shopping); } while (a === lastA && OPT.shopping.length > 1);
   do { b = pick(OPT.constraints); } while (b === lastB && OPT.constraints.length > 1 && ++tries < 20);
   lastA = a; lastB = b;
-  const fa = FILL(a), fb = FILL(b);
-  fillCards(fa, fb);
-  loadDie(dice[0], fa, OPT.shopping);
-  loadDie(dice[1], fb, OPT.constraints);
+  fillCards(a, b, variable(a), variable(b));
+  loadDie(dice[0], a, OPT.shopping);
+  loadDie(dice[1], b, OPT.constraints);
 
   const gs = H / 800, ws = W / 400;
   dice.forEach((d, i) => {
@@ -463,17 +482,20 @@ async function zoomToCards() {
 }
 
 /* ---------- timer ---------- */
-let tState = { left: 0, end: 0, running: false, iv: 0, over: false };
+let tState = { left: 0, end: 0, running: false, iv: 0, over: false, skipped: false };
+const timerActive = () => settings.timer && phase === 'cards' && !tState.over && !tState.skipped;
 const fmt = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 function updateTimerUI() {
-  timerEl.classList.toggle('show', settings.timer);
-  if (!settings.timer) return;
-  timerEl.textContent = tState.over ? 'TIME!' : fmt(tState.left);
-  timerEl.classList.toggle('paused', !tState.running && !tState.over && phase === 'cards');
-  timerEl.classList.toggle('low', tState.running && tState.left <= 10 && !tState.over);
-  timerEl.classList.toggle('done', tState.over);
+  const active = timerActive();
+  $('#timerbox').classList.toggle('show', active);
+  againEl.style.display = active ? 'none' : '';
+  againEl.classList.toggle('time', settings.timer && tState.over);
+  setHint();
+  timerEl.textContent = fmt(tState.left);
+  timerEl.classList.toggle('paused', !tState.running && active);
+  timerEl.classList.toggle('low', tState.running && tState.left <= 10);
 }
-function stopTimer() { clearInterval(tState.iv); tState.running = false; tState.over = false; tState.left = settings.minutes * 60; updateTimerUI(); }
+function stopTimer() { clearInterval(tState.iv); tState.running = false; tState.over = false; tState.skipped = false; tState.left = settings.minutes * 60; updateTimerUI(); }
 function tick() {
   tState.left = (tState.end - performance.now()) / 1000;
   if (tState.left <= 0) {
@@ -489,9 +511,9 @@ function startTimer() {
   tState.end = performance.now() + tState.left * 1000; tState.running = true;
   tState.iv = setInterval(tick, 200); tick();
 }
+$('#skip').addEventListener('click', () => { if (!timerActive()) return; clearInterval(tState.iv); tState.running = false; tState.skipped = true; updateTimerUI(); });
 timerEl.addEventListener('click', () => {
   if (!settings.timer || phase !== 'cards') return;
-  if (tState.over) { startTimer(); return; }
   if (tState.running) { clearInterval(tState.iv); tState.running = false; tick(); updateTimerUI(); }
   else { tState.end = performance.now() + tState.left * 1000; tState.running = true; tState.iv = setInterval(tick, 200); tick(); }
 });
@@ -522,13 +544,13 @@ addEventListener('keydown', e => {
 /* ---------- start / shake ---------- */
 let hasMotion = false;
 function setHint() {
-  const t = hasMotion ? 'Shake to roll again' : 'Tap to roll again';
+  const t = (settings.timer && tState.over ? "Time! " : '') + (hasMotion ? 'Shake to roll again' : 'Tap to roll again');
   againEl.textContent = t;
 }
 function trigger() {
   if (sheet.classList.contains('open')) return;
   if (phase === 'title') return start();
-  if (phase === 'cards' && performance.now() > lockUntil) roll();
+  if (phase === 'cards' && performance.now() > lockUntil && !timerActive()) roll();
 }
 async function start() {
   if (phase !== 'title') return;
@@ -564,7 +586,29 @@ titleEl.addEventListener('click', start);
 againEl.addEventListener('click', trigger);
 if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') listenMotion();
 $('#hint').textContent = 'Tap to start';
+$('#logo').src = 'logo.png?v=' + BB_V;
+if (/FxiOS/.test(navigator.userAgent)) $('#fx').hidden = false;
 addEventListener('resize', () => { if (phase === 'cards') cards.forEach(c => c.getAnimations().forEach(a => a.cancel())); layout(); if (phase === 'cards') cards.forEach(c => { c.style.visibility = 'visible'; }); });
+
+/* ---------- update check: reload when the files on the server changed ---------- */
+let stale = '';
+const sig = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+async function checkUpdate() {
+  try {
+    const get = u => fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : Promise.reject());
+    const [a, b] = await Promise.all([get('index.html'), get('options.js')]);
+    const now = sig(a + b);
+    let prev = null; try { prev = localStorage.getItem('bigbox.sig'); localStorage.setItem('bigbox.sig', now); } catch (e) {}
+    if (prev && prev !== now) { stale = now; applyUpdate(); }
+  } catch (e) {}
+}
+function applyUpdate() {
+  if (!stale || (phase !== 'title' && phase !== 'cards' )) return;
+  if (phase === 'cards' && timerActive()) return;     // never yank a round away mid-timer
+  location.replace(location.pathname + '?v=' + stale);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
+checkUpdate();
 
 layout(); syncSettings(); setHint();
 window.__bigbox = { get phase() { return phase; }, roll: () => { if (phase === 'title') start(); else if (phase === 'cards') roll(); }, settings };
