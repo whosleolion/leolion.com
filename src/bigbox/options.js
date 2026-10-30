@@ -46,12 +46,11 @@ window.BIGBOX = {
     "As much as you can fit in your trunk",
     "One item you can see without moving right now"
   ],
-  // Variable blanks: each roll picks one value and shows it on a tab on the card.
+  // Variable blanks: each roll plugs a random value into the prompt, shown bold.
   fillers: {
     "[X]": "ABCDEFGHIJKLMNOPRSTW".split(""),
     "[Holiday]": ["Halloween", "Thanksgiving", "Christmas", "Hanukkah", "Easter", "Fourth of July", "Valentine's Day", "New Year's Eve"],
     "[era]": ["the Stone Age", "ancient Egypt", "ancient Rome", "the Middle Ages", "the Wild West", "the 1920s", "the 1980s", "the far future"]
   },
-  tabs: { "[X]": "Initial", "[Holiday]": "Holiday", "[era]": "Era" },
   headings: ["Shopping for", "Constraint"]
 };

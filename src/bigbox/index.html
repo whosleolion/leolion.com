@@ -56,7 +56,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .cube{position:absolute;inset:0;transform-style:preserve-3d}
 .face{position:absolute;inset:0;border-radius:9%;display:flex;align-items:center;justify-content:center;text-align:center;padding:8%;font-weight:900;text-transform:uppercase;line-height:1.08;letter-spacing:.01em;backface-visibility:hidden;overflow:hidden;border:3px solid rgba(0,0,0,.14)}
 .face::after{content:"";position:absolute;inset:0;background:#000;opacity:var(--sh,0);pointer-events:none}
-.face span{position:relative;z-index:1}
+.face span{position:relative;z-index:1;display:block;width:100%;overflow-wrap:normal;hyphens:none}
+.face b,.card b{font-weight:900;text-decoration:underline;text-decoration-thickness:.09em;text-underline-offset:.12em}
 .die.a .face{background:var(--white);color:var(--blue)}
 .die.b .face{background:var(--yellow);color:var(--navy)}
 
@@ -68,10 +69,6 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .card .inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.4em}
 .card .lab{font-size:15px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;font-weight:900}
 .card .txt{width:100%;font-weight:900;line-height:1.04;text-transform:uppercase;overflow-wrap:normal}
-.card .tab{margin-top:.5em;padding:.3em .9em;border-radius:999px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;line-height:1.1;transform:rotate(-2deg);white-space:nowrap}
-.card .tab i{font-style:normal;opacity:.7;margin-right:.45em;font-size:.72em;letter-spacing:.14em}
-.card.a .tab{background:var(--blue);color:#fff}
-.card.b .tab{background:var(--navy);color:var(--yellow)}
 .card .sub{font-weight:900;text-transform:uppercase;letter-spacing:.08em;opacity:.75;line-height:1.1}
 
 /* settings */
@@ -99,8 +96,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 <body>
 <div id="app">
   <div id="stage"></div>
-  <div class="card a" id="cardA"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div><div class="tab"></div></div></div>
-  <div class="card b" id="cardB"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div><div class="tab"></div></div></div>
+  <div class="card a" id="cardA"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div></div></div>
+  <div class="card b" id="cardB"><div class="inner"><div class="lab"></div><div class="txt"></div><div class="sub"></div></div></div>
 
   <div class="bar off" id="top">
     <button id="gear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -183,26 +180,26 @@ const FACE_N = [[0,0,1], [0,0,-1], [1,0,0], [-1,0,0], [0,-1,0], [0,1,0]];
 const LIGHT = (() => { const v = [-0.35, -0.55, 0.8], n = Math.hypot(...v); return v.map(x => x / n); })();
 
 /* ---------- text filling ---------- */
-const BLANK = s => s.replace(/\[[^\]]+\]/g, '___');
-function variable(s) {   // the first [token] in a prompt -> a tab {k, v} with a random value
-  const m = s.match(/\[[^\]]+\]/);
-  return m && OPT.fillers[m[0]] ? { k: OPT.tabs[m[0]] || m[0].slice(1, -1), v: pick(OPT.fillers[m[0]]) } : null;
+const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+// Plug a random value into each [token]; returns plain text (for sizing / screen readers) and html with the value in <b>.
+function fillText(raw) {
+  const vals = [];
+  const plain = raw.replace(/\[[^\]]+\]/g, k => { const v = OPT.fillers[k] ? pick(OPT.fillers[k]) : k; vals.push(v); return v; });
+  let n = 0;
+  const html = esc(raw).replace(/\[[^\]]+\]/g, () => '<b>' + esc(vals[n++]) + '</b>');
+  return { plain, html };
 }
 const splitSub = s => { const m = s.match(/^(.*?)\s*\((.*)\)\s*$/); return m ? [m[1], m[2]] : [s, '']; };
 function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function dieFontSize(text, s) {
-  const inner = s * 0.78;
-  for (let fs = s * 0.2; fs > 6; fs -= 0.5) {
-    const perLine = Math.max(1, Math.floor(inner / (fs * 0.74)));
-    let lines = 1, cur = 0;
-    for (const w of text.split(' ')) {
-      const need = cur ? cur + 1 + w.length : w.length;
-      if (cur && need > perLine) { lines++; cur = w.length; } else cur = need;
-      if (w.length > perLine) { cur = 0; lines += Math.ceil(w.length / perLine) - 1; }
-    }
-    if (lines * fs * 1.12 <= inner) return fs;
-  }
-  return 6;
+// Largest font that keeps the text inside the face: measured for real, so long prompts shrink and wrap instead of cropping.
+function fitDieFace(f) {
+  const sp = f.firstChild, cs = getComputedStyle(f);
+  const ih = f.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const fits = fs => { f.style.fontSize = fs + 'px'; return sp.offsetHeight <= ih && sp.scrollWidth <= sp.clientWidth + 1; };
+  let lo = 6, hi = S * 0.22;
+  if (fits(hi)) return;
+  for (let i = 0; i < 9; i++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
+  fits(lo);
 }
 
 /* ---------- dice ---------- */
@@ -241,16 +238,15 @@ function render(d) {
   }
 }
 
-function loadDie(d, text, pool) {
-  d.text = text;
+function loadDie(d, filled, raw, pool) {
+  d.el.style.display = 'block';          // faces must be laid out to be measured
   d.face = Math.floor(Math.random() * 6);
-  const others = shuffled(pool.filter(p => p !== text)).slice(0, 5);
+  const others = shuffled(pool.filter(p => p !== raw)).slice(0, 5);
   let k = 0;
   d.faces.forEach((f, i) => {
-    const label = splitSub(BLANK(i === d.face ? text : others[k++]))[0];
-    const sp = f.firstChild;
-    sp.textContent = label;
-    f.style.fontSize = dieFontSize(label, S) + 'px';
+    const t = i === d.face ? filled : fillText(splitSub(others[k++])[0]);
+    f.firstChild.innerHTML = i === d.face ? filled.html : t.html;
+    fitDieFace(f);
   });
 }
 
@@ -273,14 +269,13 @@ function cardRects() {
 }
 let rects = [];
 function fitCard(card, r) {
-  const inner = card.querySelector('.inner'), t = card.querySelector('.txt'), sub = card.querySelector('.sub'), tab = card.querySelector('.tab');
+  const inner = card.querySelector('.inner'), t = card.querySelector('.txt'), sub = card.querySelector('.sub');
   const iw = r.w - 56, ih = r.h - 48;
   inner.style.width = iw + 'px'; inner.style.height = ih + 'px';
   let lo = 14, hi = Math.min(ih * 0.62, iw * 0.42, 130);
   const ok = fs => {
     t.style.fontSize = fs + 'px';
     sub.style.fontSize = Math.max(14, fs * 0.38) + 'px';
-    tab.style.fontSize = Math.max(18, fs * 0.5) + 'px';
     return inner.scrollHeight <= inner.clientHeight + 1 && t.scrollWidth <= t.clientWidth + 1;
   };
   if (ok(hi)) return;
@@ -296,19 +291,14 @@ function placeCards() {
     if (c.querySelector('.txt').textContent) fitCard(c, r);
   });
 }
-function fillCards(a, b, va, vb) {
-  const [ta, sa] = splitSub(BLANK(a)), [tb, sb] = splitSub(BLANK(b));
-  [[cardA, OPT.headings[0], ta, sa, va], [cardB, OPT.headings[1], tb, sb, vb]].forEach(([c, lab, t, s, v]) => {
-    const tab = c.querySelector('.tab');
-    tab.innerHTML = ''; tab.style.display = v ? '' : 'none';
-    if (v) { const i = document.createElement('i'); i.textContent = v.k; tab.append(i, v.v); }
+function fillCards(fa, fb, sa, sb) {
+  [[cardA, OPT.headings[0], fa, sa], [cardB, OPT.headings[1], fb, sb]].forEach(([c, lab, f, sub]) => {
     c.querySelector('.lab').textContent = lab;
-    c.querySelector('.txt').textContent = t;
-    c.querySelector('.sub').textContent = s;
-    c.querySelector('.sub').style.display = s ? '' : 'none';
+    c.querySelector('.txt').innerHTML = f.html;
+    c.querySelector('.sub').textContent = sub;
+    c.querySelector('.sub').style.display = sub ? '' : 'none';
   });
-  const say = (x, v) => v ? BLANK(x).replace('___', v.v) : x;
-  $('#sr').textContent = `${OPT.headings[0]}: ${say(a, va)}. ${OPT.headings[1]}: ${say(b, vb)}.`;
+  $('#sr').textContent = `${OPT.headings[0]}: ${fa.plain}. ${OPT.headings[1]}: ${fb.plain}${sb ? ' (' + sb + ')' : ''}.`;
   placeCards();
 }
 
@@ -408,9 +398,11 @@ async function roll() {
   do { a = pick(OPT.shopping); } while (a === lastA && OPT.shopping.length > 1);
   do { b = pick(OPT.constraints); } while (b === lastB && OPT.constraints.length > 1 && ++tries < 20);
   lastA = a; lastB = b;
-  fillCards(a, b, variable(a), variable(b));
-  loadDie(dice[0], a, OPT.shopping);
-  loadDie(dice[1], b, OPT.constraints);
+  const [ma, sa] = splitSub(a), [mb, sb] = splitSub(b);
+  const fa = fillText(ma), fb = fillText(mb);
+  fillCards(fa, fb, sa, sb);
+  loadDie(dice[0], fa, a, OPT.shopping);
+  loadDie(dice[1], fb, b, OPT.constraints);
 
   const gs = H / 800, ws = W / 400;
   dice.forEach((d, i) => {
