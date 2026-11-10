@@ -38,7 +38,7 @@ As the Astral Era drew to a close, the stars above were shrouded in smoke. Telos
 
 Solar Era years (SE) are counted from the **Last Act of Avatol**, year 0, when, by Avatolian scripture, humankind was made to fight the draconic threat. Some scholars doubt it. The present year is **859 SE**.
 
-The year has twelve months of thirty days each (360 days), named for the sun's year in seasons of three, from low to high or from dawn to dusk: Lowspring, Middlespring, Highspring, Lowharvest, Midharvest, Highharvest, Winterdawn, Midwinter, Winterdusk, Summerdawn, Midsummer and Summerdusk.
+The year has twelve months of thirty days each (360 days), named for the sun's year in seasons of three, from low to high or from dawn to dusk. The year runs Winterdusk, Summerdawn, Midsummer, Summerdusk, Lowspring, Middlespring, Highspring, Lowharvest, Midharvest, Highharvest, Winterdawn and ends in Midwinter.
 
 ## Map key
 
