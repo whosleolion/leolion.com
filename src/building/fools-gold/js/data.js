@@ -111,7 +111,7 @@ const coreEntries = [
     basis: 'Derived: faster than a sailing ship, so cheaper per mile at 200 miles a day.' },
   { id: 'travel.airship', name: 'Airship passage', kind: 'travel', src: 'core', group: 'travel', unit: 'day', perMile: 12, mpd: 300,
     tags: ['transport', 'air'], aliases: ['airship', 'zeppelin', 'dirigible', 'sky ship', 'skyship', 'balloon'],
-    basis: 'Original: a premium mode at 300 miles a day and 12 cp a mile.' },
+    basis: 'Fool\'s Gold estimate: a premium mode at 300 miles a day and 12 cp a mile.' },
   { id: 'travel.messenger', generic: true, name: 'Messenger', kind: 'travel', src: 'srd', group: 'travel-message', unit: 'day', perMile: 2, mpd: 40,
     tags: ['transport', 'messenger'], aliases: ['courier', 'runner', 'send a message', 'send a letter'],
     basis: 'SRD: messenger, 2 cp a mile.' },
@@ -176,7 +176,7 @@ const genericCats = [
   ['book', 'Book', '25gp', ['book', 'crafted'], 'books, tome, manual'],
 ].map(([id, name, price, tags, aliases]) => ({
   id: 'good.cat-' + id, name, kind: 'good', src: 'core', bu: parsePrice(price), unit: 'each', spread: 0.6, tags, aliases: aliases.split(',').map(s => s.trim()), isCategory: true,
-  basis: 'Generic template: a rough middle price when no specific item is named.',
+  basis: 'Generic price for when no specific item is named.',
 }));
 
 
@@ -218,9 +218,9 @@ const modernEntries = [
     'Gas tank;55;;;gas, fuel, petrol, fill up',
   ]),
   ...modern('service', ['service', 'transport'], ['Rental car;70;day;;car rental, hire car']),
-  { id: 'travel.intercity-train', name: 'Intercity train', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 28, mpd: 500, tags: ['transport', 'rail'], aliases: ['train', 'train ticket', 'train ride', 'railway', 'rail', 'amtrak style train'], basis: 'Original: about 28 cents a mile on a typical intercity line, 500 miles in a long day.' },
-  { id: 'travel.intercity-bus', name: 'Intercity bus', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 11, mpd: 500, tags: ['transport', 'coach'], aliases: ['bus', 'bus ticket', 'coach bus', 'long distance bus'], basis: 'Original: about 11 cents a mile.' },
-  { id: 'travel.commercial-flight', name: 'Commercial flight', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 14, mpd: 2400, tags: ['transport', 'air'], aliases: ['flight', 'plane', 'plane ticket', 'airplane', 'airline', 'air ticket', 'flight ticket'], basis: 'Original: about 14 cents a mile, 2,400 miles in a day of travel.' },
+  { id: 'travel.intercity-train', name: 'Intercity train', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 28, mpd: 500, tags: ['transport', 'rail'], aliases: ['train', 'train ticket', 'train ride', 'railway', 'rail', 'amtrak style train'], basis: 'Fool\'s Gold estimate: about 28 cents a mile on a typical intercity line, 500 miles in a long day.' },
+  { id: 'travel.intercity-bus', name: 'Intercity bus', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 11, mpd: 500, tags: ['transport', 'coach'], aliases: ['bus', 'bus ticket', 'coach bus', 'long distance bus'], basis: 'Fool\'s Gold estimate: about 11 cents a mile.' },
+  { id: 'travel.commercial-flight', name: 'Commercial flight', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 14, mpd: 2400, tags: ['transport', 'air'], aliases: ['flight', 'plane', 'plane ticket', 'airplane', 'airline', 'air ticket', 'flight ticket'], basis: 'Fool\'s Gold estimate: about 14 cents a mile, 2,400 miles in a day of travel.' },
   ...modern('labor', ['labor', 'unskilled'], ['Day laborer;120;day;;laborer, labourer, unskilled worker, hand, hired hand'], {}),
   ...modern('labor', ['labor', 'skilled'], [
     'Skilled tradesperson;450;day;;tradesperson, tradesman, craftsman, skilled worker, handyman', 'Electrician;850;day', 'Plumber;900;day', 'Contractor;700;day;;builder, carpenter', 'Lawyer;2400;day;;attorney, solicitor, barrister',
@@ -253,15 +253,15 @@ const modernCats = [
   ['appliance', 'Appliance', 700, ['manufactured'], 'appliances, oven, washer, dryer'],
   ['vehicle', 'Vehicle', 22000, ['manufactured', 'vehicle'], 'vehicles, truck, van'],
   ['tool', 'Tool', 60, ['manufactured', 'tool'], 'tools, equipment, drill, hammer'],
-].map(([id, name, price, tags, aliases]) => ({ id: 'good.cat-m-' + id, name, kind: 'good', src: 'modern', bu: usd(price), unit: 'each', spread: 0.6, tags, aliases: aliases.split(',').map(x => x.trim()), isCategory: true, basis: 'Generic template: a rough middle price when no specific item is named.' }));
+].map(([id, name, price, tags, aliases]) => ({ id: 'good.cat-m-' + id, name, kind: 'good', src: 'modern', bu: usd(price), unit: 'each', spread: 0.6, tags, aliases: aliases.split(',').map(x => x.trim()), isCategory: true, basis: 'Generic price for when no specific item is named.' }));
 
 // A harvested-materials category, the usual landing spot for "monster parts" style words.
-const componentCat = { id: 'good.cat-component', name: 'Crafting component', kind: 'good', src: 'core', bu: parsePrice('25gp'), unit: 'each', spread: 0.8, tags: ['component', 'raw', 'crafted'], aliases: ['component', 'components', 'ingredient', 'ingredients', 'reagent', 'reagents', 'crafting material', 'crafting materials'], isCategory: true, basis: 'Generic template for harvested materials and crafting ingredients.' };
+const componentCat = { id: 'good.cat-component', name: 'Crafting component', kind: 'good', src: 'core', bu: parsePrice('25gp'), unit: 'each', spread: 0.8, tags: ['component', 'raw', 'crafted'], aliases: ['component', 'components', 'ingredient', 'ingredients', 'reagent', 'reagents', 'crafting material', 'crafting materials'], isCategory: true, basis: 'Generic price for harvested materials and crafting ingredients.' };
 
 // Categories that stand for a family of entries (generic word -> default member).
 export const FAMILIES = [
-  { id: 'travel', name: 'Travel', kind: 'travel', terms: ['travel', 'travelling', 'traveling', 'transport', 'transportation', 'trip', 'journey', 'ride'], defaultKey: 'travel', fallback: 'travel.coach', ask: 'Which mode of travel?', offer: true },
-  { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Which kind of rental?', offer: true },
+  { id: 'travel', name: 'Travel', kind: 'travel', terms: ['travel', 'travelling', 'traveling', 'transport', 'transportation', 'trip', 'journey', 'ride'], defaultKey: 'travel', fallback: 'travel.coach', ask: 'Travel mode', offer: true },
+  { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
 export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats];
@@ -298,16 +298,16 @@ export const BULK = [[500, [0.65, 0.85]], [100, [0.75, 0.92]], [25, [0.85, 0.97]
 
 // ---- Modifiers ----
 export const GROUPS = {
-  place:        { label: 'Where',        exclusive: true,  ask: 'Where is this happening?' },
-  channel:      { label: 'Channel',      exclusive: true,  ask: 'Through what kind of seller or buyer?' },
-  urgency:      { label: 'Urgency',      exclusive: true,  ask: 'How urgent is it?' },
-  condition:    { label: 'Condition',    exclusive: true,  ask: 'In what condition?' },
-  order:        { label: 'Order',        exclusive: true,  ask: 'Off the shelf or made to order?' },
-  relationship: { label: 'Relationship', exclusive: true,  ask: 'How do they feel about you?' },
-  supply:       { label: 'Local supply', exclusive: true,  ask: 'How is local supply?' },
-  events:       { label: 'Events',       exclusive: false, ask: 'Anything big going on?' },
-  provenance:   { label: 'Provenance',   exclusive: false, ask: 'Where did it come from?' },
-  route:        { label: 'Route',        exclusive: true,  ask: 'What kind of route?' },
+  place:        { label: 'Where',        exclusive: true,  ask: 'Where' },
+  channel:      { label: 'Channel',      exclusive: true,  ask: 'Sold through' },
+  urgency:      { label: 'Urgency',      exclusive: true,  ask: 'How fast' },
+  condition:    { label: 'Condition',    exclusive: true,  ask: 'Condition' },
+  order:        { label: 'Order',        exclusive: true,  ask: 'Made to order?' },
+  relationship: { label: 'Relationship', exclusive: true,  ask: 'Their attitude' },
+  supply:       { label: 'Local supply', exclusive: true,  ask: 'Local supply' },
+  events:       { label: 'Events',       exclusive: false, ask: 'Events' },
+  provenance:   { label: 'Provenance',   exclusive: false, ask: 'Provenance' },
+  route:        { label: 'Route',        exclusive: true,  ask: 'Route' },
 };
 const NONTRAVEL = ['good', 'service', 'labor', 'lodging', 'spell', 'property'];
 const ALLK = [...NONTRAVEL, 'travel'];
@@ -472,7 +472,7 @@ export const WORLD_PRESETS = {
     anchors: { wage: 20 }, economyTags: [], dials: { ...baseDials }, defaults: { travel: 'travel.coach' }, vocabulary: [], items: [],
   }),
   modern: () => ({
-    id: 'modern', name: 'Modern day, real world', blurb: 'Contemporary US prices: rent, meals, flights, services. Adjust with the place and price level.',
+    id: 'modern', name: 'Modern day, real world', blurb: 'Current US prices for rent, meals, flights and services.',
     baseline: 'modern', currency: { denominations: [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }], belowSmallest: 'decimals', note: '1 base unit is one cent', symbol: '$', decimal: 100 },
     anchors: { wage: 12000 }, economyTags: [], dials: { ...baseDials, sellFraction: 0.5 }, defaults: { travel: 'travel.intercity-train', rent: 'lodging.m-apartment-rent-medium' }, vocabulary: [], items: [],
     samples: ['a month of rent in a major city, medium apartment', '6 months of rent in a city', 'dinner for 2 at a fancy restaurant', 'flight 1500 miles', 'hire a lawyer for 2 days', 'taxi ride in the capital', 'buy a laptop', 'sell a used car'],

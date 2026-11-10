@@ -26,7 +26,7 @@ for (const [why, ids, words] of FAMILIES) for (const w of words.split(/\s+/)) HI
 
 const GENERIC = new Set(['of', 'the', 'a', 'an', 'and', 'for', 'item', 'thing', 'stuff', 'some', 'good', 'goods']);
 const TIERS = { standard: [50, 500, 5000, 50000], modern: [500, 5000, 50000, 500000] };
-const TIER_LABELS = [['Small everyday thing', 'pocket money, picked up without a second thought'], ['Useful thing', 'a real purchase, but nobody agonizes over it'], ['Valuable thing', 'something you save up for'], ['Treasure', 'a big find or a serious investment']];
+const TIER_LABELS = [['Small item', 'pocket change'], ['Useful item', 'a real but easy purchase'], ['Valuable item', 'something to save up for'], ['Treasure', 'a major find or investment']];
 
 function unitPrice(entry, ctx, extra = {}) {
   const e = estimate({ action: 'buy', subject: entry.id, family: null, qty: null, span: null, rarity: null, tier: null, mods: [], assumed: [], ...extra }, ctx);
@@ -39,7 +39,7 @@ export function candidatesFor(phrase, ctx) {
   const add = (entry, why, score) => { if (!entry || seen.has(entry.id)) return; const p = unitPrice(entry, ctx); if (!(p > 0)) return; seen.add(entry.id); out.push({ id: entry.id, label: entry.name, why, unit: entry.unit, bu: p, entry, score }); };
   for (const w of words) {
     const h = HINT.get(w);
-    if (h) h.ids.forEach((id, i) => add(ctx.byId.get(id), 'Sounds like ' + h.why + ' ("' + w + '")', 10 - i));
+    if (h) h.ids.forEach((id, i) => add(ctx.byId.get(id), 'Matches "' + w + '": ' + h.why, 10 - i));
   }
   // word overlap with names, aliases and tags
   const scored = [];
@@ -51,7 +51,7 @@ export function candidatesFor(phrase, ctx) {
     if (sc > 0) scored.push([sc, e]);
   }
   scored.sort((a, b) => b[0] - a[0]);
-  for (const [sc, e] of scored.slice(0, 3)) add(e, 'Shares words with "' + e.name.toLowerCase() + '"', sc);
+  for (const [sc, e] of scored.slice(0, 3)) add(e, 'Shares words with ' + e.name.toLowerCase(), sc);
   out.sort((a, b) => b.score - a.score);
   const real = out.slice(0, 4);
   const tiers = (ctx.world.baseline === 'modern' ? TIERS.modern : TIERS.standard).map((bu, i) => ({ id: 'tier:' + i, label: TIER_LABELS[i][0], why: TIER_LABELS[i][1], unit: 'each', bu, tier: true }));

@@ -1,4 +1,4 @@
-// "What you didn't say": find the unstated factors that would move the price most.
+// Unspecified factors: find the unstated factors that would move the price most.
 import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js';
 import { estimate, applicable, timeUnit } from './engine.js';
 
@@ -36,7 +36,7 @@ export function analyze(q, est, ctx) {
 
   // assumptions that have a choice
   if (q.assumed.includes('action') && kind === 'good') {
-    mk('side', 'Buying or selling?', [
+    mk('side', 'Buying or selling', [
       { label: 'buying', est: run(x => { x.action = 'buy'; x.assumed = x.assumed.filter(a => a !== 'action'); }), apply: x => { x.action = 'buy'; x.assumed = x.assumed.filter(a => a !== 'action'); } },
       { label: 'selling', est: run(x => { x.action = 'sell'; x.assumed = x.assumed.filter(a => a !== 'action'); }), apply: x => { x.action = 'sell'; x.assumed = x.assumed.filter(a => a !== 'action'); } },
     ], true);
@@ -50,13 +50,13 @@ export function analyze(q, est, ctx) {
     }), true);
   }
   if (entry.curve && !q.rarity) {
-    mk('rarity', 'How rare is it?', RARITIES.map(r => {
+    mk('rarity', 'Rarity', RARITIES.map(r => {
       const f = x => { x.rarity = r; };
       return { label: r, est: run(f), apply: f };
     }), true);
   }
   if (!q.tier && !entry.noTier && ['travel', 'lodging', 'service', 'labor', 'spell'].includes(kind)) {
-    mk('tier', 'What class?', TIER_NAMES.map(t => {
+    mk('tier', 'Class', TIER_NAMES.map(t => {
       const f = x => { x.tier = t; };
       return { label: t, est: run(f), apply: f, sel: t === 'standard' };
     }), false);
@@ -64,7 +64,7 @@ export function analyze(q, est, ctx) {
   const tu = timeUnit(entry);
   if (tu && !q.span) {
     const counts = { day: [1, 3, 7, 30], week: [1, 2, 4, 12], month: [1, 3, 6, 12], year: [1, 2, 4] }[tu.unit];
-    mk('span', 'How long?', counts.map(n => {
+    mk('span', 'Length', counts.map(n => {
       const f = x => { x.span = { lo: n, hi: n, unit: tu.unit }; };
       return { label: n + ' ' + tu.word + (n === 1 ? '' : 's'), est: run(f), apply: f, sel: n === 1 };
     }), true);

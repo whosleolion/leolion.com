@@ -146,11 +146,11 @@ export function parse(text, ctx) {
   const acts = concept('action');
   if (acts.length) {
     q.action = acts[0].id; q.assumed = q.assumed.filter(x => x !== 'action');
-    if (acts.some(a => a.id !== acts[0].id)) notes.push('Both buying and selling words appeared. I used "' + acts[0].p.display + '".');
+    if (acts.some(a => a.id !== acts[0].id)) notes.push('Buying and selling both appear. Using "' + acts[0].p.display + '".');
   }
   // rarity, tier
-  const rars = concept('rarity'); if (rars.length) { q.rarity = rars[0].id; if (rars.some(r => r.id !== rars[0].id)) notes.push('More than one rarity appeared. I used ' + rars[0].id + '.'); }
-  const tiers = concept('tier'); if (tiers.length) { q.tier = tiers[0].id; if (tiers.some(r => r.id !== tiers[0].id)) notes.push('More than one class appeared. I used ' + tiers[0].id + '.'); }
+  const rars = concept('rarity'); if (rars.length) { q.rarity = rars[0].id; if (rars.some(r => r.id !== rars[0].id)) notes.push('Several rarities given. Using ' + rars[0].id + '.'); }
+  const tiers = concept('tier'); if (tiers.length) { q.tier = tiers[0].id; if (tiers.some(r => r.id !== tiers[0].id)) notes.push('Several classes given. Using ' + tiers[0].id + '.'); }
   for (const p of rars.slice(0)) p.used = true;
   for (const p of tiers) p.used = true;
   for (const p of acts) p.used = true;
@@ -178,8 +178,8 @@ export function parse(text, ctx) {
       return true;
     });
     let rentSeen = false;
-    for (const o of others) { if (o.type === 'family' && o.id === 'rent') { rentSeen = true; continue; } notes.push(isComm(o) && hasNonComm ? 'I read "' + o.p.display + '" as the material, so the price is for "' + subjectEntry.name + '" at its normal price. Material is not priced separately.' : 'I also saw "' + o.p.display + '" but priced "' + subjectEntry.name + '". Split them into separate questions to price both.'); }
-    if (rentSeen && subjectEntry.kind === 'property') notes.push('I don\'t price renting a property yet. This is the price to buy it.');
+    for (const o of others) { if (o.type === 'family' && o.id === 'rent') { rentSeen = true; continue; } notes.push(isComm(o) && hasNonComm ? 'Read "' + o.p.display + '" as the material. Priced the ' + subjectEntry.name.toLowerCase() + ' at its normal price.' : 'Also saw "' + o.p.display + '". Priced "' + subjectEntry.name + '". Ask about the other separately.'); }
+    if (rentSeen && subjectEntry.kind === 'property') notes.push('Renting a property is not priced yet. This is the purchase price.');
     if (subjectEntry) { subs.forEach(p => { p.used = true; }); q.subject = subjectEntry.id; }
   }
   const kind = subjectEntry ? subjectEntry.kind : null;
@@ -207,7 +207,7 @@ export function parse(text, ctx) {
         if ((x.k === 'n' && x.lo === 2 && x.hi === 2) || (x.k === 'f' && x.raw === 'both')) { both = true; if (x.k === 'n') x.used = true; }
       }
       if (both) pair = [p, p];
-      else notes.push('Only one end of the trip was named. Say both ends, for example "capital to village", so I can judge the route.');
+      else notes.push('Only one end of the trip named. Give both, such as "capital to village", to price the route.');
     }
     if (pair) {
       const ra = ctx.mods.get(pair[0].id).rank, rb = ctx.mods.get(pair[1].id).rank;
@@ -230,12 +230,12 @@ export function parse(text, ctx) {
       nx.used = true; p.used = true;
       if (nx.id === 'lb') { q.qty = { lo: p.lo, hi: p.hi, unit: 'lb' }; }
       else if (!q.span) q.span = { lo: p.lo, hi: p.hi, unit: nx.id };
-      else notes.push('Two lengths were given. I used ' + q.span.lo + ' ' + q.span.unit + '.');
+      else notes.push('Two lengths given. Using ' + q.span.lo + ' ' + q.span.unit + '.');
       continue;
     }
     if (nx && nx.k === 'c' && nx.type === 'money') {
       p.used = true; nx.used = true;
-      notes.push('I read "' + p.lo + ' ' + nx.p.display + '" as a sum of money. Fool\'s Gold prices things, it can\'t work backwards from a budget yet. Name what you want to buy.');
+      notes.push('Read "' + p.lo + ' ' + nx.p.display + '" as money. Fool\'s Gold prices items and cannot yet work back from a budget.');
       continue;
     }
     if (nx && nx.k === 'c' && nx.type === 'count') { nx.used = true; p.used = true; q.qty = q.qty && q.qty.unit ? q.qty : { lo: p.lo, hi: p.hi }; counted = true; continue; }
@@ -263,11 +263,11 @@ export function parse(text, ctx) {
   // sanity: zero, negative or absurd amounts are not quantities
   for (const key of ['qty', 'span']) {
     const v = q[key];
-    if (v && (!(v.lo > 0) || !(v.hi > 0) || !isFinite(v.lo) || !isFinite(v.hi))) { notes.push('I ignored a zero, negative or impossible ' + (key === 'qty' ? 'amount' : 'length') + '.'); q[key] = null; }
-    else if (v && Math.max(v.lo, v.hi) > 1e7) notes.push('That is a very large number. Check it before trusting the price.');
+    if (v && (!(v.lo > 0) || !(v.hi > 0) || !isFinite(v.lo) || !isFinite(v.hi))) { notes.push('Ignored a zero or negative ' + (key === 'qty' ? 'amount' : 'length') + '.'); q[key] = null; }
+    else if (v && Math.max(v.lo, v.hi) > 1e7) notes.push('Very large number. Check it.');
   }
-  if (subjectEntry && (subjectEntry.tags || []).includes('trade') && q.qty && !q.qty.unit && ctx.world.currency?.denominations?.some(d => String(d.name).toLowerCase().split(' ')[0] === subjectEntry.name.toLowerCase().split(' ')[0])) notes.push('Priced as ' + q.qty.lo + ' lb of ' + subjectEntry.name.toLowerCase() + '. If you meant coins, that is a sum of money, not an item.');
-  for (const p of parts) if (p.k === 'ench') notes.push('"' + p.raw + '" is an enchantment bonus. I don\'t price bonuses directly. Say the rarity instead (for example "rare" or "very rare" magic weapon).');
+  if (subjectEntry && (subjectEntry.tags || []).includes('trade') && q.qty && !q.qty.unit && ctx.world.currency?.denominations?.some(d => String(d.name).toLowerCase().split(' ')[0] === subjectEntry.name.toLowerCase().split(' ')[0])) notes.push('Priced as ' + q.qty.lo + ' lb of ' + subjectEntry.name.toLowerCase() + '. Coins count as money, not an item.');
+  for (const p of parts) if (p.k === 'ench') notes.push('"' + p.raw + '" is an enchantment bonus and is not priced directly. Use a rarity instead, such as "rare magic weapon".');
   // unrecognized
   const unk = parts.filter(p => p.k === 'u');
   const unrecognized = unk.map(u => u.raw);

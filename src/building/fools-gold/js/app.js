@@ -30,7 +30,7 @@ function useWorld(id) {
 const cur = () => world.currency;
 const money = bu => formatMoney(bu, cur());
 let saveWarned = false;
-const persist = () => { const ok = save(S); if (!ok && !saveWarned) { saveWarned = true; toast('This browser is not saving your worlds. Use Copy world under World to back them up.'); } return ok; };
+const persist = () => { const ok = save(S); if (!ok && !saveWarned) { saveWarned = true; toast('This browser is not saving your worlds. Back them up with Copy world under World.'); } return ok; };
 
 // ---------- core flow ----------
 function fromText(text, opts = {}) {
@@ -72,7 +72,7 @@ function renderUnderstanding() {
     for (const [i, s] of p.suggestions.entries()) out.push(`<div class="hint">Did you mean <button class="pill" data-act="fix" data-i="${i}">${esc(s.to)}</button> instead of <span class="ign">${esc(s.from)}</span>?</div>`);
     const sugFrom = new Set(p.suggestions.flatMap(s => s.from.split(/\s+/).map(x => x.toLowerCase())));
     const rest = p.unrecognized.filter(u => !sugFrom.has(u.toLowerCase()));
-    if (rest.length && (st.query.subject || !unknownPhrase())) out.push(`<div class="hint"><span>Not understood and ignored:</span> ${rest.map(u => `<span class="ign">${esc(u)}</span>`).join(' ')} <span>(teach ${rest.length > 1 ? 'them' : 'it'} under World, Custom words)</span></div>`);
+    if (rest.length && (st.query.subject || !unknownPhrase())) out.push(`<div class="hint"><span>Ignored:</span> ${rest.map(u => `<span class="ign">${esc(u)}</span>`).join(' ')} <span>Add ${rest.length > 1 ? 'them' : 'it'} under World, Custom words.</span></div>`);
     for (const n of p.notes) out.push(`<div class="hint">${esc(n)}</div>`);
   }
   $('#understanding').innerHTML = out.length ? `<div class="hints">${out.join('')}</div>` : '';
@@ -89,13 +89,13 @@ function renderSamples() {
 const ACTION_WORD = { buy: 'Buying', sell: 'Selling', value: 'Appraising' };
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
-  if (!st.text) { el.innerHTML = `<div class="empty"><b>Ask for a price.</b> Say what you want priced in plain words. Add any of these and the estimate adjusts:<ul class="tips"><li><b>how many</b> or <b>how long</b>: 5 potions, 3 days, 6 months</li><li><b>buying or selling</b>: sell, buy, appraise</li><li><b>where</b> and <b>who</b>: in a village, black market, friendly</li><li><b>how fast</b> and <b>how good</b>: rush, masterwork, expensive</li></ul>Leave things out and I'll show what they would have changed.</div>`; return; }
+  if (!st.text) { el.innerHTML = `<div class="empty"><b>Ask for a price.</b> Describe what you want priced. More detail narrows the estimate:<ul class="tips"><li><b>Quantity or length:</b> 5 potions, 3 days, 6 months</li><li><b>Buying or selling:</b> buy, sell, appraise</li><li><b>Place and people:</b> in a village, black market, friendly</li><li><b>Speed and quality:</b> rush, masterwork, expensive</li></ul>Anything you leave out is listed under the result, with what it would change.</div>`; return; }
   if (!q.subject) {
     const g = guessCard();
-    el.innerHTML = g || `<div class="empty"><b>I couldn't find the thing to price.</b> ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or ' : ''}try naming an item, service or trip (a sword, an inn, a train ride) or use <b>Tap it</b> to browse.</div>`; return;
+    el.innerHTML = g || `<div class="empty"><b>No item found.</b> ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip (a sword, an inn, a train ride), or switch to <b>Tap it</b> to browse.</div>`; return;
   }
   if (!e.ok && e.error === 'conflict') {
-    el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(c.labels.join(' and '))}</b> can't both be true. ${esc(GROUPS[c.group].ask)}</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
+    el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(GROUPS[c.group].ask)}:</b> pick one.</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
     return;
   }
   const ent = e.entry, p = money(e.typical);
@@ -106,7 +106,7 @@ function renderResult() {
   const facts = [];
   if (e.each) facts.push(`About <b>${esc(money(e.each))}</b> ${esc(e.eachLabel || 'each')}.`);
   if (e.sense) facts.push(esc(e.sense));
-  for (const a of e.assumptions) facts.push(`<span>Assumed: ${esc(a.text)}</span>`);
+  if (e.assumptions.length) facts.push(`Assumed: ${esc(e.assumptions.map(a => a.text).join(', '))}.`);
   for (const n of e.notes) facts.push(esc(n));
   const rows = e.factors.map(f => {
     let eff;
@@ -130,14 +130,14 @@ function renderResult() {
     <div class="rangebar" role="img" aria-label="Range ${esc(formatRange(e.lo, e.hi, cur()))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>
     ${driversLine(e)}
     <div class="facts">${facts.map(f => `<div>${f}</div>`).join('')}</div>
-    <details class="why" open><summary>How I got this</summary><div class="tablewrap"><table class="fx"><thead><tr><th>Step</th><th>Effect</th><th>Running</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></details>
+    <details class="why" open><summary>Breakdown</summary><div class="tablewrap"><table class="fx"><thead><tr><th>Step</th><th>Factor</th><th>Running total</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></details>
     <div class="card-actions"><button class="btn primary" data-act="copy">Copy for notes</button><button class="btn" data-act="mode" data-mode="tap">Adjust with buttons</button></div>
   </article>`;
 }
 function driversLine(e) {
   const fs = e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => { const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi; return { f, g: Math.sqrt(a * b) }; }).filter(x => Math.abs(Math.log(x.g)) > 0.03).sort((x, y) => Math.abs(Math.log(y.g)) - Math.abs(Math.log(x.g))).slice(0, 3);
   if (!fs.length) return '';
-  return `<div class="drivers"><span class="dl">Moving the price</span>${fs.map(x => `<span class="drv ${x.g > 1 ? 'up' : 'down'}">${x.g > 1 ? '↑' : '↓'} ${esc(x.f.label)}</span>`).join('')}</div>`;
+  return `<div class="drivers"><span class="dl">Biggest factors</span>${fs.map(x => `<span class="drv ${x.g > 1 ? 'up' : 'down'}">${x.g > 1 ? '↑' : '↓'} ${esc(x.f.label)}</span>`).join('')}</div>`;
 }
 
 // ---------- unknown words: guess, nudge, set ----------
@@ -162,17 +162,17 @@ function guessCard() {
   if (!phrase) { st.guess = null; return ''; }
   const g = ensureGuess(phrase), name = capital(phrase);
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
-  let h = `<section class="guess"><h2>I don't know "${esc(phrase)}" yet</h2><p class="lead">No problem. Pick the closest thing below and I'll price it like that. Then you can raise or lower it and save it to this world.</p><div class="cands">`;
+  let h = `<section class="guess"><h2>"${esc(phrase)}" is not in the price list</h2><p class="lead">Pick the closest match, adjust the price, and save it to this world.</p><div class="cands">`;
   h += g.cands.map((c, i) => `<button class="cand${g.sel === i ? ' sel' : ''}" data-act="g-pick" data-i="${i}"><span class="cl">${esc(c.label)}</span><span class="cw">${esc(c.why)}</span><span class="cp">about ${esc(money(c.bu))}${c.unit && c.unit !== 'each' ? ' per ' + esc(c.unit) : ' each'}</span></button>`).join('');
   h += `</div>`;
   if (g.sel != null) {
     const c = g.cands[g.sel], pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
     const one = pv.one.ok ? pv.one.typical : g.bu;
-    h += `<div class="adjust"><p class="setline">Set <b>${esc(phrase)}</b> to about <b class="gp">${esc(money(one))}</b> each${c.unit && c.unit !== 'each' ? ' per ' + esc(c.unit) : ''}?</p>`;
-    if (qtxt && pv.full.ok) h += `<p class="mini">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(formatRange(pv.full.lo, pv.full.hi, cur()))}).</p>`;
-    h += `<div class="row"><button class="btn" data-act="g-lower">Lower it</button><button class="btn" data-act="g-raise">Raise it</button><input class="field" id="gPrice" placeholder="or type a price" aria-label="Type a price" style="width:140px"></div>
-      <div class="row" style="margin-top:8px"><button class="btn primary" data-act="g-set">Set it and save</button><button class="btn" data-act="g-cancel">Pick another</button></div>
-      <p class="mini">Saved prices live under World, My items, where you can edit or remove them.</p></div>`;
+    h += `<div class="adjust"><p class="setline">Price <b>${esc(phrase)}</b> at about <b class="gp">${esc(money(one))}</b> ${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}?</p>`;
+    if (qtxt && pv.full.ok) h += `<p class="mini">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(formatRange(pv.full.lo, pv.full.hi, cur()))})</p>`;
+    h += `<div class="row"><button class="btn" data-act="g-lower">Lower</button><button class="btn" data-act="g-raise">Raise</button><input class="field" id="gPrice" placeholder="or type a price" aria-label="Type a price" style="width:140px"></div>
+      <div class="row" style="margin-top:8px"><button class="btn primary" data-act="g-set">Save price</button><button class="btn" data-act="g-cancel">Back</button></div>
+      <p class="mini">Saved under World, My items, where you can edit or remove it.</p></div>`;
   }
   return h + `</section>`;
 }
@@ -197,13 +197,13 @@ function renderUnstated() {
   const leadDims = dims.filter(d => d.id !== 'span');
   const top = [...(leadDims.length ? leadDims : dims)].sort((a, b) => b.ratio - a.ratio)[0];
   const lo = top.options[0], hi = top.options[top.options.length - 1];
-  const lead = `You didn't say. The biggest swing is <b>${esc(top.ask.replace(/\?$/, '').toLowerCase())}</b>: ${esc(lo.label)} about ${esc(money(lo.typical))}, ${esc(hi.label)} about ${esc(money(hi.typical))}. Tap one to apply it.`;
-  el.innerHTML = `<section class="un"><h2>What you didn't say</h2><p class="lead">${lead}</p>` + dims.map((d, di) => `
+  const lead = `Priced as an average case. <b>${esc(top.ask)}</b> moves it most: ${esc(lo.label)} about ${esc(money(lo.typical))}, ${esc(hi.label)} about ${esc(money(hi.typical))}. Tap an option to try it.`;
+  el.innerHTML = `<section class="un"><h2>Not specified</h2><p class="lead">${lead}</p>` + dims.map((d, di) => `
     <div class="dim"><div class="dq"><span>${esc(d.ask)}</span><small>${esc(money(d.options[0].typical))} to ${esc(money(d.options[d.options.length - 1].typical))}</small></div>
     <div class="opts">${d.options.map((o, oi) => {
       const pct = Math.round(o.delta * 100);
       const dtxt = Math.abs(pct) < 1 ? 'same' : (pct > 0 ? '+' : '') + pct + '%';
-      return `<button class="opt${o.sel ? ' sel' : ''}" data-act="opt" data-d="${di}" data-o="${oi}"><span class="ol">${esc(o.label)}${o.sel ? ' (assumed)' : ''}</span><span class="op">${esc(money(o.typical))}</span><span class="od ${pct > 0 ? 'up' : pct < 0 ? 'down' : ''}">${dtxt}</span></button>`;
+      return `<button class="opt${o.sel ? ' sel' : ''}" data-act="opt" data-d="${di}" data-o="${oi}"><span class="ol">${esc(o.label)}${o.sel ? ' · assumed' : ''}</span><span class="op">${esc(money(o.typical))}</span><span class="od ${pct > 0 ? 'up' : pct < 0 ? 'down' : ''}">${dtxt}</span></button>`;
     }).join('')}</div></div>`).join('') + `</section>`;
 }
 
@@ -225,7 +225,7 @@ function renderHistory() {
   const el = $('#history');
   if (!h.length) { el.innerHTML = ''; return; }
   const sorted = [...h.filter(x => x.pin), ...h.filter(x => !x.pin)];
-  el.innerHTML = `<h3>Recent and starred</h3>` + sorted.map(x => {
+  el.innerHTML = `<h3>Recent</h3>` + sorted.map(x => {
     const i = S.history.indexOf(x);
     return `<div class="hrow"><button class="h" data-act="hist" data-i="${i}"><span>${esc(x.text)}</span><span class="hp">${esc(x.price)}</span></button><button class="star${x.pin ? ' on' : ''}" data-act="star" data-i="${i}" aria-label="${x.pin ? 'Unstar' : 'Star'}" aria-pressed="${!!x.pin}">${x.pin ? '★' : '☆'}</button></div>`;
   }).join('');
@@ -259,10 +259,10 @@ function renderFlow() {
   if (st.mode !== 'tap') return;
   const q = st.query, ent = q.subject ? ctx.byId.get(q.subject) : null;
   const act = (id, label) => `<button class="bigbtn${q.action === id && !q.assumed.includes('action') ? ' sel' : ''}" data-act="f-action" data-v="${id}">${label}</button>`;
-  let h = `<div class="step"><h4>What are you doing?</h4><div class="row">${act('buy', 'Buy or hire')}${act('sell', 'Sell')}${act('value', 'Appraise')}</div></div>`;
+  let h = `<div class="step"><h4>Action</h4><div class="row">${act('buy', 'Buy or hire')}${act('sell', 'Sell')}${act('value', 'Appraise')}</div></div>`;
   const cats = [...FLOW_CATS.map(c => [c[0], c[1]]), ['mine', 'My items']].filter(([id]) => ctx.entries.some(e => catOf(e) === id));
   const sel = st.flow.cat || (ent ? catOf(ent) : null);
-  h += `<div class="step"><h4>What?</h4><div class="row">${cats.map(([id, l]) => `<button class="bigbtn${sel === id ? ' sel' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`;
+  h += `<div class="step"><h4>Item</h4><div class="row">${cats.map(([id, l]) => `<button class="bigbtn${sel === id ? ' sel' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`;
   if (sel) {
     const items = ctx.entries.filter(e => catOf(e) === sel).filter(e => !st.flow.search || (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(st.flow.search.toLowerCase()));
     const unitBU = e => e.perMile ? e.perMile * e.mpd : (e.bu ?? 0);
@@ -278,16 +278,16 @@ function renderFlow() {
     const tu = timeUnit(ent);
     if (tu) {
       const opts = { day: [[1, 'day', '1 ' + tu.word], [3, 'day', '3 ' + tu.word + 's'], [1, 'week', '1 week'], [2, 'week', '2 weeks'], [1, 'month', '1 month']], week: [[1, 'week', '1 week'], [2, 'week', '2 weeks'], [4, 'week', '4 weeks'], [3, 'month', '3 months']], month: [[1, 'month', '1 month'], [3, 'month', '3 months'], [6, 'month', '6 months'], [12, 'month', '12 months']], year: [[1, 'year', '1 year'], [2, 'year', '2 years'], [4, 'year', '4 years']] }[tu.unit];
-      h += `<div class="step"><h4>How long?</h4><div class="row">${opts.map(([n, u, l]) => pill('f-span', n + '|' + u, l, q.span && q.span.lo === n && q.span.hi === n && (q.span.unit === u || (n === 1 && u === 'day' && q.span.unit === 'night')))).join('')}
+      h += `<div class="step"><h4>Length</h4><div class="row">${opts.map(([n, u, l]) => pill('f-span', n + '|' + u, l, q.span && q.span.lo === n && q.span.hi === n && (q.span.unit === u || (n === 1 && u === 'day' && q.span.unit === 'night')))).join('')}
         <input class="field" id="flowSpan" type="number" min="1" step="1" placeholder="${tu.word}s" style="width:90px" aria-label="Custom number of ${tu.word}s"> ${ent.mpd ? `<input class="field" id="flowMiles" type="number" min="1" step="1" placeholder="or miles" style="width:100px" aria-label="Distance in miles">` : ''}</div></div>`;
-      h += `<div class="step"><h4>${ent.kind === 'labor' ? 'How many workers?' : 'How many people?'}</h4><div class="row">${[1, 2, 3, 5, 10].map(n => pill('f-qty', n, String(n), (q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1))).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom count"></div></div>`;
+      h += `<div class="step"><h4>${ent.kind === 'labor' ? 'Workers' : 'People'}</h4><div class="row">${[1, 2, 3, 5, 10].map(n => pill('f-qty', n, String(n), (q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1))).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom count"></div></div>`;
     } else {
-      h += `<div class="step"><h4>${ent.unit === 'lb' ? 'How many pounds?' : 'How many?'}</h4><div class="row">${[1, 2, 5, 10, 20, 50, 100].map(n => pill('f-qty', n, String(n), q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1)).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom amount"></div></div>`;
+      h += `<div class="step"><h4>${ent.unit === 'lb' ? 'Pounds' : 'Quantity'}</h4><div class="row">${[1, 2, 5, 10, 20, 50, 100].map(n => pill('f-qty', n, String(n), q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1)).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom amount"></div></div>`;
     }
     if (ent.curve) h += `<div class="step"><h4>Rarity</h4><div class="row">${RARITIES.map(r => pill('f-rarity', r, r, q.rarity === r)).join('')}</div></div>`;
     if (['travel', 'lodging', 'service', 'labor', 'spell'].includes(ent.kind)) h += `<div class="step"><h4>Class</h4><div class="row">${TIER_NAMES.map(t => pill('f-tier', t, t, q.tier === t)).join('')}</div></div>`;
     const groups = Object.keys(GROUPS).map(g => [g, ctx.modList.filter(m => m.group === g && applicable(m, ent, q.action === 'sell' && (ent.kind === 'good' || ent.kind === 'property') ? 'sell' : 'buy'))]).filter(([, l]) => l.length);
-    h += `<div class="step"><h4>Circumstances (optional)</h4>` + groups.map(([g, list]) => `<div class="grp"><div class="gl">${esc(GROUPS[g].label)}</div><div class="row">${list.map(m => `<button class="bigbtn${q.mods.includes(m.id) ? ' sel' : ''}" data-act="f-mod" data-v="${esc(m.id)}">${esc(m.label)}</button>`).join('')}</div></div>`).join('') + `</div>`;
+    h += `<div class="step"><h4>Circumstances</h4>` + groups.map(([g, list]) => `<div class="grp"><div class="gl">${esc(GROUPS[g].label)}</div><div class="row">${list.map(m => `<button class="bigbtn${q.mods.includes(m.id) ? ' sel' : ''}" data-act="f-mod" data-v="${esc(m.id)}">${esc(m.label)}</button>`).join('')}</div></div>`).join('') + `</div>`;
   }
   h += `<div class="row"><button class="btn" data-act="clear">Start over</button></div>`;
   const keep = document.activeElement && document.activeElement.id;
@@ -326,33 +326,33 @@ function renderDrawer() {
   </div>
 
   <div class="sect"><h3>Item list</h3>
-    <p>Which set of prices is the starting point. Everything is adjustable, and your own items and settings always win.</p>
-    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="srd"${w.baseline === 'srd' ? ' checked' : ''}><span><b>Fantasy, with the 5e SRD item list</b>Named items like longsword and chain mail, plus travel, hired help, spellcasting, property and magic.</span></label>
-    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="generic"${w.baseline === 'generic' ? ' checked' : ''}><span><b>Fantasy, generic only</b>No SRD names. Categories like weapon, armor, potion, plus your own items.</span></label>
-    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="modern"${w.baseline === 'modern' ? ' checked' : ''}><span><b>Modern day, real world</b>Contemporary US prices: rent, groceries, flights, doctors, cars. Switch the money to dollars below.</span></label>
+    <p>Where prices start. Your own items and settings always override it.</p>
+    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="srd"${w.baseline === 'srd' ? ' checked' : ''}><span><b>Fantasy, 5e SRD items</b>Named items like longsword and chain mail, plus travel, hired help, spells, property and magic.</span></label>
+    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="generic"${w.baseline === 'generic' ? ' checked' : ''}><span><b>Fantasy, generic</b>Categories only, such as weapon, armor and potion. No SRD names.</span></label>
+    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="modern"${w.baseline === 'modern' ? ' checked' : ''}><span><b>Modern day, real world</b>Current US prices for rent, groceries, flights, doctors and cars. Pair it with US dollars under Money.</span></label>
   </div>
 
   <div class="sect"><h3>Money</h3>
-    <p>Everything is stored in one universal number, the <b>base unit</b>. By default 1 base unit is a copper piece. Each coin below is worth some number of base units. A one-coin world just has one row.</p>
+    <p>Prices are stored as one number, the <b>base unit</b> (1 is a copper piece by default). Set what each coin is worth in base units. A one-coin world has one row.</p>
     <div class="row"><button class="btn" data-act="w-cur" data-v="gsc">Gold, silver, copper</button><button class="btn" data-act="w-cur" data-v="one">One coin</button><button class="btn" data-act="w-cur" data-v="usd">US dollars</button></div>
     ${dens.map((d, i) => `<div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label><label class="lab">Worth (base units)<input class="field" type="number" min="0.01" step="any" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">×</button>` : '<span></span>'}</div>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-den">Add a coin</button></div>
     <label class="lab">Amounts smaller than the smallest coin<select class="field" data-bind="belowSmallest"><option value="decimals"${w.currency.belowSmallest === 'decimals' ? ' selected' : ''}>Show decimals (0.4 coins)</option><option value="round"${w.currency.belowSmallest === 'round' ? ' selected' : ''}>Round up to one coin</option></select></label>
-    <label class="lab">Your own note on what a base unit feels like<input class="field" data-bind="note" value="${esc(w.currency.note || '')}" placeholder="for example: 1 base unit is roughly a dollar"></label>
-    <label class="lab">What does a day of unskilled labor pay? (used for sense checks)<input class="field" data-bind="wage" value="${esc(formatFull(w.anchors.wage, w.currency))}"></label>
-    <p id="curPrev">Preview: 1, 12, 130, 1,500, 25,000, 800,000 base units show as ${esc(curPrev)}.</p>
+    <label class="lab">Your note on what one base unit is worth<input class="field" data-bind="note" value="${esc(w.currency.note || '')}" placeholder="for example: roughly a dollar"></label>
+    <label class="lab">Daily pay for unskilled work (used for sense checks)<input class="field" data-bind="wage" value="${esc(formatFull(w.anchors.wage, w.currency))}"></label>
+    <p id="curPrev">Shown as: ${esc(curPrev)} for 1, 12, 130, 1,500, 25,000 and 800,000 base units.</p>
   </div>
 
   <div class="sect"><h3>Economy</h3>
-    <p>Tags shift whole categories of price. Pick the ones that describe the world as a whole.</p>
+    <p>Tags that raise or lower whole categories of price. Pick any that fit the world.</p>
     ${ECONOMY_TAGS.map(t => `<label class="tagrow"><input type="checkbox" data-bind="econ.${t.id}"${w.economyTags.includes(t.id) ? ' checked' : ''}><span><b>${esc(t.label)}</b>${esc(t.describe)}</span></label>`).join('')}
   </div>
 
   <div class="sect"><h3>Dials</h3>
     <div class="grid2">
-      <label class="lab">Price level (1 = standard)<input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${esc(w.dials.priceLevel)}"></label>
-      <label class="lab">Range width (0 = exact, 1 = wide)<input class="field" type="number" min="0" max="1" step="0.1" data-bind="dial.volatility" value="${esc(w.dials.volatility)}"></label>
-      <label class="lab">Shops pay this share when you sell<input class="field" type="number" min="0.1" max="1" step="0.05" data-bind="dial.sellFraction" value="${esc(w.dials.sellFraction)}"></label>
+      <label class="lab">Price level (1 is standard)<input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${esc(w.dials.priceLevel)}"></label>
+      <label class="lab">Range width (0 exact, 1 wide)<input class="field" type="number" min="0" max="1" step="0.1" data-bind="dial.volatility" value="${esc(w.dials.volatility)}"></label>
+      <label class="lab">Share of price paid to sellers<input class="field" type="number" min="0.1" max="1" step="0.05" data-bind="dial.sellFraction" value="${esc(w.dials.sellFraction)}"></label>
       <label class="lab">Stacking circumstances<select class="field" data-bind="dial.stacking"><option value="dampened"${w.dials.stacking === 'dampened' ? ' selected' : ''}>Dampened (recommended)</option><option value="strict"${w.dials.stacking === 'strict' ? ' selected' : ''}>Strict multiplication</option></select></label>
       <label class="lab">When you just say "travel"<select class="field" data-bind="defaults.travel">${ctx.entries.filter(e => e.group === 'travel').map(e => `<option value="${esc(e.id)}"${w.defaults.travel === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>
       ${ctx.entries.some(e => e.group === 'rent') ? `<label class="lab">When you just say "rent"<select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
@@ -360,19 +360,19 @@ function renderDrawer() {
   </div>
 
   <div class="sect"><h3>Custom words</h3>
-    <p>Teach it your world's slang. "sparkjuice" can mean a potion of healing, "the Spire" can mean the capital.</p>
+    <p>Teach it your world's words. "sparkjuice" can mean a healing potion, "the Spire" can mean the capital.</p>
     ${w.vocabulary.map((v, i) => `<div class="vrow"><input class="field" data-bind="voc.${i}.term" value="${esc(v.term)}" placeholder="word or phrase" aria-label="Word"><select class="field" data-bind="voc.${i}.means" aria-label="Means">${vocabOptions(v.means)}</select><button class="xbtn" data-act="w-del-voc" data-i="${i}" aria-label="Remove word">×</button></div>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-voc">Add a word</button></div>
   </div>
 
   <div class="sect"><h3>My items</h3>
-    <p>Add anything the catalog lacks, or override a name to replace its price. Price can be typed with coins, like "3 gp 5 sp".</p>
+    <p>Add items the list lacks, or reuse a name to replace its price. Prices accept coins, like "3 gp 5 sp".</p>
     ${w.items.map((it, i) => `<div class="irow"><label class="lab">Name<input class="field" data-bind="item.${i}.name" value="${esc(it.name)}"></label><label class="lab">Kind<select class="field" data-bind="item.${i}.kind">${['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'].map(k => `<option${it.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><label class="lab">Price<input class="field" data-bind="item.${i}.price" value="${esc(formatFull(it.bu, w.currency))}"></label><label class="lab">Per<select class="field" data-bind="item.${i}.unit">${['each', 'day', 'lb'].map(k => `<option${it.unit === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><button class="xbtn" data-act="w-del-item" data-i="${i}" aria-label="Remove item">×</button></div><label class="lab">Tags (space separated, like: weapon metal)<input class="field" data-bind="item.${i}.tags" value="${esc((it.tags || []).join(' '))}"></label>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-item">Add an item</button></div>
   </div>
 
   <div class="sect"><h3>Back up and share</h3>
-    <p>Copy this world to keep it or send it to someone. Paste a world below to load it.</p>
+    <p>Copy this world to keep it or share it. Paste one below to load it.</p>
     <textarea class="mono" id="exportBox" readonly aria-label="World data">${esc(json)}</textarea>
     <div class="row"><button class="btn" data-act="w-copy">Copy world</button><button class="btn" data-act="w-save-file">Save as file</button></div>
     <textarea class="mono" id="importBox" placeholder="Paste a world here" aria-label="Paste a world"></textarea>
@@ -380,7 +380,7 @@ function renderDrawer() {
   </div>
 
   <div class="sect" id="about"><h3>About</h3>
-    <p>Fool's Gold gives estimates, never appraisals. Every price is a range with the reasons shown. It runs on rules and word lists in your browser. Nothing is sent anywhere.</p>
+    <p>Estimates only. Every price is a range, with its reasons shown. Rules and word lists run in your browser, and nothing is sent anywhere.</p>
     <p>${esc(SRD_ATTRIBUTION)}</p>
   </div>`;
   panel.scrollTop = top;
@@ -395,7 +395,7 @@ async function copyText(text, okMsg) {
   catch (e) {
     const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
     let ok = false; try { ok = document.execCommand('copy'); } catch (e2) { /* ignore */ }
-    ta.remove(); toast(ok ? okMsg : 'Copy blocked here. Select the text and copy it.');
+    ta.remove(); toast(ok ? okMsg : 'Copy is blocked here. Select the text and copy it.');
   }
 }
 // Structural edits re-render the drawer. Plain field edits only refresh what depends on them, so focus stays put.
@@ -410,7 +410,7 @@ function worldChanged(opts = {}) {
     if (p[0] === 'dial') t.value = world.dials[p[1]];
     if (p[0] === 'den' && p[2] === 'bu') t.value = world.currency.denominations[+p[1]].bu;
     const prev = document.getElementById('curPrev');
-    if (prev) prev.textContent = 'Preview: 1, 12, 130, 1,500, 25,000, 800,000 base units show as ' + [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ') + '.';
+    if (prev) prev.textContent = 'Shown as: ' + [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ') + ' for 1, 12, 130, 1,500, 25,000 and 800,000 base units.';
   } else renderDrawer();
 }
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
@@ -447,7 +447,7 @@ document.addEventListener('click', e => {
       const c = st.guess.cands[st.guess.sel], name = capital(st.guess.phrase);
       const item = newItemFrom(name, st.guess.phrase, c, storedPrice(ctx, name, c, st.guess.bu));
       item.id = newItemId(); world.items.push(item); st.guess = null;
-      worldChanged(); toast('Saved "' + name + '" to ' + world.name + '. Edit it under World, My items.');
+      worldChanged(); toast('Saved "' + name + '". Edit it under World, My items.');
     } break;
     // flow
     case 'f-action': flowEdit(x => { x.action = d.v; x.assumed = x.assumed.filter(z => z !== 'action'); }); break;
@@ -487,14 +487,14 @@ document.addEventListener('click', e => {
     case 'w-add-item': world.items.push({ id: newItemId(), name: 'New item', kind: 'good', bu: 100, unit: 'each', tags: [] }); worldChanged(); break;
     case 'w-del-item': world.items.splice(+d.i, 1); worldChanged(); break;
     case 'w-copy': copyText(JSON.stringify(world, null, 1), 'World copied'); break;
-    case 'w-save-file': { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(world, null, 1)], { type: 'application/json' })); a.download = slug(world.name) + '.foolsgold.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Saving. If nothing happened, use Copy world.'); } catch (e2) { toast('Saving is blocked here. Use Copy world.'); } break; }
+    case 'w-save-file': { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(world, null, 1)], { type: 'application/json' })); a.download = slug(world.name) + '.foolsgold.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Saving. If nothing happens, use Copy world.'); } catch (e2) { toast('Saving is blocked here. Use Copy world instead.'); } break; }
     case 'w-import': {
       try {
         const w = normalizeWorld(JSON.parse($('#importBox').value));
         if (!w || typeof w !== 'object') throw new Error('bad');
         w.id = uniqueWorldId(w.id); compileWorld(w); // throws before anything is stored
         S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); toast('World loaded');
-      } catch (e2) { toast('That is not a Fool\'s Gold world.'); }
+      } catch (e2) { toast('Not a Fool\'s Gold world.'); }
       break;
     }
     case 'w-reset': {
@@ -518,7 +518,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.id === 'gPrice') { const v = parseMoney(t.value, cur()); if (v && st.guess) { st.guess.bu = v; renderResult(); } else toast('I could not read that price. Try something like 25 gp.'); return; }
+  if (t.id === 'gPrice') { const v = parseMoney(t.value, cur()); if (v && st.guess) { st.guess.bu = v; renderResult(); } else toast('Could not read that price. Try "25 gp".'); return; }
   if (t.id === 'flowQty') { const n = Math.max(1, Math.round(+t.value || 1)); flowEdit(x => { x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); return; }
   if (t.id === 'flowSpan') { const n = Math.max(1, +t.value || 1); flowEdit(x => { const tu = timeUnit(ctx.byId.get(x.subject) || {}); x.span = { lo: n, hi: n, unit: tu ? tu.unit : 'day' }; }); return; }
   if (t.id === 'flowMiles') { const n = Math.max(1, +t.value || 1); flowEdit(x => { x.span = { lo: n, hi: n, unit: 'mile' }; }); return; }

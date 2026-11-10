@@ -63,7 +63,7 @@ export function estimate(q, ctx) {
   const notes = [], assumptions = [], factors = [];
   const kind = entry.kind;
   const side = q.action === 'sell' && (kind === 'good' || kind === 'property') ? 'sell' : 'buy';
-  if (q.action === 'sell' && !(kind === 'good' || kind === 'property')) notes.push('Selling a service means charging for it, so this is what you could ask.');
+  if (q.action === 'sell' && !(kind === 'good' || kind === 'property')) notes.push('Selling a service: this is what you could charge.');
 
   let lo, hi;
   const push = (f) => {
@@ -75,7 +75,7 @@ export function estimate(q, ctx) {
   let baseLo, baseHi, baseLabel, unitWord = '';
   if (entry.curve) {
     const r = q.rarity || 'common';
-    if (!q.rarity) assumptions.push({ id: 'rarity', text: 'Rarity not stated, so I assumed common.' });
+    if (!q.rarity) assumptions.push({ id: 'rarity', text: 'common rarity' });
     const c = RARITY_CURVES[entry.curve];
     const m = c.mid[r] * (entry.scale || 1);
     baseLo = m * c.band[0]; baseHi = m * c.band[1];
@@ -85,7 +85,7 @@ export function estimate(q, ctx) {
     const sp = entry.spread ?? (entry.src === 'user' ? 0.15 : 0.1);
     baseLo = per * (1 - sp); baseHi = per * (1 + sp);
     baseLabel = entry.name;
-    if (q.rarity) notes.push(entry.name + ' has its own fixed price, so I ignored the rarity word.');
+    if (q.rarity) notes.push(entry.name + ' has a fixed price; rarity ignored.');
   }
   lo = baseLo; hi = baseHi;
   if (!(baseLo > 0) || !isFinite(baseHi)) return { ok: false, error: 'bad-price' };
@@ -99,27 +99,26 @@ export function estimate(q, ctx) {
   if (tu) {
     let dLo = 1, dHi = 1, word = tu.word;
     if (!q.span) {
-      assumptions.push({ id: 'span', text: 'Length not stated, so I priced 1 ' + word + '.' });
+      assumptions.push({ id: 'span', text: '1 ' + word });
     } else {
       const s = q.span;
       if (DAYS[s.unit]) { dLo = s.lo * DAYS[s.unit] / tu.days; dHi = s.hi * DAYS[s.unit] / tu.days; }
       else if (MILES[s.unit]) {
         if (entry.mpd) {
           dLo = s.lo * MILES[s.unit] / entry.mpd / tu.days; dHi = s.hi * MILES[s.unit] / entry.mpd / tu.days;
-          notes.push(Math.round(s.lo * MILES[s.unit]) + (s.lo !== s.hi ? ' to ' + Math.round(s.hi * MILES[s.unit]) : '') + ' miles at about ' + entry.mpd + ' miles a day is ' + (+dLo.toFixed(2)) + (dLo !== dHi ? ' to ' + (+dHi.toFixed(2)) : '') + ' days.');
-        } else { notes.push('Distance doesn\'t apply to ' + entry.name.toLowerCase() + ', so I priced 1 ' + word + '.'); assumptions.push({ id: 'span', text: 'Length not stated, so I priced 1 ' + word + '.' }); }
+          notes.push(Math.round(s.lo * MILES[s.unit]).toLocaleString('en-US') + (s.lo !== s.hi ? ' to ' + Math.round(s.hi * MILES[s.unit]).toLocaleString('en-US') : '') + ' miles is about ' + (+(dLo * tu.days).toFixed(2)) + (dLo !== dHi ? ' to ' + (+(dHi * tu.days).toFixed(2)) : '') + ' days at ' + entry.mpd.toLocaleString('en-US') + ' miles a day.');
+        } else { notes.push('Distance ignored: ' + entry.name.toLowerCase() + ' is not priced by distance.'); assumptions.push({ id: 'span', text: '1 ' + word }); }
       }
     }
-    if (dLo !== 1 || dHi !== 1) push({ kind: 'qty', label: '× ' + (dLo === dHi ? +dLo.toFixed(2) : +dLo.toFixed(2) + ' to ' + +dHi.toFixed(2)) + ' ' + word + (dHi === 1 ? '' : 's'), lo: dLo, hi: dHi, why: 'Length of the booking.' });
-    if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (kind === 'labor' ? ' workers' : ' people'), lo: qty.lo, hi: qty.hi, why: 'Number of people.' });
+    if (dLo !== 1 || dHi !== 1) push({ kind: 'qty', label: '× ' + (dLo === dHi ? +dLo.toFixed(2) : +dLo.toFixed(2) + ' to ' + +dHi.toFixed(2)) + ' ' + word + (dHi === 1 ? '' : 's'), lo: dLo, hi: dHi, why: '' });
+    if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (kind === 'labor' ? ' workers' : ' people'), lo: qty.lo, hi: qty.hi, why: '' });
   } else {
     if (q.span && entry.perDay && DAYS[q.span.unit]) {
       const dl = q.span.lo * DAYS[q.span.unit], dh = q.span.hi * DAYS[q.span.unit];
-      push({ kind: 'qty', label: '× ' + (dl === dh ? dl : dl + ' to ' + dh) + ' days', lo: dl, hi: dh, why: 'Priced per day.' });
-    } else if (q.span && !q.span.implied) notes.push('A length of time doesn\'t apply to ' + entry.name.toLowerCase() + ', so I ignored it.');
-    else if (q.span) notes.push('"' + q.span.unit + '" doesn\'t apply to ' + entry.name.toLowerCase() + ', so I ignored it.');
-    if (q.qty && q.qty.unit === 'lb' && entry.unit !== 'lb') notes.push(entry.name + ' is not sold by weight here, so I read the number as a count.');
-    if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (entry.unit === 'lb' ? ' lb' : ''), lo: qty.lo, hi: qty.hi, why: 'How many.' });
+      push({ kind: 'qty', label: '× ' + (dl === dh ? dl : dl + ' to ' + dh) + ' days', lo: dl, hi: dh, why: '' });
+    } else if (q.span) notes.push('Length ignored: ' + entry.name.toLowerCase() + ' is not priced by time.');
+    if (q.qty && q.qty.unit === 'lb' && entry.unit !== 'lb') notes.push(entry.name + ' is not sold by weight, so "' + q.qty.lo + ' lb" is counted as ' + q.qty.lo + '.');
+    if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (entry.unit === 'lb' ? ' lb' : ''), lo: qty.lo, hi: qty.hi, why: '' });
   }
 
   // ---- selling fraction ----
@@ -127,7 +126,7 @@ export function estimate(q, ctx) {
     const f = entry.sellFraction ?? dials.sellFraction;
     push({ kind: 'side', label: 'Selling, not buying', lo: f * 0.9, hi: f * 1.1, why: f >= 1 ? 'Trade goods sell at about full value.' : 'Shops pay about ' + Math.round(f * 100) + '% of the price they sell at.' });
   } else if (q.action === 'value') {
-    notes.push('This is the fair market value, not what a shop would pay you.');
+    notes.push('Fair market value, not what a shop would pay.');
   }
 
   // ---- tier ----
@@ -136,7 +135,7 @@ export function estimate(q, ctx) {
     const f = TIER_FACTORS[cls][q.tier];
     push({ kind: 'tier', label: q.tier + ' class', lo: f[0], hi: f[1], why: TIER_WHY[cls][q.tier] });
   } else if (!q.tier && ['travel', 'lodging', 'service', 'labor', 'spell'].includes(kind)) {
-    if (!entry.noTier) assumptions.push({ id: 'tier', text: 'Class not stated, so I priced the standard level.' });
+    if (!entry.noTier) assumptions.push({ id: 'tier', text: 'standard class' });
   }
 
   // ---- world economy ----
@@ -162,7 +161,7 @@ export function estimate(q, ctx) {
   // ---- modifiers ----
   const list = [];
   for (const m of selected) {
-    if (!applicable(m, entry, side)) { notes.push('"' + m.label + '" doesn\'t apply to ' + (KIND_WORD[kind] || kind) + (m.goodTags && kind === 'good' ? ' like this' : '') + ', so I left it out.'); continue; }
+    if (!applicable(m, entry, side)) { notes.push('"' + m.label + '" does not apply to ' + (m.goodTags && kind === 'good' ? 'this item' : (KIND_WORD[kind] || kind)) + '. Left out.'); continue; }
     const r = (side === 'sell' && m.sell) ? m.sell : m.buy;
     let a = r[0], b = r[1];
     if (m.group === 'place' && entry.placeScale) { a = Math.pow(a, entry.placeScale); b = Math.pow(b, entry.placeScale); }

@@ -64,7 +64,7 @@ eq('12b dash range', (() => { const q = Q('3-5 days coach'); return [q.span.lo, 
 eq('13 word number', Q('five rare potions').qty.lo, 5);
 {
   const r = P('2 gp worth of rope');
-  t('14 money flagged', r.notes.some(n => /sum of money/.test(n)), r.notes);
+  t('14 money flagged', r.notes.some(n => /as money/.test(n)), r.notes);
 }
 eq('14b lb', (() => { const q = Q('10 lb of iron'); return [q.subject, q.qty.lo, q.qty.unit]; })(), ['good.iron', 10, 'lb']);
 eq('14c miles', (() => { const q = Q('300 miles by rail'); return [q.span.lo, q.span.unit, q.subject]; })(), [300, 'mile', 'travel.rail']);
@@ -143,11 +143,11 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   t('E9 zero volatility collapses range', v.lo === v.typical && v.hi === v.typical, [v.lo, v.typical, v.hi]);
 }
 {
-  const ign = E('black market rail 3 days'); t('E10 inapplicable modifier is reported not applied', ign.notes.some(n => /doesn't apply/.test(n)), ign.notes);
+  const ign = E('black market rail 3 days'); t('E10 inapplicable modifier is reported not applied', ign.notes.some(n => /does not apply/.test(n)), ign.notes);
   const e = E('hire 3 guides for 2 days', srd); t('E11 head count x days', Math.abs(e.typical - 3 * 2 * 200 * 1) / (3 * 2 * 200) < 0.15, e.typical);
   const m = E('300 miles by coach', srd); t('E12 miles on coach = 3 cp a mile', Math.abs(m.typical - 900) / 900 < 0.15, m.typical);
   const rs = E('rare ring', srd); eq('E13 rarity honoured on templates', rs.assumptions.length, 0);
-  const pw = E('potion of healing rare', srd); t('E14 fixed price item ignores rarity word', pw.notes.some(n => /ignored the rarity/.test(n)));
+  const pw = E('potion of healing rare', srd); t('E14 fixed price item ignores rarity word', pw.notes.some(n => /rarity ignored/.test(n)));
 }
 // ---------- baseline toggle ----------
 {
@@ -228,14 +228,14 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const gsc = vcm.world.currency;
   eq('A9 parseMoney names', [parseMoney('5 gold', gsc), parseMoney('3 gold pieces', gsc), parseMoney('5 gold 3 silver', gsc), parseMoney('1,500 gp', gsc)], [500, 300, 530, 150000]);
   eq('A9b parseMoney rejects', [parseMoney('5 zorkmids', gsc), parseMoney('-5 gp', gsc), parseMoney('', gsc), parseMoney('abc', gsc)], [null, null, null, null]);
-  const tp = P('sword for 50 ti', ti); eq('A10 coin from the world table is money, not a quantity', [tp.query.qty, tp.notes.some(n => /sum of money/.test(n))], [null, true]);
+  const tp = P('sword for 50 ti', ti); eq('A10 coin from the world table is money, not a quantity', [tp.query.qty, tp.notes.some(n => /as money/.test(n))], [null, true]);
   const gp = P('sword 5 gp', ti); eq('A10b gp is not money in a one-coin world', gp.unrecognized.includes('gp'), true);
-  const gc = P('20 gold pieces', srd); eq('A11 gold pieces is a sum of money', [gc.query.subject, gc.notes.some(n => /sum of money/.test(n))], [null, true]);
+  const gc = P('20 gold pieces', srd); eq('A11 gold pieces is a sum of money', [gc.query.subject, gc.notes.some(n => /as money/.test(n))], [null, true]);
   eq('A13 formatFull', [formatFull(1350, gsc), formatFull(5, gsc), formatFull(100, gsc)], ['13 gp 5 sp', '5 cp', '1 gp']);
   eq('A16 zero and negative qty ignored', [Q('0 daggers').qty, Q('-3 daggers').qty, P('0 daggers').notes.length > 0], [null, null, true]);
-  eq('A16b huge noted', P('999999999999 daggers').notes.some(n => /very large/.test(n)), true);
+  eq('A16b huge noted', P('999999999999 daggers').notes.some(n => /very large/i.test(n)), true);
   eq('A15 sell property uses the sell side', E('sell a cottage', srd).side, 'sell');
-  eq('A17 rent note', P('rent a house').notes.some(n => /rent/.test(n)), true);
+  eq('A17 rent note', P('rent a house').notes.some(n => /rent/i.test(n)), true);
   eq('A18 tram is a tram fare', Q('tram ticket').subject, 'service.tram-fare'); eq('A18b suit of plate', Q('a suit of plate armor', srd).subject, 'good.plate-armor'); eq('A18c wizard', Q('hire a wizard').subject, 'labor.wizard-for-hire');
   t('A19 rations scale with days', E('rations for 3 days', srd).typical > E('rations', srd).typical * 2.5);
   eq('A19b lb on non-lb note', E('10 lb of torches', srd).notes.some(n => /not sold by weight/.test(n)), true);
@@ -254,7 +254,7 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('A27 lb label', E('20 lb of salt', srd).eachLabel, 'per lb');
   eq('A29 accents', Q('lòngsword', srd).subject, 'good.longsword');
   const user = WORLD_PRESETS.srd(); user.items = [{ name: 'Longsword', kind: 'good', bu: 2000, unit: 'each', tags: [] }]; const uc = compileWorld(user);
-  eq('A28 user override keeps words and tags', [Q('long sword', uc).subject, estimate(Q('rush longsword', uc), uc).ok && estimate(Q('rush longsword', uc), uc).notes.some(n => /doesn't apply/.test(n))], ['user.longsword', false]);
+  eq('A28 user override keeps words and tags', [Q('long sword', uc).subject, estimate(Q('rush longsword', uc), uc).ok && estimate(Q('rush longsword', uc), uc).notes.some(n => /does not apply/.test(n))], ['user.longsword', false]);
 }
 
 // ---------- modern real-world pack ----------
@@ -292,6 +292,20 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('G6 singular alias works', Q('a monster part', cw).subject, 'user.t1');
   const raised = storedPrice(vcm, 'Monster parts', c[0], target * 2); t('G7 raise doubles the stored price', raised > stored * 1.8 && raised < stored * 2.2, [stored, raised]);
   const mc = candidatesFor('lawyer cat', modern); t('G8 modern world guesses from word overlap', mc.some(x => x.id === 'labor.m-lawyer'), mc.map(x => x.id));
+}
+
+// ---------- copy lint: how the app talks ----------
+{
+  const sentences = ['price for train ride between two major capital cities, 3 days travel expensive', 'sell 5 rare potions black market rush', '2 gp worth of rope', 'gold dagger', '+2 longsword', 'rent a house', '0 daggers', 'rush rations', '10 lb of torches', 'train ride', 'black market rail 3 days', '3 days travel, coach and ship', 'sell car in capital and village', 'buy 10 lb of gold', 'appraise a rapier', 'sell guide', '1500 miles potion', 'hire a lawyer 3 miles', 'rare longsword', 'friendly hostile sword'];
+  const out = [];
+  for (const w of [vcm, srd, modern]) for (const sx of sentences) {
+    const r = P(sx, w); out.push(...r.notes);
+    const q = r.query; if (q.subject) { const e = estimate(q, w); if (e.ok) { out.push(...e.notes, ...e.assumptions.map(a => a.text), ...e.factors.map(f => f.why || '')); const a = analyze(q, e, w); out.push(...a.dimensions.map(d => d.ask)); } }
+  }
+  const bad = [...new Set(out)].filter(x => /\bI\b|\bI'|—|–|we |you didn't|please|sorry|oops|unfortunately|simply|just /i.test(x));
+  t('C1 notes and labels avoid first person, apology and filler', bad.length === 0, '\n   ' + bad.join('\n   '));
+  const src = (await import('node:fs')).readFileSync('src/building/fools-gold/js/data.js', 'utf8') + (await import('node:fs')).readFileSync('src/building/fools-gold/js/app.js', 'utf8') + (await import('node:fs')).readFileSync('src/building/fools-gold/index.html', 'utf8');
+  t('C2 no em dashes anywhere in the app', !/—/.test(src));
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {
