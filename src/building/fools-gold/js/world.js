@@ -1,0 +1,105 @@
+// Compile a world definition into a working context: catalog, lexicon, helpers.
+import {
+  CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, MONEY_TERMS, slug,
+} from './data.js';
+
+export function stem(w) {
+  w = w.toLowerCase();
+  if (w.length <= 3 || /^\d/.test(w)) return w;
+  if (/(ss|x|z|ch|sh)es$/.test(w)) return w.slice(0, -2);
+  if (/ies$/.test(w) && w.length > 4) return w.slice(0, -3) + 'y';
+  if (/s$/.test(w) && !/(ss|us|is)$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+
+const TOKEN_RE = /[#@][a-z0-9_-]+|\d+(?:,\d{3})*(?:\.\d+)?(?:st|nd|rd|th)\b|\d+(?:,\d{3})*(?:\.\d+)?x\b|x\d+\b|\d+(?:,\d{3})*(?:\.\d+)?|[a-z]+(?:['’-][a-z]+)*|[–—-]|[,;.!?]/gi;
+
+// Tokenize into word / number / dash tokens with source offsets.
+export function tokenize(text) {
+  const out = [];
+  const s = String(text).replace(/[“”]/g, '"').replace(/&/g, ' and ').replace(/×/g, 'x');
+  let m;
+  TOKEN_RE.lastIndex = 0;
+  while ((m = TOKEN_RE.exec(s))) {
+    const raw = m[0], start = m.index, end = start + raw.length, low = raw.toLowerCase();
+    if (/^[,;.!?]$/.test(raw)) continue;
+    if (/^[–—-]$/.test(raw)) { out.push({ raw, stem: '-', type: 'dash', start, end }); continue; }
+    if (/^[#@]/.test(low)) {
+      const inner = low.slice(1).split(/[-_]/).filter(Boolean);
+      inner.forEach(w => out.push({ raw: w, stem: stem(w), type: 'word', start, end, tag: true }));
+      continue;
+    }
+    if (/^x\d+$/.test(low)) { out.push({ raw, stem: low.slice(1), type: 'num', value: +low.slice(1), mult: true, start, end }); continue; }
+    if (/^\d[\d,.]*x$/.test(low)) { const v = parseFloat(low.slice(0, -1).replace(/,/g, '')); out.push({ raw, stem: String(v), type: 'num', value: v, mult: true, start, end }); continue; }
+    if (/^\d[\d,.]*(st|nd|rd|th)$/.test(low)) { out.push({ raw, stem: low.replace(/,/g, ''), type: 'word', start, end }); continue; }
+    if (/^\d/.test(low)) { const v = parseFloat(low.replace(/,/g, '')); out.push({ raw, stem: String(v), type: 'num', value: v, start, end }); continue; }
+    const parts = low.replace(/[’']/g, "'").split(/-/).filter(Boolean);
+    parts.forEach(w => out.push({ raw: w, stem: stem(w.replace(/'s$/, '').replace(/'/g, '')), type: 'word', start, end }));
+  }
+  return out;
+}
+
+const norm = s => tokenize(s).filter(t => t.type !== 'dash').map(t => t.stem);
+
+export function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+export function compileWorld(world) {
+  const generic = world.baseline === 'generic';
+  const entries = CATALOG.filter(e => !generic || !(e.src === 'srd') || e.generic).map(e => ({ ...e }));
+  const byId = new Map(entries.map(e => [e.id, e]));
+  // user items
+  for (const it of world.items || []) {
+    const e = {
+      id: it.id || 'user.' + slug(it.name), name: it.name, kind: it.kind || 'good', src: 'user', unit: it.unit || 'each', bu: it.bu,
+      tags: it.tags || [], aliases: it.aliases || [], spread: it.spread ?? 0.15, basis: 'Added by you.',
+    };
+    // replace same-name catalog entries so user numbers win
+    for (const old of entries.filter(x => slug(x.name) === slug(e.name))) { byId.delete(old.id); }
+    byId.set(e.id, e);
+  }
+  const list = [...byId.values()];
+  const mods = new Map(MODIFIERS.map(m => [m.id, m]));
+  const econ = new Map(ECONOMY_TAGS.map(t => [t.id, t]));
+
+  // lexicon
+  const phrases = [];
+  const add = (term, type, id, prio, extra = {}) => {
+    const words = norm(term);
+    if (!words.length) return;
+    phrases.push({ words, key: words.join(' '), type, id, prio, display: term, ...extra });
+  };
+  for (const e of list) {
+    const p = e.isCategory ? 2 : 1;
+    add(e.name, 'entry', e.id, p);
+    const m = /^(.+?) of (.+)$/i.exec(e.name);
+    if (m) add(m[2] + ' ' + m[1], 'entry', e.id, p);
+    for (const a of e.aliases || []) add(a, 'entry', e.id, p);
+  }
+  for (const f of FAMILIES) for (const t of f.terms) add(t, 'family', f.id, 3);
+  for (const m of MODIFIERS) { for (const a of m.aliases) add(a, 'mod', m.id, 4); }
+  for (const [id, ts] of Object.entries(RARITY_TERMS)) ts.forEach(t => add(t, 'rarity', id, 5));
+  for (const [id, ts] of Object.entries(TIER_TERMS)) ts.forEach(t => add(t, 'tier', id, 5));
+  for (const [id, ts] of Object.entries(ACTION_TERMS)) ts.forEach(t => add(t, 'action', id, 6));
+  for (const [id, ts] of Object.entries(UNIT_TERMS)) ts.forEach(t => add(t, 'unit', id, 7));
+  COUNT_TERMS.forEach(t => add(t, 'count', t, 7));
+  MONEY_TERMS.forEach(t => add(t, 'money', t, 7));
+  for (const v of world.vocabulary || []) {
+    if (!v.term || !v.means) continue;
+    const [kind, id] = v.means.includes(':') ? v.means.split(/:(.*)/s) : ['entry', v.means];
+    const type = kind === 'mod' ? 'mod' : kind === 'rarity' ? 'rarity' : kind === 'tier' ? 'tier' : 'entry';
+    add(v.term, type, id, 0, { custom: true });
+  }
+  // currency words so "50 gold" style does not confuse (kept as money only after a number, see parser)
+
+  // index by first word, longest first, then priority
+  const index = new Map();
+  for (const p of phrases) {
+    if (!index.has(p.words[0])) index.set(p.words[0], []);
+    index.get(p.words[0]).push(p);
+  }
+  for (const arr of index.values()) arr.sort((a, b) => b.words.length - a.words.length || a.prio - b.prio);
+
+  return { world, entries: list, byId, mods, econ, phrases, index };
+}
+
+export function entryName(ctx, id) { const e = ctx.byId.get(id); return e ? e.name : id; }
