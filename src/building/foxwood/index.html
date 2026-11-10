@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0e0f13">
+<title>Foxwood Wilds map</title>
+<style>
+:root{--bg:#0e0f13;--panel:#16181e;--line:#2b2f3a;--text:#ece8e0;--muted:#9a9ba4;--accent:#e6b94a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:2}
+h1{margin:0;font:600 1rem/1 Georgia,'Iowan Old Style',serif;letter-spacing:.04em;margin-right:auto}
+.count{color:var(--muted);font-size:.85rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);border-radius:0}
+.seg button:last-child{border-right:0}
+button,.chk{font:inherit;color:var(--text);background:#1d2028;border:1px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;min-height:42px}
+button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#14110a;font-weight:600}
+button:disabled{opacity:.5}
+.chk{display:inline-flex;gap:8px;align-items:center}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+main{flex:1;display:flex;flex-direction:column;align-items:center;padding:12px}
+.stage{width:100%;max-width:900px;touch-action:manipulation}
+canvas{display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 8px 30px #000a;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hint{color:var(--muted);font-size:.85rem;text-align:center;margin:10px 4px 0;max-width:640px}
+footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px 14px 18px;border-top:1px solid var(--line);background:var(--panel)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000c;color:#fff;padding:9px 16px;border-radius:20px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>Foxwood Wilds</h1>
+  <span class="count" id="count"></span>
+  <div class="seg" role="group" aria-label="View">
+    <button id="vPlayer" aria-pressed="true">Player</button>
+    <button id="vGM" aria-pressed="false">GM</button>
+  </div>
+  <label class="chk"><input type="checkbox" id="nums"> Numerals</label>
+</header>
+<main>
+  <div class="stage"><canvas id="c" aria-label="Foxwood Wilds hex map: tap a hex to reveal or hide it"></canvas></div>
+  <p class="hint" id="hint">Tap a hex to reveal or re-fog it. Player view hides everything under fog; GM view shows the hidden art at half strength.</p>
+</main>
+<footer>
+  <button id="revealAll">Reveal all</button>
+  <button id="fogAll">Fog all</button>
+  <button id="save">Save PNG</button>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(async () => {
+  'use strict';
+  const ORDER = 'I II III IV V VI VII VIII IX X XI XII XIII XIV XV XVI XVII XVIII XIX'.split(' ');
+  const LS = 'foxwood.revealed.v1', LSV = 'foxwood.view.v1';
+  const geo = await (await fetch('geometry.json')).json();
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = 'map.jpg'; });
+  const PAD = geo.pad, H = geo.hexes;
+  // crop box around all hexes (with headroom above hex I)
+  const xs = ORDER.flatMap(n => H[n].map(p => p[0])), ys = ORDER.flatMap(n => H[n].map(p => p[1]));
+  const M = 110, bx = Math.floor(Math.min(...xs) - M), by = Math.floor(Math.min(...ys) - M);
+  const bw = Math.ceil(Math.max(...xs) + M) - bx, bh = Math.ceil(Math.max(...ys) + M) - by;
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  cv.width = bw; cv.height = bh;
+
+  /* ---------- state ---------- */
+  let revealed = new Set(JSON.parse(localStorage.getItem(LS) || 'null') || ['II', 'III', 'VI', 'VII', 'VIII', 'XI', 'XII', 'XIII']);
+  let view = (localStorage.getItem(LSV) || 'player'), numerals = false;
+  const saveState = () => { try { localStorage.setItem(LS, JSON.stringify([...revealed])); localStorage.setItem(LSV, view); } catch (e) {} };
+
+  /* ---------- fog texture (made once) ---------- */
+  const fog = document.createElement('canvas'); fog.width = bw; fog.height = bh;
+  (function makeFog() {
+    const f = fog.getContext('2d'); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const acc = document.createElement('canvas'); acc.width = bw; acc.height = bh; const a = acc.getContext('2d');
+    a.fillStyle = '#000'; a.fillRect(0, 0, bw, bh);
+    [[220, .5], [70, .3], [22, .2]].forEach(([s, w]) => {
+      const sw = Math.ceil(bw / s) + 2, sh = Math.ceil(bh / s) + 2, sm = document.createElement('canvas'); sm.width = sw; sm.height = sh;
+      const sc = sm.getContext('2d'), d = sc.createImageData(sw, sh);
+      for (let i = 0; i < sw * sh; i++) { const v = rnd() * 255; d.data[i * 4] = d.data[i * 4 + 1] = d.data[i * 4 + 2] = v; d.data[i * 4 + 3] = 255; }
+      sc.putImageData(d, 0, 0);
+      a.globalAlpha = w; a.globalCompositeOperation = 'lighter'; a.imageSmoothingQuality = 'high'; a.drawImage(sm, 0, 0, sw * s, sh * s);
+    });
+    const src = a.getImageData(0, 0, bw, bh), out = f.createImageData(bw, bh);
+    let lo = 255, hi = 0; for (let i = 0; i < src.data.length; i += 4) { const v = src.data[i]; if (v < lo) lo = v; if (v > hi) hi = v; }
+    for (let i = 0; i < src.data.length; i += 4) {
+      const n = Math.pow((src.data[i] - lo) / (hi - lo || 1), 1.3), g = (rnd() - .5) * 8;
+      out.data[i] = 112 + 48 * n + g; out.data[i + 1] = 122 + 46 * n + g; out.data[i + 2] = 108 + 42 * n + g; out.data[i + 3] = 255;
+    }
+    f.putImageData(out, 0, 0);
+  })();
+
+  /* ---------- drawing ---------- */
+  const path = (c, pts) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x - bx, y - by) : c.moveTo(x - bx, y - by))); c.closePath(); };
+  // the photo cuts hex I off at its top edge, so its art is stretched down to fill the whole hex
+  function drawArt(c, name) {
+    path(c, H[name]); c.save(); c.clip();
+    if (name === 'I') {
+      const p = H.I, x0 = Math.min(...p.map(q => q[0])) - 6, x1 = Math.max(...p.map(q => q[0])) + 6, yt = Math.min(...p.map(q => q[1])) - 2, yb = Math.max(...p.map(q => q[1])) + 6;
+      c.drawImage(img, x0, 4, x1 - x0, yb - PAD - 4, x0 - bx, yt - by, x1 - x0, yb - yt);
+    } else c.drawImage(img, -bx, PAD - by);
+    c.restore();
+  }
+  function render(mode, showNums) {
+    const c = ctx; c.clearRect(0, 0, bw, bh); c.drawImage(fog, 0, 0);
+    if (mode === 'gm') ORDER.forEach(n => { if (!revealed.has(n)) { c.globalAlpha = .5; drawArt(c, n); c.globalAlpha = 1; } });
+    ORDER.forEach(n => { if (revealed.has(n)) drawArt(c, n); });
+    // the drawn frame
+    const seen = new Set(), edges = [];
+    ORDER.forEach(n => H[n].forEach((p, i) => { const q = H[n][(i + 1) % 6], k = [p, q].map(v => v.map(Math.round).join()).sort().join('|'); if (!seen.has(k)) { seen.add(k); edges.push([p, q]); } }));
+    c.lineCap = 'round';
+    [['#344028', 17], ['#46aa3a', 11]].forEach(([col, w]) => { c.strokeStyle = col; c.lineWidth = w; edges.forEach(([p, q]) => { c.beginPath(); c.moveTo(p[0] - bx, p[1] - by); c.lineTo(q[0] - bx, q[1] - by); c.stroke(); }); });
+    c.fillStyle = '#46aa3a'; new Set(ORDER.flatMap(n => H[n].map(p => p.map(Math.round).join()))).forEach(k => { const [x, y] = k.split(',').map(Number); c.beginPath(); c.arc(x - bx, y - by, 8, 0, 7); c.fill(); });
+    if (mode === 'gm' || showNums) {
+      c.font = 'bold 70px Georgia, "DejaVu Serif", serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+      ORDER.forEach(n => {
+        if (revealed.has(n)) return;
+        const p = H[n], cx = p.reduce((s, q) => s + q[0], 0) / 6 - bx, cy = p.reduce((s, q) => s + q[1], 0) / 6 - by;
+        c.lineWidth = 8; c.strokeStyle = '#282820'; c.strokeText(n, cx, cy); c.fillStyle = '#faf0c8'; c.fillText(n, cx, cy);
+      });
+    }
+  }
+  const paint = () => {
+    render(view, numerals);
+    document.getElementById('count').textContent = `${revealed.size} of ${ORDER.length} revealed`;
+    document.getElementById('vPlayer').setAttribute('aria-pressed', String(view === 'player'));
+    document.getElementById('vGM').setAttribute('aria-pressed', String(view === 'gm'));
+    document.getElementById('nums').checked = numerals || view === 'gm';
+    document.getElementById('nums').disabled = view === 'gm';
+  };
+
+  /* ---------- interaction ---------- */
+  const inside = (pt, poly) => { let r = false; for (let i = 0, j = 5; i < 6; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) r = !r; } return r; };
+  const toast = (t) => { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 1600); };
+  let down = null;
+  cv.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  cv.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 10) { down = null; return; }
+    down = null;
+    const r = cv.getBoundingClientRect(), pt = [(e.clientX - r.left) / r.width * bw + bx, (e.clientY - r.top) / r.height * bh + by];
+    const hit = ORDER.find(n => inside(pt, H[n])); if (!hit) return;
+    if (revealed.has(hit)) { revealed.delete(hit); toast(`${hit} fogged`); } else { revealed.add(hit); toast(`${hit} revealed`); }
+    saveState(); paint();
+  });
+  const set = (v) => { view = v; saveState(); paint(); };
+  document.getElementById('vPlayer').onclick = () => set('player');
+  document.getElementById('vGM').onclick = () => set('gm');
+  document.getElementById('nums').onchange = e => { numerals = e.target.checked; paint(); };
+  document.getElementById('revealAll').onclick = () => { if (!confirm('Reveal all 19 hexes?')) return; revealed = new Set(ORDER); saveState(); paint(); };
+  document.getElementById('fogAll').onclick = () => { if (!confirm('Fog every hex again?')) return; revealed = new Set(); saveState(); paint(); };
+
+  /* ---------- export ---------- */
+  document.getElementById('save').onclick = async () => {
+    const name = `foxwood-${view === 'gm' ? 'gm' : 'player'}-${revealed.size}of${ORDER.length}.png`;
+    const blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
+    if (!blob) return toast('Couldn’t make the image');
+    const file = new File([blob], name, { type: 'image/png' });
+    // phones: the share sheet has "Save Image" / Photos / Messages
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer: coarse)').matches) {
+      try { await navigator.share({ files: [file], title: 'Foxwood Wilds' }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+    // some mobile browsers ignore downloads; open the image so it can be pressed and held to save
+    if (matchMedia('(pointer: coarse)').matches) setTimeout(() => window.open(url, '_blank'), 300);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast(view === 'gm' ? 'Saved the GM view (spoilers!)' : 'Saved');
+  };
+  paint();
+})().catch(err => { document.body.insertAdjacentHTML('beforeend', `<p style="padding:20px;color:#f88">Couldn’t open the map: ${err.message}. Serve the folder over http (not file://).</p>`); });
+</script>
+</body>
+</html>
