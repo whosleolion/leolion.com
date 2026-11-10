@@ -9,7 +9,7 @@ import {
 } from './data.js';
 import { applicable } from './engine.js';
 import { load, save, normalizeWorld, newItemId } from './store.js';
-import { candidatesFor, previewWith, storedPrice, newItemFrom } from './guess.js';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -18,10 +18,11 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { ui: { why: false, opts: false, hist: false }, flowOpen: {}, drawerOpen: {}, guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
+const st = { ui: { hist: false }, sheet: { open: false, tab: 'break' }, editRow: null, dpage: null, flowOpen: {}, guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
+  normalizeWorld(world);
   S.activeId = world.id;
   ctx = compileWorld(world);
   $('#worldName').textContent = world.name;
@@ -56,7 +57,7 @@ function run(opts = {}) {
 }
 function renderAll() {
   $('#clearBtn').hidden = !st.text;
-  renderUnderstanding(); renderSamples(); renderResult(); renderHistory(); renderFlow();
+  renderUnderstanding(); renderSamples(); renderResult(); renderSheet(); renderHistory(); renderFlow();
 }
 
 // ---------- hints, chips, result ----------
@@ -80,14 +81,22 @@ function renderUnderstanding() {
 function renderSamples() {
   const el = $('#samples');
   if (st.text) { el.innerHTML = ''; return; }
-  el.innerHTML = sampleList().slice(0, 4).map((s, i) => `<button class="sample" data-act="sample" data-i="${i}">${esc(s)}</button>`).join('');
+  el.innerHTML = sampleList().map((s, i) => `<button class="sample" data-act="sample" data-i="${i}">${esc(s)}</button>`).join('');
 }
-const sampleList = () => (world.samples && world.samples.length ? world.samples : SAMPLE_QUERIES);
+const sampleList = () => [...(world.samples && world.samples.length ? world.samples : SAMPLE_QUERIES)].sort((a, b) => a.length - b.length);
 
 const ACTION_WORD = { buy: 'buying', sell: 'selling', value: 'appraising' };
+const hasEdits = q => !!(q.overrides && ((q.overrides.f && Object.keys(q.overrides.f).length) || q.overrides.base));
+function factsList(e) {
+  const facts = [];
+  if (e.sense) facts.push(esc(e.sense));
+  if (e.assumptions.length) facts.push(`Assumed: ${esc(e.assumptions.map(a => a.text).join(', '))}.`);
+  for (const n of [...e.notes, ...(st.parsed ? st.parsed.notes : [])]) facts.push(esc(n));
+  return facts;
+}
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
-  if (!st.text) { el.innerHTML = `<div class="empty">Describe what you want priced. Quantity, length, buying or selling, place, speed and quality all sharpen the estimate. Anything left out is listed under the result.</div>`; return; }
+  if (!st.text) { el.innerHTML = `<div class="empty">Describe what you want priced. Quantity, length, buying or selling, place, speed and quality all sharpen the estimate.</div>`; return; }
   if (!q.subject) {
     const g = guessCard();
     el.innerHTML = g || `<div class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or switch to <b>Tap it</b> to browse.</div>`; return;
@@ -97,16 +106,31 @@ function renderResult() {
     return;
   }
   const ent = e.entry;
-  const pos = e.hi > e.lo ? Math.min(100, Math.max(0, (Math.log(e.typical) - Math.log(e.lo)) / (Math.log(e.hi) - Math.log(e.lo)) * 100)) : 50;
   const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
   const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
   const what = qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
-  const meta = [range(e.lo, e.hi), e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : '', ACTION_WORD[q.action] + (q.assumed.includes('action') ? ' (assumed)' : '')].filter(Boolean);
-  const facts = [];
-  if (e.sense) facts.push(esc(e.sense));
-  if (e.assumptions.length) facts.push(`Assumed: ${esc(e.assumptions.map(a => a.text).join(', '))}.`);
-  for (const n of [...e.notes, ...(st.parsed ? st.parsed.notes : [])]) facts.push(esc(n));
+  const meta = [range(e.lo, e.hi), e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : '', ACTION_WORD[q.action] + (q.assumed.includes('action') ? ' (assumed)' : ''), hasEdits(q) ? 'edited' : ''].filter(Boolean);
+  const nOpts = st.an ? st.an.dimensions.length : 0;
+  const nFacts = factsList(e).length;
+  el.innerHTML = `<article class="res">
+    <div class="what">${esc(what)}</div>
+    <button class="pricebtn" data-act="copy" aria-label="Copy price"><span class="big">${esc(money(e.typical))}</span></button>
+    <div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>
+    <div class="acts">
+      <button class="tgl" data-act="sheet" data-tab="break">Details${nFacts ? ` <b class="dot">${nFacts}</b>` : ''}</button>
+      ${nOpts ? `<button class="tgl" data-act="sheet" data-tab="opts">Not specified <b class="dot">${nOpts}</b></button>` : ''}
+      <button class="tgl${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}" title="Round to whole coins">Round</button>
+    </div>
+  </article>`;
+}
+
+// ---------- bottom sheet: breakdown, unspecified options, what was understood ----------
+function breakdownHtml(e) {
+  const q = st.query;
+  const pos = e.hi > e.lo ? Math.min(100, Math.max(0, (Math.log(e.typical) - Math.log(e.lo)) / (Math.log(e.hi) - Math.log(e.lo)) * 100)) : 50;
+  const bar = `<div class="rangebar" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>`;
   const rows = e.factors.map((f, i) => {
+    const key = f.key || 'row:' + i;
     let eff;
     if (f.kind === 'base') eff = esc(range(f.lo, f.hi));
     else if (f.kind === 'qty') eff = esc(f.label);
@@ -115,44 +139,54 @@ function renderResult() {
       eff = '× ' + (Math.abs(a - b) < 0.005 ? fx(a) : fx(a) + ' to ' + fx(b));
       const dir = (a * b) ** 0.5;
       eff = `<span class="${dir > 1.005 ? 'up' : dir < 0.995 ? 'down' : ''}">${eff}</span>`;
-      if (f.weight !== undefined && f.weight < 0.99) eff += `<br><span class="mini">counts ${Math.round(f.weight * 100)}%</span>`;
     }
     const label = f.kind === 'qty' || f.kind === 'base' ? f.label.replace(/^× /, '') : f.label;
-    const rm = f.kind === 'mod' ? `<button class="rm" data-act="rm-mod" data-id="${esc(f.id)}" aria-label="Remove ${esc(f.label)}">remove</button>` : f.kind === 'tier' ? `<button class="rm" data-act="rm-tier" aria-label="Remove class">remove</button>` : '';
-    const has = !!f.why;
-    return `<tr${has ? ` class="rowwhy" data-act="row" tabindex="0"` : ''}><td><span class="lbl">${esc(label)}${has ? ' <span class="more">+</span>' : ''}</span><span class="why-t">${esc(f.why || '')}</span></td><td class="num">${eff}</td><td class="num">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</td><td>${rm}</td></tr>`;
+    const tappable = !!(f.key || f.why);
+    const open = st.editRow === key;
+    let h = `<tr${tappable ? ` class="rowwhy${open ? ' open' : ''}" data-act="edit-row" data-key="${esc(key)}" tabindex="0"` : ''}><td><span class="lbl">${esc(label)}${f.edited ? ` <span class="edited">${f.saved ? 'saved' : 'edited'}</span>` : ''}</span></td><td class="num">${eff}${f.weight !== undefined && f.weight < 0.99 ? `<br><span class="mini">counts ${Math.round(f.weight * 100)}%</span>` : ''}</td><td class="num">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</td><td class="chev">${tappable ? (open ? '▴' : '▾') : ''}</td></tr>`;
+    if (open) h += `<tr class="edrow"><td colspan="4">${editorHtml(f, key)}</td></tr>`;
+    return h;
   }).join('');
+  return bar + `<table class="fx"><thead><tr><th>Step</th><th>Factor</th><th>Total</th><th></th></tr></thead><tbody>${rows}</tbody></table>` +
+    (hasEdits(q) ? `<div class="row" style="margin-top:10px"><button class="btn" data-act="ed-reset-all">Reset edits to this question</button></div>` : '');
+}
+function editorHtml(f, key) {
+  const ent = st.est.entry;
+  let h = `<div class="editor">`;
+  if (f.why) h += `<p class="why-t">${esc(f.why)}</p>`;
+  if (f.key === 'base') {
+    const canKeep = !ent.curve && !ent.perMile;
+    h += `<label class="lab">Price ${esc(f.label.replace(/^.*\(/, '(').replace(/^\((.*)\)$/, '$1'))}<input class="field" data-ed="base" inputmode="decimal" value="${esc(formatFull(f.mid, cur()))}"></label>`;
+    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${canKeep ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div>`;
+    h += `<p class="mini">${f.edited ? (canKeep ? 'Applies to this question until you keep it.' : 'Applies to this question. This item is priced by rarity or distance, so it cannot be kept as one price.') : 'Type a new price to see the estimate change.'}</p>`;
+  } else if (f.key) {
+    h += `<div class="grid2"><label class="lab">Low ×<input class="field" data-ed="lo" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.lo))}"></label><label class="lab">High ×<input class="field" data-ed="hi" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.hi))}"></label></div>`;
+    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${!f.saved ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div>`;
+    h += `<p class="mini">${f.saved ? 'Saved for this world. Manage it under World, Adjustments.' : f.edited ? 'Applies to this question until you keep it.' : 'Change the range to see the estimate change.'}</p>`;
+  }
+  return h + `</div>`;
+}
+function seenHtml(e) {
+  const facts = factsList(e);
+  return `<div class="chips">${chipsHtml()}</div>` + (facts.length ? `<div class="facts">${facts.map(f => `<div>${f}</div>`).join('')}</div>` : '') +
+    `<div class="row" style="margin-top:12px"><button class="btn" data-act="mode" data-mode="tap">Adjust with buttons</button></div>`;
+}
+function renderSheet() {
+  const sh = $('#sheet'), s = st.sheet, e = st.est;
+  const ok = e && e.ok && st.query.subject;
+  if (!s.open || !ok) { sh.hidden = true; return; }
   const nOpts = st.an ? st.an.dimensions.length : 0;
-  const cnt = facts.length;
-  const tgl = (k, label, on) => `<button class="tgl" data-act="tgl" data-k="${k}" aria-expanded="${on}">${label}</button>`;
-  el.innerHTML = `<article class="res">
-    <div class="what">${esc(what)}</div>
-    <div class="price"><span class="big">${esc(money(e.typical))}</span></div>
-    <div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>
-    <div class="acts">
-      ${tgl('why', 'Details' + (cnt ? ` <b class="dot">${cnt}</b>` : ''), st.ui.why)}
-      ${nOpts ? tgl('opts', `Not specified <b class="dot">${nOpts}</b>`, st.ui.opts) : ''}
-      <button class="tgl${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}" title="Round to whole coins">Round</button>
-      <button class="tgl" data-act="copy">Copy</button>
-    </div>
-    <div class="panel" id="whyPanel"${st.ui.why ? '' : ' hidden'}>
-      <div class="chips">${chipsHtml()}</div>
-      <div class="rangebar" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>
-      ${facts.length ? `<div class="facts">${facts.map(f => `<div>${f}</div>`).join('')}</div>` : ''}
-      <div class="tablewrap"><table class="fx"><thead><tr><th>Step</th><th>Factor</th><th>Total</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="row" style="padding-top:8px"><button class="btn" data-act="mode" data-mode="tap">Adjust with buttons</button></div>
-    </div>
-    <div class="panel" id="optsPanel"${st.ui.opts && nOpts ? '' : ' hidden'}>${unstatedHtml()}</div>
-  </article>`;
+  if (s.tab === 'opts' && !nOpts) s.tab = 'break';
+  const tabs = [['break', 'Breakdown'], ['opts', 'Not specified'], ['seen', 'Understood']].filter(([id]) => id !== 'opts' || nOpts);
+  $('#sheetTabs').innerHTML = tabs.map(([id, l]) => `<button role="tab" data-act="sheet-tab" data-tab="${id}" aria-selected="${s.tab === id}">${esc(l)}</button>`).join('');
+  const body = $('#sheetBody'), top = body.scrollTop;
+  body.innerHTML = s.tab === 'break' ? breakdownHtml(e) : s.tab === 'opts' ? `<div class="optsbody">${unstatedHtml()}</div>` : seenHtml(e);
+  sh.hidden = false;
+  body.scrollTop = top;
 }
 
-function driversLine(e) {
-  const fs = e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => { const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi; return { f, g: Math.sqrt(a * b) }; }).filter(x => Math.abs(Math.log(x.g)) > 0.03).sort((x, y) => Math.abs(Math.log(y.g)) - Math.abs(Math.log(x.g))).slice(0, 3);
-  if (!fs.length) return '';
-  return `<div class="drivers"><span class="dl">Biggest factors</span>${fs.map(x => `<span class="drv ${x.g > 1 ? 'up' : 'down'}">${x.g > 1 ? '↑' : '↓'} ${esc(x.f.label)}</span>`).join('')}</div>`;
-}
-
-// ---------- unknown words: guess, nudge, set ----------
+// ---------- hints, chips ----------
+// ---------- unknown words: pick the closest thing, set the price, save ----------
 function unknownPhrase() {
   const p = st.parsed;
   if (!p || !p.parts) return '';
@@ -165,7 +199,10 @@ function unknownPhrase() {
   return best.map(x => x.raw.toLowerCase()).join(' ');
 }
 function ensureGuess(phrase) {
-  if (!st.guess || st.guess.phrase !== phrase) st.guess = { phrase, cands: candidatesFor(phrase, ctx), sel: null, bu: 0 };
+  if (!st.guess || st.guess.phrase !== phrase) {
+    const cands = candidatesFor(phrase, ctx);
+    st.guess = { phrase, cands, sel: cands.length ? 0 : null, bu: cands.length ? cands[0].bu : 0, q: '', exact: false };
+  }
   return st.guess;
 }
 const capital = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -173,18 +210,20 @@ function guessCard() {
   const phrase = unknownPhrase();
   if (!phrase) { st.guess = null; return ''; }
   const g = ensureGuess(phrase), name = capital(phrase);
+  const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
+  const all = [...g.cands, ...found];
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
-  let h = `<section class="guess"><h2>"${esc(phrase)}" is not in the price list</h2><p class="lead">Pick the closest match, adjust the price, and save it to this world.</p><div class="cands">`;
-  h += g.cands.map((c, i) => `<button class="cand${g.sel === i ? ' sel' : ''}" data-act="g-pick" data-i="${i}"><span class="cl">${esc(c.label)}</span><span class="cw">${esc(c.why)}</span><span class="cp">about ${esc(money(c.bu))}${c.unit && c.unit !== 'each' ? ' per ' + esc(c.unit) : ' each'}</span></button>`).join('');
-  h += `</div>`;
-  if (g.sel != null) {
-    const c = g.cands[g.sel], pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
+  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list. Pick the closest match.</div>
+    <div class="cscroll">${all.map((c, i) => `<button class="cchip${g.sel === i ? ' sel' : ''}" data-act="g-pick" data-i="${i}"><span class="cl">${esc(c.label)}</span><span class="cp">${esc(money(c.bu))}${c.unit && c.unit !== 'each' ? ' / ' + esc(c.unit) : ''}</span></button>`).join('')}</div>
+    <input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
+  if (g.sel != null && all[g.sel]) {
+    const c = all[g.sel], pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
     const one = pv.one.ok ? pv.one.typical : g.bu;
-    h += `<div class="adjust"><p class="setline">Price <b>${esc(phrase)}</b> at about <b class="gp">${esc(money(one))}</b> ${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}?</p>`;
-    if (qtxt && pv.full.ok) h += `<p class="mini">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</p>`;
-    h += `<div class="row"><button class="btn" data-act="g-lower">Lower</button><button class="btn" data-act="g-raise">Raise</button><input class="field" id="gPrice" placeholder="or type a price" aria-label="Type a price" style="width:140px"></div>
-      <div class="row" style="margin-top:8px"><button class="btn primary" data-act="g-set">Save price</button><button class="btn" data-act="g-cancel">Back</button></div>
-      <p class="mini">Saved under World, My items, where you can edit or remove it.</p></div>`;
+    h += `<div class="gwhy">${esc(c.why || '')}</div>
+      <div class="stepper"><button class="step-btn" data-act="g-lower" aria-label="Lower the price">−</button><div class="gval"><span class="gp">${esc(money(one))}</span><span class="mini">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}</span></div><button class="step-btn" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
+    if (qtxt && pv.full.ok) h += `<div class="gtotal">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
+    h += g.exact ? `<input class="field" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" data-act="g-exact">Type an exact price</button>`;
+    h += `<div class="row gact"><button class="btn primary" data-act="g-set">Save and price it</button>${c.entry && !c.tier ? `<button class="btn" data-act="g-alias">Same as this</button>` : ''}</div>`;
   }
   return h + `</section>`;
 }
@@ -314,8 +353,8 @@ function flowEdit(fn) { const q = clone(st.query); fn(q); fromQuery(q); }
 
 // ---------- world drawer ----------
 function openDrawer(scrollTo) {
+  st.dpage = scrollTo === 'about' ? 'About' : null;
   $('#drawer').hidden = false; renderDrawer();
-  if (scrollTo) { const t = document.getElementById(scrollTo); if (t) t.scrollIntoView(); }
   document.body.style.overflow = 'hidden';
 }
 function closeDrawer() { $('#drawer').hidden = true; document.body.style.overflow = ''; }
@@ -328,12 +367,32 @@ function vocabOptions(sel) {
   return h;
 }
 function renderDrawer() {
-  const w = world, panel = $('#drawerPanel'), top = panel.scrollTop;
-  const op = n => (st.drawerOpen[n] ? ' open' : '');
+  const panel = $('#drawerPanel'), top = panel.scrollTop;
+  const doc = new DOMParser().parseFromString('<div>' + buildSettingsHtml() + '</div>', 'text/html');
+  const secs = [...doc.querySelectorAll('details.sect')].map(d => ({ id: d.dataset.sec, sv: d.querySelector('.sv')?.textContent || '', title: d.querySelector('summary h3')?.textContent || d.dataset.sec, body: d.querySelector('.sbody').innerHTML }));
+  const page = st.dpage && secs.find(x => x.id === st.dpage);
+  if (page) {
+    panel.innerHTML = `<div class="nav"><button class="back" data-act="dpage" data-p="">‹ World</button><h2>${esc(page.title)}</h2><button class="btn primary" data-act="close-world">Done</button></div><div class="sbody page">${page.body}</div>`;
+  } else {
+    st.dpage = null;
+    panel.innerHTML = `<div class="nav"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div><div class="group">${secs.map(x => `<button class="nrow" data-act="dpage" data-p="${esc(x.id)}"><span class="nl">${esc(x.title)}</span><span class="sv">${esc(x.sv)}</span><span class="chev">›</span></button>`).join('')}</div>`;
+  }
+  panel.scrollTop = page === undefined ? top : (st.dpageChanged ? 0 : top);
+  st.dpageChanged = false;
+}
+function overrideLabel(k) {
+  if (k.startsWith('mod:')) return ctx.mods.get(k.slice(4))?.label || k;
+  if (k.startsWith('econ:')) return ECONOMY_TAGS.find(t => t.id === k.slice(5))?.label || k;
+  if (k.startsWith('tier:')) return k.slice(5) + ' class';
+  return { side: 'Selling, not buying', bulk: 'Large quantity' }[k] || k;
+}
+function buildSettingsHtml() {
+  const w = world;
+  const op = () => '';
   const dens = w.currency.denominations;
   const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
-  panel.innerHTML = `
+  const html = `
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
   <details class="sect" data-sec="Your worlds"${op('Your worlds')}><summary><h3>Your worlds</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
@@ -389,6 +448,11 @@ function renderDrawer() {
     <div class="row"><button class="btn" data-act="w-add-item">Add an item</button></div>
   </div></div></details>
 
+  <details class="sect" data-sec="Adjustments"${op('Adjustments')}><summary><h3>Adjustments</h3><span class="sv">${Object.keys(w.overrides).length || 'none'}</span></summary><div class="sbody">
+    <p>Factor ranges you changed and kept. They apply to every estimate in this world.</p>
+    ${Object.entries(w.overrides).map(([k, v]) => `<div class="vrow"><span>${esc(overrideLabel(k))}</span><span class="mini">× ${esc(fx(v[0]))} to ${esc(fx(v[1]))}</span><button class="xbtn" data-act="w-del-ov" data-key="${esc(k)}" aria-label="Remove adjustment">×</button></div>`).join('') || '<p class="mini">None yet. Tap a row under Breakdown, change it, and choose Keep for this world.</p>'}
+  </div></div></details>
+
   <details class="sect" data-sec="Back up and share"${op('Back up and share')}><summary><h3>Back up and share</h3><span class="sv"></span></summary><div class="sbody">
     <p>Copy this world to keep it or share it. Paste one below to load it.</p>
     <textarea class="mono" id="exportBox" readonly aria-label="World data">${esc(json)}</textarea>
@@ -401,9 +465,50 @@ function renderDrawer() {
     <p>Estimates only. Every price is a range, with its reasons shown. Rules and word lists run in your browser, and nothing is sent anywhere.</p>
     <p>${esc(SRD_ATTRIBUTION)}</p>
   </div></div></details>`;
-  panel.scrollTop = top;
+  return html;
 }
 
+function guessAll() {
+  const g = st.guess;
+  if (!g) return [];
+  const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
+  return [...g.cands, ...found];
+}
+function keepEdit(key) {
+  const f = st.est && st.est.factors.find(x => x.key === key), ent = st.est && st.est.entry;
+  if (!f) return;
+  if (key === 'base') {
+    if (ent.curve || ent.perMile || !(st.query.overrides && st.query.overrides.base > 0)) return;
+    const it = { id: newItemId(), name: ent.name, kind: ent.kind, unit: ent.unit, bu: st.query.overrides.base, tags: [...(ent.tags || [])], aliases: [...(ent.aliases || [])], spread: ent.spread ?? 0.1 };
+    world.items = world.items.filter(x => x.name.toLowerCase() !== ent.name.toLowerCase());
+    world.items.push(it);
+  } else {
+    world.overrides[key] = [f.lo, f.hi];
+  }
+  st.editRow = null;
+  worldChanged({ lite: true });
+  toast('Kept for this world. Manage it under World.');
+}
+function applyEdit(kind, value) {
+  const key = st.editRow, f = st.est && st.est.factors.find(x => x.key === key);
+  if (!f) return;
+  if (kind === 'base') {
+    const v = parseMoney(value, cur());
+    if (!v) { toast('Could not read that price. Try "25 gp".'); return; }
+    flowEdit(x => { x.overrides ||= {}; x.overrides.base = v; });
+    return;
+  }
+  flowEdit(x => {
+    x.overrides ||= {}; x.overrides.f ||= {};
+    const cur0 = x.overrides.f[key] || [f.lo, f.hi];
+    let lo = kind === 'lo' ? +value : cur0[0], hi = kind === 'hi' ? +value : cur0[1];
+    if (!(lo > 0) || !isFinite(lo)) lo = cur0[0];
+    if (!(hi > 0) || !isFinite(hi)) hi = cur0[1];
+    lo = Math.min(100, Math.max(0.05, lo)); hi = Math.min(100, Math.max(0.05, hi));
+    if (hi < lo) { if (kind === 'lo') hi = lo; else lo = hi; }
+    x.overrides.f[key] = [lo, hi];
+  });
+}
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
   clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200);
@@ -440,7 +545,7 @@ document.addEventListener('click', e => {
   const a = b.dataset.act, d = b.dataset;
   const q = st.query;
   switch (a) {
-    case 'mode': st.mode = d.mode; $('#tabType').setAttribute('aria-selected', st.mode === 'type'); $('#tabTap').setAttribute('aria-selected', st.mode === 'tap'); renderFlow(); if (st.mode === 'type') $('#q').focus(); break;
+    case 'mode': st.sheet.open = false; renderSheet(); st.mode = d.mode; $('#tabType').setAttribute('aria-selected', st.mode === 'type'); $('#tabTap').setAttribute('aria-selected', st.mode === 'tap'); renderFlow(); if (st.mode === 'type') $('#q').focus(); break;
     case 'clear': $('#q').value = ''; st.flow = { cat: null, search: '' }; fromText('', { noHistory: true }); break;
     case 'sample': { const t = sampleList()[+d.i]; $('#q').value = t; fromText(t); break; }
     case 'fix': { const s = st.parsed.suggestions[+d.i]; const t = st.text.slice(0, s.start) + s.to + st.text.slice(s.end); $('#q').value = t; fromText(t); break; }
@@ -448,7 +553,7 @@ document.addEventListener('click', e => {
       const k = d.key;
       if (k === 'action') { x.assumed = [...new Set([...x.assumed, 'action'])]; x.action = 'buy'; }
       else if (k === 'qty') x.qty = null; else if (k === 'span') x.span = null; else if (k === 'rarity') x.rarity = null; else if (k === 'tier') x.tier = null;
-      else if (k === 'subject') { x.subject = null; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); }
+      else if (k === 'subject') { x.subject = null; x.family = null; x.overrides = undefined; x.assumed = x.assumed.filter(z => z !== 'mode'); }
       else if (k.startsWith('mod:')) x.mods = x.mods.filter(m => m !== k.slice(4));
     }); break;
     case 'opt': { const o = st.an.dimensions[+d.d].options[+d.o]; flowEdit(x => o.apply(x)); break; }
@@ -458,22 +563,34 @@ document.addEventListener('click', e => {
     case 'copy': copyText(summaryLine(st.est), 'Copied'); break;
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
     case 'star': { const h = S.history[+d.i]; h.pin = !h.pin; persist(); renderHistory(); break; }
-    case 'tgl': st.ui[d.k] = !st.ui[d.k]; renderResult(); renderHistory(); break;
+    case 'tgl': st.ui[d.k] = !st.ui[d.k]; renderHistory(); break;
+    case 'sheet': st.sheet = { open: true, tab: d.tab }; st.editRow = null; renderSheet(); break;
+    case 'sheet-tab': st.sheet.tab = d.tab; renderSheet(); break;
+    case 'sheet-close': st.sheet.open = false; st.editRow = null; renderSheet(); break;
+    case 'edit-row': st.editRow = st.editRow === d.key ? null : d.key; renderSheet(); break;
+    case 'ed-reset': flowEdit(x => { if (x.overrides) { if (d.key === 'base') delete x.overrides.base; else if (x.overrides.f) delete x.overrides.f[d.key]; } }); if (world.overrides[d.key]) { delete world.overrides[d.key]; worldChanged({ lite: true }); } break;
+    case 'ed-reset-all': flowEdit(x => { delete x.overrides; }); break;
+    case 'ed-keep': keepEdit(d.key); break;
+    case 'w-del-ov': delete world.overrides[d.key]; worldChanged(); break;
+    case 'dpage': st.dpage = d.p || null; st.dpageChanged = true; renderDrawer(); break;
     case 'round': world.dials.round = !world.dials.round; persist(); renderAll(); break;
-    case 'row': b.classList.toggle('open'); break;
-    case 'g-pick': if (st.guess) { st.guess.sel = +d.i; st.guess.bu = st.guess.cands[+d.i].bu; renderResult(); } break;
-    case 'g-cancel': if (st.guess) { st.guess.sel = null; renderResult(); } break;
+    case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
+    case 'g-exact': if (st.guess) { st.guess.exact = true; renderResult(); const i = $('#gPrice'); if (i) i.focus(); } break;
     case 'g-raise': case 'g-lower': if (st.guess && st.guess.sel != null) { const f = a === 'g-raise' ? 1.25 : 0.8; st.guess.bu = niceRound(st.guess.bu * f, 3); renderResult(); } break;
     case 'g-set': if (st.guess && st.guess.sel != null) {
-      const c = st.guess.cands[st.guess.sel], name = capital(st.guess.phrase);
+      const c = guessAll()[st.guess.sel], name = capital(st.guess.phrase);
       const item = newItemFrom(name, st.guess.phrase, c, storedPrice(ctx, name, c, st.guess.bu));
       item.id = newItemId(); world.items.push(item); st.guess = null;
       worldChanged(); toast('Saved "' + name + '". Edit it under World, My items.');
     } break;
+    case 'g-alias': if (st.guess && st.guess.sel != null) {
+      const c = guessAll()[st.guess.sel], term = st.guess.phrase;
+      if (c && c.entry) { world.vocabulary.push({ term, means: c.entry.id }); st.guess = null; worldChanged(); toast('"' + term + '" now means ' + c.entry.name.toLowerCase() + '. Edit it under World, Custom words.'); }
+    } break;
     // flow
     case 'f-action': flowEdit(x => { x.action = d.v; x.assumed = x.assumed.filter(z => z !== 'action'); }); break;
     case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderFlow(); break;
-    case 'f-item': st.flowOpen = { item: false }; flowEdit(x => { x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
+    case 'f-item': st.flowOpen = { item: false }; flowEdit(x => { delete x.overrides; x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
     case 'f-qty': flowEdit(x => { const n = +d.v; x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); break;
     case 'f-span': flowEdit(x => { const [n, u] = d.v.split('|'); x.span = { lo: +n, hi: +n, unit: u }; }); break;
     case 'f-rarity': flowEdit(x => { x.rarity = x.rarity === d.v ? null : d.v; }); break;
@@ -530,7 +647,7 @@ function afterWorldSwitch() { renderDrawer(); st.query = emptyQuery(); if (st.te
 
 $('#q').addEventListener('input', e => fromText(e.target.value));
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); e.target.blur(); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#drawer').hidden) closeDrawer(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
 
 // drawer and flow inputs
@@ -541,9 +658,11 @@ document.addEventListener('toggle', e => {
 }, true);
 document.addEventListener('input', e => {
   if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderFlow(); }
+  if (e.target.id === 'gSearch' && st.guess) { st.guess.q = e.target.value; renderResult(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.dataset && t.dataset.ed) { applyEdit(t.dataset.ed, t.value); return; }
   if (t.id === 'gPrice') { const v = parseMoney(t.value, cur()); if (v && st.guess) { st.guess.bu = v; renderResult(); } else toast('Could not read that price. Try "25 gp".'); return; }
   if (t.id === 'flowQty') { const n = Math.max(1, Math.round(+t.value || 1)); flowEdit(x => { x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); return; }
   if (t.id === 'flowSpan') { const n = Math.max(1, +t.value || 1); flowEdit(x => { const tu = timeUnit(ctx.byId.get(x.subject) || {}); x.span = { lo: n, hi: n, unit: tu ? tu.unit : 'day' }; }); return; }

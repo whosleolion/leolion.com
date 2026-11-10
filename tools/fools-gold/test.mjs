@@ -321,6 +321,23 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('R8 range uses it', formatRange(59, 1177, g, r), '6 sp to 12 gp');
   const wr = WORLD_PRESETS.vcm(); wr.dials.round = true; eq('R9 normalizes', (await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(wr).dials.round, true);
 }
+
+// ---------- factor editing (overrides) ----------
+{
+  const base = E('longsword', srd).typical;
+  const q = Q('longsword', srd); q.overrides = { base: 3000 };
+  const e2 = estimate(q, srd); t('F1 base override doubles a 15 gp sword', Math.abs(e2.typical / base - 2) < 0.1, [base, e2.typical]); eq('F1b flagged edited', e2.factors[0].edited, true);
+  const r = Q('rush longsword', srd), rp = estimate(r, srd).typical; r.overrides = { f: { 'mod:rush': [1, 1] } };
+  t('F2 modifier override removes its effect', Math.abs(estimate(r, srd).typical / base - 1) < 0.1, [estimate(r, srd).typical, rp, base]);
+  const ww = WORLD_PRESETS.srd(); ww.overrides = { 'mod:black-market': [1, 1] }; const wc = compileWorld((await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(ww));
+  t('F3 saved world adjustment applies everywhere', Math.abs(estimate(Q('black market longsword', wc), wc).typical / base - 1) < 0.1);
+  const tq = Q('3 days coach expensive', srd); tq.overrides = { f: { 'tier:expensive': [1, 1] } }; const tb = E('3 days coach expensive', srd).typical;
+  t('F4 class override works', estimate(tq, srd).typical < tb * 0.6, [estimate(tq, srd).typical, tb]);
+  const { normalizeWorld: nw } = await import('../../src/building/fools-gold/js/store.js');
+  const bad = nw({ overrides: { 'mod:x': [0, 2], 'mod:y': [2, 1], 'mod:z': 'no', ok: [0.5, 2], huge: [1, 5000] } });
+  eq('F5 bad adjustments are dropped on load', Object.keys(bad.overrides), ['ok']);
+  const eq1 = Q('longsword', srd); eq1.overrides = { f: { 'mod:rush': [0.0001, 2] } }; t('F6 an override on an absent factor is harmless', estimate(eq1, srd).ok);
+}
 // ---------- store.normalizeWorld survives hostile input ----------
 {
   const { normalizeWorld } = await import('../../src/building/fools-gold/js/store.js');

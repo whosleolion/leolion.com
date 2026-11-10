@@ -61,6 +61,10 @@ export function estimate(q, ctx) {
   if (conflicts.length) return { ok: false, error: 'conflict', conflicts };
 
   const notes = [], assumptions = [], factors = [];
+  // edits: this question's overrides (q.overrides) win over the world's saved adjustments (world.overrides)
+  const ov = q.overrides || {}, wov = w.overrides || {};
+  const fo = key => (ov.f && ov.f[key]) || wov[key] || null;
+  const foSaved = key => !(ov.f && ov.f[key]) && !!wov[key];
   const kind = entry.kind;
   const side = q.action === 'sell' && (kind === 'good' || kind === 'property') ? 'sell' : 'buy';
   if (q.action === 'sell' && !(kind === 'good' || kind === 'property')) notes.push('Selling a service: this is what you could charge.');
@@ -72,16 +76,18 @@ export function estimate(q, ctx) {
   };
 
   // ---- base ----
-  let baseLo, baseHi, baseLabel, unitWord = '';
+  let baseLo, baseHi, baseLabel, unitWord = '', baseMid = 0;
   if (entry.curve) {
     const r = q.rarity || 'common';
     if (!q.rarity) assumptions.push({ id: 'rarity', text: 'common rarity' });
     const c = RARITY_CURVES[entry.curve];
-    const m = c.mid[r] * (entry.scale || 1);
+    const m = ov.base > 0 ? ov.base : c.mid[r] * (entry.scale || 1);
+    baseMid = m;
     baseLo = m * c.band[0]; baseHi = m * c.band[1];
     baseLabel = entry.name + ', ' + r;
   } else {
-    const per = entry.perMile && entry.mpd ? entry.perMile * entry.mpd : entry.bu;
+    const per = ov.base > 0 ? ov.base : entry.perMile && entry.mpd ? entry.perMile * entry.mpd : entry.bu;
+    baseMid = per;
     const sp = entry.spread ?? (entry.src === 'user' ? 0.15 : 0.1);
     baseLo = per * (1 - sp); baseHi = per * (1 + sp);
     baseLabel = entry.name;
@@ -90,7 +96,7 @@ export function estimate(q, ctx) {
   lo = baseLo; hi = baseHi;
   if (!(baseLo > 0) || !isFinite(baseHi)) return { ok: false, error: 'bad-price' };
   const perUnit = tu0(entry) ? 'per ' + tu0(entry).word :  entry.unit === 'lb' ? 'per lb' : entry.unit === 'each' && !entry.isCategory ? 'each' : 'each';
-  factors.push({ kind: 'base', label: baseLabel + ' (' + perUnit + ')', lo: baseLo, hi: baseHi, runLo: lo, runHi: hi, abs: true, why: entry.basis || (entry.src === 'srd' ? 'SRD price.' : entry.src === 'user' ? 'Your price.' : 'Fool\'s Gold price.') });
+  factors.push({ kind: 'base', label: baseLabel + ' (' + perUnit + ')', lo: baseLo, hi: baseHi, runLo: lo, runHi: hi, abs: true, key: 'base', mid: baseMid, edited: ov.base > 0, why: entry.basis || (entry.src === 'srd' ? 'SRD price.' : entry.src === 'user' ? 'Your price.' : 'Fool\'s Gold price.') });
 
   // ---- quantity / length ----
   const qty = q.qty ? { lo: q.qty.lo, hi: q.qty.hi ?? q.qty.lo } : { lo: 1, hi: 1 };
@@ -124,7 +130,8 @@ export function estimate(q, ctx) {
   // ---- selling fraction ----
   if (side === 'sell') {
     const f = entry.sellFraction ?? dials.sellFraction;
-    push({ kind: 'side', label: 'Selling, not buying', lo: f * 0.9, hi: f * 1.1, why: f >= 1 ? 'Trade goods sell at about full value.' : 'Shops pay about ' + Math.round(f * 100) + '% of the price they sell at.' });
+    const o = fo('side');
+    push({ kind: 'side', key: 'side', edited: !!o, saved: foSaved('side'), label: 'Selling, not buying', lo: o ? o[0] : f * 0.9, hi: o ? o[1] : f * 1.1, why: f >= 1 ? 'Trade goods sell at about full value.' : 'Shops pay about ' + Math.round(f * 100) + '% of the price they sell at.' });
   } else if (q.action === 'value') {
     notes.push('Fair market value, not what a shop would pay.');
   }
@@ -132,8 +139,9 @@ export function estimate(q, ctx) {
   // ---- tier ----
   if (q.tier && q.tier !== 'standard') {
     const cls = tierClass(entry);
-    const f = TIER_FACTORS[cls][q.tier];
-    push({ kind: 'tier', label: q.tier + ' class', lo: f[0], hi: f[1], why: TIER_WHY[cls][q.tier] });
+    const o = fo('tier:' + q.tier);
+    const f = o || TIER_FACTORS[cls][q.tier];
+    push({ kind: 'tier', key: 'tier:' + q.tier, edited: !!o, saved: foSaved('tier:' + q.tier), label: q.tier + ' class', lo: f[0], hi: f[1], why: TIER_WHY[cls][q.tier] });
   } else if (!q.tier && ['travel', 'lodging', 'service', 'labor', 'spell'].includes(kind)) {
     if (!entry.noTier) assumptions.push({ id: 'tier', text: 'standard class' });
   }
@@ -148,14 +156,17 @@ export function estimate(q, ctx) {
     const wts = [1, 0.6, 0.4];
     let fl = 1, fh = 1;
     hits.forEach((f, i) => { const wt = wts[i] ?? 0.3; fl *= Math.pow(f[0], wt); fh *= Math.pow(f[1], wt); });
-    push({ kind: 'world', label: tag.label, lo: fl, hi: fh, why: tag.describe });
+    const o = fo('econ:' + tid);
+    if (o) { fl = o[0]; fh = o[1]; }
+    push({ kind: 'world', key: 'econ:' + tid, edited: !!o, saved: foSaved('econ:' + tid), label: tag.label, lo: fl, hi: fh, why: tag.describe });
   }
   if (dials.priceLevel !== 1) push({ kind: 'world', label: 'World price level', lo: dials.priceLevel, hi: dials.priceLevel, why: 'Your world-wide price setting.' });
 
   // ---- bulk ----
   if (kind === 'good' && (entry.unit === 'each' || entry.unit === 'lb') && (qty.lo >= 10 || qty.hi >= 10)) {
-    const a = bulkFactor(qty.lo)[0], b = bulkFactor(qty.hi)[1];
-    if (a !== 1 || b !== 1) push({ kind: 'bulk', label: 'Large quantity', lo: a, hi: b, why: side === 'sell' ? 'Dumping a lot at once pushes the price down.' : 'Buying in volume earns a discount.' });
+    let a = bulkFactor(qty.lo)[0], b = bulkFactor(qty.hi)[1];
+    const o = fo('bulk'); if (o) { a = o[0]; b = o[1]; }
+    if (a !== 1 || b !== 1) push({ kind: 'bulk', key: 'bulk', edited: !!o, saved: foSaved('bulk'), label: 'Large quantity', lo: a, hi: b, why: side === 'sell' ? 'Dumping a lot at once pushes the price down.' : 'Buying in volume earns a discount.' });
   }
 
   // ---- modifiers ----
@@ -169,7 +180,8 @@ export function estimate(q, ctx) {
       const hit = ((tb.tags && (entry.tags || []).some(t => tb.tags.includes(t))) || (tb.kinds && tb.kinds.includes(kind))) && (!tb.sides || tb.sides.includes(side));
       if (hit) { a *= tb.f[0]; b *= tb.f[1]; }
     }
-    list.push({ m, lo: a, hi: b, size: Math.abs(Math.log(mid(a, b))) });
+    const o = fo('mod:' + m.id); if (o) { a = o[0]; b = o[1]; }
+    list.push({ m, lo: a, hi: b, edited: !!o, saved: foSaved('mod:' + m.id), size: Math.abs(Math.log(mid(a, b))) });
   }
   list.sort((x, y) => y.size - x.size);
   const strict = dials.stacking === 'strict';
@@ -182,7 +194,7 @@ export function estimate(q, ctx) {
       }
     }
     const effLo = Math.pow(x.lo, wt), effHi = Math.pow(x.hi, wt);
-    push({ kind: 'mod', id: x.m.id, group: x.m.group, label: x.m.label, lo: x.lo, hi: x.hi, effLo, effHi, weight: wt, why: x.m.why, _eff: true });
+    push({ kind: 'mod', key: 'mod:' + x.m.id, edited: x.edited, saved: x.saved, id: x.m.id, group: x.m.group, label: x.m.label, lo: x.lo, hi: x.hi, effLo, effHi, weight: wt, why: x.m.why, _eff: true });
     // push() used raw lo/hi; correct with the dampened values
   });
   // The loop above multiplied raw factors; redo the modifier part with effective values.

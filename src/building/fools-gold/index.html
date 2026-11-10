@@ -8,7 +8,7 @@
 <title>Fool's Gold</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Zilla+Slab:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,10 +34,10 @@
       </div>
       <div id="understanding"></div>
       <div id="samples" class="samples"></div>
-      <div id="flow" class="flow" hidden></div>
     </section>
 
     <div id="result" aria-live="polite"></div>
+    <div id="flow" class="flow" hidden></div>
     <section id="history" class="history"></section>
   </main>
 
@@ -46,6 +46,14 @@
 
 <div id="drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-label="World settings">
   <div class="drawer-panel" id="drawerPanel"></div>
+</div>
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-back" data-act="sheet-close"></div>
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Details">
+    <button class="grab" data-act="sheet-close" aria-label="Close details"></button>
+    <div class="sheet-head"><div class="seg" id="sheetTabs" role="tablist"></div><button class="sheet-x" data-act="sheet-close" aria-label="Close">×</button></div>
+    <div id="sheetBody"></div>
+  </div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <!--FG-BODY-END-->

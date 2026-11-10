@@ -33,6 +33,11 @@ function unitPrice(entry, ctx, extra = {}) {
   return e.ok ? e.typical : null;
 }
 
+export function candidateFromEntry(entry, ctx, why) {
+  const p = unitPrice(entry, ctx);
+  return p > 0 ? { id: entry.id, label: entry.name, why, unit: entry.unit, bu: p, entry, score: 0 } : null;
+}
+
 export function candidatesFor(phrase, ctx) {
   const words = phrase.toLowerCase().split(/\s+/).map(w => stem(w.replace(/[^a-z']/g, ''))).filter(w => w && !GENERIC.has(w));
   const out = [], seen = new Set();

@@ -7,6 +7,7 @@ let mem = null;
 
 function defaults() {
   const worlds = [WORLD_PRESETS.vcm(), WORLD_PRESETS.srd(), WORLD_PRESETS.modern()];
+  worlds.forEach(normalizeWorld);
   return { v: 1, worlds, activeId: 'vcm', history: [], theme: null };
 }
 export function load() {
@@ -58,6 +59,9 @@ export function normalizeWorld(w) {
   const d = w.dials && typeof w.dials === 'object' ? w.dials : {};
   w.dials = { priceLevel: num(d.priceLevel, 1, 0.1, 10), volatility: num(d.volatility, 0.5, 0, 1), stacking: d.stacking === 'strict' ? 'strict' : 'dampened', sellFraction: num(d.sellFraction, 0.5, 0.1, 1), round: !!d.round };
   w.defaults = { travel: str(w.defaults && w.defaults.travel, 'travel.coach'), rent: str(w.defaults && w.defaults.rent, 'lodging.m-apartment-rent-medium') };
+  const ovs = {};
+  if (w.overrides && typeof w.overrides === 'object' && !Array.isArray(w.overrides)) for (const [k, v] of Object.entries(w.overrides)) { if (typeof k === 'string' && k.length < 60 && Array.isArray(v) && v.length === 2) { const a = num(v[0], NaN), b = num(v[1], NaN); if (a > 0 && b >= a && b <= 1000) ovs[k] = [a, b]; } }
+  w.overrides = ovs;
   w.samples = (Array.isArray(w.samples) ? w.samples : []).filter(x => typeof x === 'string').slice(0, 8);
   w.vocabulary = (Array.isArray(w.vocabulary) ? w.vocabulary : []).filter(v => v && typeof v === 'object').map(v => ({ term: str(v.term), means: str(v.means) })).slice(0, 200);
   w.items = (Array.isArray(w.items) ? w.items : []).filter(it => it && typeof it === 'object').map(it => ({
