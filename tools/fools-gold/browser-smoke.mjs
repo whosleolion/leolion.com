@@ -170,6 +170,22 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' empty state', !!(await page.$('.empty')));
   await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');
   await page.screenshot({ path: `${out}/${name}-2.png`, fullPage: true });
+  // a saved copy with old files updates itself
+  const stale = await ctx.newPage();
+  await stale.route('**/version.json*', r => r.fulfill({ contentType: 'application/json', body: '{"v":"deadbeef"}' }));
+  await stale.goto(url, { waitUntil: 'load' });
+  await stale.waitForURL(/\?v=deadbeef/, { timeout: 8000 }).catch(() => {});
+  ok(name + ' stale copy reloads itself when version.json differs', /\?v=deadbeef/.test(stale.url()), stale.url());
+  await stale.waitForSelector('.res');
+  await stale.waitForTimeout(1200);
+  ok(name + ' update reload happens once, never loops', /\?v=deadbeef$/.test(stale.url()));
+  ok(name + ' update toast shown', /Updated/.test(await stale.textContent('#toast')));
+  await stale.close();
+  const fresh = await ctx.newPage();
+  let navs = 0; fresh.on('framenavigated', f => { if (f === fresh.mainFrame()) navs++; });
+  await fresh.goto(url, { waitUntil: 'load' }); await fresh.waitForTimeout(1200);
+  ok(name + ' an up-to-date copy does not reload', navs === 1, navs);
+  await fresh.close();
   await ctx.close();
 }
 await browser.close();

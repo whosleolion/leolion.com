@@ -295,6 +295,12 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const mc = candidatesFor('lawyer cat', modern); t('G8 modern world guesses from word overlap', mc.some(x => x.id === 'labor.m-lawyer'), mc.map(x => x.id));
 }
 
+// ---------- cache buster is current ----------
+{
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync('node', ['tools/fools-gold/stamp.mjs', '--check'], { encoding: 'utf8' });
+  t('V1 cache stamp is current (run: node tools/fools-gold/stamp.mjs)', r.status === 0, r.stderr);
+}
 // ---------- copy lint: how the app talks ----------
 {
   const sentences = ['price for train ride between two major capital cities, 3 days travel expensive', 'sell 5 rare potions black market rush', '2 gp worth of rope', 'gold dagger', '+2 longsword', 'rent a house', '0 daggers', 'rush rations', '10 lb of torches', 'train ride', 'black market rail 3 days', '3 days travel, coach and ship', 'sell car in capital and village', 'buy 10 lb of gold', 'appraise a rapier', 'sell guide', '1500 miles potion', 'hire a lawyer 3 miles', 'rare longsword', 'friendly hostile sword'];

@@ -1,16 +1,16 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js';
-import { estimate, findConflicts, timeUnit } from './engine.js';
-import { analyze } from './unstated.js';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js';
+import { compileWorld } from './world.js?v=230c05ca';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=230c05ca';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=230c05ca';
+import { analyze } from './unstated.js?v=230c05ca';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=230c05ca';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js';
-import { applicable } from './engine.js';
-import { load, save, normalizeWorld, newItemId } from './store.js';
-import { parseSetting, baseFor, storedFor } from './setting.js';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js';
+} from './data.js?v=230c05ca';
+import { applicable } from './engine.js?v=230c05ca';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=230c05ca';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=230c05ca';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=230c05ca';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -736,6 +736,28 @@ document.addEventListener('change', e => {
   }
   worldChanged({ lite: true, el: t });
 });
+
+// ---------- self-update for saved copies (home screen apps keep old files) ----------
+const builtAs = () => (document.querySelector('meta[name="fg-build"]') || {}).content || '';
+let lastCheck = 0;
+async function checkForUpdate() {
+  const mine = builtAs();
+  if (!mine || Date.now() - lastCheck < 20000) return;
+  lastCheck = Date.now();
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const { v } = await r.json();
+    if (!v || v === mine) return;
+    const key = 'fg-reloaded-' + v;
+    if (sessionStorage.getItem(key)) return; // one reload per version, never a loop
+    sessionStorage.setItem(key, '1'); sessionStorage.setItem('fg-updated', '1');
+    location.replace(location.pathname + '?v=' + v);
+  } catch (e) { /* offline or blocked: keep running the copy we have */ }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+try { if (sessionStorage.getItem('fg-updated')) { sessionStorage.removeItem('fg-updated'); setTimeout(() => toast('Updated to the latest version.'), 400); } } catch (e) { /* ignore */ }
+checkForUpdate();
 
 // ---------- boot ----------
 useWorld(S.activeId);
