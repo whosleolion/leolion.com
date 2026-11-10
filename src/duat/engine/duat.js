@@ -400,7 +400,8 @@
     const counts = {}, w = S.world;
     listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
-      `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('');
+      `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('')
+      + (w.economy && isGM() ? `<a href="#/economy" data-nav="economy" style="--c:#e6b94a">Economy</a>` : '');
     $('.brand-short').textContent = w.short || w.title; $('.brand-full').textContent = w.title;
     $('.foot > span').textContent = w.title;
   }
@@ -2107,6 +2108,8 @@
     const sess = session(), a = sess && authorOf(sess.author);
     b.innerHTML = a ? `<span class="who-dot" style="background:${a.color}"></span><span class="who-name">${esc(a.name)}${isGM() ? ' · GM' : ''}</span> ▾` : 'Sign in';
     b.classList.toggle('is-in', !!a);
+    if ($('.typenav')) renderNav();
+    if ($('[data-ec-in]') && isGM()) setTimeout(route, 0);   // signed in from the top bar while the Economy tab was asking
     closeWho();
   }
   function closeWho() { const m = $('.who-menu'); if (m) m.remove(); }
@@ -2130,6 +2133,9 @@
   }
   // for the fold-back action (duat-backend/fold-back.js)
   window.Duat = { ready: () => S.sync, export: () => exportData() };
+  // small surface for engine add-ons (engine/economy.js): the world's "economy" key turns the tab on
+  const EXT = { views: {}, S, esc, $, page, persist, isGM, session, canEdit, withSession, route, worldId, store, show: dlg => show(dlg) };
+  window.Duat.ext = EXT;
   function openGM() {
     const dlg = S.dlg, changed = S.entries.filter(e => e.dirty);
     dlg.innerHTML = `<form method="dialog" class="ed-form">
@@ -2471,7 +2477,7 @@
     if (S.cleanup) { S.cleanup(); S.cleanup = null; }
     closeSearch(false);
     const raw = location.hash.replace(/^#\/?/, '');
-    if (raw && !/^(e|t|s|tag|by)\/|^(recent|attention)$/.test(raw) && document.getElementById(raw)) return; // in-page anchor
+    if (raw && !/^(e|t|s|tag|by)\/|^(recent|attention|economy)$/.test(raw) && document.getElementById(raw)) return; // in-page anchor
     const [path, query] = raw.split('?');
     const params = new URLSearchParams(query || '');
     const [kind, ...rest] = path.split('/');
@@ -2488,6 +2494,7 @@
     else if (kind === 's') viewSearch(arg);
     else if (kind === 'recent') viewRecent();
     else if (kind === 'attention') viewAttention();
+    else if (kind === 'economy' && EXT.views.economy) EXT.views.economy();
     else viewHome();
     window.scrollTo(0, 0);
   }

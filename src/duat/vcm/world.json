@@ -4,6 +4,7 @@
   "kicker": "Player quickref",
   "subtitle": "Everything the crew knows so far.",
   "home": "home",
+  "economy": "economy.json",
   "theme": {
     "accent": "#ff5a36"
   },

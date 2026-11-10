@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "accounts": [
+    { "id": "cassandra-cash", "name": "Cassandra cash", "owner": "cassandra", "kind": "cash", "cp": 40 },
+    { "id": "finnean-cash", "name": "Finnean cash", "owner": "finnean", "kind": "cash", "cp": 130 },
+    { "id": "rosie-cash", "name": "Rosie cash", "owner": "rosie", "kind": "cash", "cp": 7470 },
+    { "id": "sprynger-cash", "name": "Sprynger cash", "owner": "sprynger", "kind": "cash", "cp": null },
+    { "id": "felt-cash", "name": "Felt cash", "owner": "felt", "kind": "cash", "cp": null },
+    { "id": "rbh-cassandra-personal", "name": "RBH Cassandra personal", "owner": "cassandra", "kind": "account", "cp": 100000 },
+    { "id": "rbh-killers-payable", "name": "RBH Killers Inc payable acc", "owner": "Killers Inc", "kind": "account", "cp": 400000 },
+    { "id": "rbh-killers-index", "name": "RBH Killers Inc index acc", "owner": "Killers Inc", "kind": "account", "cp": 400000 },
+    { "id": "finnean-debt", "name": "Finnean debt", "owner": "finnean", "kind": "debt", "cp": 21000000, "note": "9,000gp Marelith" }
+  ],
+  "formulas": [
+    { "id": "index-growth", "name": "Index growth", "account": "rbh-killers-index", "expr": "balance * (1d6 - 1) / 100", "per": "month", "periods": 1, "each": true }
+  ],
+  "log": []
+}
