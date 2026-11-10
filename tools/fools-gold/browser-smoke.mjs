@@ -20,6 +20,12 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' initial price shown', (await page.textContent('.pricebtn .big')).length > 0);
   ok(name + ' no horizontal overflow', (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
   ok(name + ' sheet closed by default', await page.isHidden('#sheet'));
+  ok(name + ' no footer text on the page', !(await page.$('.foot')));
+  ok(name + ' zoom is locked', /user-scalable=no/.test(await page.getAttribute('meta[name=viewport]', 'content')));
+  await page.click('#info');
+  ok(name + ' info tooltip opens', await page.isVisible('#infotip'));
+  await page.click('.res .what');
+  ok(name + ' info tooltip closes on outside tap', await page.isHidden('#infotip'));
   ok(name + ' home screen fits without scrolling', (await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)) <= 4, await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight));
   await page.screenshot({ path: `${out}/${name}-1.png`, fullPage: true });
 

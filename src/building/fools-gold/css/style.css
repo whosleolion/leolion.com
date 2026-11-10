@@ -372,3 +372,13 @@ tr.edrow td { padding: 0 8px 12px; border-top: 0; }
 .setting .arrow { color: var(--muted); }
 .setting .sval { font: 700 28px/1.1 var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
 .slines { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+
+/* zoom lock: panning only, no pinch or double-tap zoom */
+html, body { touch-action: pan-x pan-y; overscroll-behavior-y: none; }
+input, select, textarea, button { touch-action: manipulation; }
+
+/* footer is now a tiny tooltip at the bottom of the screen */
+.app { padding-bottom: 56px; }
+.info { position: fixed; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 20; width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: italic 600 12px/1 var(--font-display); }
+.infotip { position: fixed; left: 50%; bottom: calc(40px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 20; max-width: min(320px, calc(100% - 32px)); padding: 7px 12px; border-radius: 10px; background: var(--fg); color: var(--bg); font-size: 12px; line-height: 1.35; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+.infotip .linkbtn { color: inherit; font-size: 12px; text-decoration: underline; }

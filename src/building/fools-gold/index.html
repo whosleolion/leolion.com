@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Fool's Gold</title>
@@ -41,12 +41,13 @@
     <section id="history" class="history"></section>
   </main>
 
-  <footer class="foot"><p>Estimates only. Rules and word lists, no AI. <button class="linkbtn" data-act="open-world" data-scroll="about">About and licence</button></p></footer>
 </div>
 
 <div id="drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-label="World settings">
   <div class="drawer-panel" id="drawerPanel"></div>
 </div>
+<button id="info" class="info" data-act="info" aria-label="About Fool's Gold" aria-expanded="false">i</button>
+<div id="infotip" class="infotip" role="tooltip" hidden>Estimates only. Rules and word lists, no AI. <button class="linkbtn" data-act="open-world" data-scroll="about">About</button></div>
 <div id="sheet" class="sheet" hidden>
   <div class="sheet-back" data-act="sheet-close"></div>
   <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Details">

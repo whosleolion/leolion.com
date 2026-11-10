@@ -579,7 +579,10 @@ function worldChanged(opts = {}) {
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
 
 // ---------- events ----------
+// no pinch or double-tap zoom: this is an app, not a page
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
 document.addEventListener('click', e => {
+  if (!e.target.closest('#info, #infotip')) { const tip = $('#infotip'); if (tip && !tip.hidden) { tip.hidden = true; $('#info').setAttribute('aria-expanded', 'false'); } }
   const b = e.target.closest('[data-act]');
   if (!b) return;
   const a = b.dataset.act, d = b.dataset;
@@ -644,7 +647,8 @@ document.addEventListener('click', e => {
       else { if (GROUPS[m.group].exclusive) x.mods = x.mods.filter(z => ctx.mods.get(z)?.group !== m.group); x.mods.push(d.v); }
     }); break;
     // drawer
-    case 'open-world': openDrawer(d.scroll); break;
+    case 'info': { const t = $('#infotip'); t.hidden = !t.hidden; $('#info').setAttribute('aria-expanded', String(!t.hidden)); break; }
+    case 'open-world': $('#infotip').hidden = true; openDrawer(d.scroll); break;
     case 'close-world': closeDrawer(); break;
     case 'w-select': useWorld(d.id); persist(); closeDrawerKeep(); break;
     case 'w-new': { const w = WORLD_PRESETS[$('#newPreset').value](); w.id = uniqueWorldId(w.id); w.name = w.name + ' (copy)'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
