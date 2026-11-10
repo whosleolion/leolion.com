@@ -24,6 +24,11 @@ export function formatMoney(bu, currency, opts = {}) {
   const mode = currency.belowSmallest || 'decimals';
   let v = opts.exact ? bu : niceRound(bu, 2);
   if (v <= 0) return '0 ' + abbr(dens[dens.length - 1], 0);
+  // Round to whole coins of the largest coin that fits, when that keeps at least 5 of them: 5 sp 9 cp becomes 6 sp.
+  if (opts.round && !opts.exact) {
+    const big = dens.find(d => d.bu <= v);
+    if (big && v / big.bu >= 5) return formatMoney(Math.round(v / big.bu) * big.bu, currency, { ...opts, round: false, exact: true });
+  }
   if (dens.length === 1) {
     const d = dens[0];
     let n = v / d.bu;
@@ -51,8 +56,8 @@ export function formatMoney(bu, currency, opts = {}) {
 }
 
 // Short form for tight places, e.g. a range endpoint: same as formatMoney.
-export function formatRange(lo, hi, currency) {
-  const a = formatMoney(lo, currency), b = formatMoney(hi, currency);
+export function formatRange(lo, hi, currency, opts = {}) {
+  const a = formatMoney(lo, currency, opts), b = formatMoney(hi, currency, opts);
   if (a === b) return a;
   // Collapse shared coin: "8 gp to 17 gp" -> "8 to 17 gp" when both are single-coin.
   const ma = /^([\d.,]+) (\S+)$/.exec(a), mb = /^([\d.,]+) (\S+)$/.exec(b);
@@ -65,6 +70,7 @@ function formatSymbol(bu, currency, opts = {}) {
   const per = currency.decimal || 100;
   const v = opts.exact ? bu : niceRound(bu, 2);
   const d = v / per;
+  if (opts.round && d >= 5) return currency.symbol + group(Math.round(d));
   if (d >= 100) return currency.symbol + group(Math.round(d));
   return currency.symbol + d.toFixed(2);
 }

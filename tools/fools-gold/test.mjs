@@ -307,6 +307,20 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const src = (await import('node:fs')).readFileSync('src/building/fools-gold/js/data.js', 'utf8') + (await import('node:fs')).readFileSync('src/building/fools-gold/js/app.js', 'utf8') + (await import('node:fs')).readFileSync('src/building/fools-gold/index.html', 'utf8');
   t('C2 no em dashes anywhere in the app', !/—/.test(src));
 }
+
+// ---------- rounding toggle ----------
+{
+  const g = vcm.world.currency, r = { round: true };
+  eq('R1 5 sp 9 cp rounds to 6 sp', [formatMoney(59, g), formatMoney(59, g, r)], ['5 sp 9 cp', '6 sp']);
+  eq('R2 12 gp stays', formatMoney(1177, g, r), '12 gp');
+  eq('R3 8 gp 3 sp rounds to 8 gp', formatMoney(830, g, r), '8 gp');
+  eq('R4 small amounts keep detail', [formatMoney(140, g, r), formatMoney(23, g, r), formatMoney(4, g, r)], ['1 gp 4 sp', '2 sp 3 cp', '4 cp']);
+  eq('R5 rounding up across a coin', formatMoney(98, g, r), '1 gp');
+  eq('R6 dollars', [formatMoney(750, modern.world.currency, r), formatMoney(380, modern.world.currency, r)], ['$8', '$3.80']);
+  eq('R7 one coin', [formatMoney(590, { denominations: [{ id: 'c', name: 'coin', plural: 'coins', bu: 100 }] }, r)], ['6 coins']);
+  eq('R8 range uses it', formatRange(59, 1177, g, r), '6 sp to 12 gp');
+  const wr = WORLD_PRESETS.vcm(); wr.dials.round = true; eq('R9 normalizes', (await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(wr).dials.round, true);
+}
 // ---------- store.normalizeWorld survives hostile input ----------
 {
   const { normalizeWorld } = await import('../../src/building/fools-gold/js/store.js');

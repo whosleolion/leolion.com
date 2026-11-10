@@ -56,7 +56,7 @@ export function normalizeWorld(w) {
   w.anchors = { wage: num(w.anchors && w.anchors.wage, 20, 0.01, 1e9) };
   w.economyTags = (Array.isArray(w.economyTags) ? w.economyTags : []).filter(t => typeof t === 'string');
   const d = w.dials && typeof w.dials === 'object' ? w.dials : {};
-  w.dials = { priceLevel: num(d.priceLevel, 1, 0.1, 10), volatility: num(d.volatility, 0.5, 0, 1), stacking: d.stacking === 'strict' ? 'strict' : 'dampened', sellFraction: num(d.sellFraction, 0.5, 0.1, 1) };
+  w.dials = { priceLevel: num(d.priceLevel, 1, 0.1, 10), volatility: num(d.volatility, 0.5, 0, 1), stacking: d.stacking === 'strict' ? 'strict' : 'dampened', sellFraction: num(d.sellFraction, 0.5, 0.1, 1), round: !!d.round };
   w.defaults = { travel: str(w.defaults && w.defaults.travel, 'travel.coach'), rent: str(w.defaults && w.defaults.rent, 'lodging.m-apartment-rent-medium') };
   w.samples = (Array.isArray(w.samples) ? w.samples : []).filter(x => typeof x === 'string').slice(0, 8);
   w.vocabulary = (Array.isArray(w.vocabulary) ? w.vocabulary : []).filter(v => v && typeof v === 'object').map(v => ({ term: str(v.term), means: str(v.means) })).slice(0, 200);

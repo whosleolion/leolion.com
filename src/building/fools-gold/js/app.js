@@ -18,17 +18,17 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
+const st = { ui: { why: false, opts: false, hist: false }, flowOpen: {}, drawerOpen: {}, guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
   S.activeId = world.id;
   ctx = compileWorld(world);
   $('#worldName').textContent = world.name;
-  const cs = $('#worldCur'); if (cs) cs.textContent = world.currency.symbol ? world.currency.symbol + ' dollars and cents' : world.currency.denominations.map(d => d.id).join(' / ');
 }
 const cur = () => world.currency;
-const money = bu => formatMoney(bu, cur());
+const money = bu => formatMoney(bu, cur(), { round: !!world.dials.round });
+const range = (lo, hi) => formatRange(lo, hi, cur(), { round: !!world.dials.round });
 let saveWarned = false;
 const persist = () => { const ok = save(S); if (!ok && !saveWarned) { saveWarned = true; toast('This browser is not saving your worlds. Back them up with Copy world under World.'); } return ok; };
 
@@ -56,62 +56,60 @@ function run(opts = {}) {
 }
 function renderAll() {
   $('#clearBtn').hidden = !st.text;
-  renderChips(); renderUnderstanding(); renderSamples(); renderResult(); renderUnstated(); renderHistory(); renderFlow();
+  renderUnderstanding(); renderSamples(); renderResult(); renderHistory(); renderFlow();
 }
 
-// ---------- chips and hints ----------
-function renderChips() {
+// ---------- hints, chips, result ----------
+function chipsHtml() {
   const chips = st.query.subject || st.query.mods.length || st.query.qty || st.query.span || st.query.rarity || st.query.tier ? chipsFor(st.query, ctx) : [];
-  $('#chips').innerHTML = chips.map(c =>
-    `<span class="chip r-${c.role}${c.assumed ? ' assumed' : ''}" title="${esc(c.assumed ? 'Assumed, you did not say' : c.role)}"><span class="role">${esc(c.role === 'mod' ? c.group : c.role)}</span>${esc(c.label)}${c.assumed ? '<span class="role">assumed</span>' : ''}<button class="x" data-act="chip-x" data-key="${esc(c.key)}" aria-label="Remove ${esc(c.label)}">×</button></span>`
+  return chips.map(c =>
+    `<span class="chip r-${c.role}${c.assumed ? ' assumed' : ''}" title="${esc(c.assumed ? 'Assumed' : c.role)}"><span class="role">${esc(c.role === 'mod' ? c.group : c.role)}</span>${esc(c.label)}${c.assumed ? '<span class="role">assumed</span>' : ''}<button class="x" data-act="chip-x" data-key="${esc(c.key)}" aria-label="Remove ${esc(c.label)}">×</button></span>`
   ).join('');
 }
+// Only things the DM must act on stay visible: typo suggestions and ignored words.
 function renderUnderstanding() {
   const p = st.parsed, out = [];
   if (p) {
     for (const [i, s] of p.suggestions.entries()) out.push(`<div class="hint">Did you mean <button class="pill" data-act="fix" data-i="${i}">${esc(s.to)}</button> instead of <span class="ign">${esc(s.from)}</span>?</div>`);
     const sugFrom = new Set(p.suggestions.flatMap(s => s.from.split(/\s+/).map(x => x.toLowerCase())));
     const rest = p.unrecognized.filter(u => !sugFrom.has(u.toLowerCase()));
-    if (rest.length && (st.query.subject || !unknownPhrase())) out.push(`<div class="hint"><span>Ignored:</span> ${rest.map(u => `<span class="ign">${esc(u)}</span>`).join(' ')} <span>Add ${rest.length > 1 ? 'them' : 'it'} under World, Custom words.</span></div>`);
-    for (const n of p.notes) out.push(`<div class="hint">${esc(n)}</div>`);
+    if (rest.length && (st.query.subject || !unknownPhrase())) out.push(`<div class="hint"><span>Ignored:</span> ${rest.map(u => `<span class="ign">${esc(u)}</span>`).join(' ')}</div>`);
   }
   $('#understanding').innerHTML = out.length ? `<div class="hints">${out.join('')}</div>` : '';
 }
-const sampleList = () => (world.samples && world.samples.length ? world.samples : SAMPLE_QUERIES);
 function renderSamples() {
   const el = $('#samples');
   if (st.text) { el.innerHTML = ''; return; }
-  const list = sampleList();
-  el.innerHTML = `<span class="lab">Try one</span>` + list.map((s, i) => `<button class="sample" data-act="sample" data-i="${i}">${esc(s)}</button>`).join('');
+  el.innerHTML = sampleList().slice(0, 4).map((s, i) => `<button class="sample" data-act="sample" data-i="${i}">${esc(s)}</button>`).join('');
 }
+const sampleList = () => (world.samples && world.samples.length ? world.samples : SAMPLE_QUERIES);
 
-// ---------- result ----------
-const ACTION_WORD = { buy: 'Buying', sell: 'Selling', value: 'Appraising' };
+const ACTION_WORD = { buy: 'buying', sell: 'selling', value: 'appraising' };
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
-  if (!st.text) { el.innerHTML = `<div class="empty"><b>Ask for a price.</b> Describe what you want priced. More detail narrows the estimate:<ul class="tips"><li><b>Quantity or length:</b> 5 potions, 3 days, 6 months</li><li><b>Buying or selling:</b> buy, sell, appraise</li><li><b>Place and people:</b> in a village, black market, friendly</li><li><b>Speed and quality:</b> rush, masterwork, expensive</li></ul>Anything you leave out is listed under the result, with what it would change.</div>`; return; }
+  if (!st.text) { el.innerHTML = `<div class="empty">Describe what you want priced. Quantity, length, buying or selling, place, speed and quality all sharpen the estimate. Anything left out is listed under the result.</div>`; return; }
   if (!q.subject) {
     const g = guessCard();
-    el.innerHTML = g || `<div class="empty"><b>No item found.</b> ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip (a sword, an inn, a train ride), or switch to <b>Tap it</b> to browse.</div>`; return;
+    el.innerHTML = g || `<div class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or switch to <b>Tap it</b> to browse.</div>`; return;
   }
   if (!e.ok && e.error === 'conflict') {
     el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(GROUPS[c.group].ask)}:</b> pick one.</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
     return;
   }
-  const ent = e.entry, p = money(e.typical);
+  const ent = e.entry;
   const pos = e.hi > e.lo ? Math.min(100, Math.max(0, (Math.log(e.typical) - Math.log(e.lo)) / (Math.log(e.hi) - Math.log(e.lo)) * 100)) : 50;
-  const qtyTxt = q.qty && ent.unit !== 'day' ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
+  const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
   const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
   const what = qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
+  const meta = [range(e.lo, e.hi), e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : '', ACTION_WORD[q.action] + (q.assumed.includes('action') ? ' (assumed)' : '')].filter(Boolean);
   const facts = [];
-  if (e.each) facts.push(`About <b>${esc(money(e.each))}</b> ${esc(e.eachLabel || 'each')}.`);
   if (e.sense) facts.push(esc(e.sense));
   if (e.assumptions.length) facts.push(`Assumed: ${esc(e.assumptions.map(a => a.text).join(', '))}.`);
-  for (const n of e.notes) facts.push(esc(n));
-  const rows = e.factors.map(f => {
+  for (const n of [...e.notes, ...(st.parsed ? st.parsed.notes : [])]) facts.push(esc(n));
+  const rows = e.factors.map((f, i) => {
     let eff;
-    if (f.kind === 'base') eff = esc(formatRange(f.lo, f.hi, cur()));
-    else if (f.kind === 'qty') eff = esc(f.label.replace('×', '×'));
+    if (f.kind === 'base') eff = esc(range(f.lo, f.hi));
+    else if (f.kind === 'qty') eff = esc(f.label);
     else {
       const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi;
       eff = '× ' + (Math.abs(a - b) < 0.005 ? fx(a) : fx(a) + ' to ' + fx(b));
@@ -121,19 +119,33 @@ function renderResult() {
     }
     const label = f.kind === 'qty' || f.kind === 'base' ? f.label.replace(/^× /, '') : f.label;
     const rm = f.kind === 'mod' ? `<button class="rm" data-act="rm-mod" data-id="${esc(f.id)}" aria-label="Remove ${esc(f.label)}">remove</button>` : f.kind === 'tier' ? `<button class="rm" data-act="rm-tier" aria-label="Remove class">remove</button>` : '';
-    const lead = f.kind === 'base' ? '' : f.kind === 'qty' ? '' : '';
-    return `<tr><td><span class="lbl">${esc(label)}</span><span class="why-t">${esc(f.why || '')}</span></td><td class="num">${f.kind === 'qty' ? esc(f.label) : eff}</td><td class="num">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</td><td>${rm}</td></tr>`;
+    const has = !!f.why;
+    return `<tr${has ? ` class="rowwhy" data-act="row" tabindex="0"` : ''}><td><span class="lbl">${esc(label)}${has ? ' <span class="more">+</span>' : ''}</span><span class="why-t">${esc(f.why || '')}</span></td><td class="num">${eff}</td><td class="num">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</td><td>${rm}</td></tr>`;
   }).join('');
-  el.innerHTML = `<article class="card">
-    <div class="card-head"><div class="what">${esc(what)}</div><div class="sub">${ACTION_WORD[q.action]}${q.assumed.includes('action') ? ' (assumed)' : ''}</div></div>
-    <div class="price"><span class="big">${esc(p)}</span><span class="about">estimate</span></div>
-    <div class="rangebar" role="img" aria-label="Range ${esc(formatRange(e.lo, e.hi, cur()))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>
-    ${driversLine(e)}
-    <div class="facts">${facts.map(f => `<div>${f}</div>`).join('')}</div>
-    <details class="why" open><summary>Breakdown</summary><div class="tablewrap"><table class="fx"><thead><tr><th>Step</th><th>Factor</th><th>Running total</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></details>
-    <div class="card-actions"><button class="btn primary" data-act="copy">Copy for notes</button><button class="btn" data-act="mode" data-mode="tap">Adjust with buttons</button></div>
+  const nOpts = st.an ? st.an.dimensions.length : 0;
+  const cnt = facts.length;
+  const tgl = (k, label, on) => `<button class="tgl" data-act="tgl" data-k="${k}" aria-expanded="${on}">${label}</button>`;
+  el.innerHTML = `<article class="res">
+    <div class="what">${esc(what)}</div>
+    <div class="price"><span class="big">${esc(money(e.typical))}</span></div>
+    <div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>
+    <div class="acts">
+      ${tgl('why', 'Details' + (cnt ? ` <b class="dot">${cnt}</b>` : ''), st.ui.why)}
+      ${nOpts ? tgl('opts', `Not specified <b class="dot">${nOpts}</b>`, st.ui.opts) : ''}
+      <button class="tgl${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}" title="Round to whole coins">Round</button>
+      <button class="tgl" data-act="copy">Copy</button>
+    </div>
+    <div class="panel" id="whyPanel"${st.ui.why ? '' : ' hidden'}>
+      <div class="chips">${chipsHtml()}</div>
+      <div class="rangebar" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>
+      ${facts.length ? `<div class="facts">${facts.map(f => `<div>${f}</div>`).join('')}</div>` : ''}
+      <div class="tablewrap"><table class="fx"><thead><tr><th>Step</th><th>Factor</th><th>Total</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="row" style="padding-top:8px"><button class="btn" data-act="mode" data-mode="tap">Adjust with buttons</button></div>
+    </div>
+    <div class="panel" id="optsPanel"${st.ui.opts && nOpts ? '' : ' hidden'}>${unstatedHtml()}</div>
   </article>`;
 }
+
 function driversLine(e) {
   const fs = e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => { const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi; return { f, g: Math.sqrt(a * b) }; }).filter(x => Math.abs(Math.log(x.g)) > 0.03).sort((x, y) => Math.abs(Math.log(y.g)) - Math.abs(Math.log(x.g))).slice(0, 3);
   if (!fs.length) return '';
@@ -169,7 +181,7 @@ function guessCard() {
     const c = g.cands[g.sel], pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
     const one = pv.one.ok ? pv.one.typical : g.bu;
     h += `<div class="adjust"><p class="setline">Price <b>${esc(phrase)}</b> at about <b class="gp">${esc(money(one))}</b> ${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}?</p>`;
-    if (qtxt && pv.full.ok) h += `<p class="mini">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(formatRange(pv.full.lo, pv.full.hi, cur()))})</p>`;
+    if (qtxt && pv.full.ok) h += `<p class="mini">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</p>`;
     h += `<div class="row"><button class="btn" data-act="g-lower">Lower</button><button class="btn" data-act="g-raise">Raise</button><input class="field" id="gPrice" placeholder="or type a price" aria-label="Type a price" style="width:140px"></div>
       <div class="row" style="margin-top:8px"><button class="btn primary" data-act="g-set">Save price</button><button class="btn" data-act="g-cancel">Back</button></div>
       <p class="mini">Saved under World, My items, where you can edit or remove it.</p></div>`;
@@ -186,25 +198,24 @@ function summaryLine(e) {
   if (q.rarity) bits.push(q.rarity);
   for (const id of q.mods) bits.push(ctx.mods.get(id)?.label || id);
   const unk = [...e.assumptions.map(a => a.text)];
-  return `${ACTION_WORD[q.action]}: ${bits.join(', ')}: about ${money(e.typical)} (${formatRange(e.lo, e.hi, cur())}).` + (unk.length ? ' ' + unk.join(' ') : '');
+  return `${ACTION_WORD[q.action]}: ${bits.join(', ')}: about ${money(e.typical)} (${range(e.lo, e.hi)}).` + (unk.length ? ' ' + unk.join(' ') : '');
 }
 
-// ---------- unstated ----------
-function renderUnstated() {
-  const el = $('#unstated'), an = st.an;
-  if (!an || !an.dimensions.length) { el.innerHTML = ''; return; }
+// ---------- unspecified factors ----------
+function unstatedHtml() {
+  const an = st.an;
+  if (!an || !an.dimensions.length) return '';
   const dims = an.dimensions;
   const leadDims = dims.filter(d => d.id !== 'span');
-  const top = [...(leadDims.length ? leadDims : dims)].sort((a, b) => b.ratio - a.ratio)[0];
+  const top = [...(leadDims.length ? leadDims : dims)].sort((x, y) => y.ratio - x.ratio)[0];
   const lo = top.options[0], hi = top.options[top.options.length - 1];
-  const lead = `Priced as an average case. <b>${esc(top.ask)}</b> moves it most: ${esc(lo.label)} about ${esc(money(lo.typical))}, ${esc(hi.label)} about ${esc(money(hi.typical))}. Tap an option to try it.`;
-  el.innerHTML = `<section class="un"><h2>Not specified</h2><p class="lead">${lead}</p>` + dims.map((d, di) => `
-    <div class="dim"><div class="dq"><span>${esc(d.ask)}</span><small>${esc(money(d.options[0].typical))} to ${esc(money(d.options[d.options.length - 1].typical))}</small></div>
+  return `<p class="lead">Priced as an average case. <b>${esc(top.ask)}</b> moves it most: ${esc(lo.label)} about ${esc(money(lo.typical))}, ${esc(hi.label)} about ${esc(money(hi.typical))}.</p>` + dims.map((d, di) => `
+    <div class="dim"><div class="dq"><span>${esc(d.ask)}</span></div>
     <div class="opts">${d.options.map((o, oi) => {
       const pct = Math.round(o.delta * 100);
       const dtxt = Math.abs(pct) < 1 ? 'same' : (pct > 0 ? '+' : '') + pct + '%';
       return `<button class="opt${o.sel ? ' sel' : ''}" data-act="opt" data-d="${di}" data-o="${oi}"><span class="ol">${esc(o.label)}${o.sel ? ' · assumed' : ''}</span><span class="op">${esc(money(o.typical))}</span><span class="od ${pct > 0 ? 'up' : pct < 0 ? 'down' : ''}">${dtxt}</span></button>`;
-    }).join('')}</div></div>`).join('') + `</section>`;
+    }).join('')}</div></div>`).join('');
 }
 
 // ---------- history ----------
@@ -225,10 +236,10 @@ function renderHistory() {
   const el = $('#history');
   if (!h.length) { el.innerHTML = ''; return; }
   const sorted = [...h.filter(x => x.pin), ...h.filter(x => !x.pin)];
-  el.innerHTML = `<h3>Recent</h3>` + sorted.map(x => {
+  el.innerHTML = `<button class="linkbtn" data-act="tgl" data-k="hist" aria-expanded="${st.ui.hist}">Recent (${h.length})</button>` + (st.ui.hist ? sorted.map(x => {
     const i = S.history.indexOf(x);
     return `<div class="hrow"><button class="h" data-act="hist" data-i="${i}"><span>${esc(x.text)}</span><span class="hp">${esc(x.price)}</span></button><button class="star${x.pin ? ' on' : ''}" data-act="star" data-i="${i}" aria-label="${x.pin ? 'Unstar' : 'Star'}" aria-pressed="${!!x.pin}">${x.pin ? '★' : '☆'}</button></div>`;
-  }).join('');
+  }).join('') : '');
 }
 
 // ---------- quick flow ----------
@@ -258,41 +269,46 @@ function renderFlow() {
   el.hidden = st.mode !== 'tap';
   if (st.mode !== 'tap') return;
   const q = st.query, ent = q.subject ? ctx.byId.get(q.subject) : null;
-  const act = (id, label) => `<button class="bigbtn${q.action === id && !q.assumed.includes('action') ? ' sel' : ''}" data-act="f-action" data-v="${id}">${label}</button>`;
-  let h = `<div class="step"><h4>Action</h4><div class="row">${act('buy', 'Buy or hire')}${act('sell', 'Sell')}${act('value', 'Appraise')}</div></div>`;
+  const open = id => (id in st.flowOpen ? st.flowOpen[id] : (id === 'item' && !ent));
+  const step = (id, title, value, body) => `<details class="fstep" data-step="${id}"${open(id) ? ' open' : ''}><summary><span class="ft">${title}</span><span class="fv">${esc(value || '')}</span></summary><div class="fbody">${body}</div></details>`;
+  const pill = (act, v, label, on) => `<button class="bigbtn${on ? ' sel' : ''}" data-act="${act}" data-v="${esc(v)}">${esc(label)}</button>`;
+  const actName = q.assumed.includes('action') ? '' : { buy: 'Buy or hire', sell: 'Sell', value: 'Appraise' }[q.action];
+  let h = step('action', 'Action', actName || 'Buy (assumed)', `<div class="row">${pill('f-action', 'buy', 'Buy or hire', q.action === 'buy' && !q.assumed.includes('action'))}${pill('f-action', 'sell', 'Sell', q.action === 'sell')}${pill('f-action', 'value', 'Appraise', q.action === 'value')}</div>`);
   const cats = [...FLOW_CATS.map(c => [c[0], c[1]]), ['mine', 'My items']].filter(([id]) => ctx.entries.some(e => catOf(e) === id));
   const sel = st.flow.cat || (ent ? catOf(ent) : null);
-  h += `<div class="step"><h4>Item</h4><div class="row">${cats.map(([id, l]) => `<button class="bigbtn${sel === id ? ' sel' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`;
+  let body = `<div class="row">${cats.map(([id, l]) => pill('f-cat', id, l, sel === id)).join('')}</div>`;
   if (sel) {
     const items = ctx.entries.filter(e => catOf(e) === sel).filter(e => !st.flow.search || (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(st.flow.search.toLowerCase()));
     const unitBU = e => e.perMile ? e.perMile * e.mpd : (e.bu ?? 0);
     items.sort((a, b) => (b.isCategory ? 1 : 0) - (a.isCategory ? 1 : 0) || unitBU(a) - unitBU(b) || a.name.localeCompare(b.name));
-    h += `<div style="margin-top:8px"><input class="field" id="flowSearch" type="search" placeholder="Search this list" value="${esc(st.flow.search)}" style="width:100%;margin-bottom:6px"><div class="itemlist">${items.map(e => {
-      const per = e.curve ? 'by rarity' : money(e.perMile ? e.perMile * e.mpd : e.bu) + (timeUnit(e) ? ' / ' + timeUnit(e).word : e.unit === 'lb' ? ' / lb' : '');
+    body += `<div style="margin-top:8px"><input class="field" id="flowSearch" type="search" placeholder="Search this list" value="${esc(st.flow.search)}" style="width:100%;margin-bottom:6px"><div class="itemlist">${items.map(e => {
+      const per = e.curve ? 'by rarity' : money(unitBU(e)) + (timeUnit(e) ? ' / ' + timeUnit(e).word : e.unit === 'lb' ? ' / lb' : '');
       return `<button class="${q.subject === e.id ? 'sel' : ''}" data-act="f-item" data-v="${esc(e.id)}"><span>${esc(e.name)}${e.isCategory ? ' <span class="mini">(any)</span>' : ''}</span><span class="ip">${esc(per)}</span></button>`;
     }).join('') || '<div class="mini" style="padding:10px">Nothing matches.</div>'}</div></div>`;
   }
-  h += `</div>`;
+  h += step('item', 'Item', ent ? ent.name : '', body);
   if (ent) {
-    const pill = (act, v, label, on) => `<button class="bigbtn${on ? ' sel' : ''}" data-act="${act}" data-v="${esc(v)}">${esc(label)}</button>`;
     const tu = timeUnit(ent);
+    const num = n => (n.lo === n.hi ? n.lo : n.lo + ' to ' + n.hi);
     if (tu) {
       const opts = { day: [[1, 'day', '1 ' + tu.word], [3, 'day', '3 ' + tu.word + 's'], [1, 'week', '1 week'], [2, 'week', '2 weeks'], [1, 'month', '1 month']], week: [[1, 'week', '1 week'], [2, 'week', '2 weeks'], [4, 'week', '4 weeks'], [3, 'month', '3 months']], month: [[1, 'month', '1 month'], [3, 'month', '3 months'], [6, 'month', '6 months'], [12, 'month', '12 months']], year: [[1, 'year', '1 year'], [2, 'year', '2 years'], [4, 'year', '4 years']] }[tu.unit];
-      h += `<div class="step"><h4>Length</h4><div class="row">${opts.map(([n, u, l]) => pill('f-span', n + '|' + u, l, q.span && q.span.lo === n && q.span.hi === n && (q.span.unit === u || (n === 1 && u === 'day' && q.span.unit === 'night')))).join('')}
-        <input class="field" id="flowSpan" type="number" min="1" step="1" placeholder="${tu.word}s" style="width:90px" aria-label="Custom number of ${tu.word}s"> ${ent.mpd ? `<input class="field" id="flowMiles" type="number" min="1" step="1" placeholder="or miles" style="width:100px" aria-label="Distance in miles">` : ''}</div></div>`;
-      h += `<div class="step"><h4>${ent.kind === 'labor' ? 'Workers' : 'People'}</h4><div class="row">${[1, 2, 3, 5, 10].map(n => pill('f-qty', n, String(n), (q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1))).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom count"></div></div>`;
+      h += step('span', 'Length', q.span ? num(q.span) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '1 ' + tu.word, `<div class="row">${opts.map(([n, u, l]) => pill('f-span', n + '|' + u, l, q.span && q.span.lo === n && q.span.hi === n && (q.span.unit === u || (n === 1 && u === 'day' && q.span.unit === 'night')))).join('')}
+        <input class="field" id="flowSpan" type="number" min="1" step="1" placeholder="${tu.word}s" style="width:90px" aria-label="Custom number of ${tu.word}s"> ${ent.mpd ? `<input class="field" id="flowMiles" type="number" min="1" step="1" placeholder="or miles" style="width:100px" aria-label="Distance in miles">` : ''}</div>`);
+      h += step('qty', ent.kind === 'labor' ? 'Workers' : 'People', q.qty ? num(q.qty) : '1', `<div class="row">${[1, 2, 3, 5, 10].map(n => pill('f-qty', n, String(n), (q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1))).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom count"></div>`);
     } else {
-      h += `<div class="step"><h4>${ent.unit === 'lb' ? 'Pounds' : 'Quantity'}</h4><div class="row">${[1, 2, 5, 10, 20, 50, 100].map(n => pill('f-qty', n, String(n), q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1)).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom amount"></div></div>`;
+      h += step('qty', ent.unit === 'lb' ? 'Pounds' : 'Quantity', q.qty ? num(q.qty) : '1', `<div class="row">${[1, 2, 5, 10, 20, 50, 100].map(n => pill('f-qty', n, String(n), q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1)).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom amount"></div>`);
     }
-    if (ent.curve) h += `<div class="step"><h4>Rarity</h4><div class="row">${RARITIES.map(r => pill('f-rarity', r, r, q.rarity === r)).join('')}</div></div>`;
-    if (['travel', 'lodging', 'service', 'labor', 'spell'].includes(ent.kind)) h += `<div class="step"><h4>Class</h4><div class="row">${TIER_NAMES.map(t => pill('f-tier', t, t, q.tier === t)).join('')}</div></div>`;
-    const groups = Object.keys(GROUPS).map(g => [g, ctx.modList.filter(m => m.group === g && applicable(m, ent, q.action === 'sell' && (ent.kind === 'good' || ent.kind === 'property') ? 'sell' : 'buy'))]).filter(([, l]) => l.length);
-    h += `<div class="step"><h4>Circumstances</h4>` + groups.map(([g, list]) => `<div class="grp"><div class="gl">${esc(GROUPS[g].label)}</div><div class="row">${list.map(m => `<button class="bigbtn${q.mods.includes(m.id) ? ' sel' : ''}" data-act="f-mod" data-v="${esc(m.id)}">${esc(m.label)}</button>`).join('')}</div></div>`).join('') + `</div>`;
+    if (ent.curve) h += step('rarity', 'Rarity', q.rarity || 'common (assumed)', `<div class="row">${RARITIES.map(r => pill('f-rarity', r, r, q.rarity === r)).join('')}</div>`);
+    if (['travel', 'lodging', 'service', 'labor', 'spell'].includes(ent.kind) && !ent.noTier) h += step('tier', 'Class', q.tier || 'standard (assumed)', `<div class="row">${TIER_NAMES.map(t => pill('f-tier', t, t, q.tier === t)).join('')}</div>`);
+    const side = q.action === 'sell' && (ent.kind === 'good' || ent.kind === 'property') ? 'sell' : 'buy';
+    const groups = Object.keys(GROUPS).map(g => [g, ctx.modList.filter(m => m.group === g && applicable(m, ent, side))]).filter(([, l]) => l.length);
+    const chosen = q.mods.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ');
+    h += step('circ', 'Circumstances', chosen || 'none', groups.map(([g, list]) => `<div class="grp"><div class="gl">${esc(GROUPS[g].label)}</div><div class="row">${list.map(m => pill('f-mod', m.id, m.label, q.mods.includes(m.id))).join('')}</div></div>`).join(''));
   }
   h += `<div class="row"><button class="btn" data-act="clear">Start over</button></div>`;
   const keep = document.activeElement && document.activeElement.id;
   el.innerHTML = h;
-  if (keep === 'flowSearch') { const i = $('#flowSearch'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  if (keep === 'flowSearch') { const i = $('#flowSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 }
 function flowEdit(fn) { const q = clone(st.query); fn(q); fromQuery(q); }
 
@@ -313,26 +329,27 @@ function vocabOptions(sel) {
 }
 function renderDrawer() {
   const w = world, panel = $('#drawerPanel'), top = panel.scrollTop;
+  const op = n => (st.drawerOpen[n] ? ' open' : '');
   const dens = w.currency.denominations;
   const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
   panel.innerHTML = `
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
-  <div class="sect"><h3>Your worlds</h3>
+  <details class="sect" data-sec="Your worlds"${op('Your worlds')}><summary><h3>Your worlds</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
     ${S.worlds.map(x => `<button class="world-row${x.id === w.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}"><span><span class="wn">${esc(x.name)}</span><span class="wb">${esc(x.blurb || (x.economyTags || []).join(', ') || 'Custom world')}</span></span></button>`).join('')}
     <div class="row"><select id="newPreset" class="field" aria-label="Preset to copy"><option value="vcm">Vista City Mondays</option><option value="srd">Standard fantasy (SRD)</option><option value="modern">Modern day, real world</option></select><button class="btn" data-act="w-new">New world from preset</button><button class="btn" data-act="w-dup">Duplicate this one</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete this one</button>` : ''}</div>
     <label class="lab">Name<input class="field" data-bind="name" value="${esc(w.name)}"></label>
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>Item list</h3>
+  <details class="sect" data-sec="Item list"${op('Item list')}><summary><h3>Item list</h3><span class="sv">${esc({ srd: 'Fantasy, 5e SRD', generic: 'Fantasy, generic', modern: 'Modern day' }[w.baseline])}</span></summary><div class="sbody">
     <p>Where prices start. Your own items and settings always override it.</p>
     <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="srd"${w.baseline === 'srd' ? ' checked' : ''}><span><b>Fantasy, 5e SRD items</b>Named items like longsword and chain mail, plus travel, hired help, spells, property and magic.</span></label>
     <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="generic"${w.baseline === 'generic' ? ' checked' : ''}><span><b>Fantasy, generic</b>Categories only, such as weapon, armor and potion. No SRD names.</span></label>
     <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="modern"${w.baseline === 'modern' ? ' checked' : ''}><span><b>Modern day, real world</b>Current US prices for rent, groceries, flights, doctors and cars. Pair it with US dollars under Money.</span></label>
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>Money</h3>
+  <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">
     <p>Prices are stored as one number, the <b>base unit</b> (1 is a copper piece by default). Set what each coin is worth in base units. A one-coin world has one row.</p>
     <div class="row"><button class="btn" data-act="w-cur" data-v="gsc">Gold, silver, copper</button><button class="btn" data-act="w-cur" data-v="one">One coin</button><button class="btn" data-act="w-cur" data-v="usd">US dollars</button></div>
     ${dens.map((d, i) => `<div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label><label class="lab">Worth (base units)<input class="field" type="number" min="0.01" step="any" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">×</button>` : '<span></span>'}</div>`).join('')}
@@ -341,14 +358,15 @@ function renderDrawer() {
     <label class="lab">Your note on what one base unit is worth<input class="field" data-bind="note" value="${esc(w.currency.note || '')}" placeholder="for example: roughly a dollar"></label>
     <label class="lab">Daily pay for unskilled work (used for sense checks)<input class="field" data-bind="wage" value="${esc(formatFull(w.anchors.wage, w.currency))}"></label>
     <p id="curPrev">Shown as: ${esc(curPrev)} for 1, 12, 130, 1,500, 25,000 and 800,000 base units.</p>
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>Economy</h3>
+  <details class="sect" data-sec="Economy"${op('Economy')}><summary><h3>Economy</h3><span class="sv">${w.economyTags.length ? w.economyTags.length + ' on' : 'none'}</span></summary><div class="sbody">
     <p>Tags that raise or lower whole categories of price. Pick any that fit the world.</p>
     ${ECONOMY_TAGS.map(t => `<label class="tagrow"><input type="checkbox" data-bind="econ.${t.id}"${w.economyTags.includes(t.id) ? ' checked' : ''}><span><b>${esc(t.label)}</b>${esc(t.describe)}</span></label>`).join('')}
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>Dials</h3>
+  <details class="sect" data-sec="Dials"${op('Dials')}><summary><h3>Dials</h3><span class="sv">${w.dials.round ? 'rounded' : 'exact'}</span></summary><div class="sbody">
+    <label class="tagrow"><input type="checkbox" data-bind="dial.round"${w.dials.round ? ' checked' : ''}><span><b>Round prices to whole coins</b>Shows 5 sp 9 cp as 6 sp, and $7.50 as $8. Small amounts keep their detail.</span></label>
     <div class="grid2">
       <label class="lab">Price level (1 is standard)<input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${esc(w.dials.priceLevel)}"></label>
       <label class="lab">Range width (0 exact, 1 wide)<input class="field" type="number" min="0" max="1" step="0.1" data-bind="dial.volatility" value="${esc(w.dials.volatility)}"></label>
@@ -357,32 +375,32 @@ function renderDrawer() {
       <label class="lab">When you just say "travel"<select class="field" data-bind="defaults.travel">${ctx.entries.filter(e => e.group === 'travel').map(e => `<option value="${esc(e.id)}"${w.defaults.travel === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>
       ${ctx.entries.some(e => e.group === 'rent') ? `<label class="lab">When you just say "rent"<select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
     </div>
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>Custom words</h3>
+  <details class="sect" data-sec="Custom words"${op('Custom words')}><summary><h3>Custom words</h3><span class="sv">${w.vocabulary.length || 'none'}</span></summary><div class="sbody">
     <p>Teach it your world's words. "sparkjuice" can mean a healing potion, "the Spire" can mean the capital.</p>
     ${w.vocabulary.map((v, i) => `<div class="vrow"><input class="field" data-bind="voc.${i}.term" value="${esc(v.term)}" placeholder="word or phrase" aria-label="Word"><select class="field" data-bind="voc.${i}.means" aria-label="Means">${vocabOptions(v.means)}</select><button class="xbtn" data-act="w-del-voc" data-i="${i}" aria-label="Remove word">×</button></div>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-voc">Add a word</button></div>
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>My items</h3>
+  <details class="sect" data-sec="My items"${op('My items')}><summary><h3>My items</h3><span class="sv">${w.items.length || 'none'}</span></summary><div class="sbody">
     <p>Add items the list lacks, or reuse a name to replace its price. Prices accept coins, like "3 gp 5 sp".</p>
     ${w.items.map((it, i) => `<div class="irow"><label class="lab">Name<input class="field" data-bind="item.${i}.name" value="${esc(it.name)}"></label><label class="lab">Kind<select class="field" data-bind="item.${i}.kind">${['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'].map(k => `<option${it.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><label class="lab">Price<input class="field" data-bind="item.${i}.price" value="${esc(formatFull(it.bu, w.currency))}"></label><label class="lab">Per<select class="field" data-bind="item.${i}.unit">${['each', 'day', 'lb'].map(k => `<option${it.unit === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><button class="xbtn" data-act="w-del-item" data-i="${i}" aria-label="Remove item">×</button></div><label class="lab">Tags (space separated, like: weapon metal)<input class="field" data-bind="item.${i}.tags" value="${esc((it.tags || []).join(' '))}"></label>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-item">Add an item</button></div>
-  </div>
+  </div></div></details>
 
-  <div class="sect"><h3>Back up and share</h3>
+  <details class="sect" data-sec="Back up and share"${op('Back up and share')}><summary><h3>Back up and share</h3><span class="sv"></span></summary><div class="sbody">
     <p>Copy this world to keep it or share it. Paste one below to load it.</p>
     <textarea class="mono" id="exportBox" readonly aria-label="World data">${esc(json)}</textarea>
     <div class="row"><button class="btn" data-act="w-copy">Copy world</button><button class="btn" data-act="w-save-file">Save as file</button></div>
     <textarea class="mono" id="importBox" placeholder="Paste a world here" aria-label="Paste a world"></textarea>
     <div class="row"><button class="btn" data-act="w-import">Load pasted world</button><button class="btn danger" id="resetBtn" data-act="w-reset">Reset everything</button></div>
-  </div>
+  </div></div></details>
 
-  <div class="sect" id="about"><h3>About</h3>
+  <details class="sect" id="about" data-sec="About"${op('About')}><summary><h3>About</h3><span class="sv"></span></summary><div class="sbody">
     <p>Estimates only. Every price is a range, with its reasons shown. Rules and word lists run in your browser, and nothing is sent anywhere.</p>
     <p>${esc(SRD_ATTRIBUTION)}</p>
-  </div>`;
+  </div></div></details>`;
   panel.scrollTop = top;
 }
 
@@ -440,6 +458,9 @@ document.addEventListener('click', e => {
     case 'copy': copyText(summaryLine(st.est), 'Copied'); break;
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
     case 'star': { const h = S.history[+d.i]; h.pin = !h.pin; persist(); renderHistory(); break; }
+    case 'tgl': st.ui[d.k] = !st.ui[d.k]; renderResult(); renderHistory(); break;
+    case 'round': world.dials.round = !world.dials.round; persist(); renderAll(); break;
+    case 'row': b.classList.toggle('open'); break;
     case 'g-pick': if (st.guess) { st.guess.sel = +d.i; st.guess.bu = st.guess.cands[+d.i].bu; renderResult(); } break;
     case 'g-cancel': if (st.guess) { st.guess.sel = null; renderResult(); } break;
     case 'g-raise': case 'g-lower': if (st.guess && st.guess.sel != null) { const f = a === 'g-raise' ? 1.25 : 0.8; st.guess.bu = niceRound(st.guess.bu * f, 3); renderResult(); } break;
@@ -452,7 +473,7 @@ document.addEventListener('click', e => {
     // flow
     case 'f-action': flowEdit(x => { x.action = d.v; x.assumed = x.assumed.filter(z => z !== 'action'); }); break;
     case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderFlow(); break;
-    case 'f-item': flowEdit(x => { x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
+    case 'f-item': st.flowOpen = { item: false }; flowEdit(x => { x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
     case 'f-qty': flowEdit(x => { const n = +d.v; x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); break;
     case 'f-span': flowEdit(x => { const [n, u] = d.v.split('|'); x.span = { lo: +n, hi: +n, unit: u }; }); break;
     case 'f-rarity': flowEdit(x => { x.rarity = x.rarity === d.v ? null : d.v; }); break;
@@ -513,6 +534,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#drawe
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
 
 // drawer and flow inputs
+document.addEventListener('toggle', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.step) st.flowOpen[t.dataset.step] = t.open;
+  if (t.dataset && t.dataset.sec) st.drawerOpen[t.dataset.sec] = t.open;
+}, true);
 document.addEventListener('input', e => {
   if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderFlow(); }
 });
@@ -532,7 +558,7 @@ document.addEventListener('change', e => {
   else if (bind === 'note') w.currency.note = t.value;
   else if (bind === 'wage') { const v = parseMoney(t.value, w.currency); if (v > 0) w.anchors.wage = v; }
   else if (p[0] === 'econ') { const set = new Set(w.economyTags); t.checked ? set.add(p[1]) : set.delete(p[1]); w.economyTags = [...set]; }
-  else if (p[0] === 'dial') w.dials[p[1]] = t.tagName === 'SELECT' ? t.value : +t.value;
+  else if (p[0] === 'dial') w.dials[p[1]] = t.type === 'checkbox' ? t.checked : t.tagName === 'SELECT' ? t.value : +t.value;
   else if (bind === 'defaults.travel') w.defaults.travel = t.value;
   else if (bind === 'defaults.rent') w.defaults.rent = t.value;
   else if (p[0] === 'voc') w.vocabulary[+p[1]][p[2]] = t.value.trim();
