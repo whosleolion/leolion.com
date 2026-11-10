@@ -15,9 +15,10 @@ const server = http.createServer((req, res) => {
 });
 let failed = 0;
 const t = (name, ok, detail = '') => { if (!ok) failed++; console.log(ok ? 'PASS' : 'FAIL', name, ok ? '' : detail); };
+// the VCM campaign has the Economy tab switched off in world.json; the engine feature is tested with it switched on here
 async function open(browser, svc) {
   const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, serviceWorkers: 'block' });
-  await ctx.route('**/duat/vcm/world.json', async r => { const res = await r.fetch(); const j = await res.json(); j.edit = { endpoint: EP }; await r.fulfill({ response: res, json: j }); });
+  await ctx.route('**/duat/vcm/world.json', async r => { const res = await r.fetch(); const j = await res.json(); j.edit = { endpoint: EP }; j.economy = 'economy.json'; await r.fulfill({ response: res, json: j }); });
   await ctx.route(EP + '**', async r => {
     const url = new URL(r.request().url());
     const out = r.request().method() === 'POST' ? svc.post(JSON.parse(r.request().postData())) : svc.get(Object.fromEntries(url.searchParams));
