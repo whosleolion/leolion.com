@@ -54,6 +54,26 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   const price = await page.textContent('.price .big');
   ok(name + ' one-coin world prices in coins', /coin/.test(price), price);
   await page.click('#worldBtn'); await page.click('[data-act=w-select][data-id=vcm]'); await page.click('[data-act=close-world]');
+  // hostile import must not brick the app or run script
+  let alerts = 0; page.on('dialog', d => { alerts++; d.dismiss(); });
+  await page.click('#worldBtn');
+  await page.fill('#importBox', '{"name":"bad","items":[{}]}');
+  await page.click('[data-act=w-import]');
+  await page.fill('#importBox', '{"id":"i","name":"i","currency":{"denominations":[{"id":"gp","name":"gp","bu":"\\"><img src=x onerror=alert(1)>"}]},"dials":{"priceLevel":"\\"><img src=x onerror=alert(2)>"}}');
+  await page.click('[data-act=w-import]');
+  await page.click('[data-act=close-world]');
+  await page.fill('#q', 'longsword');
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('.card, .empty');
+  ok(name + ' hostile import: app still boots after reload', !!(await page.$('#q')));
+  ok(name + ' hostile import: no script ran', alerts === 0, alerts);
+  // focus stays put while editing a field in the drawer
+  await page.click('#worldBtn');
+  await page.focus('[data-bind=wage]');
+  await page.fill('[data-bind=wage]', '30 cp');
+  await page.keyboard.press('Tab');
+  ok(name + ' drawer keeps focus after an edit', await page.evaluate(() => document.activeElement && document.activeElement.tagName !== 'BODY'));
+  await page.click('[data-act=close-world]');
   await page.fill('#q', '');
   ok(name + ' empty state', !!(await page.$('.empty')));
   await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');

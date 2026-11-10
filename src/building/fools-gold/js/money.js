@@ -59,20 +59,44 @@ export function formatRange(lo, hi, currency) {
   return a + ' to ' + b;
 }
 
-// Parse a typed amount like "5 gp 3 sp" or "250" (BU) in a given currency.
+// Exact, unrounded text for editable fields ("13 gp 5 sp"), so a stored price never drifts on display.
+export function formatFull(bu, currency) {
+  const dens = [...currency.denominations].sort((a, b) => b.bu - a.bu);
+  if (!(bu > 0)) return '0 ' + dens[dens.length - 1].id;
+  const parts = [];
+  let rest = bu;
+  for (const d of dens) {
+    const n = Math.floor(rest / d.bu + 1e-9);
+    if (n > 0 && d !== dens[dens.length - 1]) { parts.push(n + ' ' + d.id); rest -= n * d.bu; }
+  }
+  const last = dens[dens.length - 1];
+  const n = rest / last.bu;
+  if (n > 1e-9 || !parts.length) parts.push(+n.toFixed(4) + ' ' + last.id);
+  return parts.join(' ');
+}
+
+// Parse a typed amount like "5 gp 3 sp", "3 gold pieces" or "250" (base units).
+// Returns null when it cannot be read, including unknown coin names and negative numbers.
 export function parseMoney(text, currency) {
   const t = String(text).trim().toLowerCase();
-  if (!t) return null;
+  if (!t || /-/.test(t)) return null;
   const dens = currency.denominations;
+  const same = (a, b) => a === b || a === b + 's' || b === a + 's';
   let total = 0, found = false;
-  const re = /([\d.,]+)\s*([a-z]+)?/g;
+  const re = /(\d[\d,]*(?:\.\d+)?)\s*([a-z][a-z ]*?)?(?=\s*\d|\s*$)/g;
   let m;
   while ((m = re.exec(t))) {
     const n = parseFloat(m[1].replace(/,/g, ''));
-    if (isNaN(n)) continue;
-    const d = m[2] ? dens.find(x => x.id === m[2] || x.name === m[2] || x.plural === m[2]) : null;
-    total += n * (d ? d.bu : 1);
-    found = true;
+    const unit = (m[2] || '').trim();
+    let mult = 1;
+    if (unit) {
+      const first = x => String(x.name).toLowerCase().split(' ')[0];
+      const d = dens.find(x => [x.id, x.name, x.plural].some(v => v && same(String(v).toLowerCase(), unit))) || (dens.filter(x => same(first(x), unit)).length === 1 ? dens.find(x => same(first(x), unit)) : null);
+      if (!d) return null;
+      mult = d.bu;
+    }
+    if (!isFinite(n)) return null;
+    total += n * mult; found = true;
   }
-  return found ? total : null;
+  return found && total > 0 && isFinite(total) ? total : null;
 }

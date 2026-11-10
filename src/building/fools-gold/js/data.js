@@ -37,10 +37,10 @@ const srdGoods = [
   ...rows('good', 'srd', ['weapon', 'manufactured', 'crafted', 'metal'], [
     'Club;1sp;;;', 'Dagger;2gp', 'Greatclub;2sp', 'Handaxe;5gp;;;hand axe', 'Javelin;5sp', 'Light hammer;2gp',
     'Mace;5gp', 'Quarterstaff;2sp;;;staff', 'Sickle;1gp', 'Spear;1gp', 'Light crossbow;25gp;;;', 'Dart;5cp',
-    'Shortbow;25gp;;;short bow', 'Sling;1gp', 'Battleaxe;10gp;;;battle axe', 'Flail;10gp', 'Glaive;20gp', 'Greataxe;30gp;;;great axe',
+    'Shortbow;25gp;;;short bow', 'Sling;1sp', 'Battleaxe;10gp;;;battle axe', 'Flail;10gp', 'Glaive;20gp', 'Greataxe;30gp;;;great axe',
     'Greatsword;50gp;;;great sword', 'Halberd;20gp', 'Lance;10gp', 'Longsword;15gp;;;long sword', 'Maul;10gp',
     'Morningstar;15gp;;;morning star', 'Pike;5gp', 'Rapier;25gp', 'Scimitar;25gp', 'Shortsword;10gp;;;short sword',
-    'Trident;5gp', 'Warhammer;15gp;;;war hammer', 'Whip;2sp', 'Blowgun;10gp', 'Hand crossbow;75gp', 'Heavy crossbow;50gp',
+    'Trident;5gp', 'Warhammer;15gp;;;war hammer', 'Whip;2gp', 'Blowgun;10gp', 'Hand crossbow;75gp', 'Heavy crossbow;50gp',
     'Longbow;50gp;;;long bow', 'Arrow;5cp;;ammunition;arrows', 'Crossbow bolt;5cp;;ammunition;bolt',
   ]),
   ...rows('good', 'srd', ['armor', 'manufactured', 'crafted', 'metal'], [
@@ -58,14 +58,14 @@ const srdGoods = [
     'Ladder;1sp;;;ten foot ladder', 'Net;1gp', 'Caltrops;1gp', "Climber's kit;25gp;;;climbing kit", 'Fishing tackle;1gp',
     'Hourglass;25gp', 'Magnifying glass;100gp', 'Lamp;5sp', 'Signal whistle;5cp;;;whistle', 'Component pouch;25gp', 'Spellbook;50gp',
     "Thieves' tools;25gp;;;thieves tools, lockpicks", "Smith's tools;20gp;;;smiths tools", 'Lute;35gp;;instrument', 'Disguise kit;25gp',
-    'Holy symbol;5gp;;;amulet', 'Arcane focus;10gp;;;crystal, orb', 'Pocket watch;40gp;;luxury;watch', 'Newspaper;2cp;;;broadsheet',
+    'Holy symbol;5gp;;;amulet', 'Arcane focus;10gp;;;crystal, orb', 'Pocket watch;40gp;;luxury;wristwatch', 'Newspaper;2cp;;newspaper;broadsheet',
   ]),
   ...rows('good', 'srd', ['clothing', 'textile', 'manufactured'], [
-    'Common clothes;5sp;;;peasant clothes', "Traveler's clothes;2gp;;;travelers clothes", 'Fine clothes;15gp;;luxury;nice clothes, suit',
+    'Common clothes;5sp;;;peasant clothes', "Traveler's clothes;2gp;;;travelers clothes", 'Fine clothes;15gp;;luxury;nice clothes, suit of clothes',
     'Costume;5gp', "Robes;1gp;;;robe", 'Cold weather cloak;1gp;;;cloak',
   ]),
   ...rows('good', 'srd', ['food', 'consumable'], [
-    'Rations;5sp;;;ration, travel rations', 'Bread loaf;2cp;;;bread', 'Cheese wedge;1sp;;;cheese', 'Meat chunk;3sp;;;meat',
+    'Rations;5sp;;perday;ration, travel rations', 'Bread loaf;2cp;;;bread', 'Cheese wedge;1sp;;;cheese', 'Meat chunk;3sp;;;meat',
   ]),
   ...rows('good', 'srd', ['drink', 'food', 'consumable'], [
     'Ale mug;4cp;;;ale, beer, pint', 'Ale gallon;2sp;;;', 'Common wine;2sp;;;wine, wine pitcher', 'Fine wine;10gp;;luxury;fine wine bottle',
@@ -74,14 +74,14 @@ const srdGoods = [
     'Camel;50gp', 'Donkey;8gp;;;mule', 'Draft horse;50gp', 'Riding horse;75gp;;;horse', 'Warhorse;400gp;;;war horse', 'Pony;30gp',
     'Elephant;200gp', 'Mastiff;25gp;;;dog, guard dog',
   ]),
-  ...rows('good', 'srd', ['livestock', 'animal'], ['Chicken;2sp', 'Cow;10gp;;;cattle', 'Goat;1gp', 'Pig;3gp', 'Sheep;2gp']),
+  ...rows('good', 'srd', ['livestock', 'animal'], ['Chicken;2cp', 'Cow;10gp;;;cattle', 'Goat;1gp', 'Pig;3gp', 'Sheep;2gp']),
   ...rows('good', 'srd', ['vehicle', 'gear'], [
     'Saddle;10gp;;;riding saddle', 'Cart;15gp', 'Wagon;35gp', 'Carriage;100gp', 'Sled;20gp', 'Rowboat;50gp', 'Keelboat;3000gp', 'Longship;10000gp',
     'Sailing ship;10000gp', 'Galley;30000gp', 'Warship;25000gp',
   ]),
   ...rows('good', 'srd', ['trade', 'raw'], [
     'Wheat;1cp;lb', 'Flour;2cp;lb', 'Salt;5cp;lb', 'Iron;1sp;lb;metal', 'Copper;5sp;lb;metal', 'Silver;5gp;lb;metal;silver bullion',
-    'Gold;50gp;lb;metal;gold bullion', 'Platinum;500gp;lb;metal', 'Ginger;2gp;lb;luxury spice', 'Cinnamon;2gp;lb;luxury spice',
+    'Gold;50gp;lb;metal;gold bullion', 'Platinum;500gp;lb;metal', 'Ginger;1gp;lb;luxury spice', 'Cinnamon;2gp;lb;luxury spice',
     'Pepper;2gp;lb;luxury spice', 'Cloves;3gp;lb;luxury spice', 'Saffron;15gp;lb;luxury spice',
   ], { sellFraction: 1 }),
   ...rows('good', 'srd', ['magic', 'potion', 'consumable', 'medicine', 'crafted'], ['Potion of healing;50gp;;;healing potion, health potion, potion of health']),
@@ -98,7 +98,7 @@ const srdServices = [
 const coreEntries = [
   // Travel. perMile in BU, mpd = miles per day. bu is per day of travel.
   { id: 'travel.rail', name: 'Rail passage', kind: 'travel', src: 'core', group: 'travel', unit: 'day', perMile: 0.4, mpd: 250,
-    tags: ['transport', 'rail'], aliases: ['train', 'rail', 'railway', 'railroad', 'steam train', 'locomotive', 'train ride', 'train ticket', 'tram', 'transit'],
+    tags: ['transport', 'rail'], aliases: ['train', 'rail', 'railway', 'railroad', 'steam train', 'locomotive', 'train ride', 'train ticket'],
     basis: 'Derived: the SRD coach is 3 cp a mile. Rail is far faster and cheaper per mile, so about 0.4 cp a mile at 250 miles a day, roughly 1 gp per day of travel.' },
   { id: 'travel.coach', generic: true, name: 'Coach passage', kind: 'travel', src: 'srd', group: 'travel', unit: 'day', perMile: 3, mpd: 24,
     tags: ['transport', 'coach'], aliases: ['coach', 'stagecoach', 'stage coach', 'stage', 'carriage ride', 'wagon ride', 'coach ride'],
@@ -117,13 +117,13 @@ const coreEntries = [
     basis: 'SRD: messenger, 2 cp a mile.' },
   // Services and labor
   ...rows('service', 'core', ['service', 'communication'], ['Telegram;3sp;each;;telegraph, wire, cable']),
-  ...rows('service', 'core', ['service', 'transport'], ['Tram fare;2cp;each;;tram ride, omnibus, streetcar']),
+  ...rows('service', 'core', ['service', 'transport'], ['Tram fare;2cp;each;;tram, tram ticket, tram ride, omnibus, streetcar']),
   ...rows('labor', 'core', ['labor', 'unskilled', 'factory'], ['Factory hand;25cp;day;;mill worker, factory worker, factory laborer']),
   ...rows('labor', 'core', ['labor', 'skilled'], [
     'Blacksmith;3gp;day;metal crafted;smith', 'Carpenter;2gp;day', 'Cook;6sp;day;food', 'Scribe;4sp;day;;clerk, secretary', 'Servant;2sp;day;;maid, butler, footman',
     'Guide;2gp;day', 'Bodyguard;5gp;day;combat;guard, bouncer', 'Mercenary;3gp;day;combat;sellsword, soldier for hire, hired sword', 'Engineer;5gp;day;;steam engineer, mechanic',
     'Physician;5gp;day;medicine;doctor, surgeon, healer', 'Lawyer;8gp;day;;barrister, solicitor, attorney', 'Sage;10gp;day;;scholar, researcher, expert', 'Alchemist;6gp;day;magic crafted',
-    'Wizard for hire;12gp;day;magic;hedge wizard, mage for hire', 'Spy;10gp;day;;informant, agent', 'Thug;1gp;day;combat;ruffian, muscle',
+    'Wizard for hire;12gp;day;magic;wizard, mage, hedge wizard, mage for hire, sorcerer', 'Spy;10gp;day;;informant, agent', 'Thug;1gp;day;combat;ruffian, muscle',
   ]),
   ...rows('spell', 'core', ['spell', 'magic', 'service'], [
     'Cantrip casting;15gp;each;;cantrip', '1st level spell casting;40gp;each;;1st level spell, first level spell', '2nd level spell casting;90gp;each;;2nd level spell, second level spell',
@@ -140,7 +140,7 @@ const coreEntries = [
   ]),
   // Original goods for variety
   ...rows('good', 'core', ['gear', 'industrial', 'manufactured'], [
-    'Steam engine;400gp;;;engine, boiler', 'Gaslamp;8gp;;;gas lamp, streetlamp, street lamp', 'Revolver;60gp;;weapon;pistol, firearm, gun', 'Coal;4cp;lb;raw fuel;coal ton',
+    'Steam engine;400gp;;;engine, boiler', 'Gaslamp;8gp;;;gas lamp, streetlamp, street lamp', 'Revolver;60gp;;weapon;pistol, firearm, gun', 'Coal;4cp;lb;raw fuel;',
   ]),
 ];
 
@@ -185,6 +185,13 @@ export const FAMILIES = [
 ];
 
 export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats];
+// Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
+const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
+for (const e of CATALOG) {
+  if (NONMETAL.has(e.name)) e.tags = e.tags.filter(t => t !== 'metal');
+  if (e.name === 'Newspaper' || e.name === 'Pocket watch') { e.src = 'core'; }
+  if (e.tags.includes('perday')) e.perDay = true;
+}
 
 // Rarity curves: middle price in BU per rarity, band as multipliers of the middle.
 export const RARITIES = ['common', 'uncommon', 'rare', 'very rare', 'legendary'];
@@ -238,7 +245,7 @@ export const MODIFIERS = [
   M('auction', 'auction', 'channel', ['auction', 'auction house', 'bidding'], [1.1, 1.6], [0.9, 1.4], ['good', 'property'], 'Competing bidders push prices up, minus the house fee.'),
   M('pawn', 'pawnshop', 'channel', ['pawn', 'pawnshop', 'pawn shop', 'pawnbroker'], [1, 1.2], [0.3, 0.5], ['good'], 'Pawnbrokers pay a fraction and mark up what they sell.'),
   M('wholesale', 'wholesale', 'channel', ['wholesale', 'bulk dealer', 'wholesaler', 'trade price', 'at cost'], [0.6, 0.85], [0.7, 0.9], ['good'], 'Dealers buy and sell in volume at thin margins.'),
-  M('direct', 'direct from the maker', 'channel', ['direct', 'direct sale', 'from the maker', 'from the artisan', 'private sale'], [0.8, 1], [1, 1.2], ['good'], 'Cutting out the shopkeeper.'),
+  M('direct', 'direct from the maker', 'channel', ['direct', 'direct sale', 'from the maker', 'from the artisan', 'private sale'], [0.8, 1], [1, 1.2], ['good'], 'Cutting out the shopkeeper.', { sides: ['buy'] }),
   M('peddler', 'street peddler', 'channel', ['peddler', 'pedlar', 'street vendor', 'vendor', 'hawker', 'traveling merchant', 'travelling merchant', 'street stall'], [1.1, 1.5], [0.5, 0.8], ['good'], 'Convenient, so it costs extra. Peddlers lowball what they buy.'),
 
   M('rush', 'rush job', 'urgency', ['rush', 'rush job', 'rushed', 'urgent', 'urgently', 'asap', 'right now', 'same day', 'overnight', 'expedite', 'expedited', 'last minute', 'last-minute', 'in a hurry'], [1.5, 3], [0.6, 0.85], ALLK, 'Paying to skip the queue. When selling in a hurry, you take what you can get.', { goodTags: ['crafted'] }),
@@ -247,9 +254,9 @@ export const MODIFIERS = [
   M('shoddy', 'shoddy', 'condition', ['shoddy', 'poor quality', 'low quality', 'crude'], [0.5, 0.8], [0.4, 0.7], ['good', 'property'], 'Poorly made, still functional.'),
   M('used', 'secondhand', 'condition', ['used', 'secondhand', 'second hand', 'second-hand', 'worn', 'pre-owned', 'preowned', 'hand me down'], [0.5, 0.8], [0.4, 0.7], ['good', 'property'], 'Secondhand goods trade at a discount.'),
   M('damaged', 'damaged', 'condition', ['damaged', 'broken', 'cracked', 'ruined', 'dented', 'in disrepair'], [0.2, 0.5], [0.15, 0.4], ['good', 'property'], 'Needs repairs before it is worth anything.'),
-  M('fine', 'fine quality', 'condition', ['fine', 'fine quality', 'high quality', 'well made', 'well-made', 'good quality', 'quality'], [1.5, 2.5], [1.4, 2.2], ['good', 'property'], 'Better materials and craft.'),
-  M('masterwork', 'masterwork', 'condition', ['masterwork', 'masterpiece', 'exquisite', 'flawless', 'peerless', 'master crafted'], [4, 10], [3, 8], ['good', 'property'], 'The best a master can make.'),
-  M('antique', 'antique', 'condition', ['antique', 'ancient', 'heirloom', 'vintage', 'old world'], [2, 6], [1.5, 4.5], ['good'], 'Age and rarity add value, if the right collector is around.'),
+  M('fine', 'fine quality', 'condition', ['fine', 'fine quality', 'high quality', 'well made', 'well-made', 'good quality', 'quality'], [1.5, 2.5], [1.4, 2.2], ['good', 'property'], 'Better materials and craft.', { goodTags: ['crafted', 'luxury', 'art', 'jewelry', 'clothing', 'tool'] }),
+  M('masterwork', 'masterwork', 'condition', ['masterwork', 'masterpiece', 'exquisite', 'flawless', 'peerless', 'master crafted'], [4, 10], [3, 8], ['good', 'property'], 'The best a master can make.', { goodTags: ['crafted', 'luxury', 'art', 'jewelry', 'clothing', 'tool'] }),
+  M('antique', 'antique', 'condition', ['antique', 'ancient', 'heirloom', 'vintage', 'old world'], [2, 6], [1.5, 4.5], ['good'], 'Age and rarity add value, if the right collector is around.', { goodTags: ['crafted', 'luxury', 'art', 'jewelry', 'book', 'weapon', 'armor'] }),
 
   M('custom', 'made to order', 'order', ['custom', 'commissioned', 'commission', 'bespoke', 'made to order', 'tailored', 'custom made', 'custom-made'], [1.3, 2], [1.3, 2], ['good'], 'Built to the buyer\'s spec instead of pulled off a shelf.', { goodTags: ['crafted'] }),
 
@@ -261,11 +268,12 @@ export const MODIFIERS = [
 
   M('shortage', 'shortage', 'supply', ['shortage', 'scarce', 'scarcity', 'short supply', 'in short supply', 'rationed', 'rationing', 'out of stock', 'sold out'], [1.4, 2.5], [1.2, 1.8], ['good'], 'Not enough to go around.'),
   M('glut', 'glut', 'supply', ['glut', 'surplus', 'oversupply', 'flooded market', 'plentiful', 'abundant', 'overstocked'], [0.6, 0.85], [0.5, 0.8], ['good'], 'The market is full of it.'),
-  M('offseason', 'out of season', 'supply', ['out of season', 'off season', 'off-season', 'unseasonal'], [1.3, 2], [1.1, 1.5], ['good'], 'Out of season, supply is thin.'),
+  M('offseason', 'out of season', 'supply', ['out of season', 'off season', 'off-season', 'unseasonal'], [1.3, 2], [1.1, 1.5], ['good'], 'Out of season, supply is thin.', { goodTags: ['food', 'livestock', 'raw', 'trade'] }),
 
   M('wartime', 'wartime', 'events', ['war', 'wartime', 'at war', 'during the war', 'war time', 'conflict'], [1.05, 1.3], [1, 1.2], ALLK, 'War strains supply and raises demand for arms, food and medicine.', {
     tagBoost: [{ tags: ['weapon', 'armor', 'medicine', 'potion', 'food', 'mount', 'combat'], f: [1.3, 1.9] }] }),
-  M('siege', 'under siege', 'events', ['siege', 'besieged', 'under siege', 'blockade', 'blockaded'], [2, 5], [0.4, 0.8], ALLK, 'Nothing gets in. Everything that exists costs a fortune.'),
+  M('siege', 'under siege', 'events', ['siege', 'besieged', 'under siege', 'blockade', 'blockaded'], [2, 5], [0.8, 1.5], ALLK, 'Nothing gets in. Everything that exists costs a fortune, and sellers of anything useful name their price.', {
+    tagBoost: [{ tags: ['food', 'weapon', 'armor', 'medicine', 'potion'], f: [1.2, 1.8], sides: ['sell'] }] }),
   M('festival', 'festival', 'events', ['festival', 'carnival', 'holiday', 'feast day', 'market day', 'faire'], [1.05, 1.3], [1, 1.25], ALLK, 'Crowds fill rooms and empty shelves.', {
     tagBoost: [{ tags: ['lodging', 'food', 'drink', 'luxury', 'meal'], f: [1.2, 1.7] }] }),
   M('plague', 'plague', 'events', ['plague', 'epidemic', 'outbreak', 'quarantine', 'disease', 'pandemic'], [1.05, 1.2], [1, 1.1], ALLK, 'Sickness drives up the price of cures and care.', {

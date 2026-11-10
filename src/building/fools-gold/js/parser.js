@@ -32,6 +32,7 @@ function numberWords(toks, i) {
     const t = toks[j];
     if (t.type !== 'word') break;
     const w = t.stem;
+    if (w === 'and' && any && cur >= 100 && NUMBER_WORDS[toks[j + 1]?.stem] !== undefined && NUMBER_WORDS[toks[j + 1].stem] < 100) continue;
     if (['couple', 'pair', 'few', 'several'].includes(w)) { if (any || cur) break; return { value: NUMBER_WORDS[w], len: 1 + (j - i) }; }
     if (BIGNUM[w]) {
       if (w === 'hundred') cur = (cur || 1) * 100;
@@ -46,7 +47,8 @@ function numberWords(toks, i) {
     cur += v; any = true;
   }
   if (!any) return null;
-  return { value: total + cur, len: j - i };
+  const bigOnly = j - i === 1 && BIGNUM[toks[i].stem] !== undefined;
+  return { value: total + cur, len: j - i, big: bigOnly };
 }
 
 // Optimal-string-alignment edit distance.
@@ -117,15 +119,21 @@ export function parse(text, ctx) {
     }
     if (t.type === 'num') { parts.push({ k: 'n', lo: t.value, hi: t.value, mult: !!t.mult, start: t.start, end: t.end, tokIdx: i }); i++; continue; }
     const nw = t.type === 'word' ? numberWords(toks, i) : null;
-    if (nw) { parts.push({ k: 'n', lo: nw.value, hi: nw.value, start: t.start, end: toks[i + nw.len - 1].end, tokIdx: i }); i += nw.len; continue; }
+    if (nw) { parts.push({ k: 'n', lo: nw.value, hi: nw.value, big: nw.big, start: t.start, end: toks[i + nw.len - 1].end, tokIdx: i }); i += nw.len; continue; }
+    if (t.ench) { parts.push({ k: 'ench', raw: t.raw, start: t.start, end: t.end }); i++; continue; }
     if (FILLERS.has(t.stem) || FILLERS.has(t.raw)) { parts.push({ k: 'f', raw: t.raw.toLowerCase(), stem: t.stem }); i++; continue; }
     parts.push({ k: 'u', raw: t.raw, stem: t.stem, start: t.start, end: t.end, tokIdx: i }); i++;
   }
 
-  // ranges: n (to|or|-) n
+  // "3 dozen", "2 hundred": a number followed by a big-number word multiplies
+  for (let a = 1; a < parts.length; a++) {
+    const p = parts[a], prev = parts[a - 1];
+    if (p.k === 'n' && p.big && prev.k === 'n' && !prev.big && !prev.mult) { prev.lo *= p.lo; prev.hi *= p.hi; prev.end = p.end; parts.splice(a, 1); a--; }
+  }
+  // ranges: n (to|or|-) n, or "between n and n"
   for (let a = 0; a < parts.length - 2; a++) {
     const p = parts[a], s = parts[a + 1], q = parts[a + 2];
-    if (p.k === 'n' && q.k === 'n' && (s.k === 'dash' || (s.k === 'f' && (s.raw === 'to' || s.raw === 'or')))) {
+    if (p.k === 'n' && q.k === 'n' && (s.k === 'dash' || (s.k === 'f' && (s.raw === 'to' || s.raw === 'or' || (s.raw === 'and' && parts[a - 1]?.k === 'f' && parts[a - 1].raw === 'between'))))) {
       p.lo = Math.min(p.lo, q.lo); p.hi = Math.max(p.hi, q.hi); p.end = q.end;
       parts.splice(a + 1, 2);
     }
@@ -149,25 +157,28 @@ export function parse(text, ctx) {
 
   // subject
   const subs = parts.filter(p => p.k === 'c' && (p.type === 'entry' || p.type === 'family'));
-  subs.sort((a, b) => (a.p.prio - b.p.prio) || (b.n - a.n) || (a.start - b.start));
+  const isComm = s => s.type === 'entry' && (() => { const e = ctx.byId.get(s.id); return e && (e.tags || []).some(t => t === 'trade' || t === 'raw'); })();
+  // a raw material word next to a real item is a material (gold dagger), not a bullion order
+  const hasNonComm = subs.some(s => !isComm(s));
+  subs.sort((a, b) => (hasNonComm ? (isComm(a) ? 1 : 0) - (isComm(b) ? 1 : 0) : 0) || (a.p.prio - b.p.prio) || (b.n - a.n) || (a.start - b.start));
   let subjectEntry = null;
   if (subs.length) {
     const s = subs[0];
-    if (s.type === 'entry') subjectEntry = ctx.byId.get(s.id);
+    if (s.type === 'entry') subjectEntry = ctx.byId.get(s.id) || null;
     else {
       const fam = FAMILIES.find(f => f.id === s.id);
       const want = ctx.world.defaults?.[fam.defaultKey] || fam.fallback;
-      subjectEntry = ctx.byId.get(want) || ctx.byId.get(fam.fallback);
-      q.family = fam.id; q.assumed.push('mode');
+      subjectEntry = ctx.byId.get(want) || ctx.byId.get(fam.fallback) || null;
+      if (subjectEntry) { q.family = fam.id; q.assumed.push('mode'); }
     }
+    if (!subjectEntry) { subs.forEach(p => { p.used = false; }); }
     const others = subs.slice(1).filter(o => {
       if (o.type === 'family') return !(subjectEntry && subjectEntry.group === o.id);
-      if (o.id === (subjectEntry && subjectEntry.id)) return false;
+      if (subjectEntry && o.id === subjectEntry.id) return false;
       return true;
     });
-    for (const o of others) notes.push('I also saw "' + o.p.display + '" but priced "' + subjectEntry.name + '". Split them into separate questions to price both.');
-    subs.forEach(p => { p.used = true; });
-    q.subject = subjectEntry.id;
+    for (const o of others) notes.push(isComm(o) && hasNonComm ? 'I read "' + o.p.display + '" as the material, so the price is for "' + subjectEntry.name + '" at its normal price. Material is not priced separately.' : 'I also saw "' + o.p.display + '" but priced "' + subjectEntry.name + '". Split them into separate questions to price both.');
+    if (subjectEntry) { subs.forEach(p => { p.used = true; }); q.subject = subjectEntry.id; }
   }
   const kind = subjectEntry ? subjectEntry.kind : null;
 
@@ -205,8 +216,8 @@ export function parse(text, ctx) {
   if (kind && kind !== 'travel') for (const id of [...q.mods]) if (routeIds.has(id)) q.mods.splice(q.mods.indexOf(id), 1);
 
   // numbers
-  const nextMeaningful = i => { for (let k = i + 1; k < parts.length; k++) { if (parts[k].k === 'f' && ['of', 'for', 'a', 'an', 'the'].includes(parts[k].raw)) continue; return parts[k]; } return null; };
-  let bare = null, multQty = null;
+  const nextMeaningful = i => { for (let k = i + 1; k < parts.length; k++) { if (parts[k].k === 'dash') continue; if (parts[k].k === 'f' && ['of', 'for', 'a', 'an', 'the'].includes(parts[k].raw)) continue; return parts[k]; } return null; };
+  let bare = null, multQty = null, counted = false, bareBeforeSubject = false;
   const unusedNums = [];
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i];
@@ -225,8 +236,8 @@ export function parse(text, ctx) {
       notes.push('I read "' + p.lo + ' ' + nx.p.display + '" as a sum of money. Fool\'s Gold prices things, it can\'t work backwards from a budget yet. Name what you want to buy.');
       continue;
     }
-    if (nx && nx.k === 'c' && nx.type === 'count') { nx.used = true; p.used = true; q.qty = q.qty && q.qty.unit ? q.qty : { lo: p.lo, hi: p.hi }; continue; }
-    if (!bare) { bare = p; p.used = true; } else unusedNums.push(p);
+    if (nx && nx.k === 'c' && nx.type === 'count') { nx.used = true; p.used = true; q.qty = q.qty && q.qty.unit ? q.qty : { lo: p.lo, hi: p.hi }; counted = true; continue; }
+    if (!bare) { bare = p; p.used = true; bareBeforeSubject = !!(nx && nx.k === 'c' && (nx.type === 'entry' || nx.type === 'family')); } else unusedNums.push(p);
   }
   if (bare && !q.qty) q.qty = { lo: bare.lo, hi: bare.hi };
   else if (bare) unusedNums.push(bare);
@@ -243,10 +254,19 @@ export function parse(text, ctx) {
   parts.forEach(p => { if (p.k === 'c' && (p.type === 'count' || p.type === 'unit' || p.type === 'money')) p.used = true; });
 
   // bare number on a per-day travel/lodging subject is a length, not a head count
-  if (subjectEntry && subjectEntry.unit === 'day' && (kind === 'travel' || kind === 'lodging') && q.qty && !q.span && !q.qty.unit) {
+  if (subjectEntry && subjectEntry.unit === 'day' && (kind === 'travel' || kind === 'lodging') && q.qty && !q.span && !q.qty.unit && !counted && !multQty && !bareBeforeSubject) {
     q.span = { lo: q.qty.lo, hi: q.qty.hi, unit: 'day', implied: true }; q.qty = null;
   }
 
+  // sanity: zero, negative or absurd amounts are not quantities
+  for (const key of ['qty', 'span']) {
+    const v = q[key];
+    if (v && (!(v.lo > 0) || !(v.hi > 0) || !isFinite(v.lo) || !isFinite(v.hi))) { notes.push('I ignored a zero, negative or impossible ' + (key === 'qty' ? 'amount' : 'length') + '.'); q[key] = null; }
+    else if (v && Math.max(v.lo, v.hi) > 1e7) notes.push('That is a very large number. Check it before trusting the price.');
+  }
+  if (subjectEntry && (subjectEntry.tags || []).includes('trade') && q.qty && !q.qty.unit && ctx.world.currency?.denominations?.some(d => String(d.name).toLowerCase().split(' ')[0] === subjectEntry.name.toLowerCase().split(' ')[0])) notes.push('Priced as ' + q.qty.lo + ' lb of ' + subjectEntry.name.toLowerCase() + '. If you meant coins, that is a sum of money, not an item.');
+  for (const p of parts) if (p.k === 'ench') notes.push('"' + p.raw + '" is an enchantment bonus. I don\'t price bonuses directly. Say the rarity instead (for example "rare" or "very rare" magic weapon).');
+  if (subjectEntry && kind === 'property' && acts.some(a => /^rent/.test(a.p.display))) notes.push('I don\'t price rent yet. This is the price to buy the property.');
   // unrecognized
   const unk = parts.filter(p => p.k === 'u');
   const unrecognized = unk.map(u => u.raw);

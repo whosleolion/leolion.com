@@ -37,8 +37,9 @@ function bulkFactor(n) {
   return [1, 1];
 }
 
-export function applicable(m, entry) {
+export function applicable(m, entry, side) {
   if (!m.kinds.includes(entry.kind)) return false;
+  if (side && m.sides && !m.sides.includes(side)) return false;
   if (m.goodTags && entry.kind === 'good' && !(entry.tags || []).some(t => m.goodTags.includes(t))) return false;
   return true;
 }
@@ -54,8 +55,8 @@ export function estimate(q, ctx) {
 
   const notes = [], assumptions = [], factors = [];
   const kind = entry.kind;
-  const side = q.action === 'sell' && kind === 'good' ? 'sell' : 'buy';
-  if (q.action === 'sell' && kind !== 'good') notes.push('Selling a service means charging for it, so this is what you could ask.');
+  const side = q.action === 'sell' && (kind === 'good' || kind === 'property') ? 'sell' : 'buy';
+  if (q.action === 'sell' && !(kind === 'good' || kind === 'property')) notes.push('Selling a service means charging for it, so this is what you could ask.');
 
   let lo, hi;
   const push = (f) => {
@@ -80,6 +81,7 @@ export function estimate(q, ctx) {
     if (q.rarity) notes.push(entry.name + ' has its own fixed price, so I ignored the rarity word.');
   }
   lo = baseLo; hi = baseHi;
+  if (!(baseLo > 0) || !isFinite(baseHi)) return { ok: false, error: 'bad-price' };
   const perUnit = entry.unit === 'day' ? 'per day' : entry.unit === 'lb' ? 'per lb' : entry.unit === 'each' && !entry.isCategory ? 'each' : 'each';
   factors.push({ kind: 'base', label: baseLabel + ' (' + perUnit + ')', lo: baseLo, hi: baseHi, runLo: lo, runHi: hi, abs: true, why: entry.basis || (entry.src === 'srd' ? 'SRD price.' : entry.src === 'user' ? 'Your price.' : 'Fool\'s Gold price.') });
 
@@ -103,8 +105,12 @@ export function estimate(q, ctx) {
     if (dLo !== 1 || dHi !== 1) push({ kind: 'qty', label: '× ' + (dLo === dHi ? +dLo.toFixed(2) : +dLo.toFixed(2) + ' to ' + +dHi.toFixed(2)) + ' ' + word + (dHi === 1 ? '' : 's'), lo: dLo, hi: dHi, why: 'Length of the booking.' });
     if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (kind === 'labor' ? ' workers' : ' people'), lo: qty.lo, hi: qty.hi, why: 'Number of people.' });
   } else {
-    if (q.span && !q.span.implied) notes.push('A length of time doesn\'t apply to ' + entry.name.toLowerCase() + ', so I ignored it.');
+    if (q.span && entry.perDay && DAYS[q.span.unit]) {
+      const dl = q.span.lo * DAYS[q.span.unit], dh = q.span.hi * DAYS[q.span.unit];
+      push({ kind: 'qty', label: '× ' + (dl === dh ? dl : dl + ' to ' + dh) + ' days', lo: dl, hi: dh, why: 'Priced per day.' });
+    } else if (q.span && !q.span.implied) notes.push('A length of time doesn\'t apply to ' + entry.name.toLowerCase() + ', so I ignored it.');
     else if (q.span) notes.push('"' + q.span.unit + '" doesn\'t apply to ' + entry.name.toLowerCase() + ', so I ignored it.');
+    if (q.qty && q.qty.unit === 'lb' && entry.unit !== 'lb') notes.push(entry.name + ' is not sold by weight here, so I read the number as a count.');
     if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (entry.unit === 'lb' ? ' lb' : ''), lo: qty.lo, hi: qty.hi, why: 'How many.' });
   }
 
@@ -148,11 +154,11 @@ export function estimate(q, ctx) {
   // ---- modifiers ----
   const list = [];
   for (const m of selected) {
-    if (!applicable(m, entry)) { notes.push('"' + m.label + '" doesn\'t apply to ' + (KIND_WORD[kind] || kind) + (m.goodTags && kind === 'good' ? ' like this' : '') + ', so I left it out.'); continue; }
+    if (!applicable(m, entry, side)) { notes.push('"' + m.label + '" doesn\'t apply to ' + (KIND_WORD[kind] || kind) + (m.goodTags && kind === 'good' ? ' like this' : '') + ', so I left it out.'); continue; }
     const r = (side === 'sell' && m.sell) ? m.sell : m.buy;
     let a = r[0], b = r[1];
     for (const tb of m.tagBoost || []) {
-      const hit = (tb.tags && (entry.tags || []).some(t => tb.tags.includes(t))) || (tb.kinds && tb.kinds.includes(kind));
+      const hit = ((tb.tags && (entry.tags || []).some(t => tb.tags.includes(t))) || (tb.kinds && tb.kinds.includes(kind))) && (!tb.sides || tb.sides.includes(side));
       if (hit) { a *= tb.f[0]; b *= tb.f[1]; }
     }
     list.push({ m, lo: a, hi: b, size: Math.abs(Math.log(mid(a, b))) });
@@ -193,7 +199,7 @@ export function estimate(q, ctx) {
   // per-unit and sense check
   const out = { ok: true, entry, side, typical, lo: low, hi: high, factors, notes, assumptions, qty };
   const qMid = mid(qty.lo, qty.hi);
-  if (entry.unit !== 'day' && qMid > 1) out.each = niceRound(typ0 / qMid);
+  if (entry.unit !== 'day' && qMid > 1 && !entry.perDay) { out.each = niceRound(typ0 / qMid); out.eachLabel = entry.unit === 'lb' ? 'per lb' : 'each'; }
   const wage = w.anchors?.wage;
   if (wage > 0) {
     const days = typ0 / wage;

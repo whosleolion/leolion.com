@@ -3,12 +3,12 @@ import { compileWorld } from './world.js';
 import { parse, queryToText, chipsFor, emptyQuery } from './parser.js';
 import { estimate, findConflicts } from './engine.js';
 import { analyze } from './unstated.js';
-import { formatMoney, formatRange, parseMoney } from './money.js';
+import { formatMoney, formatRange, formatFull, parseMoney } from './money.js';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
 } from './data.js';
 import { applicable } from './engine.js';
-import { load, save, normalizeWorld } from './store.js';
+import { load, save, normalizeWorld, newItemId } from './store.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -27,7 +27,8 @@ function useWorld(id) {
 }
 const cur = () => world.currency;
 const money = bu => formatMoney(bu, cur());
-const persist = () => save(S);
+let saveWarned = false;
+const persist = () => { const ok = save(S); if (!ok && !saveWarned) { saveWarned = true; toast('This browser is not saving your worlds. Use Copy world under World to back them up.'); } return ok; };
 
 // ---------- core flow ----------
 function fromText(text, opts = {}) {
@@ -98,7 +99,7 @@ function renderResult() {
   const spanTxt = q.span && ent.unit === 'day' ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
   const what = qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
   const facts = [];
-  if (e.each) facts.push(`About <b>${esc(money(e.each))}</b> each.`);
+  if (e.each) facts.push(`About <b>${esc(money(e.each))}</b> ${esc(e.eachLabel || 'each')}.`);
   if (e.sense) facts.push(esc(e.sense));
   for (const a of e.assumptions) facts.push(`<span>Assumed: ${esc(a.text)}</span>`);
   for (const n of e.notes) facts.push(esc(n));
@@ -144,7 +145,8 @@ function renderUnstated() {
   const el = $('#unstated'), an = st.an;
   if (!an || !an.dimensions.length) { el.innerHTML = ''; return; }
   const dims = an.dimensions;
-  const top = [...dims].sort((a, b) => b.ratio - a.ratio)[0];
+  const leadDims = dims.filter(d => d.id !== 'span');
+  const top = [...(leadDims.length ? leadDims : dims)].sort((a, b) => b.ratio - a.ratio)[0];
   const lo = top.options[0], hi = top.options[top.options.length - 1];
   const lead = `You didn't say. The biggest swing is <b>${esc(top.ask.replace(/\?$/, '').toLowerCase())}</b>: ${esc(lo.label)} about ${esc(money(lo.typical))}, ${esc(hi.label)} about ${esc(money(hi.typical))}. Tap one to apply it.`;
   el.innerHTML = `<section class="un"><h2>What you didn't say</h2><p class="lead">${lead}</p>` + dims.map((d, di) => `
@@ -233,7 +235,7 @@ function renderFlow() {
     }
     if (ent.curve) h += `<div class="step"><h4>Rarity</h4><div class="row">${RARITIES.map(r => pill('f-rarity', r, r, q.rarity === r)).join('')}</div></div>`;
     if (['travel', 'lodging', 'service', 'labor', 'spell'].includes(ent.kind)) h += `<div class="step"><h4>Class</h4><div class="row">${TIER_NAMES.map(t => pill('f-tier', t, t, q.tier === t)).join('')}</div></div>`;
-    const groups = Object.keys(GROUPS).map(g => [g, MODIFIERS.filter(m => m.group === g && applicable(m, ent) && !(m.id === 'border' && false))]).filter(([, l]) => l.length);
+    const groups = Object.keys(GROUPS).map(g => [g, MODIFIERS.filter(m => m.group === g && applicable(m, ent, q.action === 'sell' && (ent.kind === 'good' || ent.kind === 'property') ? 'sell' : 'buy'))]).filter(([, l]) => l.length);
     h += `<div class="step"><h4>Circumstances (optional)</h4>` + groups.map(([g, list]) => `<div class="grp"><div class="gl">${esc(GROUPS[g].label)}</div><div class="row">${list.map(m => `<button class="bigbtn${q.mods.includes(m.id) ? ' sel' : ''}" data-act="f-mod" data-v="${esc(m.id)}">${esc(m.label)}</button>`).join('')}</div></div>`).join('') + `</div>`;
   }
   h += `<div class="row"><button class="btn" data-act="clear">Start over</button></div>`;
@@ -281,12 +283,12 @@ function renderDrawer() {
   <div class="sect"><h3>Money</h3>
     <p>Everything is stored in one universal number, the <b>base unit</b>. By default 1 base unit is a copper piece. Each coin below is worth some number of base units. A one-coin world just has one row.</p>
     <div class="row"><button class="btn" data-act="w-cur" data-v="gsc">Gold, silver, copper</button><button class="btn" data-act="w-cur" data-v="one">One coin</button></div>
-    ${dens.map((d, i) => `<div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label><label class="lab">Worth (base units)<input class="field" type="number" min="0.01" step="any" data-bind="den.${i}.bu" value="${d.bu}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">×</button>` : '<span></span>'}</div>`).join('')}
+    ${dens.map((d, i) => `<div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label><label class="lab">Worth (base units)<input class="field" type="number" min="0.01" step="any" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">×</button>` : '<span></span>'}</div>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-den">Add a coin</button></div>
     <label class="lab">Amounts smaller than the smallest coin<select class="field" data-bind="belowSmallest"><option value="decimals"${w.currency.belowSmallest === 'decimals' ? ' selected' : ''}>Show decimals (0.4 coins)</option><option value="round"${w.currency.belowSmallest === 'round' ? ' selected' : ''}>Round up to one coin</option></select></label>
     <label class="lab">Your own note on what a base unit feels like<input class="field" data-bind="note" value="${esc(w.currency.note || '')}" placeholder="for example: 1 base unit is roughly a dollar"></label>
-    <label class="lab">What does a day of unskilled labor pay? (used for sense checks)<input class="field" data-bind="wage" value="${esc(money(w.anchors.wage))}"></label>
-    <p>Preview: 1, 12, 130, 1,500, 25,000, 800,000 base units show as ${esc(curPrev)}.</p>
+    <label class="lab">What does a day of unskilled labor pay? (used for sense checks)<input class="field" data-bind="wage" value="${esc(formatFull(w.anchors.wage, w.currency))}"></label>
+    <p id="curPrev">Preview: 1, 12, 130, 1,500, 25,000, 800,000 base units show as ${esc(curPrev)}.</p>
   </div>
 
   <div class="sect"><h3>Economy</h3>
@@ -296,9 +298,9 @@ function renderDrawer() {
 
   <div class="sect"><h3>Dials</h3>
     <div class="grid2">
-      <label class="lab">Price level (1 = standard)<input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${w.dials.priceLevel}"></label>
-      <label class="lab">Range width (0 = exact, 1 = wide)<input class="field" type="number" min="0" max="1" step="0.1" data-bind="dial.volatility" value="${w.dials.volatility}"></label>
-      <label class="lab">Shops pay this share when you sell<input class="field" type="number" min="0.1" max="1" step="0.05" data-bind="dial.sellFraction" value="${w.dials.sellFraction}"></label>
+      <label class="lab">Price level (1 = standard)<input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${esc(w.dials.priceLevel)}"></label>
+      <label class="lab">Range width (0 = exact, 1 = wide)<input class="field" type="number" min="0" max="1" step="0.1" data-bind="dial.volatility" value="${esc(w.dials.volatility)}"></label>
+      <label class="lab">Shops pay this share when you sell<input class="field" type="number" min="0.1" max="1" step="0.05" data-bind="dial.sellFraction" value="${esc(w.dials.sellFraction)}"></label>
       <label class="lab">Stacking circumstances<select class="field" data-bind="dial.stacking"><option value="dampened"${w.dials.stacking === 'dampened' ? ' selected' : ''}>Dampened (recommended)</option><option value="strict"${w.dials.stacking === 'strict' ? ' selected' : ''}>Strict multiplication</option></select></label>
       <label class="lab">When you just say "travel"<select class="field" data-bind="defaults.travel">${ctx.entries.filter(e => e.group === 'travel').map(e => `<option value="${esc(e.id)}"${w.defaults.travel === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>
     </div>
@@ -312,7 +314,7 @@ function renderDrawer() {
 
   <div class="sect"><h3>My items</h3>
     <p>Add anything the catalog lacks, or override a name to replace its price. Price can be typed with coins, like "3 gp 5 sp".</p>
-    ${w.items.map((it, i) => `<div class="irow"><label class="lab">Name<input class="field" data-bind="item.${i}.name" value="${esc(it.name)}"></label><label class="lab">Kind<select class="field" data-bind="item.${i}.kind">${['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'].map(k => `<option${it.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><label class="lab">Price<input class="field" data-bind="item.${i}.price" value="${esc(money(it.bu).replace(/\s*(gp|sp|cp)$/, ' $1'))}"></label><label class="lab">Per<select class="field" data-bind="item.${i}.unit">${['each', 'day', 'lb'].map(k => `<option${it.unit === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><button class="xbtn" data-act="w-del-item" data-i="${i}" aria-label="Remove item">×</button></div><label class="lab">Tags (space separated, like: weapon metal)<input class="field" data-bind="item.${i}.tags" value="${esc((it.tags || []).join(' '))}"></label>`).join('')}
+    ${w.items.map((it, i) => `<div class="irow"><label class="lab">Name<input class="field" data-bind="item.${i}.name" value="${esc(it.name)}"></label><label class="lab">Kind<select class="field" data-bind="item.${i}.kind">${['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'].map(k => `<option${it.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><label class="lab">Price<input class="field" data-bind="item.${i}.price" value="${esc(formatFull(it.bu, w.currency))}"></label><label class="lab">Per<select class="field" data-bind="item.${i}.unit">${['each', 'day', 'lb'].map(k => `<option${it.unit === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><button class="xbtn" data-act="w-del-item" data-i="${i}" aria-label="Remove item">×</button></div><label class="lab">Tags (space separated, like: weapon metal)<input class="field" data-bind="item.${i}.tags" value="${esc((it.tags || []).join(' '))}"></label>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-item">Add an item</button></div>
   </div>
 
@@ -343,13 +345,20 @@ async function copyText(text, okMsg) {
     ta.remove(); toast(ok ? okMsg : 'Copy blocked here. Select the text and copy it.');
   }
 }
-function worldChanged() {
+// Structural edits re-render the drawer. Plain field edits only refresh what depends on them, so focus stays put.
+function worldChanged(opts = {}) {
   normalizeWorld(world);
   ctx = compileWorld(world); $('#worldName').textContent = world.name;
   if (st.query.subject && !ctx.byId.has(st.query.subject)) { st.query.subject = null; }
   persist();
   if (st.text) fromText(st.text, { noHistory: true }); else renderAll();
-  renderDrawer();
+  if (opts.lite) {
+    const t = opts.el, p = t && t.dataset.bind ? t.dataset.bind.split('.') : [];
+    if (p[0] === 'dial') t.value = world.dials[p[1]];
+    if (p[0] === 'den' && p[2] === 'bu') t.value = world.currency.denominations[+p[1]].bu;
+    const prev = document.getElementById('curPrev');
+    if (prev) prev.textContent = 'Preview: 1, 12, 130, 1,500, 25,000, 800,000 base units show as ' + [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ') + '.';
+  } else renderDrawer();
 }
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
 
@@ -381,7 +390,7 @@ document.addEventListener('click', e => {
     // flow
     case 'f-action': flowEdit(x => { x.action = d.v; x.assumed = x.assumed.filter(z => z !== 'action'); }); break;
     case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderFlow(); break;
-    case 'f-item': flowEdit(x => { x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
+    case 'f-item': flowEdit(x => { x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
     case 'f-qty': flowEdit(x => { const n = +d.v; x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); break;
     case 'f-span': flowEdit(x => { const [n, u] = d.v.split('|'); x.span = { lo: +n, hi: +n, unit: u }; }); break;
     case 'f-rarity': flowEdit(x => { x.rarity = x.rarity === d.v ? null : d.v; }); break;
@@ -397,7 +406,11 @@ document.addEventListener('click', e => {
     case 'w-select': useWorld(d.id); persist(); closeDrawerKeep(); break;
     case 'w-new': { const w = WORLD_PRESETS[$('#newPreset').value](); w.id = uniqueWorldId(w.id); w.name = w.name + ' (copy)'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
     case 'w-dup': { const w = clone(world); w.id = uniqueWorldId(w.id); w.name += ' (copy)'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
-    case 'w-del': if (S.worlds.length > 1) { S.worlds = S.worlds.filter(w => w.id !== world.id); useWorld(S.worlds[0].id); afterWorldSwitch(); } break;
+    case 'w-del':
+      if (S.worlds.length > 1) {
+        if (b.dataset.armed) { const gone = world.id; S.worlds = S.worlds.filter(w => w.id !== gone); S.history = S.history.filter(h => h.world !== gone); useWorld(S.worlds[0].id); persist(); afterWorldSwitch(); }
+        else { b.dataset.armed = '1'; b.textContent = 'Click again to delete'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Delete this one'; } }, 3500); }
+      } break;
     case 'w-cur': world.currency.denominations = d.v === 'one'
       ? [{ id: 'coin', name: 'coin', plural: 'coins', bu: 100 }]
       : [{ id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100 }, { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10 }, { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1 }];
@@ -406,14 +419,16 @@ document.addEventListener('click', e => {
     case 'w-del-den': world.currency.denominations.splice(+d.i, 1); worldChanged(); break;
     case 'w-add-voc': world.vocabulary.push({ term: '', means: '' }); renderDrawer(); break;
     case 'w-del-voc': world.vocabulary.splice(+d.i, 1); worldChanged(); break;
-    case 'w-add-item': world.items.push({ name: 'New item', kind: 'good', bu: 100, unit: 'each', tags: [] }); worldChanged(); break;
+    case 'w-add-item': world.items.push({ id: newItemId(), name: 'New item', kind: 'good', bu: 100, unit: 'each', tags: [] }); worldChanged(); break;
     case 'w-del-item': world.items.splice(+d.i, 1); worldChanged(); break;
     case 'w-copy': copyText(JSON.stringify(world, null, 1), 'World copied'); break;
     case 'w-save-file': { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(world, null, 1)], { type: 'application/json' })); a.download = slug(world.name) + '.foolsgold.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Saving. If nothing happened, use Copy world.'); } catch (e2) { toast('Saving is blocked here. Use Copy world.'); } break; }
     case 'w-import': {
       try {
         const w = normalizeWorld(JSON.parse($('#importBox').value));
-        w.id = uniqueWorldId(w.id); S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); toast('World loaded');
+        if (!w || typeof w !== 'object') throw new Error('bad');
+        w.id = uniqueWorldId(w.id); compileWorld(w); // throws before anything is stored
+        S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); toast('World loaded');
       } catch (e2) { toast('That is not a Fool\'s Gold world.'); }
       break;
     }
@@ -459,9 +474,8 @@ document.addEventListener('change', e => {
     if (p[2] === 'price') { const v = parseMoney(t.value, w.currency); if (v > 0) it.bu = v; }
     else if (p[2] === 'tags') it.tags = t.value.toLowerCase().split(/[\s,]+/).filter(Boolean);
     else it[p[2]] = t.value.trim();
-    it.id = 'user.' + slug(it.name);
   }
-  worldChanged();
+  worldChanged({ lite: true, el: t });
 });
 
 // ---------- boot ----------

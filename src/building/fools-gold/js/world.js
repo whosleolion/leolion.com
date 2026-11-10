@@ -1,6 +1,6 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
 import {
-  CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, MONEY_TERMS, slug,
+  CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
 } from './data.js';
 
 export function stem(w) {
@@ -12,17 +12,20 @@ export function stem(w) {
   return w;
 }
 
-const TOKEN_RE = /[#@][a-z0-9_-]+|\d+(?:,\d{3})*(?:\.\d+)?(?:st|nd|rd|th)\b|\d+(?:,\d{3})*(?:\.\d+)?x\b|x\d+\b|\d+(?:,\d{3})*(?:\.\d+)?|[a-z]+(?:['’-][a-z]+)*|[–—-]|[,;.!?]/gi;
+const TOKEN_RE = /[#@][a-z0-9_-]+|\+\d+\b|(?<![\w.])-\d[\d,]*(?:\.\d+)?|\d+(?:,\d{3})*(?:\.\d+)?(?:st|nd|rd|th)\b|\d+(?:,\d{3})*(?:\.\d+)?x\b|x\d+\b|\d+(?:,\d{3})*(?:\.\d+)?|[a-z]+(?:['’-][a-z]+)*|[–—-]|[,;.!?]/gi;
 
 // Tokenize into word / number / dash tokens with source offsets.
 export function tokenize(text) {
   const out = [];
-  const s = String(text).replace(/[“”]/g, '"').replace(/&/g, ' and ').replace(/×/g, 'x');
+  // length-preserving clean-up so token offsets still point into the original text
+  const s = String(text).replace(/[“”]/g, '"').replace(/×/g, 'x').replace(/[\u00C0-\u024F]/g, ch => (ch.normalize('NFD')[0] || ch));
   let m;
   TOKEN_RE.lastIndex = 0;
   while ((m = TOKEN_RE.exec(s))) {
     const raw = m[0], start = m.index, end = start + raw.length, low = raw.toLowerCase();
     if (/^[,;.!?]$/.test(raw)) continue;
+    if (/^\+\d+$/.test(raw)) { out.push({ raw, stem: raw, type: 'word', ench: true, start, end }); continue; }
+    if (/^-\d/.test(raw)) { const v = -parseFloat(raw.slice(1).replace(/,/g, '')); out.push({ raw, stem: String(v), type: 'num', value: v, start, end }); continue; }
     if (/^[–—-]$/.test(raw)) { out.push({ raw, stem: '-', type: 'dash', start, end }); continue; }
     if (/^[#@]/.test(low)) {
       const inner = low.slice(1).split(/[-_]/).filter(Boolean);
@@ -36,7 +39,8 @@ export function tokenize(text) {
     const parts = low.replace(/[’']/g, "'").split(/-/).filter(Boolean);
     parts.forEach(w => out.push({ raw: w, stem: stem(w.replace(/'s$/, '').replace(/'/g, '')), type: 'word', start, end }));
   }
-  return out;
+  // a hyphen glued between a word and something else is part of the phrase (3-day, 3rd-level), not a range
+  return out.filter((t, i) => !(t.type === 'dash' && out[i - 1] && out[i + 1] && out[i - 1].end === t.start && out[i + 1].start === t.end && !(out[i - 1].type === 'num' && out[i + 1].type === 'num')));
 }
 
 const norm = s => tokenize(s).filter(t => t.type !== 'dash').map(t => t.stem);
@@ -53,11 +57,17 @@ export function compileWorld(world) {
       id: it.id || 'user.' + slug(it.name), name: it.name, kind: it.kind || 'good', src: 'user', unit: it.unit || 'each', bu: it.bu,
       tags: it.tags || [], aliases: it.aliases || [], spread: it.spread ?? 0.15, basis: 'Added by you.',
     };
-    // replace same-name catalog entries so user numbers win
-    for (const old of entries.filter(x => slug(x.name) === slug(e.name))) { byId.delete(old.id); }
+    // replace same-name catalog entries so user numbers win, keeping their words and tags
+    for (const old of entries.filter(x => slug(x.name) === slug(e.name))) {
+      byId.delete(old.id);
+      if (!(it.tags || []).length) e.tags = [...(old.tags || [])];
+      e.aliases = [...new Set([...(old.aliases || []), ...e.aliases])];
+      if (old.group) e.group = old.group;
+    }
     byId.set(e.id, e);
   }
   const list = [...byId.values()];
+  for (const e of list) { e.tags ||= []; e.aliases ||= []; }
   const mods = new Map(MODIFIERS.map(m => [m.id, m]));
   const econ = new Map(ECONOMY_TAGS.map(t => [t.id, t]));
 
@@ -82,10 +92,11 @@ export function compileWorld(world) {
   for (const [id, ts] of Object.entries(ACTION_TERMS)) ts.forEach(t => add(t, 'action', id, 6));
   for (const [id, ts] of Object.entries(UNIT_TERMS)) ts.forEach(t => add(t, 'unit', id, 7));
   COUNT_TERMS.forEach(t => add(t, 'count', t, 7));
-  MONEY_TERMS.forEach(t => add(t, 'money', t, 7));
+  for (const d of world.currency?.denominations || []) for (const t of [d.id, d.name, d.plural]) if (t) add(String(t), 'money', d.id, 7);
   for (const v of world.vocabulary || []) {
     if (!v.term || !v.means) continue;
     const [kind, id] = v.means.includes(':') ? v.means.split(/:(.*)/s) : ['entry', v.means];
+    if (kind === 'mod' ? !mods.has(id) : (kind === 'rarity' || kind === 'tier') ? false : !byId.has(id)) continue; // dangling word: ignore
     const type = kind === 'mod' ? 'mod' : kind === 'rarity' ? 'rarity' : kind === 'tier' ? 'tier' : 'entry';
     add(v.term, type, id, 0, { custom: true });
   }

@@ -17,6 +17,7 @@ export function analyze(q, est, ctx) {
   if (!est.ok) return { assumptions: [], dimensions: [] };
   const entry = est.entry, kind = entry.kind;
   const base = est.typical;
+  if (!(base > 0)) return { assumptions: est.assumptions, dimensions: [] };
   const dims = [];
   const run = (patch) => {
     const q2 = clone(q); patch(q2);
@@ -70,10 +71,10 @@ export function analyze(q, est, ctx) {
   }
 
   // modifier groups the user did not specify
-  const have = new Set((q.mods || []).map(id => ctx.mods.get(id)?.group));
+  const have = new Set(est.factors.filter(f => f.kind === 'mod').map(f => f.group));
   const groups = (ORDER[kind] || []).filter(g => !have.has(g));
   for (const g of groups) {
-    const mods = MODIFIERS.filter(m => m.group === g && applicable(m, entry) && !(g === 'route' && m.id === 'border'));
+    const mods = MODIFIERS.filter(m => m.group === g && applicable(m, entry, est.side) && !(g === 'route' && m.id === 'border'));
     if (mods.length < 2) continue;
     // Skip the group when the entry is a travel route group but travel has a route already
     mk('g:' + g, GROUPS[g].ask, mods.map(m => {

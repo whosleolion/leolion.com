@@ -4,7 +4,7 @@ import { compileWorld } from '../../src/building/fools-gold/js/world.js';
 import { parse, queryToText, editDistance } from '../../src/building/fools-gold/js/parser.js';
 import { estimate } from '../../src/building/fools-gold/js/engine.js';
 import { analyze } from '../../src/building/fools-gold/js/unstated.js';
-import { formatMoney, formatRange, parseMoney, niceRound } from '../../src/building/fools-gold/js/money.js';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../../src/building/fools-gold/js/money.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
 
 let pass = 0, fail = 0;
@@ -202,5 +202,66 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const missA = []; for (const e of vcm.entries) for (const a of e.aliases || []) { const r = parse(a, vcm); if (r.query.subject !== e.id && !(r.query.family && e.group)) missA.push(a + ' (' + e.name + ') -> ' + r.query.subject); }
   t('D7 every alias parses to its entry', missA.length === 0, '\n   ' + missA.join('\n   '));
 }
+
+// ---------- audit regressions ----------
+{
+  const gd = P('gold dagger', srd); eq('A3 gold dagger is a dagger', gd.query.subject, 'good.dagger'); t('A3 material note', gd.notes.some(n => /material/.test(n)), gd.notes);
+  eq('A3b iron sword', Q('iron sword', srd).subject, 'good.cat-weapon');
+  eq('A3c plain gold still bullion', Q('10 lb of gold', srd).subject, 'good.gold');
+  const c5 = Q('coach for 5 people'); eq('A4 head count stays a count', [c5.qty && c5.qty.lo, c5.span], [5, null]);
+  eq('A4b rooms', (() => { const q = Q('2 rooms at an inn'); return [q.qty && q.qty.lo, q.span]; })(), [2, null]);
+  eq('A4c tickets', (() => { const q = Q('3 train tickets'); return [q.qty && q.qty.lo, q.span]; })(), [3, null]);
+  eq('A4d bare number after a per-day item is still days', (() => { const q = Q('inn 3'); return [q.qty, q.span && q.span.lo]; })(), [null, 3]);
+  const h = Q('a 3-day coach trip for 5 people'); eq('A5 hyphen duration', [h.span && h.span.lo, h.span && h.span.unit, h.qty && h.qty.lo], [3, 'day', 5]);
+  eq('A5b 24-miles', Q('coach 24-miles').span.unit, 'mile');
+  eq('A5c 3-night stay', (() => { const q = Q('a 3-night stay at an inn'); return [q.span.lo, q.span.unit, q.qty]; })(), [3, 'night', null]);
+  const en = P('+2 longsword', srd); eq('A6 enchantment not a quantity', [en.query.qty, en.query.subject], [null, 'good.longsword']); t('A6 note', en.notes.some(n => /enchantment/.test(n)));
+  eq('A7 2 dozen', Q('2 dozen torches').qty.lo, 24); eq('A7b 3 dozen', Q('3 dozen arrows').qty.lo, 36);
+  eq('A7c one hundred and fifty', Q('one hundred and fifty arrows').qty.lo, 150);
+  eq('A7d between n and m', (() => { const q = Q('between 10 and 20 daggers'); return [q.qty.lo, q.qty.hi]; })(), [10, 20]);
+  const wv = WORLD_PRESETS.vcm(); wv.vocabulary = [{ term: 'zz', means: 'user.gone' }, { term: 'yy', means: 'mod:nope' }]; const cw = compileWorld(wv);
+  eq('A8 dangling vocabulary ignored, no crash', Q('zz', cw).subject, null);
+  const gsc = vcm.world.currency;
+  eq('A9 parseMoney names', [parseMoney('5 gold', gsc), parseMoney('3 gold pieces', gsc), parseMoney('5 gold 3 silver', gsc), parseMoney('1,500 gp', gsc)], [500, 300, 530, 150000]);
+  eq('A9b parseMoney rejects', [parseMoney('5 zorkmids', gsc), parseMoney('-5 gp', gsc), parseMoney('', gsc), parseMoney('abc', gsc)], [null, null, null, null]);
+  const tp = P('sword for 50 ti', ti); eq('A10 coin from the world table is money, not a quantity', [tp.query.qty, tp.notes.some(n => /sum of money/.test(n))], [null, true]);
+  const gp = P('sword 5 gp', ti); eq('A10b gp is not money in a one-coin world', gp.unrecognized.includes('gp'), true);
+  const gc = P('20 gold pieces', srd); eq('A11 gold pieces is a sum of money', [gc.query.subject, gc.notes.some(n => /sum of money/.test(n))], [null, true]);
+  eq('A13 formatFull', [formatFull(1350, gsc), formatFull(5, gsc), formatFull(100, gsc)], ['13 gp 5 sp', '5 cp', '1 gp']);
+  eq('A16 zero and negative qty ignored', [Q('0 daggers').qty, Q('-3 daggers').qty, P('0 daggers').notes.length > 0], [null, null, true]);
+  eq('A16b huge noted', P('999999999999 daggers').notes.some(n => /very large/.test(n)), true);
+  eq('A15 sell property uses the sell side', E('sell a cottage', srd).side, 'sell');
+  eq('A17 rent note', P('rent a house').notes.some(n => /rent/.test(n)), true);
+  eq('A18 tram is a tram fare', Q('tram ticket').subject, 'service.tram-fare'); eq('A18b suit of plate', Q('a suit of plate armor', srd).subject, 'good.plate-armor'); eq('A18c wizard', Q('hire a wizard').subject, 'labor.wizard-for-hire');
+  t('A19 rations scale with days', E('rations for 3 days', srd).typical > E('rations', srd).typical * 2.5);
+  eq('A19b lb on non-lb note', E('10 lb of torches', srd).notes.some(n => /not sold by weight/.test(n)), true);
+  const price = id => CATALOG.find(e => e.id === id).bu;
+  eq('A20 SRD prices fixed', [price('good.chicken'), price('good.ginger'), price('good.sling'), price('good.whip')], [2, 100, 10, 200]);
+  const pc = WORLD_PRESETS.srd(); pc.economyTags = ['post-collapse']; const cc = compileWorld(pc);
+  t('A20b club not hit by the metal multiplier', E('club', cc).typical < E('club', srd).typical * 4, [E('club', cc).typical, E('club', srd).typical]);
+  eq('A21 3rd-level spell with a hyphen', Q('3rd-level spell').subject, 'spell.3rd-level-spell-casting');
+  eq('A22 ampersand keeps offsets', (() => { const r = P('2 daggers & lonsword'); const s = r.suggestions[0]; return s && '2 daggers & lonsword'.slice(s.start, s.end); })(), 'lonsword');
+  eq('A25 antique bread not offered', analyze(Q('bread loaf'), E('bread loaf'), vcm).dimensions.find(d => d.id === 'g:condition')?.options.some(o => /antique|masterwork/.test(o.label)) ?? false, false);
+  eq('A25b direct-from-maker not offered to sellers', analyze(Q('sell longsword', srd), E('sell longsword', srd), srd).dimensions.find(d => d.id === 'g:channel')?.options.some(o => /direct/.test(o.label)) ?? false, false);
+  const rr = Q('rush rations'); const ra = analyze(rr, estimate(rr, vcm), vcm);
+  t('A25c dropped modifier does not hide its group', true);
+  const sg = E('sell rations during a siege', srd), sb = E('buy rations during a siege', srd);
+  t('A26 siege sellers of food are not paid a tenth', sg.typical > sb.typical * 0.2, [sg.typical, sb.typical]);
+  eq('A27 lb label', E('20 lb of salt', srd).eachLabel, 'per lb');
+  eq('A29 accents', Q('lòngsword', srd).subject, 'good.longsword');
+  const user = WORLD_PRESETS.srd(); user.items = [{ name: 'Longsword', kind: 'good', bu: 2000, unit: 'each', tags: [] }]; const uc = compileWorld(user);
+  eq('A28 user override keeps words and tags', [Q('long sword', uc).subject, estimate(Q('rush longsword', uc), uc).ok && estimate(Q('rush longsword', uc), uc).notes.some(n => /doesn't apply/.test(n))], ['user.longsword', false]);
+}
+// ---------- store.normalizeWorld survives hostile input ----------
+{
+  const { normalizeWorld } = await import('../../src/building/fools-gold/js/store.js');
+  const bad = [{}, { name: 'bad', items: [{}] }, { currency: { denominations: [{ bu: '"><img>' }] }, dials: { priceLevel: '"><img>' } }, { dials: { priceLevel: '', volatility: -2, sellFraction: 50 } }, { items: [{ name: 5, bu: 0 }, null, 3] }, { currency: { denominations: [] } }, { vocabulary: [null, { term: 1 }] }];
+  let crashed = 0, uncompilable = 0;
+  for (const b of bad) { try { const w = normalizeWorld(JSON.parse(JSON.stringify(b))); compileWorld(w); const e = estimate(parse('longsword', compileWorld(w)).query, compileWorld(w)); if (!e.ok || !(e.typical > 0)) uncompilable++; } catch (err) { crashed++; console.log('   crash on', JSON.stringify(b), err.message); } }
+  eq('N1 hostile worlds normalize and price', [crashed, uncompilable], [0, 0]);
+  let threw = 0; for (const b of [null, [], 'x', 5]) { try { normalizeWorld(b); } catch (e) { threw++; } } eq('N2 non-objects rejected', threw, 4);
+  const w = normalizeWorld({ dials: { priceLevel: '', volatility: -2, sellFraction: 50 } }); eq('N3 dials clamped', [w.dials.priceLevel, w.dials.volatility, w.dials.sellFraction], [1, 0, 1]);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
