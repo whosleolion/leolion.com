@@ -14,7 +14,7 @@ aliases: [Dologoth, Reformed States of Dologoth]
 | Government | Constitutional Democracy (President Rook Broadwell) |
 | Native to | Orcs, Giants, Goblins |
 
-The **Reformed States of Dologoth (R.S.D.)** is a constitutional republic comprised of disparate states: centrally, Jogunheim, Gektuk, and Rag'dul. The R.S.D. signed its reformational constitution in 1220 SE, heralding the formation of the Grand Kainos National Union. "Dologoth" traditionally refers to the Dologothi Continental Region, and is primarily populated by Giants, Goblins, and Orcs.
+The **Reformed States of Dologoth (R.S.D.)** is a constitutional republic comprised of disparate states: centrally, Jogunheim, Gektuk, and Rag'dul. The R.S.D. signed its reformational constitution in 836 SE, heralding the formation of the Grand Kainos National Union. "Dologoth" traditionally refers to the Dologothi Continental Region, and is primarily populated by Giants, Goblins, and Orcs.
 
 The Dologothi Continental Region is the group of landmasses formed directly around The Mouth of Chaos, which is sometimes referred to as a Fifth Gate (in reference to the Elemental Gates). The Mouth of Chaos and its impact on the environment makes most of Dologoth an arid wasteland of black sand deserts and barren mountains, and the native populations of the region have historically been beset with attacks by fiends and other destructive forces from the depths of the pit. The civilizations that developed on this continent were largely nomadic and anti-materialistic due to an intimate connection with creative-destructive cycles of order and chaos.
 

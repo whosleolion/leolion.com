@@ -11,7 +11,7 @@ author: leo
 > “Historians say the Hygarian Kings rid the world of every last dragon’s hoard. Clearly they’ve never seen Vista City.”
 > — Ambassador Cysero Bright
 
-Vista City is the beating heart of the global Hygardian Empire – a treasure trove of history, industry, crime, and every kind of pleasure and pain imaginable. The City has grown over the last few centuries into a bustling metropolis surrounding Hygardian capital citadel, constructed off of the Telosian channel in the Third Regal Age by Queen Clarita Vistal. Today, Visa City is home to a number of the nation's oldest prime institutions, including [[Oldcastle|Oldcastle Palace]], Highdawn Cathedral, Parliament Hall, and the [[Museum of Material Cultures|Royal Museum of Material Cultures]]. Hygard's most eminent figures reside here, including heads of state and industry as well as numerous public figures.
+Vista City is the beating heart of the global Hygardian Empire – a treasure trove of history, industry, crime, and every kind of pleasure and pain imaginable. The City has grown over the last two centuries into a bustling metropolis surrounding Hygardian capital citadel, constructed off of the Telosian channel in the Third Regal Age by Queen Clarita Vistal. Today, Visa City is home to a number of the nation's oldest prime institutions, including [[Oldcastle|Oldcastle Palace]], Highdawn Cathedral, Parliament Hall, and the [[Museum of Material Cultures|Royal Museum of Material Cultures]]. Hygard's most eminent figures reside here, including heads of state and industry as well as numerous public figures.
 
 ## Boroughs
 

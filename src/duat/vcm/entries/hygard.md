@@ -16,3 +16,12 @@ aliases: [Hygardian Empire]
 | Native to | Humans, Gnomes |
 
 **Hygard** is a sprawling human-led nation in the southern part of the Western Continent. It emerged in the early part of the Sunless Age as a number of human and gnomish agrarian tribes that were able to withstand and recover from dragon attacks through their geographic dispersion and keeping constant watch of the skies. As a result, Hygard was a major playor in the Dragon Wars of the Third Regal Age and for a long time subsisted on a feudal adventuring economy. The Hygardian government consists of a parliamentary monarchy, which was established in the latter part of the Golden Age to support less volatile relations with other major nations, and took loose influence from the democratic models of ancient Telos. **[[Queen Agnes Vistal|Queen Agnes]]** of the *Vistal* line is the current head of the Empire, and **Harold Sower** is the Prime Minister of the Hygardian Nation.
+
+## Hygardian history
+
+Hygard's rulers fall into four periods, from the Last Act of Avatol to the present. Dates are approximate.
+
+- **The Pentarchy (0 – 214 SE).** Hygard begins as a rule of five, through the Sunless Age.
+- **The Hywill Crown (215 – 414 SE).** Founded by **Gant Hywill the Hardfist**, the first Hywill king (c. 215 SE).
+- **The Garland Crown (415 – 684 SE).** The longest ruling line. Its mid-line kings include **Hal Garland** (c. 525 SE) and, after him, **Gawaine Garland** (c. 553 SE).
+- **The Vistal Crown (685 SE – present).** Begun by **Clarita Vistal**, the first Vistal queen, who built [[Oldcastle]] Palace. The Vistals took the throne some four generations before the Dragon Wars were won in 795 SE, and still hold it under [[Queen Agnes Vistal|Queen Agnes]].
