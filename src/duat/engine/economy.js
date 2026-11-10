@@ -1,21 +1,21 @@
-/* Duat add-on: the Economy tab (GM only).
+/* Duat add-on: the Economy tab (anyone can look; editing uses the normal Duat sign-in).
    Turn it on with "economy": "economy.json" in world.json (that file is the starting ledger).
    Saved as one shared row (slug economy-ledger, kept like page details), so it syncs between devices. */
 (() => {
   'use strict';
   const D = window.Duat && window.Duat.ext;
   if (!D) return;
-  const { S, esc, $, page, persist, isGM, session, withSession, route, show } = D;
+  const { S, esc, $, page, persist, session, withSession, route, show } = D;
   const SLUG = 'economy-ledger', AUTHOR = '@meta';
   const KINDS = { cash: 'Cash', account: 'Account', debt: 'Debt' };
-  const CP = { pp: 1000, gp: 100, sp: 10, cp: 1 };
+  const CP = { pp: 1000, gp: 100, sp: 10, cp: 1, g: 100, s: 10, c: 1, $: 10 };
 
   /* ---------- money ---------- */
   // "5gp 3sp", "1,000gp", "-2sp", "12" (gp) → copper pieces, or null if it isn't money
   function parseMoney(str) {
     const s = String(str || '').trim().toLowerCase();
     if (!s) return null;
-    const re = /([+-]?)\s*(\d[\d,]*(?:\.\d+)?|\.\d+)\s*(pp|gp|sp|cp)?/g;
+    const re = /([+-]?)\s*(\d[\d,]*(?:\.\d+)?|\.\d+)\s*(pp|gp|sp|cp|g|s|c|\$)?/g;
     let m, total = 0, n = 0, rest = s;
     while ((m = re.exec(s))) {
       const v = parseFloat(m[2].replace(/,/g, ''));
@@ -30,6 +30,28 @@
     const neg = cp < 0, a = Math.abs(Math.round(cp));
     const gp = Math.floor(a / 100), sp = Math.floor((a % 100) / 10), c = a % 10;
     return (neg ? '−' : '') + gp.toLocaleString('en-US') + 'gp' + (sp ? ` ${sp}sp` : '') + (c ? ` ${c}cp` : '');
+  }
+
+  /* ---------- coin glyphs: G, S ($) and C, each with a clean vertical line through it ---------- */
+  const GLYPHS = {
+    g: 'M8 4.3 A4 4 0 1 0 9 7 H5.6',
+    s: 'M7.9 4.7 C7.9 3.4 6.8 3 5 3 C3.3 3 2.2 3.7 2.2 5 C2.2 6.3 3.6 6.7 5 7 C6.4 7.3 7.8 7.7 7.8 9 C7.8 10.3 6.7 11 5 11 C3.3 11 2.1 10.6 2.1 9.3',
+    c: 'M8 4.3 A4 4 0 1 0 8 9.7',
+  };
+  function sprite() {
+    if (document.getElementById('ec-sprite')) return;
+    document.body.insertAdjacentHTML('beforeend', `<svg id="ec-sprite" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.entries(GLYPHS).map(([k, d]) =>
+      `<symbol id="cg-${k}" viewBox="0 0 10 14" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M5 .8V13.2"/><path d="${d}"/></symbol>`).join('')}</defs></svg>`);
+  }
+  const NAMES = { g: 'gold', s: 'silver', c: 'copper' };
+  const glyph = k => `<svg class="cg cg-${k}" viewBox="0 0 10 14" role="img" aria-label="${NAMES[k]}"><use href="#cg-${k}"/></svg>`;
+  const num = n => n.toLocaleString('en-US');
+  // cash: 74 G 7 S (copper only when there is some).  everything else: 4,000 G 0 S / (400,000 C), copper greyed
+  function money(cp, cash) {
+    if (cp == null) return '<span class="ec-tbe">TBE</span>';
+    const neg = cp < 0 ? '−' : '', a = Math.abs(Math.round(cp)), g = Math.floor(a / 100), sl = Math.floor((a % 100) / 10), c = a % 10;
+    if (cash) return `${neg}<span class="ec-u">${num(g)}${glyph('g')}</span> <span class="ec-u">${sl}${glyph('s')}</span>${c ? ` <span class="ec-u ec-cu">${c}${glyph('c')}</span>` : ''}`;
+    return `${neg}<span class="ec-u">${num(g)}${glyph('g')}</span> <span class="ec-u">${sl}${glyph('s')}</span> <span class="ec-sep">/</span> <span class="ec-u ec-cu">(${neg}${num(a)}${glyph('c')})</span>`;
   }
 
   /* ---------- formulas: + - * / % ^ ( ), numbers, 12%, dice like 2d6, balance, periods, floor/ceil/round/min/max/abs ---------- */
@@ -138,24 +160,39 @@
     save(); paint();
   }
   function undo() {
-    const l = R.model.log.pop(); if (!l) return;
-    const a = acct(l.id);
-    if (a) a.cp = l.how === 'set' ? (l.was === undefined ? a.cp - l.delta : l.was) : (a.cp || 0) - l.delta;
+    const last = R.model.log[R.model.log.length - 1]; if (!last) return;
+    const pull = () => {
+      const l = R.model.log.pop(), a = acct(l.id);
+      if (a) a.cp = l.how === 'set' ? (l.was === undefined ? a.cp - l.delta : l.was) : (a.cp || 0) - l.delta;
+    };
+    pull();
+    if (last.how === 'xfer') while (R.model.log.length && R.model.log[R.model.log.length - 1].pair === last.pair) pull();   // both halves of a transfer
     save(); paint();
   }
 
   /* ---------- view ---------- */
+  // anyone can look; changing a balance asks for the usual Duat sign-in first
+  const needSession = fn => session() ? fn() : withSession(S.dlg, 'Sign in to edit', () => { if (S.dlg.open) S.dlg.close(); fn(); });
   const ownerLink = o => {
     const e = o && S.entries.find(x => x.slug === String(o).toLowerCase());
     return e ? `<a href="#/e/${esc(e.slug)}">${esc(e.title)}</a>` : esc(o || '');
   };
+  const short = a => a.kind === 'cash' ? a.name.replace(/\s*cash$/i, '') : a.name;
+  const xferRow = a => {
+    if (!R.xfer || R.xfer.id !== a.id) return '';
+    const opts = R.model.accounts.filter(x => x.id !== a.id).map(x => `<option value="${esc(x.id)}">${esc(short(x))}</option>`).join('');
+    return `<div class="ec-xfer"><span>${money(R.xfer.cp, true)} →</span><select aria-label="Send to">${opts}</select>
+      <button type="button" class="primary" data-do="xsend">Send</button><button type="button" data-do="xcancel" aria-label="Cancel">✕</button></div>`;
+  };
   const adjForm = a => {
     const debt = a.kind === 'debt', tbe = a.cp == null;
-    return `<form class="ec-adj" data-acct="${esc(a.id)}" autocomplete="off">
-      <input name="amt" inputmode="text" placeholder="${tbe ? 'Set balance' : 'e.g. 5gp 3sp'}" aria-label="Amount for ${esc(a.name)}" enterkeyhint="done">
-      ${tbe ? '' : `<button type="button" data-do="sub" title="${debt ? 'Pay off' : 'Spend / take out'}" aria-label="${debt ? 'Pay' : 'Subtract'}">−</button>
-      <button type="button" data-do="add" title="${debt ? 'Owe more' : 'Add'}" aria-label="${debt ? 'Owe more' : 'Add'}">+</button>`}
-      <button type="button" data-do="set" class="ec-set" title="Set the balance to exactly this">${tbe ? 'Set' : '='}</button></form>`;
+    return `<form class="ec-adj${tbe ? ' is-tbe' : ''}" data-acct="${esc(a.id)}" autocomplete="off">
+      <input name="amt" inputmode="text" placeholder="${tbe ? 'Set balance' : '5g 3s'}" aria-label="Amount for ${esc(a.name)}" enterkeyhint="done">
+      <div class="ec-btns">${tbe ? '<button type="button" data-do="set" title="Set the balance">Set</button>' : `
+        <button type="button" data-do="sub" title="${debt ? 'Pay off' : 'Take out'}" aria-label="${debt ? 'Pay' : 'Subtract'}">−</button>
+        <button type="button" data-do="add" title="${debt ? 'Owe more' : 'Add'}" aria-label="${debt ? 'Owe more' : 'Add'}">+</button>
+        <button type="button" data-do="set" title="Set the balance to exactly this" aria-label="Set to">=</button>
+        ${debt ? '' : '<button type="button" data-do="xfer" title="Send to another balance" aria-label="Transfer">→</button>'}`}</div></form>${xferRow(a)}`;
   };
   const formulaBox = a => {
     const fs = R.model.formulas.filter(f => f.account === a.id);
@@ -165,43 +202,58 @@
       return `<div class="ec-formula" data-f="${esc(f.id)}"><span class="ec-fname">${esc(f.name)}</span>
         <label class="ec-per">× <input type="number" min="1" max="120" value="${p ? p.n : f.periods || 1}" data-per> ${esc(f.per || 'period')}${(p ? p.n : f.periods || 1) == 1 ? '' : 's'}</label>
         <button type="button" data-do="roll">Roll</button>
-        ${p ? `<div class="ec-roll${p.err ? ' is-err' : ''}">${p.err ? esc(p.err) : `<b>${p.res.deltaCp >= 0 ? '+' : ''}${fmt(p.res.deltaCp)}</b> <span class="muted">${esc(rollText(p.res.steps))}</span>
-          <span class="ec-roll-act"><button type="button" class="primary" data-do="apply">Apply</button><button type="button" data-do="reroll">Reroll</button><button type="button" data-do="drop">✕</button></span>`}</div>` : ''}</div>`;
+        ${p ? `<div class="ec-roll${p.err ? ' is-err' : ''}">${p.err ? esc(p.err) : `<b>${p.res.deltaCp >= 0 ? '+' : ''}${money(p.res.deltaCp, true)}</b> <span class="muted">${esc(rollText(p.res.steps))}</span>
+          <span class="ec-roll-act"><button type="button" class="primary" data-do="apply">Apply</button><button type="button" data-do="reroll">Reroll</button><button type="button" data-do="drop" aria-label="Dismiss">✕</button></span>`}</div>` : ''}</div>`;
     }).join('')}</div>`;
   };
   const tile = a => `<article class="ec-tile${a.cp == null ? ' is-tbe' : ''}${a.cp != null && a.cp < 0 ? ' is-neg' : ''}">
-      <header><span class="ec-name">${esc(a.name)}</span></header>
-      <p class="ec-bal">${esc(fmt(a.cp))}</p>${adjForm(a)}</article>`;
-  const row = a => `<details class="ec-row k-${esc(a.kind)}" data-id="${esc(a.id)}"${R.open.has(a.id) ? ' open' : ''}>
-      <summary><span class="ec-rname">${esc(a.name)}<small>${ownerLink(a.owner)}${a.note ? ` · ${esc(a.note)}` : ''}</small></span>
-        <span class="ec-kind">${esc(KINDS[a.kind] || a.kind)}</span><span class="ec-rbal">${a.kind === 'debt' && a.cp != null ? 'owes ' : ''}${esc(fmt(a.cp))}</span></summary>
+      <header class="ec-name">${esc(short(a))}</header><p class="ec-bal">${money(a.cp, true)}</p>${adjForm(a)}</article>`;
+  const row = a => `<details class="ec-row k-${esc(a.kind)}" data-id="${esc(a.id)}"${R.open.has(a.id) || (R.xfer && R.xfer.id === a.id) ? ' open' : ''}>
+      <summary><span class="ec-rname">${esc(a.name)}<small>${ownerLink(a.owner)}${a.note ? `${a.owner ? ' · ' : ''}${esc(a.note)}` : ''}</small></span>
+        <span class="ec-rbal">${money(a.cp)}</span></summary>
       <div class="ec-body">${adjForm(a)}${formulaBox(a)}</div></details>`;
   const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
   function paint() {
+    sprite();
     const m = R.model, cash = m.accounts.filter(a => a.kind === 'cash'), other = m.accounts.filter(a => a.kind !== 'cash');
     const y = scrollY;
-    page(`<div class="wrap ec"><header class="list-head"><p class="kicker">GM only</p><h1>Economy</h1>
-      <p class="muted">Tap an account to adjust it. Amounts take gp, sp and cp (<code>5gp 3sp</code>). <span class="ec-status" role="status"></span></p></header>
-      <section><h2 class="ec-h">Cash</h2><div class="ec-tiles">${cash.map(tile).join('') || '<p class="muted">No cash accounts yet.</p>'}</div></section>
-      <section><h2 class="ec-h">Accounts &amp; debts</h2><div class="ec-rows">${other.map(row).join('') || '<p class="muted">Nothing here yet. Add accounts in Balance settings.</p>'}</div></section>
-      <section><details class="ec-log"${R.logOpen ? ' open' : ''}><summary><h2 class="ec-h">History</h2></summary>
-        ${m.log.length ? `<ul>${m.log.slice(-30).reverse().map(l => `<li><span class="muted">${esc(when(l.t))}</span> ${esc(l.name || '')} <b>${l.delta >= 0 ? '+' : ''}${esc(fmt(l.delta))}</b> → ${esc(fmt(l.bal))}${l.note ? ` <span class="muted">${esc(l.note)}</span>` : ''}</li>`).join('')}</ul>
-        <button type="button" data-do="undo">Undo last</button>` : '<p class="muted">Nothing yet.</p>'}</details></section>
+    page(`<div class="wrap ec"><p class="ec-top"><span class="ec-status" role="status"></span><span class="ec-top-act">${m.log.length ? '<button type="button" class="ec-undo" data-do="undo" title="Undo the last change">↶ Undo</button>' : ''}${session() ? '' : '<button type="button" class="ec-signin" data-do="signin">Sign in to edit</button>'}</span></p>
+      <div class="ec-tiles">${cash.map(tile).join('')}</div>
+      <div class="ec-rows">${other.map(row).join('')}</div>
+      <details class="ec-log"${R.logOpen ? ' open' : ''}><summary>History</summary>
+        ${m.log.length ? `<ul>${m.log.slice(-30).reverse().map(l => `<li><span class="muted">${esc(when(l.t))}</span> ${esc(l.name || '')} <b>${l.delta >= 0 ? '+' : ''}${money(l.delta, true)}</b>${l.note ? ` <span class="muted">${esc(l.note)}</span>` : ''}</li>`).join('')}</ul>` : '<p class="muted">Nothing yet.</p>'}</details>
       <p class="ec-foot"><button type="button" class="ec-gear" data-do="settings">⚙ Balance settings</button></p></div>`, 'Economy', 'economy');
     paintStatus(); scrollTo(0, y);
-    $('.ec').addEventListener('click', onClick);
-    $('.ec').addEventListener('submit', ev => ev.preventDefault());
-    $('.ec').addEventListener('toggle', ev => { const d = ev.target; if (d.classList.contains('ec-row')) (d.open ? R.open.add(d.dataset.id) : R.open.delete(d.dataset.id)); if (d.classList.contains('ec-log')) R.logOpen = d.open; }, true);
+    const root = $('.ec');
+    root.addEventListener('click', onClick);
+    root.addEventListener('submit', ev => { ev.preventDefault(); const b = ev.target.querySelector('[data-do=add]') || ev.target.querySelector('[data-do=set]'); if (b) b.click(); });
+    root.addEventListener('toggle', ev => { const d = ev.target; if (d.classList.contains('ec-row')) (d.open ? R.open.add(d.dataset.id) : R.open.delete(d.dataset.id)); if (d.classList.contains('ec-log')) R.logOpen = d.open; }, true);
+  }
+  function transfer(fromId, toId, cp) {
+    const from = acct(fromId), to = acct(toId); if (!from || !to || cp <= 0) return;
+    const pair = uid('x'), t = new Date().toISOString();
+    from.cp = (from.cp || 0) - cp;
+    to.cp = to.kind === 'debt' ? (to.cp || 0) - cp : (to.cp || 0) + cp;      // sending to a debt pays it down
+    R.model.log.push({ t, id: fromId, name: from.name, delta: -cp, bal: from.cp, note: `→ ${short(to)}`, how: 'xfer', pair },
+      { t, id: toId, name: to.name, delta: to.kind === 'debt' ? -cp : cp, bal: to.cp, note: `← ${short(from)}`, how: 'xfer', pair });
+    R.model.log = R.model.log.slice(-100); R.xfer = null;
+    save(); paint();
   }
   function onClick(ev) {
     const b = ev.target.closest('[data-do]'); if (!b) return;
     const act = b.dataset.do, form = b.closest('.ec-adj'), fbox = b.closest('.ec-formula');
+    if (act === 'signin') return needSession(() => route());
+    if (act === 'xcancel') { R.xfer = null; return paint(); }
+    if (act === 'xsend') {
+      const dest = b.closest('.ec-xfer').querySelector('select').value, x = R.xfer;
+      return needSession(() => transfer(x.id, dest, x.cp));
+    }
     if (form) {
       const id = form.dataset.acct, cp = parseMoney(form.amt.value);
       if (cp == null || (act !== 'set' && cp === 0)) { form.amt.classList.add('is-bad'); form.amt.focus(); return; }
-      if (act === 'set') setBal(id, cp);
-      else adjust(id, act === 'sub' ? -Math.abs(cp) : Math.abs(cp));
-      return;
+      form.amt.classList.remove('is-bad');
+      if (act === 'xfer') { if (cp < 0) return; R.xfer = { id, cp }; return paint(); }
+      return needSession(() => { if (act === 'set') setBal(id, cp); else adjust(id, act === 'sub' ? -Math.abs(cp) : Math.abs(cp)); });
     }
     if (fbox) {
       const f = R.model.formulas.find(x => x.id === fbox.dataset.f), a = acct(b.closest('.ec-row').dataset.id);
@@ -213,12 +265,11 @@
       if (act === 'drop') { delete R.preview[f.id]; return paint(); }
       if (act === 'apply') {
         const p = R.preview[f.id]; if (!p || p.err) return;
-        delete R.preview[f.id];
-        return adjust(a.id, p.res.deltaCp, `${f.name} ×${p.n} ${f.per || 'period'}${p.n === 1 ? '' : 's'}: ${rollText(p.res.steps)}`, 'formula');
+        return needSession(() => { delete R.preview[f.id]; adjust(a.id, p.res.deltaCp, `${f.name} ×${p.n} ${f.per || 'period'}${p.n === 1 ? '' : 's'}: ${rollText(p.res.steps)}`, 'formula'); });
       }
     }
-    if (act === 'undo') return undo();
-    if (act === 'settings') return settings();
+    if (act === 'undo') return needSession(undo);
+    if (act === 'settings') return needSession(settings);
   }
 
   /* ---------- Balance settings (kept out of the way) ---------- */
@@ -289,12 +340,6 @@
 
   /* ---------- the route ---------- */
   D.views.economy = async function () {
-    if (!isGM()) {
-      page(`<div class="wrap ec"><header class="list-head"><p class="kicker">GM only</p><h1>Economy</h1></header>
-        <p>The ledger is for the GM. <button type="button" class="primary" data-ec-in>Sign in</button></p></div>`, 'Economy', 'economy');
-      $('[data-ec-in]').addEventListener('click', () => withSession(S.dlg, 'Sign in', () => { if (S.dlg.open) S.dlg.close(); route(); }));
-      return;
-    }
     page('<div class="wrap ec"><p class="muted">Opening the ledger…</p></div>', 'Economy', 'economy');
     try { await load(); } catch (x) { return page(`<div class="wrap ec"><p class="ed-err">Couldn’t open the ledger: ${esc(x.message)}</p></div>`, 'Economy', 'economy'); }
     if (location.hash.replace(/^#\/?/, '') === 'economy') paint();

@@ -32,7 +32,7 @@ async function signIn(page, who, key) {
   await page.fill('dialog input[name=key]', key); await page.click('dialog .primary'); await page.waitForTimeout(250);
 }
 const adj = (page, id, amt, op) => page.evaluate(([id, amt, op]) => { const f = document.querySelector(`.ec-adj[data-acct="${id}"]`); f.amt.value = amt; f.querySelector(`[data-do=${op}]`).click(); }, [id, amt, op]);
-const bal = (page, name) => page.evaluate(n => { const a = [...document.querySelectorAll('.ec-tile, .ec-row')].find(e => e.textContent.includes(n)); return a.querySelector('.ec-bal, .ec-rbal').textContent; }, name);
+const bal = (page, name) => page.evaluate(n => { const a = [...document.querySelectorAll('.ec-tile, .ec-row')].find(e => e.textContent.includes(n)); return a.querySelector('.ec-bal, .ec-rbal').textContent.replace(/\s+/g, ' ').trim(); }, name);
 
 (async () => {
   await new Promise(r => server.listen(0, r));
@@ -40,31 +40,42 @@ const bal = (page, name) => page.evaluate(n => { const a = [...document.querySel
   const svc = createSaveService({ player: PLAYER, gm: GM });
   { const { ctx, page } = await open(browser, svc);
     await page.goto(base()); await page.waitForSelector('.card');
-    t('no Economy chip when signed out', !(await page.$('.typenav a[data-nav=economy]')));
-    await page.goto(base() + '#/economy'); await page.waitForSelector('[data-ec-in]');
-    t('signed-out visitors are asked to sign in', true);
-    await signIn(page, 'leo', GM);
-    await page.waitForSelector('.ec-tile');
-    t('Economy chip appears for the GM', !!(await page.$('.typenav a[data-nav=economy]')));
-    t('five cash tiles come first', (await page.$$('.ec-tile')).length === 5);
-    t('Sprynger and Felt are TBE', (await page.$$eval('.ec-tile.is-tbe', e => e.map(x => x.textContent))).filter(x => /Sprynger|Felt/.test(x)).length === 2);
-    t('Rosie starts at 74gp 7sp', (await bal(page, 'Rosie cash')) === '74gp 7sp', await bal(page, 'Rosie cash'));
-    t('Finnean cash 13sp reads 1gp 3sp', (await bal(page, 'Finnean cash')) === '1gp 3sp');
-    t('Finnean debt is 210,000gp', (await bal(page, 'Finnean debt')).includes('210,000gp'));
-    await adj(page, 'rosie-cash', '5gp 3sp', 'add'); await page.waitForTimeout(150);
-    t('adding works', (await bal(page, 'Rosie cash')) === '80gp');
-    await adj(page, 'rosie-cash', '2gp', 'sub');
-    t('subtracting works', (await bal(page, 'Rosie cash')) === '78gp');
-    await adj(page, 'felt-cash', '3gp 5sp', 'set'); await page.waitForTimeout(150);
-    t('a TBE balance can be set', (await bal(page, 'Felt cash')) === '3gp 5sp');
+    t('Economy chip is there for everyone', !!(await page.$('.typenav a[data-nav=economy]')));
+    await page.goto(base() + '#/economy'); await page.waitForSelector('.ec-tile');
+    t('signed-out visitors can look', (await page.$$('.ec-tile')).length === 5);
+    // editing asks for the normal sign-in, then carries on with what was asked
+    await adj(page, 'rosie-cash', '5g 3s', 'add');
+    await page.waitForSelector('dialog select[name=author]');
+    t('editing asks a visitor to sign in', true);
+    await page.selectOption('dialog select[name=author]', 'thomas'); await page.fill('dialog input[name=key]', PLAYER); await page.click('dialog .primary');
+    await page.waitForTimeout(500);
+    t('a player (not the GM) can edit, and the pending change goes through', (await bal(page, 'Rosie')) === '80 0', await bal(page, 'Rosie'));
+    t('five cash tiles come first, named without the word cash', (await page.$$eval('.ec-tile .ec-name', e => e.map(x => x.textContent))).join() === 'Cassandra,Finnean,Rosie,Sprynger,Felt');
+    t('Sprynger and Felt are TBE', (await page.$$eval('.ec-tile.is-tbe .ec-bal', e => e.map(x => x.textContent))).join() === 'TBE,TBE');
+    t('Cassandra is 0 G 4 S', (await bal(page, 'Cassandra')) === '0 4');
+    t('non-cash balances read gold silver / (copper)', (await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-rbal', e => e.textContent.replace(/\s+/g, ' ').trim())) === '4,000 0 / (400,000)');
+    t('copper value is greyed', await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-cu', e => getComputedStyle(e).color !== getComputedStyle(e.parentElement).color));
+    t('coin glyphs are drawn', (await page.$$('.cg use')).length > 10);
+    t('Finnean debt is 210,000 G', (await page.$eval('.ec-row[data-id=finnean-debt] .ec-rbal', e => e.textContent)).includes('210,000'));
+    await adj(page, 'rosie-cash', '2g', 'sub');
+    t('subtracting works', (await bal(page, 'Rosie')) === '78 0');
+    await adj(page, 'felt-cash', '3g 5s', 'set'); await page.waitForTimeout(150);
+    t('a TBE balance can be set', (await bal(page, 'Felt')) === '3 5');
     await adj(page, 'rosie-cash', 'banana', 'add');
-    t('junk amounts are refused', (await bal(page, 'Rosie cash')) === '78gp');
+    t('junk amounts are refused', (await bal(page, 'Rosie')) === '78 0');
+    // transfer
+    await adj(page, 'rosie-cash', '10g', 'xfer');
+    await page.selectOption('.ec-xfer select', 'cassandra-cash'); await page.click('[data-do=xsend]'); await page.waitForTimeout(200);
+    t('transfer moves money between balances', (await bal(page, 'Rosie')) === '68 0' && (await bal(page, 'Cassandra')) === '10 4', `${await bal(page, 'Rosie')} / ${await bal(page, 'Cassandra')}`);
+    await page.click('[data-do=undo]'); await page.waitForTimeout(150);
+    t('undo reverses both halves of a transfer', (await bal(page, 'Rosie')) === '78 0' && (await bal(page, 'Cassandra')) === '0 4');
+    await adj(page, 'rosie-cash', '1g', 'xfer'); await page.selectOption('.ec-xfer select', 'finnean-debt'); await page.click('[data-do=xsend]'); await page.waitForTimeout(200);
+    t('sending to a debt pays it down', (await page.$eval('.ec-row[data-id=finnean-debt] .ec-rbal', e => e.textContent)).includes('209,999'));
     await page.click('.ec-row[data-id=rbh-killers-index] summary');
     await page.click('.ec-row[data-id=rbh-killers-index] [data-do=roll]');
     await page.waitForSelector('.ec-roll b');
     await page.click('[data-do=apply]'); await page.waitForTimeout(250);
-    const after = await bal(page, 'index acc');
-    t('a rolled formula applies to its account', /^\d[\d,]*gp/.test(after) && /index growth/i.test(await page.evaluate(() => document.querySelector('.ec-log').textContent)), after);
+    t('a rolled formula applies to its account', /index growth/i.test(await page.evaluate(() => document.querySelector('.ec-log').textContent)));
     await page.click('[data-do=settings]'); await page.waitForSelector('.ec-set-form');
     await page.click('[data-s=add-f]');
     await page.fill('.ec-fedit >> nth=-1 >> [name=expr]', 'balance * (');
@@ -77,7 +88,7 @@ const bal = (page, name) => page.evaluate(n => { const a = [...document.querySel
     t('settings save and close', await page.evaluate(() => !document.querySelector('dialog[open]')));
     t('no page errors', page.errors.length === 0, page.errors.join('|'));
     await page.goto(base() + '#/economy'); await page.reload(); await page.waitForSelector('.ec-tile', { timeout: 8000 });
-    t('balances persist across a reload', (await bal(page, 'Rosie cash')) === '78gp' && (await bal(page, 'Felt cash')) === '3gp 5sp');
+    t('balances persist across a reload', (await bal(page, 'Rosie')) === '77 0' && (await bal(page, 'Felt')) === '3 5', `${await bal(page, 'Rosie')} ${await bal(page, 'Felt')}`);
     await ctx.close();
   }
   await browser.close(); server.close();

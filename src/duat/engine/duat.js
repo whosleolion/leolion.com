@@ -401,7 +401,7 @@
     listed().forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('.typenav').innerHTML = `<a href="#/" data-nav="home">Home</a>` + navTypes().filter(t => counts[t]).map(t =>
       `<a href="#/t/${encodeURIComponent(t)}" data-nav="t/${esc(t)}" style="--c:${typeOf(t).color}">${esc(typeOf(t).label)}<span>${counts[t]}</span></a>`).join('')
-      + (w.economy && isGM() ? `<a href="#/economy" data-nav="economy" style="--c:#e6b94a">Economy</a>` : '');
+      + (w.economy ? `<a href="#/economy" data-nav="economy" style="--c:#e6b94a">Economy</a>` : '');
     $('.brand-short').textContent = w.short || w.title; $('.brand-full').textContent = w.title;
     $('.foot > span').textContent = w.title;
   }
@@ -2109,7 +2109,6 @@
     b.innerHTML = a ? `<span class="who-dot" style="background:${a.color}"></span><span class="who-name">${esc(a.name)}${isGM() ? ' · GM' : ''}</span> ▾` : 'Sign in';
     b.classList.toggle('is-in', !!a);
     if ($('.typenav')) renderNav();
-    if ($('[data-ec-in]') && isGM()) setTimeout(route, 0);   // signed in from the top bar while the Economy tab was asking
     closeWho();
   }
   function closeWho() { const m = $('.who-menu'); if (m) m.remove(); }
