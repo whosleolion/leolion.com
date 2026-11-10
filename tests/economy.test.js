@@ -53,7 +53,7 @@ const bal = (page, name) => page.evaluate(n => { const a = [...document.querySel
     t('five cash tiles come first, named without the word cash', (await page.$$eval('.ec-tile .ec-name', e => e.map(x => x.textContent))).join() === 'Cassandra,Finnean,Rosie,Sprynger,Felt');
     t('Sprynger and Felt are TBE', (await page.$$eval('.ec-tile.is-tbe .ec-bal', e => e.map(x => x.textContent))).join() === 'TBE,TBE');
     t('Cassandra is 0 G 4 S', (await bal(page, 'Cassandra')) === '0 4');
-    t('non-cash balances read gold silver / (copper)', (await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-rbal', e => e.textContent.replace(/\s+/g, ' ').trim())) === '4,000 0 / (400,000)');
+    t('non-cash balances read gold (decimals) / (copper), no silver', (await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-rbal', e => e.textContent.replace(/\s+/g, ' ').trim())) === '4,000 / (400,000)');
     t('copper value is greyed', await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-cu', e => getComputedStyle(e).color !== getComputedStyle(e.parentElement).color));
     t('coin glyphs are drawn', (await page.$$('.cg use')).length > 10);
     t('Finnean debt is 210,000 G', (await page.$eval('.ec-row[data-id=finnean-debt] .ec-rbal', e => e.textContent)).includes('210,000'));
