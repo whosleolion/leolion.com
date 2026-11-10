@@ -197,3 +197,29 @@ textarea.mono { width: 100%; min-height: 110px; font: 12px/1.4 var(--font-mono);
   .card, .un { animation: rise .18s ease-out; }
   @keyframes rise { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 }
+
+/* Clarity pass */
+.qlabel { font-size: 13px; font-weight: 600; color: var(--fg); margin-bottom: -4px; }
+.worldbtn .wc { font-size: 11px; color: var(--muted); }
+.chip { padding: 5px 4px 5px 11px; font-size: 14px; }
+.chip .x { width: 26px; height: 26px; font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
+.empty ul.tips { margin: 10px 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.drivers { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 16px 8px; }
+.drivers .dl { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+.drv { font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--bg); }
+.drv.up { color: var(--up); } .drv.down { color: var(--down); }
+.why summary { font-size: 12px; }
+.card-head .what { font-size: 18px; }
+.un { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.un h2::after { content: "tap to apply"; margin-left: 10px; font: 500 11px var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.guess { margin-top: 14px; padding: 14px 16px; border: 1px solid var(--accent); border-radius: 14px; background: var(--surface); }
+.guess h2 { margin: 0 0 4px; font: 600 18px/1.25 var(--font-display); }
+.guess .lead { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.cands { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.cand:hover { border-color: var(--accent); }
+.cand.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
+.cand .cl { font-weight: 600; } .cand .cw { font-size: 12px; color: var(--muted); } .cand .cp { font: 500 13px var(--font-mono); color: var(--accent); margin-top: 2px; }
+.adjust { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.adjust .setline { margin: 0 0 4px; font-size: 16px; } .adjust .gp { color: var(--accent); font-family: var(--font-display); font-size: 20px; }
+.adjust p.mini { margin: 4px 0 8px; }

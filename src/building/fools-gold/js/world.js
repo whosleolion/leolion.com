@@ -48,8 +48,8 @@ const norm = s => tokenize(s).filter(t => t.type !== 'dash').map(t => t.stem);
 export function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 export function compileWorld(world) {
-  const generic = world.baseline === 'generic';
-  const entries = CATALOG.filter(e => !generic || !(e.src === 'srd') || e.generic).map(e => ({ ...e }));
+  const base = world.baseline === 'generic' ? 'generic' : world.baseline === 'modern' ? 'modern' : 'srd';
+  const entries = CATALOG.filter(e => base === 'modern' ? e.src === 'modern' : e.src !== 'modern' && (base === 'srd' || e.src !== 'srd' || e.generic)).map(e => ({ ...e }));
   const byId = new Map(entries.map(e => [e.id, e]));
   // user items
   for (const it of world.items || []) {
@@ -68,7 +68,10 @@ export function compileWorld(world) {
   }
   const list = [...byId.values()];
   for (const e of list) { e.tags ||= []; e.aliases ||= []; }
-  const mods = new Map(MODIFIERS.map(m => [m.id, m]));
+  // the modern world talks about cities and towns, not trading outposts
+  const MODERN_LABELS = { capital: 'major city', town: 'mid-size town', village: 'small town or rural', outpost: 'remote small town', remote: 'very remote area' };
+  const modList = MODIFIERS.map(m => (base === 'modern' && MODERN_LABELS[m.id] ? { ...m, label: MODERN_LABELS[m.id] } : m));
+  const mods = new Map(modList.map(m => [m.id, m]));
   const econ = new Map(ECONOMY_TAGS.map(t => [t.id, t]));
 
   // lexicon
@@ -110,7 +113,7 @@ export function compileWorld(world) {
   }
   for (const arr of index.values()) arr.sort((a, b) => b.words.length - a.words.length || a.prio - b.prio);
 
-  return { world, entries: list, byId, mods, econ, phrases, index };
+  return { world, entries: list, byId, mods, modList, econ, phrases, index };
 }
 
 export function entryName(ctx, id) { const e = ctx.byId.get(id); return e ? e.name : id; }

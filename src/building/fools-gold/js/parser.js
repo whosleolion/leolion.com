@@ -177,7 +177,9 @@ export function parse(text, ctx) {
       if (subjectEntry && o.id === subjectEntry.id) return false;
       return true;
     });
-    for (const o of others) notes.push(isComm(o) && hasNonComm ? 'I read "' + o.p.display + '" as the material, so the price is for "' + subjectEntry.name + '" at its normal price. Material is not priced separately.' : 'I also saw "' + o.p.display + '" but priced "' + subjectEntry.name + '". Split them into separate questions to price both.');
+    let rentSeen = false;
+    for (const o of others) { if (o.type === 'family' && o.id === 'rent') { rentSeen = true; continue; } notes.push(isComm(o) && hasNonComm ? 'I read "' + o.p.display + '" as the material, so the price is for "' + subjectEntry.name + '" at its normal price. Material is not priced separately.' : 'I also saw "' + o.p.display + '" but priced "' + subjectEntry.name + '". Split them into separate questions to price both.'); }
+    if (rentSeen && subjectEntry.kind === 'property') notes.push('I don\'t price renting a property yet. This is the price to buy it.');
     if (subjectEntry) { subs.forEach(p => { p.used = true; }); q.subject = subjectEntry.id; }
   }
   const kind = subjectEntry ? subjectEntry.kind : null;
@@ -254,8 +256,8 @@ export function parse(text, ctx) {
   parts.forEach(p => { if (p.k === 'c' && (p.type === 'count' || p.type === 'unit' || p.type === 'money')) p.used = true; });
 
   // bare number on a per-day travel/lodging subject is a length, not a head count
-  if (subjectEntry && subjectEntry.unit === 'day' && (kind === 'travel' || kind === 'lodging') && q.qty && !q.span && !q.qty.unit && !counted && !multQty && !bareBeforeSubject) {
-    q.span = { lo: q.qty.lo, hi: q.qty.hi, unit: 'day', implied: true }; q.qty = null;
+  if (subjectEntry && ['day', 'week', 'month', 'year'].includes(subjectEntry.unit) && (kind === 'travel' || kind === 'lodging') && q.qty && !q.span && !q.qty.unit && !counted && !multQty && !bareBeforeSubject) {
+    q.span = { lo: q.qty.lo, hi: q.qty.hi, unit: subjectEntry.unit, implied: true }; q.qty = null;
   }
 
   // sanity: zero, negative or absurd amounts are not quantities
@@ -266,7 +268,6 @@ export function parse(text, ctx) {
   }
   if (subjectEntry && (subjectEntry.tags || []).includes('trade') && q.qty && !q.qty.unit && ctx.world.currency?.denominations?.some(d => String(d.name).toLowerCase().split(' ')[0] === subjectEntry.name.toLowerCase().split(' ')[0])) notes.push('Priced as ' + q.qty.lo + ' lb of ' + subjectEntry.name.toLowerCase() + '. If you meant coins, that is a sum of money, not an item.');
   for (const p of parts) if (p.k === 'ench') notes.push('"' + p.raw + '" is an enchantment bonus. I don\'t price bonuses directly. Say the rarity instead (for example "rare" or "very rare" magic weapon).');
-  if (subjectEntry && kind === 'property' && acts.some(a => /^rent/.test(a.p.display))) notes.push('I don\'t price rent yet. This is the price to buy the property.');
   // unrecognized
   const unk = parts.filter(p => p.k === 'u');
   const unrecognized = unk.map(u => u.raw);

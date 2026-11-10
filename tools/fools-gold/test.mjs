@@ -5,6 +5,7 @@ import { parse, queryToText, editDistance } from '../../src/building/fools-gold/
 import { estimate } from '../../src/building/fools-gold/js/engine.js';
 import { analyze } from '../../src/building/fools-gold/js/unstated.js';
 import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../../src/building/fools-gold/js/money.js';
+import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
 
 let pass = 0, fail = 0;
@@ -13,7 +14,10 @@ const eq = (name, a, b) => t(name, JSON.stringify(a) === JSON.stringify(b), '\n 
 
 const vcm = compileWorld(WORLD_PRESETS.vcm());
 const srd = compileWorld(WORLD_PRESETS.srd());
-const ti = compileWorld(WORLD_PRESETS.titanium());
+const tw = WORLD_PRESETS.srd(); tw.baseline = 'generic'; tw.economyTags = ['scarce-wilderland'];
+tw.currency = { denominations: [{ id: 'ti', name: 'titanium coin', plural: 'titanium coins', bu: 250 }], belowSmallest: 'decimals', note: '' };
+const ti = compileWorld(tw);
+const modern = compileWorld(WORLD_PRESETS.modern());
 const P = (s, c = vcm) => parse(s, c);
 const Q = (s, c = vcm) => P(s, c).query;
 const E = (s, c = vcm) => estimate(Q(s, c), c);
@@ -251,6 +255,43 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('A29 accents', Q('lòngsword', srd).subject, 'good.longsword');
   const user = WORLD_PRESETS.srd(); user.items = [{ name: 'Longsword', kind: 'good', bu: 2000, unit: 'each', tags: [] }]; const uc = compileWorld(user);
   eq('A28 user override keeps words and tags', [Q('long sword', uc).subject, estimate(Q('rush longsword', uc), uc).ok && estimate(Q('rush longsword', uc), uc).notes.some(n => /doesn't apply/.test(n))], ['user.longsword', false]);
+}
+
+// ---------- modern real-world pack ----------
+{
+  const m = x => Q(x, modern), me = x => estimate(Q(x, modern), modern), cur = modern.world.currency;
+  const r1 = me('a month of rent in a major city, medium apartment');
+  eq('M1 parse', [m('a month of rent in a major city, medium apartment').subject, m('a month of rent in a major city, medium apartment').span.unit, m('a month of rent in a major city, medium apartment').mods], ['lodging.m-apartment-rent-medium', 'month', ['capital']]);
+  t('M1 major city rent is believable ($2,000 to $4,000)', r1.typical >= 200000 && r1.typical <= 400000, formatMoney(r1.typical, cur));
+  const r6 = me('6 months of rent in a city'); t('M2 six months of rent in a city', r6.typical > 800000 && r6.typical < 1500000, formatMoney(r6.typical, cur));
+  eq('M2b rent family default and assumed', [m('rent').family, m('rent').subject], ['rent', 'lodging.m-apartment-rent-medium']);
+  t('M3 big city rent beats small town rent by a lot', me('rent in a major city').typical > me('rent in a small town').typical * 1.8, [me('rent in a major city').typical, me('rent in a small town').typical]);
+  eq('M4 dollar format', [formatMoney(280000, cur), formatMoney(750, cur), formatMoney(45, cur), formatMoney(1234567, cur)], ['$2,800', '$7.50', '$0.45', '$12,000']);
+  eq('M4b parseMoney dollars', [parseMoney('$800', cur), parseMoney('7.50', cur), parseMoney('800 dollars', cur), parseMoney('45 cents', cur)], [80000, 750, 80000, 45]);
+  eq('M4c formatFull dollars', [formatFull(75000, cur), formatFull(750, cur)], ['$750', '$7.50']);
+  t('M5 modern world has no fantasy items', !modern.byId.has('good.longsword') && !modern.byId.has('travel.rail') && modern.byId.has('travel.commercial-flight'));
+  eq('M6 flights by distance', (() => { const e = me('flight 1500 miles'); return e.ok && e.typical > 15000 && e.typical < 30000; })(), true);
+  t('M7 modern place labels', modern.mods.get('capital').label === 'major city' && vcm.mods.get('capital').label.includes('capital'));
+  t('M8 rent has no class nag', !me('rent').assumptions.some(a => a.id === 'tier'));
+  t('M9 month-priced span options', analyze(Q('rent', modern), me('rent'), modern).dimensions.some(d => d.id === 'span' && d.options.some(o => o.label === '6 months')));
+  eq('M10 every modern entry name parses to itself', modern.entries.filter(e => parse(e.name, modern).query.subject !== e.id).map(e => e.name + ' -> ' + parse(e.name, modern).query.subject), []);
+}
+// ---------- unknown words: guess, nudge, set ----------
+{
+  const r = P('10 monster parts'); eq('G1 unknown, no subject', [r.query.subject, r.query.qty && r.query.qty.lo], [null, 10]);
+  const c = candidatesFor('monster parts', vcm);
+  eq('G2 best guess is a crafting component', c[0].id, 'good.cat-component'); t('G2b tiers offered as a fallback', c.some(x => x.tier));
+  const none = candidatesFor('zibblewump', vcm); t('G3 no hint still offers price tiers', none.length === 4 && none.every(x => x.tier));
+  const target = 3000; const stored = storedPrice(vcm, 'Monster parts', c[0], target);
+  const pv = previewWith(vcm, 'Monster parts', c[0], target, { ...r.query, subject: 'x' });
+  t('G4 preview shows the price the DM set', Math.abs(pv.one.typical - target) / target < 0.08, [pv.one.typical, target]);
+  const w = WORLD_PRESETS.vcm(); w.items.push({ ...newItemFrom('Monster parts', 'monster parts', c[0], stored), id: 'user.t1' });
+  const cw = compileWorld(w); const q2 = Q('10 monster parts', cw); const e2 = estimate(q2, cw);
+  eq('G5 saved word is understood next time', [q2.subject, q2.qty.lo], ['user.t1', 10]);
+  t('G5b ten of them cost about ten times the set price', e2.ok && Math.abs(e2.typical / 10 - target) / target < 0.2, [e2.typical, target]);
+  eq('G6 singular alias works', Q('a monster part', cw).subject, 'user.t1');
+  const raised = storedPrice(vcm, 'Monster parts', c[0], target * 2); t('G7 raise doubles the stored price', raised > stored * 1.8 && raised < stored * 2.2, [stored, raised]);
+  const mc = candidatesFor('lawyer cat', modern); t('G8 modern world guesses from word overlap', mc.some(x => x.id === 'labor.m-lawyer'), mc.map(x => x.id));
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

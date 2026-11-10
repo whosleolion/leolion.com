@@ -6,7 +6,7 @@ const KEY = 'foolsgold.v1';
 let mem = null;
 
 function defaults() {
-  const worlds = [WORLD_PRESETS.vcm(), WORLD_PRESETS.srd(), WORLD_PRESETS.titanium()];
+  const worlds = [WORLD_PRESETS.vcm(), WORLD_PRESETS.srd(), WORLD_PRESETS.modern()];
   return { v: 1, worlds, activeId: 'vcm', history: [], theme: null };
 }
 export function load() {
@@ -18,6 +18,8 @@ export function load() {
       if (s && Array.isArray(s.worlds) && s.worlds.length) {
         s.history = Array.isArray(s.history) ? s.history : [];
         if (!s.worlds.some(w => w.id === s.activeId)) s.activeId = s.worlds[0].id;
+        // the old Titanium Frontier sample world was replaced by the modern world
+        s.worlds = s.worlds.map(w => (w.id === 'titanium' && w.name === 'Titanium Frontier' ? WORLD_PRESETS.modern() : w));
         s.worlds = s.worlds.filter(w => { try { normalizeWorld(w); compileWorld(w); return true; } catch (e) { return false; } });
         if (!s.worlds.length) return mem || (mem = defaults());
         if (!s.worlds.some(w => w.id === s.activeId)) s.activeId = s.worlds[0].id;
@@ -42,7 +44,7 @@ export const newItemId = () => 'user.i' + Date.now().toString(36) + (seq++).toSt
 // Clean any world object, from storage or an import, into one the engine can always compile.
 export function normalizeWorld(w) {
   if (!w || typeof w !== 'object' || Array.isArray(w)) throw new Error('not a world');
-  w.baseline = w.baseline === 'generic' ? 'generic' : 'srd';
+  w.baseline = w.baseline === 'generic' ? 'generic' : w.baseline === 'modern' ? 'modern' : 'srd';
   const cur = w.currency && typeof w.currency === 'object' ? w.currency : {};
   let dens = (Array.isArray(cur.denominations) ? cur.denominations : []).filter(d => d && typeof d === 'object')
     .map(d => ({ id: str(d.id).trim() || 'coin', name: str(d.name).trim() || str(d.id).trim() || 'coin', plural: str(d.plural).trim(), bu: num(d.bu, NaN) }))
@@ -50,15 +52,18 @@ export function normalizeWorld(w) {
   if (!dens.length) dens = GSC.map(d => ({ ...d }));
   for (const d of dens) if (!d.plural) d.plural = /s$/.test(d.name) ? d.name : d.name + 's';
   w.currency = { denominations: dens, belowSmallest: cur.belowSmallest === 'round' ? 'round' : 'decimals', note: str(cur.note) };
+  if (typeof cur.symbol === 'string' && cur.symbol && num(cur.decimal, 0) > 0) { w.currency.symbol = cur.symbol.slice(0, 3); w.currency.decimal = num(cur.decimal, 100, 0.01, 1e9); }
   w.anchors = { wage: num(w.anchors && w.anchors.wage, 20, 0.01, 1e9) };
   w.economyTags = (Array.isArray(w.economyTags) ? w.economyTags : []).filter(t => typeof t === 'string');
   const d = w.dials && typeof w.dials === 'object' ? w.dials : {};
   w.dials = { priceLevel: num(d.priceLevel, 1, 0.1, 10), volatility: num(d.volatility, 0.5, 0, 1), stacking: d.stacking === 'strict' ? 'strict' : 'dampened', sellFraction: num(d.sellFraction, 0.5, 0.1, 1) };
-  w.defaults = { travel: str(w.defaults && w.defaults.travel, 'travel.coach') };
+  w.defaults = { travel: str(w.defaults && w.defaults.travel, 'travel.coach'), rent: str(w.defaults && w.defaults.rent, 'lodging.m-apartment-rent-medium') };
+  w.samples = (Array.isArray(w.samples) ? w.samples : []).filter(x => typeof x === 'string').slice(0, 8);
   w.vocabulary = (Array.isArray(w.vocabulary) ? w.vocabulary : []).filter(v => v && typeof v === 'object').map(v => ({ term: str(v.term), means: str(v.means) })).slice(0, 200);
   w.items = (Array.isArray(w.items) ? w.items : []).filter(it => it && typeof it === 'object').map(it => ({
-    id: str(it.id) || newItemId(), name: str(it.name).trim() || 'New item', kind: KINDS.includes(it.kind) ? it.kind : 'good', unit: ['each', 'day', 'lb'].includes(it.unit) ? it.unit : 'each',
+    id: str(it.id) || newItemId(), name: str(it.name).trim() || 'New item', kind: KINDS.includes(it.kind) ? it.kind : 'good', unit: ['each', 'day', 'lb', 'week', 'month', 'year'].includes(it.unit) ? it.unit : 'each',
     bu: num(it.bu, NaN), tags: (Array.isArray(it.tags) ? it.tags : []).filter(t => typeof t === 'string'),
+    aliases: (Array.isArray(it.aliases) ? it.aliases : []).filter(t => typeof t === 'string').slice(0, 10), spread: num(it.spread, 0.15, 0, 3),
   })).filter(it => it.bu > 0).slice(0, 500);
   w.name = str(w.name).trim().slice(0, 80) || 'My world';
   w.blurb = typeof w.blurb === 'string' ? w.blurb.slice(0, 200) : undefined;

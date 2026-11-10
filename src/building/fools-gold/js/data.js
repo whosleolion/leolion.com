@@ -179,17 +179,97 @@ const genericCats = [
   basis: 'Generic template: a rough middle price when no specific item is named.',
 }));
 
+
+// ---- Modern real-world pack (original numbers: a typical mid-size US city, around 2025) ----
+// Prices are in cents. Place modifiers scale housing harder than anything else (placeScale).
+const usd = n => Math.round(n * 100);
+function modern(kind, tags, list, extra = {}) {
+  return list.map(line => {
+    const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim());
+    return {
+      id: kind + '.m-' + slug(name), name, kind, src: 'modern', bu: usd(parseFloat(price.replace(/,/g, ''))), unit: unit || 'each',
+      tags: [...tags, ...(more ? more.split(/\s+/) : [])], aliases: aliases ? aliases.split(',').map(x => x.trim()).filter(Boolean) : [], ...extra,
+    };
+  });
+}
+const modernEntries = [
+  ...modern('lodging', ['lodging', 'rent', 'property'], [
+    'Studio apartment rent;1250;month;;studio, studio apartment, studio rent',
+    'Apartment rent, medium;1650;month;;medium apartment, one bedroom apartment, 1 bedroom apartment, apartment, flat, apartment rent, monthly rent, medium apartment rent',
+    'Apartment rent, large;2300;month;;large apartment, two bedroom apartment, 2 bedroom apartment, big apartment, large apartment rent',
+    'House rent;2700;month;;rental house, house rental, house rent',
+    'Room rental;850;month;;shared room, room in a shared apartment, roommate room',
+    'Office rent;3200;month;;office, office space, commercial lease',
+  ], { group: 'rent', placeScale: 3, noTier: true }),
+  ...modern('lodging', ['lodging'], ['Hotel room;170;day;;hotel, hotel room, hotel stay', 'Motel room;95;day;;motel', 'Hostel bed;45;day;;hostel, hostel bed', 'Vacation rental;210;day;;airbnb, short term rental, holiday rental'], { placeScale: 2 }),
+  ...modern('service', ['service', 'subscription'], [
+    'Utilities bill;210;month;;utilities, electric bill, utility bill', 'Internet service;70;month;;internet, wifi, broadband', 'Phone plan;65;month;;cell plan, mobile plan, phone bill',
+    'Gym membership;50;month;;gym', 'Streaming subscription;16;month;;streaming', 'Health insurance premium;480;month;;health insurance, insurance premium', 'Car insurance;160;month',
+    'Childcare;1400;month;;daycare, day care',
+  ], { noTier: true }),
+  ...modern('service', ['service', 'food', 'meal'], [
+    'Coffee;4.50;;;latte, espresso', 'Fast food meal;13;;;burger, fast food', 'Restaurant meal;28;;;dinner, lunch, breakfast, meal, restaurant, casual dinner, sit down meal',
+    'Fine dining dinner;140;;;fancy dinner, tasting menu, fine dining, upscale dinner', 'Pizza;22', 'Sandwich;11;;;sub',
+  ]),
+  ...modern('service', ['service', 'food'], ['Weekly groceries;150;week;;groceries, grocery shopping, grocery run']),
+  ...modern('good', ['food', 'drink', 'consumable'], ['Beer;7.50;;;pint, draft beer', 'Cocktail;16;;;mixed drink', 'Bottle of wine;24;;;wine']),
+  ...modern('service', ['service', 'transport'], [
+    'Taxi ride;26;;;taxi, cab, rideshare, ride share, car service', 'Subway ride;3;;;subway, metro, bus fare, bus ride, light rail', 'Parking;22;;;parking spot, parking garage', 'Toll;6;;;road toll',
+    'Gas tank;55;;;gas, fuel, petrol, fill up',
+  ]),
+  ...modern('service', ['service', 'transport'], ['Rental car;70;day;;car rental, hire car']),
+  { id: 'travel.intercity-train', name: 'Intercity train', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 28, mpd: 500, tags: ['transport', 'rail'], aliases: ['train', 'train ticket', 'train ride', 'railway', 'rail', 'amtrak style train'], basis: 'Original: about 28 cents a mile on a typical intercity line, 500 miles in a long day.' },
+  { id: 'travel.intercity-bus', name: 'Intercity bus', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 11, mpd: 500, tags: ['transport', 'coach'], aliases: ['bus', 'bus ticket', 'coach bus', 'long distance bus'], basis: 'Original: about 11 cents a mile.' },
+  { id: 'travel.commercial-flight', name: 'Commercial flight', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 14, mpd: 2400, tags: ['transport', 'air'], aliases: ['flight', 'plane', 'plane ticket', 'airplane', 'airline', 'air ticket', 'flight ticket'], basis: 'Original: about 14 cents a mile, 2,400 miles in a day of travel.' },
+  ...modern('labor', ['labor', 'unskilled'], ['Day laborer;120;day;;laborer, labourer, unskilled worker, hand, hired hand'], {}),
+  ...modern('labor', ['labor', 'skilled'], [
+    'Skilled tradesperson;450;day;;tradesperson, tradesman, craftsman, skilled worker, handyman', 'Electrician;850;day', 'Plumber;900;day', 'Contractor;700;day;;builder, carpenter', 'Lawyer;2400;day;;attorney, solicitor, barrister',
+    'Accountant;1200;day;;bookkeeper', 'Software developer;1000;day;;developer, programmer, coder', 'Security guard;210;day;;guard, bouncer', 'Cleaner;170;day;;maid, housekeeper', 'Babysitter;130;day;;sitter, nanny',
+    'Chauffeur;320;day;;driver', 'Private investigator;900;day;;investigator, detective, pi', 'Bodyguard;1000;day;combat;', 'Tutor;400;day;;teacher',
+  ]),
+  ...modern('service', ['service', 'medicine'], [
+    'Doctor visit;220;;;doctor, clinic visit, physician visit', 'Dentist visit;190;;;dentist', 'Therapy session;150;;;therapist, counseling', 'Emergency room visit;2600;;;er, er visit, emergency room',
+    'Ambulance ride;1300;;;ambulance', 'Haircut;38;;;barber', 'Massage;110', 'Dry cleaning;18', 'Movie ticket;16;;;cinema, movie', 'Concert ticket;95;;;concert', 'Legal retainer;5000;;;retainer', 'Wedding;35000;;;wedding reception',
+    'Funeral;9500;;;burial',
+  ]),
+  ...modern('service', ['service', 'medicine'], ['Hospital stay;3500;day;;hospital, hospital bed']),
+  ...modern('service', ['service'], ['College tuition;32000;year;;tuition, college', 'Private school tuition;22000;year;;private school']),
+  ...modern('good', ['manufactured', 'gadget'], [
+    'Smartphone;850;;;phone, cell phone, mobile phone, iphone style phone', 'Burner phone;45;;;prepaid phone, throwaway phone', 'Laptop;1150;;;computer, notebook computer', 'Television;550;;;tv, telly', 'Headphones;160;;;earbuds',
+  ]),
+  ...modern('good', ['manufactured', 'clothing'], ['Jeans;75;;;pants, trousers', 'Sneakers;115;;;shoes, trainers', 'Business suit;520;;luxury;suit', 'Winter coat;180;;;coat, jacket', 'Designer handbag;2400;;luxury;handbag, purse']),
+  ...modern('good', ['manufactured', 'luxury'], ['Luxury watch;9000;;;rolex style watch, expensive watch', 'Engagement ring;5500;;;diamond ring', 'Wristwatch;250;;;watch']),
+  ...modern('good', ['manufactured'], [
+    'Book;20;;book;paperback, hardcover', 'Newspaper;3;;newspaper;paper', 'Pack of cigarettes;9.50;;;cigarettes, smokes', 'Bicycle;520;;vehicle;bike', 'Motorcycle;9500;;vehicle;motorbike', 'Car;38000;;vehicle;automobile, new car, sedan, suv',
+    'Sofa;900;;;couch', 'Mattress;1000;;;bed frame', 'Refrigerator;1300;;;fridge', 'Over the counter medicine;12;;medicine;medicine, painkillers, cold medicine', 'Prescription medication;60;;medicine;prescription, meds',
+  ]),
+  ...modern('good', ['manufactured', 'weapon', 'metal'], ['Handgun;600;;;pistol, gun, firearm, revolver', 'Hunting rifle;900;;;rifle, shotgun', 'Pocketknife;45;;;knife', 'Bulletproof vest;650;;armor;body armor, kevlar vest']),
+  ...modern('property', ['property'], ['House;420000;;;home, family home, house purchase', 'Condo;360000;;;condominium', 'Acre of land;6000;;;acre, land'], { placeScale: 3 }),
+].map(e => ({ spread: 0.15, ...e }));
+const modernCats = [
+  ['gadget', 'Gadget', 300, ['manufactured', 'gadget'], 'gadgets, device, electronics, gizmo'],
+  ['clothes', 'Clothing', 80, ['manufactured', 'clothing'], 'clothes, clothing, outfit, garment'],
+  ['furniture', 'Furniture', 600, ['manufactured'], 'furnishings, table, chair, desk'],
+  ['appliance', 'Appliance', 700, ['manufactured'], 'appliances, oven, washer, dryer'],
+  ['vehicle', 'Vehicle', 22000, ['manufactured', 'vehicle'], 'vehicles, truck, van'],
+  ['tool', 'Tool', 60, ['manufactured', 'tool'], 'tools, equipment, drill, hammer'],
+].map(([id, name, price, tags, aliases]) => ({ id: 'good.cat-m-' + id, name, kind: 'good', src: 'modern', bu: usd(price), unit: 'each', spread: 0.6, tags, aliases: aliases.split(',').map(x => x.trim()), isCategory: true, basis: 'Generic template: a rough middle price when no specific item is named.' }));
+
+// A harvested-materials category, the usual landing spot for "monster parts" style words.
+const componentCat = { id: 'good.cat-component', name: 'Crafting component', kind: 'good', src: 'core', bu: parsePrice('25gp'), unit: 'each', spread: 0.8, tags: ['component', 'raw', 'crafted'], aliases: ['component', 'components', 'ingredient', 'ingredients', 'reagent', 'reagents', 'crafting material', 'crafting materials'], isCategory: true, basis: 'Generic template for harvested materials and crafting ingredients.' };
+
 // Categories that stand for a family of entries (generic word -> default member).
 export const FAMILIES = [
-  { id: 'travel', name: 'Travel', kind: 'travel', terms: ['travel', 'travelling', 'traveling', 'transport', 'transportation', 'trip', 'journey', 'ride'], defaultKey: 'travel', fallback: 'travel.coach', offer: true },
+  { id: 'travel', name: 'Travel', kind: 'travel', terms: ['travel', 'travelling', 'traveling', 'transport', 'transportation', 'trip', 'journey', 'ride'], defaultKey: 'travel', fallback: 'travel.coach', ask: 'Which mode of travel?', offer: true },
+  { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Which kind of rental?', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {
   if (NONMETAL.has(e.name)) e.tags = e.tags.filter(t => t !== 'metal');
-  if (e.name === 'Newspaper' || e.name === 'Pocket watch') { e.src = 'core'; }
+  if (e.src === 'srd' && (e.name === 'Newspaper' || e.name === 'Pocket watch')) { e.src = 'core'; }
   if (e.tags.includes('perday')) e.perDay = true;
 }
 
@@ -326,6 +406,10 @@ export const ECONOMY_TAGS = [
     { tags: ['food', 'livestock'], f: [0.7, 0.9] }, { tags: ['manufactured'], f: [1.1, 1.4] }, { tags: ['luxury'], f: [1.1, 1.5] }, { tags: ['unskilled'], f: [0.9, 1] }, { kinds: ['property'], f: [0.7, 1] }]),
   E('guild-controlled', 'Guild-controlled', 'Guilds fix prices and limit who can sell. Skilled work and made goods cost more.', [
     { tags: ['skilled'], f: [1.2, 1.5] }, { tags: ['crafted'], f: [1.05, 1.25] }]),
+  E('high-cost-metro', 'High cost of living', 'Housing, services and eating out are expensive. Goods are about normal.', [
+    { tags: ['rent', 'property'], f: [1.3, 1.9] }, { kinds: ['lodging'], f: [1.15, 1.5] }, { tags: ['meal', 'service'], f: [1.1, 1.35] }, { tags: ['skilled'], f: [1.15, 1.4] }]),
+  E('low-cost-region', 'Low cost of living', 'Cheap housing and services. Imported goods cost the same as anywhere.', [
+    { tags: ['rent', 'property'], f: [0.55, 0.8] }, { kinds: ['lodging'], f: [0.7, 0.9] }, { tags: ['meal', 'service'], f: [0.8, 0.95] }, { tags: ['skilled', 'unskilled'], f: [0.75, 0.95] }]),
   E('magic-rich', 'Magic is everyday', 'Enchanting is routine, so magic items and casting are cheaper.', [
     { tags: ['magic'], f: [0.5, 0.8] }, { tags: ['potion', 'scroll'], f: [0.6, 0.85] }, { kinds: ['spell'], f: [0.6, 0.85] }]),
   E('magic-scarce', 'Magic is rare', 'Few can enchant, so magic items and casting are very expensive.', [
@@ -334,7 +418,7 @@ export const ECONOMY_TAGS = [
 
 // ---- Language data ----
 export const ACTION_TERMS = {
-  buy: ['buy', 'buying', 'bought', 'purchase', 'purchasing', 'pay', 'paying', 'get', 'getting', 'hire', 'hiring', 'hired', 'booking', 'rent', 'renting', 'ordering'],
+  buy: ['buy', 'buying', 'bought', 'purchase', 'purchasing', 'pay', 'paying', 'get', 'getting', 'hire', 'hiring', 'hired', 'booking', 'ordering'],
   sell: ['sell', 'selling', 'sold', 'offload', 'offloading', 'unload', 'flip', 'flipping', 'dump', 'dumping'],
   value: ['value', 'valuing', 'appraise', 'appraisal', 'appraising', 'worth', 'evaluate', 'assess', 'valuation'],
 };
@@ -348,7 +432,7 @@ export const TIER_TERMS = {
   luxury: ['luxury', 'luxurious', 'opulent', 'lavish', 'royal', 'five star', '5 star', 'five-star', 'palatial'],
 };
 export const UNIT_TERMS = {
-  day: ['day', 'days', 'daily'], night: ['night', 'nights'], week: ['week', 'weeks'], month: ['month', 'months'],
+  day: ['day', 'days', 'daily'], night: ['night', 'nights'], week: ['week', 'weeks'], month: ['month', 'months', 'monthly'], year: ['year', 'years', 'yearly', 'annual'],
   mile: ['mile', 'miles', 'mi'], league: ['league', 'leagues'], lb: ['lb', 'lbs', 'pounds of', 'pound of', 'pound'],
 };
 export const COUNT_TERMS = ['passenger', 'person', 'people', 'traveler', 'traveller', 'adult', 'guest', 'seat', 'ticket', 'head', 'pax', 'party member'];
@@ -387,10 +471,11 @@ export const WORLD_PRESETS = {
     baseline: 'srd', currency: { denominations: GSC.map(d => ({ ...d })), belowSmallest: 'decimals', note: '' },
     anchors: { wage: 20 }, economyTags: [], dials: { ...baseDials }, defaults: { travel: 'travel.coach' }, vocabulary: [], items: [],
   }),
-  titanium: () => ({
-    id: 'titanium', name: 'Titanium Frontier', blurb: 'One coin, scarce wilderland, no SRD item list.',
-    baseline: 'generic', currency: { denominations: [{ id: 'ti', name: 'titanium coin', plural: 'titanium coins', bu: 250 }], belowSmallest: 'decimals', note: '' },
-    anchors: { wage: 250 }, economyTags: ['scarce-wilderland'], dials: { ...baseDials, priceLevel: 1 }, defaults: { travel: 'travel.coach' }, vocabulary: [], items: [],
+  modern: () => ({
+    id: 'modern', name: 'Modern day, real world', blurb: 'Contemporary US prices: rent, meals, flights, services. Adjust with the place and price level.',
+    baseline: 'modern', currency: { denominations: [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }], belowSmallest: 'decimals', note: '1 base unit is one cent', symbol: '$', decimal: 100 },
+    anchors: { wage: 12000 }, economyTags: [], dials: { ...baseDials, sellFraction: 0.5 }, defaults: { travel: 'travel.intercity-train', rent: 'lodging.m-apartment-rent-medium' }, vocabulary: [], items: [],
+    samples: ['a month of rent in a major city, medium apartment', '6 months of rent in a city', 'dinner for 2 at a fancy restaurant', 'flight 1500 miles', 'hire a lawyer for 2 days', 'taxi ride in the capital', 'buy a laptop', 'sell a used car'],
   }),
 };
 export const SAMPLE_QUERIES = [

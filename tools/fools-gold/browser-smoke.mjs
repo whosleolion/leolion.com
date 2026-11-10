@@ -48,12 +48,26 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('#worldBtn');
   ok(name + ' drawer opens', await page.isVisible('#drawer'));
   await page.screenshot({ path: `${out}/${name}-world.png` });
-  await page.click('[data-act=w-select][data-id=titanium]');
+  await page.click('[data-act=w-select][data-id=modern]');
   await page.click('[data-act=close-world]');
-  await page.fill('#q', 'hire a skilled blacksmith for a week');
+  await page.fill('#q', '6 months of rent in a city');
   const price = await page.textContent('.price .big');
-  ok(name + ' one-coin world prices in coins', /coin/.test(price), price);
+  ok(name + ' modern world prices in dollars', /^\$[\d,]+/.test(price), price);
+  ok(name + ' modern world asks which rental', !!(await page.$('.un')));
+  await page.screenshot({ path: `${out}/${name}-modern.png`, fullPage: true });
   await page.click('#worldBtn'); await page.click('[data-act=w-select][data-id=vcm]'); await page.click('[data-act=close-world]');
+  // unknown words: guess, nudge, set
+  await page.fill('#q', '10 monster parts');
+  ok(name + ' unknown word shows the guess card', !!(await page.$('.guess')));
+  await page.click('.cand >> nth=0');
+  ok(name + ' guess shows a proposed price', /about/.test(await page.textContent('.adjust .setline')));
+  const p0 = await page.textContent('.adjust .gp');
+  await page.click('[data-act=g-raise]');
+  ok(name + ' raise changes the proposal', p0 !== (await page.textContent('.adjust .gp')), p0);
+  await page.screenshot({ path: `${out}/${name}-guess.png`, fullPage: true });
+  await page.click('[data-act=g-set]');
+  ok(name + ' set it prices the thing', !(await page.$('.guess')) && !!(await page.$('.card')));
+  ok(name + ' set it priced ten of them', /Monster parts/i.test(await page.textContent('.card-head .what')));
   // hostile import must not brick the app or run script
   let alerts = 0; page.on('dialog', d => { alerts++; d.dismiss(); });
   await page.click('#worldBtn');

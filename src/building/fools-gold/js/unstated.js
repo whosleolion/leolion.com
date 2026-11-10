@@ -1,6 +1,6 @@
 // "What you didn't say": find the unstated factors that would move the price most.
-import { MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js';
-import { estimate, applicable } from './engine.js';
+import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js';
+import { estimate, applicable, timeUnit } from './engine.js';
 
 const ORDER = {
   good: ['place', 'channel', 'condition', 'supply', 'relationship', 'urgency'],
@@ -44,9 +44,9 @@ export function analyze(q, est, ctx) {
   if (q.assumed.includes('mode') && q.family) {
     const fam = FAMILIES.find(f => f.id === q.family);
     const sibs = ctx.entries.filter(e => e.group === fam.id);
-    mk('mode', 'Which mode of travel?', sibs.map(s => {
+    mk('mode', fam.ask || 'Which one?', sibs.map(s => {
       const f = x => { x.subject = s.id; x.family = null; x.assumed = x.assumed.filter(a => a !== 'mode'); };
-      return { label: s.name.replace(/ passage$/, '').toLowerCase(), est: run(f), apply: f, sel: s.id === q.subject };
+      return { label: s.name.replace(/ passage$/, '').replace(/ rent\b,?/i, '').toLowerCase(), est: run(f), apply: f, sel: s.id === q.subject };
     }), true);
   }
   if (entry.curve && !q.rarity) {
@@ -55,18 +55,18 @@ export function analyze(q, est, ctx) {
       return { label: r, est: run(f), apply: f };
     }), true);
   }
-  if (!q.tier && ['travel', 'lodging', 'service', 'labor', 'spell'].includes(kind)) {
+  if (!q.tier && !entry.noTier && ['travel', 'lodging', 'service', 'labor', 'spell'].includes(kind)) {
     mk('tier', 'What class?', TIER_NAMES.map(t => {
       const f = x => { x.tier = t; };
       return { label: t, est: run(f), apply: f, sel: t === 'standard' };
     }), false);
   }
-  if (entry.unit === 'day' && !q.span) {
-    const word = kind === 'lodging' ? 'night' : 'day';
-    const units = [[1, word], [3, word + 's'], [7, word + 's'], [30, word + 's']];
-    mk('span', 'How long?', units.map(([n]) => {
-      const f = x => { x.span = { lo: n, hi: n, unit: 'day' }; };
-      return { label: n + ' ' + word + (n === 1 ? '' : 's'), est: run(f), apply: f, sel: n === 1 };
+  const tu = timeUnit(entry);
+  if (tu && !q.span) {
+    const counts = { day: [1, 3, 7, 30], week: [1, 2, 4, 12], month: [1, 3, 6, 12], year: [1, 2, 4] }[tu.unit];
+    mk('span', 'How long?', counts.map(n => {
+      const f = x => { x.span = { lo: n, hi: n, unit: tu.unit }; };
+      return { label: n + ' ' + tu.word + (n === 1 ? '' : 's'), est: run(f), apply: f, sel: n === 1 };
     }), true);
   }
 
@@ -74,7 +74,7 @@ export function analyze(q, est, ctx) {
   const have = new Set(est.factors.filter(f => f.kind === 'mod').map(f => f.group));
   const groups = (ORDER[kind] || []).filter(g => !have.has(g));
   for (const g of groups) {
-    const mods = MODIFIERS.filter(m => m.group === g && applicable(m, entry, est.side) && !(g === 'route' && m.id === 'border'));
+    const mods = ctx.modList.filter(m => m.group === g && applicable(m, entry, est.side) && !(g === 'route' && m.id === 'border'));
     if (mods.length < 2) continue;
     // Skip the group when the entry is a travel route group but travel has a route already
     mk('g:' + g, GROUPS[g].ask, mods.map(m => {

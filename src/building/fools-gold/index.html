@@ -19,7 +19,7 @@
       <svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14L16 30 4 23V9z" fill="var(--accent)"/><path d="M16 2 28 9 16 16 4 9z" fill="var(--accent-hi)"/><path d="M16 16v14L4 23V9z" fill="var(--accent-lo)"/></svg>
       <div><h1>Fool's Gold</h1><p class="tag">Price reasoning for Dungeon Masters</p></div>
     </div>
-    <button class="worldbtn" id="worldBtn" data-act="open-world" aria-haspopup="dialog"><span class="wl">World</span><span id="worldName"></span></button>
+    <button class="worldbtn" id="worldBtn" data-act="open-world" aria-haspopup="dialog"><span class="wl">World</span><span id="worldName"></span><span class="wc" id="worldCur"></span></button>
   </header>
 
   <main>
@@ -28,6 +28,7 @@
         <button role="tab" id="tabType" data-act="mode" data-mode="type" aria-selected="true">Type it</button>
         <button role="tab" id="tabTap" data-act="mode" data-mode="tap" aria-selected="false">Tap it</button>
       </div>
+      <label class="qlabel" for="q">What do you need a price for?</label>
       <div class="inputrow">
         <input id="q" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go" placeholder="sell 5 rare potions, black market, rush" aria-label="Describe what you want priced">
         <button class="clear" id="clearBtn" data-act="clear" aria-label="Clear" hidden>×</button>

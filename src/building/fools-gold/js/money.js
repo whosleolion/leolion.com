@@ -18,6 +18,7 @@ export const short = d => d.id;
 
 // Format a Base Unit value. Rounds to 2 significant figures first (estimates, not appraisals).
 export function formatMoney(bu, currency, opts = {}) {
+  if (currency.symbol) return formatSymbol(bu, currency, opts);
   const dens = [...currency.denominations].sort((a, b) => b.bu - a.bu);
   const abbr = (opts.long || dens.length === 1) ? (d, n) => label(d, n) : d => d.id;
   const mode = currency.belowSmallest || 'decimals';
@@ -59,8 +60,18 @@ export function formatRange(lo, hi, currency) {
   return a + ' to ' + b;
 }
 
+// Dollar-style currencies: "$2,800", "$7.50", "$0.45".
+function formatSymbol(bu, currency, opts = {}) {
+  const per = currency.decimal || 100;
+  const v = opts.exact ? bu : niceRound(bu, 2);
+  const d = v / per;
+  if (d >= 100) return currency.symbol + group(Math.round(d));
+  return currency.symbol + d.toFixed(2);
+}
+
 // Exact, unrounded text for editable fields ("13 gp 5 sp"), so a stored price never drifts on display.
 export function formatFull(bu, currency) {
+  if (currency.symbol) { const d = bu / (currency.decimal || 100); return currency.symbol + (Number.isInteger(+d.toFixed(2)) ? group(Math.round(d)) : d.toFixed(2)); }
   const dens = [...currency.denominations].sort((a, b) => b.bu - a.bu);
   if (!(bu > 0)) return '0 ' + dens[dens.length - 1].id;
   const parts = [];
@@ -78,9 +89,11 @@ export function formatFull(bu, currency) {
 // Parse a typed amount like "5 gp 3 sp", "3 gold pieces" or "250" (base units).
 // Returns null when it cannot be read, including unknown coin names and negative numbers.
 export function parseMoney(text, currency) {
-  const t = String(text).trim().toLowerCase();
+  let t = String(text).trim().toLowerCase();
   if (!t || /-/.test(t)) return null;
   const dens = currency.denominations;
+  if (currency.symbol && t.startsWith(currency.symbol)) { t = t.slice(currency.symbol.length).trim(); const n = parseFloat(t.replace(/,/g, '')); return n > 0 && isFinite(n) ? n * (currency.decimal || 100) : null; }
+  if (currency.symbol && /^[\d,.]+$/.test(t)) { const n = parseFloat(t.replace(/,/g, '')); return n > 0 && isFinite(n) ? n * (currency.decimal || 100) : null; }
   const same = (a, b) => a === b || a === b + 's' || b === a + 's';
   let total = 0, found = false;
   const re = /(\d[\d,]*(?:\.\d+)?)\s*([a-z][a-z ]*?)?(?=\s*\d|\s*$)/g;
