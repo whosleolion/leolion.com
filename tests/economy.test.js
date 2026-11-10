@@ -49,26 +49,26 @@ const bal = (page, name) => page.evaluate(n => { const a = [...document.querySel
     t('editing asks a visitor to sign in', true);
     await page.selectOption('dialog select[name=author]', 'thomas'); await page.fill('dialog input[name=key]', PLAYER); await page.click('dialog .primary');
     await page.waitForTimeout(500);
-    t('a player (not the GM) can edit, and the pending change goes through', (await bal(page, 'Rosie')) === '80 0', await bal(page, 'Rosie'));
+    t('a player (not the GM) can edit, and the pending change goes through', (await bal(page, 'Rosie')) === '80', await bal(page, 'Rosie'));
     t('five cash tiles come first, named without the word cash', (await page.$$eval('.ec-tile .ec-name', e => e.map(x => x.textContent))).join() === 'Cassandra,Finnean,Rosie,Sprynger,Felt');
     t('Sprynger and Felt are TBE', (await page.$$eval('.ec-tile.is-tbe .ec-bal', e => e.map(x => x.textContent))).join() === 'TBE,TBE');
-    t('Cassandra is 0 G 4 S', (await bal(page, 'Cassandra')) === '0 4');
+    t('Cassandra holds only 4 S, so no gold shown', (await bal(page, 'Cassandra')) === '4');
     t('non-cash balances read gold (decimals) / (copper), no silver', (await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-rbal', e => e.textContent.replace(/\s+/g, ' ').trim())) === '4,000 / (400,000)');
     t('copper value is greyed', await page.$eval('.ec-row[data-id=rbh-killers-index] .ec-cu', e => getComputedStyle(e).color !== getComputedStyle(e.parentElement).color));
     t('coin glyphs are drawn', (await page.$$('.cg use')).length > 10);
     t('Finnean debt is 210,000 G', (await page.$eval('.ec-row[data-id=finnean-debt] .ec-rbal', e => e.textContent)).includes('210,000'));
     await adj(page, 'rosie-cash', '2g', 'sub');
-    t('subtracting works', (await bal(page, 'Rosie')) === '78 0');
+    t('subtracting works', (await bal(page, 'Rosie')) === '78');
     await adj(page, 'felt-cash', '3g 5s', 'set'); await page.waitForTimeout(150);
     t('a TBE balance can be set', (await bal(page, 'Felt')) === '3 5');
     await adj(page, 'rosie-cash', 'banana', 'add');
-    t('junk amounts are refused', (await bal(page, 'Rosie')) === '78 0');
+    t('junk amounts are refused', (await bal(page, 'Rosie')) === '78');
     // transfer
     await adj(page, 'rosie-cash', '10g', 'xfer');
     await page.selectOption('.ec-xfer select', 'cassandra-cash'); await page.click('[data-do=xsend]'); await page.waitForTimeout(200);
-    t('transfer moves money between balances', (await bal(page, 'Rosie')) === '68 0' && (await bal(page, 'Cassandra')) === '10 4', `${await bal(page, 'Rosie')} / ${await bal(page, 'Cassandra')}`);
+    t('transfer moves money between balances', (await bal(page, 'Rosie')) === '68' && (await bal(page, 'Cassandra')) === '10 4', `${await bal(page, 'Rosie')} / ${await bal(page, 'Cassandra')}`);
     await page.click('[data-do=undo]'); await page.waitForTimeout(150);
-    t('undo reverses both halves of a transfer', (await bal(page, 'Rosie')) === '78 0' && (await bal(page, 'Cassandra')) === '0 4');
+    t('undo reverses both halves of a transfer', (await bal(page, 'Rosie')) === '78' && (await bal(page, 'Cassandra')) === '4');
     await adj(page, 'rosie-cash', '1g', 'xfer'); await page.selectOption('.ec-xfer select', 'finnean-debt'); await page.click('[data-do=xsend]'); await page.waitForTimeout(200);
     t('sending to a debt pays it down', (await page.$eval('.ec-row[data-id=finnean-debt] .ec-rbal', e => e.textContent)).includes('209,999'));
     await page.click('.ec-row[data-id=rbh-killers-index] summary');
@@ -88,7 +88,7 @@ const bal = (page, name) => page.evaluate(n => { const a = [...document.querySel
     t('settings save and close', await page.evaluate(() => !document.querySelector('dialog[open]')));
     t('no page errors', page.errors.length === 0, page.errors.join('|'));
     await page.goto(base() + '#/economy'); await page.reload(); await page.waitForSelector('.ec-tile', { timeout: 8000 });
-    t('balances persist across a reload', (await bal(page, 'Rosie')) === '77 0' && (await bal(page, 'Felt')) === '3 5', `${await bal(page, 'Rosie')} ${await bal(page, 'Felt')}`);
+    t('balances persist across a reload', (await bal(page, 'Rosie')) === '77' && (await bal(page, 'Felt')) === '3 5', `${await bal(page, 'Rosie')} ${await bal(page, 'Felt')}`);
     await ctx.close();
   }
   await browser.close(); server.close();

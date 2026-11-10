@@ -46,11 +46,14 @@
   const NAMES = { g: 'gold', s: 'silver', c: 'copper' };
   const glyph = k => `<svg class="cg cg-${k}" viewBox="0 0 10 14" role="img" aria-label="${NAMES[k]}"><use href="#cg-${k}"/></svg>`;
   const num = n => n.toLocaleString('en-US');
-  // cash: 74 G 7 S (copper only when there is some).  everything else: 4,000.5 G / (400,050 C), copper greyed
+  // cash: only the coins held, e.g. 74 G 7 S or just 4 S.  everything else: 4,000.5 G / (400,050 C), copper greyed
   function money(cp, cash) {
     if (cp == null) return '<span class="ec-tbe">TBE</span>';
     const neg = cp < 0 ? '−' : '', a = Math.abs(Math.round(cp)), g = Math.floor(a / 100), sl = Math.floor((a % 100) / 10), c = a % 10;
-    if (cash) return `${neg}<span class="ec-u">${num(g)}${glyph('g')}</span> <span class="ec-u">${sl}${glyph('s')}</span>${c ? ` <span class="ec-u ec-cu">${c}${glyph('c')}</span>` : ''}`;
+    if (cash) {   // only the coins actually held; a zero balance reads 0 G
+      const parts = [g ? `<span class="ec-u">${num(g)}${glyph('g')}</span>` : '', sl ? `<span class="ec-u">${sl}${glyph('s')}</span>` : '', c ? `<span class="ec-u ec-cu">${c}${glyph('c')}</span>` : ''].filter(Boolean);
+      return neg + (parts.join(' ') || `<span class="ec-u">0${glyph('g')}</span>`);
+    }
     // gold with decimals (1 S = 0.1, 1 C = 0.01), no silver column
     const gold = (a / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     return `${neg}<span class="ec-u">${gold}${glyph('g')}</span> <span class="ec-sep">/</span> <span class="ec-u ec-cu">(${neg}${num(a)}${glyph('c')})</span>`;
