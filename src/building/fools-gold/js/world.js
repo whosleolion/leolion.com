@@ -55,7 +55,7 @@ export function compileWorld(world) {
   for (const it of world.items || []) {
     const e = {
       id: it.id || 'user.' + slug(it.name), name: it.name, kind: it.kind || 'good', src: 'user', unit: it.unit || 'each', bu: it.bu,
-      tags: it.tags || [], aliases: it.aliases || [], spread: it.spread ?? 0.15, basis: 'Added by you.',
+      tags: it.tags || [], aliases: it.aliases || [], spread: it.spread ?? 0.15, basis: 'Added by you.', fixed: !!it.fixed, noTier: !!it.noTier, placeScale: it.placeScale || 0, group: it.group,
     };
     // replace same-name catalog entries so user numbers win, keeping their words and tags
     for (const old of entries.filter(x => slug(x.name) === slug(e.name))) {
@@ -63,6 +63,8 @@ export function compileWorld(world) {
       if (!(it.tags || []).length) e.tags = [...(old.tags || [])];
       e.aliases = [...new Set([...(old.aliases || []), ...e.aliases])];
       if (old.group) e.group = old.group;
+      if (old.noTier && it.noTier === undefined) e.noTier = true;
+      if (old.placeScale && !it.placeScale) e.placeScale = old.placeScale;
     }
     byId.set(e.id, e);
   }

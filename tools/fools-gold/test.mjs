@@ -6,6 +6,7 @@ import { estimate } from '../../src/building/fools-gold/js/engine.js';
 import { analyze } from '../../src/building/fools-gold/js/unstated.js';
 import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../../src/building/fools-gold/js/money.js';
 import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
+import { parseSetting, baseFor, storedFor } from '../../src/building/fools-gold/js/setting.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
 
 let pass = 0, fail = 0;
@@ -337,6 +338,38 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const bad = nw({ overrides: { 'mod:x': [0, 2], 'mod:y': [2, 1], 'mod:z': 'no', ok: [0.5, 2], huge: [1, 5000] } });
   eq('F5 bad adjustments are dropped on load', Object.keys(bad.overrides), ['ok']);
   const eq1 = Q('longsword', srd); eq1.overrides = { f: { 'mod:rush': [0.0001, 2] } }; t('F6 an override on an absent factor is harmless', estimate(eq1, srd).ok);
+}
+
+// ---------- settings typed into the box ----------
+{
+  const S = (x, c = vcm) => parseSetting(x, c);
+  const rj = S("John's rent is $800 a month", modern);
+  eq('T1 named variable', rj && [rj.name, rj.owner, rj.unit, rj.perUnitBU, rj.draft.fixed, rj.viaBase], ['John’s rent', 'John', 'month', 80000, true, false]);
+  const rp = S('a healing potion costs 40 gp here');
+  eq('T2 override of a known item uses its entry', rp && [rp.viaBase, rp.analog.id, rp.perUnitBU, rp.current > 0], [true, 'good.potion-of-healing', 4000, true]);
+  eq('T3 per-week converts to the entry\'s own unit', Math.round(S('rent is $200 a week', modern).perUnitBU), 85714);
+  eq('T4 several for a total gives the unit price', (() => { const r = S('5 potions cost 200 gp'); return [r.perUnitBU, r.qty, r.rarityPriced, /each/.test(r.note)]; })(), [4000, 5, true, true]);
+  eq('T5 unknown thing is a new item', (() => { const r = S('monster parts cost 25 gp each'); return [r.name, r.analog, r.viaBase, r.perUnitBU]; })(), ['Monster parts', null, false, 2500]);
+  eq('T6 unknown word next to a known thing is a new item based on it', (() => { const r = S('dragonscale dagger costs 400 gp'); return [r.name, r.analog.name, r.viaBase]; })(), ['Dragonscale dagger', 'Dagger', false]);
+  eq('T7 set to', S('set longsword to 3 gp 5 sp').perUnitBU, 350);
+  for (const q of ['how much is a laptop for $900', 'sell a laptop for $900', 'what does a sword cost', 'hello there', 'iron is 5', 'a sword is rare', 'sell 5 potions for 40 gp', 'longsword', 'price of a longsword?', '5 rare potions']) t('T8 not a setting: ' + q, S(q, /\$/.test(q) ? modern : vcm) === null, q);
+  eq('T9 a bare number is not money in a coin world', S('longsword is 20'), null);
+  eq('T10 a bare number is dollars in a dollar world', S('a laptop costs 900', modern) && S('a laptop costs 900', modern).perUnitBU, 90000);
+  // applying: the displayed price equals what was set, economy tags included
+  const wv = WORLD_PRESETS.vcm(), cv = compileWorld(wv);
+  const set = S('a healing potion costs 40 gp here', cv);
+  wv.baseOverrides = { 'good.potion-of-healing': baseFor(cv, 'good.potion-of-healing', set.perUnitBU) };
+  const cv2 = compileWorld((await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(wv));
+  const shown = estimate(Q('potion of healing', cv2), cv2).typical;
+  t('T11 base override shows exactly what was set', Math.abs(shown - 4000) / 4000 < 0.05, shown);
+  t('T11b world base override flagged saved in the factor table', estimate(Q('potion of healing', cv2), cv2).factors[0].saved === true);
+  const wn = WORLD_PRESETS.vcm(); const nset = S('Maria\'s tab is 25 gp', compileWorld(wn));
+  wn.items = [{ ...nset.draft, id: 'user.t9', bu: nset.perUnitBU }]; const cn = compileWorld((await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(wn));
+  const nq = Q("Maria's tab", cn), ne = estimate(nq, cn);
+  eq('T12 named variable is found by name and is fixed (no economy tags)', [nq.subject, Math.abs(ne.typical - 2500) / 2500 < 0.08], ['user.t9', true]);
+  const sx = Q('3 months of rent', modern); const wm = WORLD_PRESETS.modern(); wm.baseOverrides = { 'lodging.m-apartment-rent-medium': 100000 }; const cm = compileWorld((await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(wm));
+  t('T13 rent override feeds a multi-month question', Math.abs(estimate(Q('3 months of rent', cm), cm).typical / 300000 - 1) < 0.2, estimate(Q('3 months of rent', cm), cm).typical);
+  const bo = (await import('../../src/building/fools-gold/js/store.js')).normalizeWorld({ baseOverrides: { a: 5, b: -1, c: 'x', d: 0 } }); eq('T14 base overrides are validated', bo.baseOverrides, { a: 5 });
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

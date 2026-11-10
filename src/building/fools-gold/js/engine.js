@@ -63,6 +63,7 @@ export function estimate(q, ctx) {
   const notes = [], assumptions = [], factors = [];
   // edits: this question's overrides (q.overrides) win over the world's saved adjustments (world.overrides)
   const ov = q.overrides || {}, wov = w.overrides || {};
+  const wbase = (w.baseOverrides && w.baseOverrides[entry.id]) || 0;
   const fo = key => (ov.f && ov.f[key]) || wov[key] || null;
   const foSaved = key => !(ov.f && ov.f[key]) && !!wov[key];
   const kind = entry.kind;
@@ -81,12 +82,12 @@ export function estimate(q, ctx) {
     const r = q.rarity || 'common';
     if (!q.rarity) assumptions.push({ id: 'rarity', text: 'common rarity' });
     const c = RARITY_CURVES[entry.curve];
-    const m = ov.base > 0 ? ov.base : c.mid[r] * (entry.scale || 1);
+    const m = ov.base > 0 ? ov.base : c.mid[r] * (entry.scale || 1); // rarity-priced entries cannot take a world base price
     baseMid = m;
     baseLo = m * c.band[0]; baseHi = m * c.band[1];
     baseLabel = entry.name + ', ' + r;
   } else {
-    const per = ov.base > 0 ? ov.base : entry.perMile && entry.mpd ? entry.perMile * entry.mpd : entry.bu;
+    const per = ov.base > 0 ? ov.base : wbase > 0 ? wbase : entry.perMile && entry.mpd ? entry.perMile * entry.mpd : entry.bu;
     baseMid = per;
     const sp = entry.spread ?? (entry.src === 'user' ? 0.15 : 0.1);
     baseLo = per * (1 - sp); baseHi = per * (1 + sp);
@@ -96,7 +97,7 @@ export function estimate(q, ctx) {
   lo = baseLo; hi = baseHi;
   if (!(baseLo > 0) || !isFinite(baseHi)) return { ok: false, error: 'bad-price' };
   const perUnit = tu0(entry) ? 'per ' + tu0(entry).word :  entry.unit === 'lb' ? 'per lb' : entry.unit === 'each' && !entry.isCategory ? 'each' : 'each';
-  factors.push({ kind: 'base', label: baseLabel + ' (' + perUnit + ')', lo: baseLo, hi: baseHi, runLo: lo, runHi: hi, abs: true, key: 'base', mid: baseMid, edited: ov.base > 0, why: entry.basis || (entry.src === 'srd' ? 'SRD price.' : entry.src === 'user' ? 'Your price.' : 'Fool\'s Gold price.') });
+  factors.push({ kind: 'base', label: baseLabel + ' (' + perUnit + ')', lo: baseLo, hi: baseHi, runLo: lo, runHi: hi, abs: true, key: 'base', mid: baseMid, edited: ov.base > 0 || (wbase > 0 && !entry.curve), saved: !(ov.base > 0) && wbase > 0 && !entry.curve, why: entry.basis || (entry.src === 'srd' ? 'SRD price.' : entry.src === 'user' ? 'Your price.' : 'Fool\'s Gold price.') });
 
   // ---- quantity / length ----
   const qty = q.qty ? { lo: q.qty.lo, hi: q.qty.hi ?? q.qty.lo } : { lo: 1, hi: 1 };
@@ -147,7 +148,7 @@ export function estimate(q, ctx) {
   }
 
   // ---- world economy ----
-  for (const tid of w.economyTags || []) {
+  for (const tid of entry.fixed ? [] : (w.economyTags || [])) {
     const tag = ctx.econ.get(tid);
     if (!tag) continue;
     const hits = tag.categories.filter(r => ruleMatches(r, entry)).map(r => r.f);
@@ -160,7 +161,7 @@ export function estimate(q, ctx) {
     if (o) { fl = o[0]; fh = o[1]; }
     push({ kind: 'world', key: 'econ:' + tid, edited: !!o, saved: foSaved('econ:' + tid), label: tag.label, lo: fl, hi: fh, why: tag.describe });
   }
-  if (dials.priceLevel !== 1) push({ kind: 'world', label: 'World price level', lo: dials.priceLevel, hi: dials.priceLevel, why: 'Your world-wide price setting.' });
+  if (dials.priceLevel !== 1 && !entry.fixed) push({ kind: 'world', label: 'World price level', lo: dials.priceLevel, hi: dials.priceLevel, why: 'Your world-wide price setting.' });
 
   // ---- bulk ----
   if (kind === 'good' && (entry.unit === 'each' || entry.unit === 'lb') && (qty.lo >= 10 || qty.hi >= 10)) {

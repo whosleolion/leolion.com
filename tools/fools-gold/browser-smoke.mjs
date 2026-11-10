@@ -104,7 +104,25 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' round toggle keeps a price', (await page.textContent('.pricebtn .big')).startsWith('$'));
   await page.click('[data-act=round]');
 
+  await page.fill('#q', "John's rent is $800 a month");
+  ok(name + ' a setting shows a confirmation, not a price', !!(await page.$('.setting')) && !(await page.$('.pricebtn')));
+  ok(name + ' confirmation names the value', /800/.test(await page.textContent('.setting .sval')));
+  await page.click('[data-act=s-cancel]');
+  ok(name + ' cancel returns to a normal answer', !(await page.$('.setting')));
+  await page.fill('#q', '');
+  await page.fill('#q', "John's rent is $800 a month");
+  await page.click('[data-act=s-set]');
+  ok(name + ' set it saves and prices it', (await page.textContent('.pricebtn .big')) === '$800');
+  await page.fill('#q', "6 months of John's rent");
+  ok(name + ' saved variable works in a longer question', (await page.textContent('.pricebtn .big')) === '$4,800', await page.textContent('.pricebtn .big'));
   await page.click('#worldBtn'); await goPage(page, 'Your worlds'); await page.click('[data-act=w-select][data-id=vcm]'); await goBack(page); await page.click('[data-act=close-world]');
+  await page.fill('#q', 'a healing potion costs 40 gp here');
+  ok(name + ' override asks first', !!(await page.$('.setting')));
+  await page.click('[data-act=s-set]');
+  ok(name + ' override applies in the world', /^(3[6-9]|4[0-4]) gp$/.test(await page.textContent('.pricebtn .big')), await page.textContent('.pricebtn .big'));
+  await page.click('[data-act=sheet][data-tab=break]');
+  ok(name + ' saved price is marked in the breakdown', /saved/.test(await page.textContent('#sheetBody')));
+  await page.click('.sheet-x');
   await page.fill('#q', '10 monster parts');
   ok(name + ' unknown word shows the card', !!(await page.$('.guess')));
   ok(name + ' best guess is already selected with a price', await page.isVisible('.guess .stepper .gp'));

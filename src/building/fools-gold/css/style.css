@@ -364,3 +364,11 @@ tr.edrow td { padding: 0 8px 12px; border-top: 0; }
 .sheet-x { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--surface2); color: var(--muted); font-size: 22px; line-height: 1; }
 #sheetTabs { flex: 1; max-width: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
 #sheetTabs button { padding: 6px 4px; font-size: 13px; }
+
+/* settings typed into the box */
+.setting { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.setting .sh { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.setting .sline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 18px; }
+.setting .arrow { color: var(--muted); }
+.setting .sval { font: 700 28px/1.1 var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.slines { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }

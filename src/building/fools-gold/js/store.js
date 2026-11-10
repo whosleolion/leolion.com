@@ -62,12 +62,16 @@ export function normalizeWorld(w) {
   const ovs = {};
   if (w.overrides && typeof w.overrides === 'object' && !Array.isArray(w.overrides)) for (const [k, v] of Object.entries(w.overrides)) { if (typeof k === 'string' && k.length < 60 && Array.isArray(v) && v.length === 2) { const a = num(v[0], NaN), b = num(v[1], NaN); if (a > 0 && b >= a && b <= 1000) ovs[k] = [a, b]; } }
   w.overrides = ovs;
+  const bo = {};
+  if (w.baseOverrides && typeof w.baseOverrides === 'object' && !Array.isArray(w.baseOverrides)) for (const [k, v] of Object.entries(w.baseOverrides)) { const n = num(v, NaN); if (typeof k === 'string' && k.length < 80 && n > 0 && isFinite(n)) bo[k] = n; }
+  w.baseOverrides = bo;
   w.samples = (Array.isArray(w.samples) ? w.samples : []).filter(x => typeof x === 'string').slice(0, 8);
   w.vocabulary = (Array.isArray(w.vocabulary) ? w.vocabulary : []).filter(v => v && typeof v === 'object').map(v => ({ term: str(v.term), means: str(v.means) })).slice(0, 200);
   w.items = (Array.isArray(w.items) ? w.items : []).filter(it => it && typeof it === 'object').map(it => ({
     id: str(it.id) || newItemId(), name: str(it.name).trim() || 'New item', kind: KINDS.includes(it.kind) ? it.kind : 'good', unit: ['each', 'day', 'lb', 'week', 'month', 'year'].includes(it.unit) ? it.unit : 'each',
     bu: num(it.bu, NaN), tags: (Array.isArray(it.tags) ? it.tags : []).filter(t => typeof t === 'string'),
     aliases: (Array.isArray(it.aliases) ? it.aliases : []).filter(t => typeof t === 'string').slice(0, 10), spread: num(it.spread, 0.15, 0, 3),
+    fixed: !!it.fixed, noTier: !!it.noTier, placeScale: num(it.placeScale, 0, 0, 5), group: typeof it.group === 'string' ? it.group.slice(0, 30) : undefined,
   })).filter(it => it.bu > 0).slice(0, 500);
   w.name = str(w.name).trim().slice(0, 80) || 'My world';
   w.blurb = typeof w.blurb === 'string' ? w.blurb.slice(0, 200) : undefined;

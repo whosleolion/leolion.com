@@ -9,6 +9,7 @@ import {
 } from './data.js';
 import { applicable } from './engine.js';
 import { load, save, normalizeWorld, newItemId } from './store.js';
+import { parseSetting, baseFor, storedFor } from './setting.js';
 import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js';
 
 const $ = s => document.querySelector(s);
@@ -18,7 +19,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { ui: { hist: false }, sheet: { open: false, tab: 'break' }, editRow: null, dpage: null, flowOpen: {}, guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
+const st = { setting: null, settingDismissed: '', ui: { hist: false }, sheet: { open: false, tab: 'break' }, editRow: null, dpage: null, flowOpen: {}, guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -38,9 +39,12 @@ function fromText(text, opts = {}) {
   st.text = text;
   st.parsed = parse(text, ctx);
   st.query = st.parsed.query;
+  if (text !== st.settingDismissed) st.settingDismissed = '';
+  st.setting = st.settingDismissed ? null : parseSetting(text, ctx);
   run(opts);
 }
 function fromQuery(q) {
+  st.setting = null;
   st.query = q;
   st.text = queryToText(q, ctx);
   $('#q').value = st.text;
@@ -53,7 +57,7 @@ function run(opts = {}) {
   st.an = st.est && st.est.ok ? analyze(q, st.est, ctx) : null;
   S.last = st.text; persist();
   renderAll();
-  if (st.est && st.est.ok && st.text && !opts.noHistory) scheduleHistory();
+  if (st.est && st.est.ok && st.text && !opts.noHistory && !st.setting) scheduleHistory();
 }
 function renderAll() {
   $('#clearBtn').hidden = !st.text;
@@ -70,7 +74,7 @@ function chipsHtml() {
 // Only things the DM must act on stay visible: typo suggestions and ignored words.
 function renderUnderstanding() {
   const p = st.parsed, out = [];
-  if (p) {
+  if (p && !st.setting) {
     for (const [i, s] of p.suggestions.entries()) out.push(`<div class="hint">Did you mean <button class="pill" data-act="fix" data-i="${i}">${esc(s.to)}</button> instead of <span class="ign">${esc(s.from)}</span>?</div>`);
     const sugFrom = new Set(p.suggestions.flatMap(s => s.from.split(/\s+/).map(x => x.toLowerCase())));
     const rest = p.unrecognized.filter(u => !sugFrom.has(u.toLowerCase()));
@@ -96,6 +100,7 @@ function factsList(e) {
 }
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
+  if (st.setting) { el.innerHTML = settingCard(); return; }
   if (!st.text) { el.innerHTML = `<div class="empty">Describe what you want priced. Quantity, length, buying or selling, place, speed and quality all sharpen the estimate.</div>`; return; }
   if (!q.subject) {
     const g = guessCard();
@@ -155,10 +160,10 @@ function editorHtml(f, key) {
   let h = `<div class="editor">`;
   if (f.why) h += `<p class="why-t">${esc(f.why)}</p>`;
   if (f.key === 'base') {
-    const canKeep = !ent.curve && !ent.perMile;
+    const canKeep = !ent.curve;
     h += `<label class="lab">Price ${esc(f.label.replace(/^.*\(/, '(').replace(/^\((.*)\)$/, '$1'))}<input class="field" data-ed="base" inputmode="decimal" value="${esc(formatFull(f.mid, cur()))}"></label>`;
     if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${canKeep ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div>`;
-    h += `<p class="mini">${f.edited ? (canKeep ? 'Applies to this question until you keep it.' : 'Applies to this question. This item is priced by rarity or distance, so it cannot be kept as one price.') : 'Type a new price to see the estimate change.'}</p>`;
+    h += `<p class="mini">${f.edited ? (canKeep ? 'Applies to this question until you keep it.' : 'Applies to this question. This item is priced by rarity, so it cannot be kept as one price.') : 'Type a new price to see the estimate change.'}</p>`;
   } else if (f.key) {
     h += `<div class="grid2"><label class="lab">Low ×<input class="field" data-ed="lo" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.lo))}"></label><label class="lab">High ×<input class="field" data-ed="hi" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.hi))}"></label></div>`;
     if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${!f.saved ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div>`;
@@ -173,7 +178,7 @@ function seenHtml(e) {
 }
 function renderSheet() {
   const sh = $('#sheet'), s = st.sheet, e = st.est;
-  const ok = e && e.ok && st.query.subject;
+  const ok = e && e.ok && st.query.subject && !st.setting;
   if (!s.open || !ok) { sh.hidden = true; return; }
   const nOpts = st.an ? st.an.dimensions.length : 0;
   if (s.tab === 'opts' && !nOpts) s.tab = 'break';
@@ -226,6 +231,41 @@ function guessCard() {
     h += `<div class="row gact"><button class="btn primary" data-act="g-set">Save and price it</button>${c.entry && !c.tier ? `<button class="btn" data-act="g-alias">Same as this</button>` : ''}</div>`;
   }
   return h + `</section>`;
+}
+
+// ---------- settings typed into the box ----------
+function settingCard() {
+  const s = st.setting, c = cur();
+  const unitTxt = s.unit === 'each' ? 'each' : 'per ' + (s.unit === 'day' && s.draft.kind === 'lodging' ? 'night' : s.unit);
+  const lines = [];
+  if (s.viaBase && s.current) lines.push(`Replaces the price of ${esc(s.analog.name.toLowerCase())}, now ${esc(money(s.current))} ${unitTxt}.`);
+  if (!s.viaBase && s.analog && !s.rarityPriced) lines.push(`New item, based on ${esc(s.analog.name.toLowerCase())}.${s.owner ? ' Fixed at this price.' : ''}`);
+  if (s.rarityPriced) lines.push(`${esc(s.analog.name)} is priced by rarity. This sets one fixed price, and rarity will no longer change it.`);
+  if (!s.analog) lines.push('New item. Nothing similar was found, so it is priced as entered.');
+  if (s.note) lines.push(esc(s.note));
+  return `<section class="setting"><div class="sh">Set this value?</div>
+    <div class="sline"><b>${esc(s.name)}</b><span class="arrow">→</span><b class="sval">${esc(formatFull(s.perUnitBU, c))}</b> <span class="mini">${unitTxt}</span></div>
+    <ul class="slines">${lines.map(l => `<li>${l}</li>`).join('')}</ul>
+    <div class="row gact"><button class="btn primary" data-act="s-set">Set it</button><button class="btn" data-act="s-cancel">Cancel</button></div></section>`;
+}
+function applySetting() {
+  const s = st.setting;
+  if (!s) return;
+  let text;
+  if (s.viaBase) {
+    world.baseOverrides[s.analog.id] = baseFor(ctx, s.analog.id, s.perUnitBU);
+    text = s.analog.name.toLowerCase();
+  } else {
+    const stored = storedFor(ctx, s.draft, s.perUnitBU);
+    world.items = world.items.filter(x => x.name.toLowerCase() !== s.name.toLowerCase());
+    world.items.push({ id: newItemId(), ...s.draft, bu: +stored.toPrecision(6) });
+    text = s.name.toLowerCase();
+  }
+  const label = s.name;
+  st.setting = null; st.settingDismissed = '';
+  $('#q').value = text; st.text = text;
+  worldChanged();
+  toast('Set. ' + label + ' is now ' + formatFull(s.perUnitBU, cur()) + (s.unit === 'each' ? ' each' : ' per ' + s.unit) + '.');
 }
 
 function summaryLine(e) {
@@ -448,9 +488,11 @@ function buildSettingsHtml() {
     <div class="row"><button class="btn" data-act="w-add-item">Add an item</button></div>
   </div></div></details>
 
-  <details class="sect" data-sec="Adjustments"${op('Adjustments')}><summary><h3>Adjustments</h3><span class="sv">${Object.keys(w.overrides).length || 'none'}</span></summary><div class="sbody">
-    <p>Factor ranges you changed and kept. They apply to every estimate in this world.</p>
-    ${Object.entries(w.overrides).map(([k, v]) => `<div class="vrow"><span>${esc(overrideLabel(k))}</span><span class="mini">× ${esc(fx(v[0]))} to ${esc(fx(v[1]))}</span><button class="xbtn" data-act="w-del-ov" data-key="${esc(k)}" aria-label="Remove adjustment">×</button></div>`).join('') || '<p class="mini">None yet. Tap a row under Breakdown, change it, and choose Keep for this world.</p>'}
+  <details class="sect" data-sec="Adjustments"${op('Adjustments')}><summary><h3>Adjustments</h3><span class="sv">${Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || 'none'}</span></summary><div class="sbody">
+    <p>Prices and factor ranges you set or kept. They apply to every estimate in this world.</p>
+    ${Object.entries(w.baseOverrides).map(([id, bu]) => `<div class="vrow"><span>${esc((ctx.byId.get(id) || {}).name || id)}</span><span class="mini">${esc(formatFull(bu, w.currency))}</span><button class="xbtn" data-act="w-del-bo" data-key="${esc(id)}" aria-label="Remove price">×</button></div>`).join('')}
+    ${Object.entries(w.overrides).map(([k, v]) => `<div class="vrow"><span>${esc(overrideLabel(k))}</span><span class="mini">× ${esc(fx(v[0]))} to ${esc(fx(v[1]))}</span><button class="xbtn" data-act="w-del-ov" data-key="${esc(k)}" aria-label="Remove adjustment">×</button></div>`).join('')}
+    ${Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length ? '' : '<p class="mini">None yet. Type a setting like "healing potion costs 40 gp", or tap a row under Breakdown, change it, and choose Keep for this world.</p>'}
   </div></div></details>
 
   <details class="sect" data-sec="Back up and share"${op('Back up and share')}><summary><h3>Back up and share</h3><span class="sv"></span></summary><div class="sbody">
@@ -478,10 +520,8 @@ function keepEdit(key) {
   const f = st.est && st.est.factors.find(x => x.key === key), ent = st.est && st.est.entry;
   if (!f) return;
   if (key === 'base') {
-    if (ent.curve || ent.perMile || !(st.query.overrides && st.query.overrides.base > 0)) return;
-    const it = { id: newItemId(), name: ent.name, kind: ent.kind, unit: ent.unit, bu: st.query.overrides.base, tags: [...(ent.tags || [])], aliases: [...(ent.aliases || [])], spread: ent.spread ?? 0.1 };
-    world.items = world.items.filter(x => x.name.toLowerCase() !== ent.name.toLowerCase());
-    world.items.push(it);
+    if (ent.curve || !(st.query.overrides && st.query.overrides.base > 0)) return;
+    world.baseOverrides[ent.id] = st.query.overrides.base;
   } else {
     world.overrides[key] = [f.lo, f.hi];
   }
@@ -568,12 +608,15 @@ document.addEventListener('click', e => {
     case 'sheet-tab': st.sheet.tab = d.tab; renderSheet(); break;
     case 'sheet-close': st.sheet.open = false; st.editRow = null; renderSheet(); break;
     case 'edit-row': st.editRow = st.editRow === d.key ? null : d.key; renderSheet(); break;
-    case 'ed-reset': flowEdit(x => { if (x.overrides) { if (d.key === 'base') delete x.overrides.base; else if (x.overrides.f) delete x.overrides.f[d.key]; } }); if (world.overrides[d.key]) { delete world.overrides[d.key]; worldChanged({ lite: true }); } break;
+    case 'ed-reset': flowEdit(x => { if (x.overrides) { if (d.key === 'base') delete x.overrides.base; else if (x.overrides.f) delete x.overrides.f[d.key]; } }); if (d.key === 'base' && st.est && world.baseOverrides[st.est.entry.id]) { delete world.baseOverrides[st.est.entry.id]; worldChanged({ lite: true }); } else if (world.overrides[d.key]) { delete world.overrides[d.key]; worldChanged({ lite: true }); } break;
     case 'ed-reset-all': flowEdit(x => { delete x.overrides; }); break;
     case 'ed-keep': keepEdit(d.key); break;
     case 'w-del-ov': delete world.overrides[d.key]; worldChanged(); break;
+    case 'w-del-bo': delete world.baseOverrides[d.key]; worldChanged(); break;
     case 'dpage': st.dpage = d.p || null; st.dpageChanged = true; renderDrawer(); break;
     case 'round': world.dials.round = !world.dials.round; persist(); renderAll(); break;
+    case 's-set': applySetting(); break;
+    case 's-cancel': st.settingDismissed = st.text; st.setting = null; fromText(st.text, { noHistory: true }); break;
     case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
     case 'g-exact': if (st.guess) { st.guess.exact = true; renderResult(); const i = $('#gPrice'); if (i) i.focus(); } break;
     case 'g-raise': case 'g-lower': if (st.guess && st.guess.sel != null) { const f = a === 'g-raise' ? 1.25 : 0.8; st.guess.bu = niceRound(st.guess.bu * f, 3); renderResult(); } break;
