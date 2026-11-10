@@ -31,6 +31,29 @@ canvas{display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 8px 
 footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px 14px 18px;border-top:1px solid var(--line);background:var(--panel)}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000c;color:#fff;padding:9px 16px;border-radius:20px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
+
+.mbtn{font:inherit}
+dialog.modal{width:min(760px,calc(100vw - 24px));max-height:88vh;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);box-shadow:0 24px 70px #000b}
+dialog.modal::backdrop{background:rgba(0,0,0,.6)}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:1}
+.mh h2{margin:0;font:700 1.15rem/1.2 Georgia,'Iowan Old Style',serif}
+.mx{min-width:36px;padding:6px 10px}
+.mbody{padding:14px 16px 18px;overflow:auto;max-height:calc(88vh - 58px)}
+.intro{margin:0 0 12px;color:var(--muted);font-size:.9rem}
+.mtools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.mtools input[type=search]{flex:1;min-width:140px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#0e0f13;color:var(--text);font:inherit}
+.gh2{margin:16px 0 4px;font:700 .72rem/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.wm{display:grid;grid-template-columns:2.6em 1fr;gap:2px 8px;padding:6px 6px;border-radius:8px;border-bottom:1px solid #2b2f3a66}
+.wm .no{font:700 .95rem/1.4 Georgia,serif;color:var(--accent);text-align:right;font-variant-numeric:tabular-nums}
+.wm b{font-weight:600}
+.wm.hit{background:#e6b94a22;outline:2px solid var(--accent)}
+.card{margin:0 auto;max-width:520px;background:#fdf1dc;color:#1e1a14;border:1px solid #e69a28;border-top:4px solid #922610;border-bottom:4px solid #922610;border-radius:3px;padding:18px 22px 16px;box-shadow:0 8px 26px #0008;font-family:Georgia,'Iowan Old Style',serif;line-height:1.45}
+.card h3{margin:0;font:400 1.7rem/1.1 Georgia,serif;font-variant:small-caps;color:#58180d;letter-spacing:.02em}
+.card .sub{font-style:italic;font-size:.9rem;margin:4px 0 6px;color:#3a2d1c}
+.card .rule{height:3px;margin:6px 0 10px;background:linear-gradient(90deg,#922610,#e69a28);clip-path:polygon(0 0,100% 50%,0 100%)}
+.card p{margin:0 0 8px}
+.card p i.lead{font-weight:700}
+.card a.lnk{color:#58180d;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -43,6 +66,8 @@ footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px 
     <button id="vGM" aria-pressed="false">GM</button>
   </div>
   <label class="chk"><input type="checkbox" id="nums"> Numerals</label>
+  <button type="button" class="mbtn" id="bItem">Map item</button>
+  <button type="button" class="mbtn" id="bMagic">Wild magic</button>
 </header>
 <main>
   <div class="stage"><canvas id="c" aria-label="Foxwood Wilds hex map: tap a hex to reveal or hide it"></canvas></div>
@@ -53,6 +78,25 @@ footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px 
   <button id="fogAll">Fog all</button>
   <button id="save">Save PNG</button>
 </footer>
+<dialog class="modal" id="dMagic" aria-labelledby="dMagicT">
+  <div class="mh"><h2 id="dMagicT">Foxwood Wild Magic: Open Connection</h2><button type="button" class="mx" data-close aria-label="Close">✕</button></div>
+  <div class="mbody">
+    <p class="intro">When you surge, the magic opens a thread between you and a type of fae. The connection lasts 1 hour unless a line says otherwise. A save DC is 13 unless stated. To snip the thread early, touch cold iron to it and succeed on a DC 13 Intelligence (Arcana) or Intelligence (Religion) check.</p>
+    <div class="mtools"><button type="button" id="mRoll" class="mbtn">Roll d100</button><input type="search" id="mQ" placeholder="Search (e.g. hag, frightened, 1 hour)" aria-label="Search the table"><span class="count" id="mRolled"></span></div>
+    <div id="mList"></div>
+  </div>
+</dialog>
+<dialog class="modal" id="dItem" aria-labelledby="dItemT">
+  <div class="mh"><h2 id="dItemT">Map of Foxwood Wilds</h2><button type="button" class="mx" data-close aria-label="Close">✕</button></div>
+  <div class="mbody">
+    <div class="card">
+      <h3>Map of Foxwood Wilds</h3><div class="sub">Wondrous item, uncommon</div><div class="rule"></div>
+      <p>This hand-drawn map of a Feywild region is divided into 19 numbered hexes, each hidden behind drifting fog.</p>
+      <p><i class="lead">Investigate.</i> Studying the map takes 1 hour. Choose up to three hexes and make an Intelligence (Arcana) or Intelligence (Religion) check. On a 20 or higher, one chosen hex clears of fog; on a 25 or higher, two; on a 30 or higher, three. On a lower result, nothing clears. Cleared hexes stay revealed.</p>
+      <p><i class="lead">Fey Interference.</i> Each time you study the map again before the next dawn, roll a d20. On a 10 or lower, the map's magic lashes out and you trigger a wild magic surge (roll on the <a class="lnk" id="toMagic">Foxwood wild magic table</a>).</p>
+    </div>
+  </div>
+</dialog>
 <div class="toast" id="toast" role="status"></div>
 <script>
 (async () => {
@@ -173,6 +217,34 @@ footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px 
   };
   paint();
 })().catch(err => { document.body.insertAdjacentHTML('beforeend', `<p style="padding:20px;color:#f88">Couldn’t open the map: ${err.message}. Serve the folder over http (not file://).</p>`); });
+</script>
+<script>
+(() => {
+  const DATA = [["Pixies and Sprites",[[1,"Pixie","A pixie sees through your eyes for 1 hour. It knows everything you know."],[2,"Pixie","Pixie dust falls from your hair. One creature you choose gains a fly speed of 30 feet for 1 minute."],[3,"Pixie","A pixie sits on your shoulder, visible only to you. You can't be surprised."],[4,"Pixie","You can cast *dancing lights* at will. It squeaks every time."],[5,"Sprite","You glow green whenever you lie."],[6,"Sprite","A sprite heals you for 1 hit point at the start of each of your turns for 1 minute."],[7,"Sprite","Sprites tie everyone's laces together. Creatures within 10 feet of you have disadvantage on Dexterity saves for 1 minute."],[8,"Sprite","A sprite will deliver one message (up to 25 words) anywhere within 1 mile, arriving in 1 minute."]]],["Satyrs",[[9,"Satyr","Your voice becomes irresistibly smooth: advantage on Charisma checks."],[10,"Satyr","Pipes play from nowhere. Creatures within 30 feet make a Wisdom save or dance, with speed halved and disadvantage on attacks until the end of their next turn."],[11,"Satyr","Any wine within 60 feet becomes a fine vintage. Drinkers have advantage on saves against fear."],[12,"Satyr","A satyr's laughter echoes in your head. You can't be frightened for 1 minute."]]],["Dryads and Treants",[[13,"Dryad","Once, you can step into a tree and emerge from another within 30 feet of it."],[14,"Dryad","Roots hold you in place for 1 round (speed 0), but you have resistance to all damage until the start of your next turn."],[15,"Dryad","Plants within 30 feet turn toward you. You have advantage on Survival checks."],[16,"Treant","A seedling sprouts from your pocket. If planted, it grows into a tree by dawn that answers 3 questions."]]],["Nymphs",[[17,"Nymph","Water calls to you. You can breathe underwater."],[18,"Nymph","Creatures that see you make a Wisdom save or are charmed by your beauty for 1 minute."],[19,"Nymph","You can't lie while standing in water."],[20,"Nymph","Every reflective surface within 60 feet shows a vision of someone you love."]]],["Hags",[[21,"Green hag","Your voice also speaks from 30 feet away, and she can speak through it."],[22,"Green hag","She watches through your eyes. She knows your location and what you see."],[23,"Night hag","You dream of her at the next dawn. She offers a bargain (DM's design)."],[24,"Night hag","Your next long rest is interrupted and gives no benefit, but you learn a secret she whispers."],[25,"Sea hag","Your gaze blights. The next creature you look at makes a Wisdom save or is frightened for 1 minute."],[26,"Dusk hag","The next time a creature wakes within 30 feet of you, it takes 2d10 psychic damage and you regain that many hit points."],[27,"Annis hag","Your fingernails turn to iron claws (1d8 slashing) for 1 minute, but you can't cast spells."],[28,"Bheur hag","Frost spreads 10 feet from you, turning the ground to ice (difficult terrain). You are resistant to cold."],[29,"Hag coven","Three crones argue in your head. You have advantage on Wisdom saves and disadvantage on Insight checks."],[30,"Hag","A hag poses a riddle. If you answer it correctly, you gain a boon. If you answer wrongly, you have disadvantage on one ability's checks until dawn."]]],["Eladrin",[[31,"Spring eladrin","You can Fey Step 30 feet once as a bonus action, then giggle uncontrollably until your next turn."],[32,"Summer eladrin","Your next attack deals an extra 1d6 fire damage, and you are quick to anger for 1 hour."],[33,"Autumn eladrin","Hostile creatures within 30 feet make a Wisdom save or can't bring themselves to attack you for 1 minute."],[34,"Winter eladrin","You can Fey Step once, and both the starting and ending areas freeze (difficult terrain)."],[35,"Eladrin","A noble invites you to a Court event. The invitation appears in your pocket."],[36,"Eladrin","An eladrin shares your memories of the last hour and knows your plans."]]],["Redcaps",[[37,"Redcap","Your weapon thirsts. Your next hit deals an extra 1d8 damage, but you must kill a creature before dawn or take 2d6 psychic damage."],[38,"Redcap","Your boots feel heavy. You gain +10 feet of speed but can't stop moving for 1 round."],[39,"Redcap","You smell blood across the Wilds. Creatures within 300 feet that are bleeding are revealed to you."],[40,"Redcap","A redcap's hat appears on your head. Remove it before dawn or it stains red and won't come off."]]],["Boggles",[[41,"Boggle","An item in your possession (DM's choice) turns up somewhere else within 100 feet."],[42,"Boggle","Your hands become sticky: you can't drop what you're holding for 1 minute."],[43,"Boggle","A boggle makes you able to squeeze through any space an inch wide for 1 minute."],[44,"Boggle","Doors and gates within 30 feet of you swing open on their own."]]],["Quicklings",[[45,"Quickling","You gain the effect of *haste* for 1 round, then lethargy (*slow*) for 1 round."],[46,"Quickling","A blur circles you, giving +2 AC for 1 minute but disadvantage on Perception checks."],[47,"Quickling","Time stutters. You take the same action twice on your next turn, if possible."],[48,"Quickling","A quickling steals your next 10 minutes. You finish what you were doing, but no time has passed for you."]]],["Blink Dogs",[[49,"Blink dog","You can teleport 20 feet as a bonus action, once."],[50,"Blink dog","A blink dog barks from nowhere. A creature within 60 feet teleports 10 feet in a random direction."],[51,"Blink dog","A pack of blink dogs follows you for 1 hour, guarding you from attackers (one attack per round has disadvantage)."],[52,"Blink dog","Your shadow blinks one second behind you for 1 hour, confusing trackers."]]],["Will-o'-Wisps",[[53,"Will-o'-wisp","A wisp offers to guide you. It lies on a 1–3 on a d6, rolled by the DM each time it speaks."],[54,"Will-o'-wisp","You glow with a pale light (bright light 10 feet). You can't hide."],[55,"Will-o'-wisp","Your next attack deals an extra 1d6 lightning damage."],[56,"Will-o'-wisp","A trail of lights leads to the nearest dead creature."]]],["Korreds",[[57,"Korred","You can hurl a boulder (+5 to hit, 2d6 bludgeoning, range 60 feet) once."],[58,"Korred","Stones within 30 feet rumble. You have advantage on checks to understand stone and earth."],[59,"Korred","Your hair grows long and strong, giving you advantage on Strength (Athletics) checks for 1 hour."],[60,"Korred","A korred's music makes any creature within 30 feet dance. They have disadvantage on Dexterity saves for 1 minute."]]],["Meenlocks",[[61,"Meenlock","Claw marks appear on your back. You have advantage on saves against being grappled."],[62,"Meenlock","A meenlock whispers fear into your thoughts. You are frightened of the dark but can see in it up to 60 feet."],[63,"Meenlock","A shadow creeps across the ground toward you. It reveals creatures hiding within 30 feet."],[64,"Meenlock","A creature you can see within 30 feet must succeed on a Wisdom save or is frightened for 1 minute."]]],["Fomorians",[[65,"Fomorian","A fomorian looks through your eyes. Creatures that meet your gaze take 1d6 psychic damage."],[66,"Fomorian","Your reflection twists into something ugly. Anyone who looks at it makes a Wisdom save or is frightened for 1 minute."],[67,"Fomorian","You gain a +2 bonus to damage rolls for 1 minute but have disadvantage on Charisma checks for 1 hour."],[68,"Fomorian","A fomorian demands a tribute. If you give it something valuable, it blesses you with a boon (DM's choice)."]]],["Firbolgs",[[69,"Firbolg","You can cast *invisibility* on yourself once (no components)."],[70,"Firbolg","You gain advantage on Stealth checks and can't be tracked by scent."],[71,"Firbolg","A firbolg gives you a piece of advice (DM's choice) about your current situation."],[72,"Firbolg","You can detect any poisoned food or drink within 30 feet."]]],["Faerie Dragons",[[73,"Faerie dragon","You exhale a cloud of euphoria (15-foot cone). Creatures must succeed on a Wisdom save or are poisoned for 1 minute."],[74,"Faerie dragon","Illusions you cast have their save DC increased by 2 for 1 hour."],[75,"Faerie dragon","A faerie dragon hides in your pack for 1 hour. It plays tricks, and you have advantage on Deception checks."],[76,"Faerie dragon","A flurry of butterflies follows you. Creatures within 10 feet have disadvantage on attacks against you for 1 round."]]],["Unicorns and Pegasi",[[77,"Unicorn","A unicorn heals you for 2d8 hit points but you can't be healed again until dawn."],[78,"Unicorn","Unicorn magic gives you advantage on saves against being charmed for 1 hour."],[79,"Pegasus","You gain a fly speed of 30 feet for 1 minute."],[80,"Pegasus","A pegasus offers a ride. Anyone who rides it travels 5 miles in a minute."]]],["Darklings",[[81,"Darkling","You gain darkvision 60 feet. Bright light blinds you for 1 round."],[82,"Darkling","Your shadow slips loose and steals an item from a creature within 30 feet."],[83,"Darkling","You gain the ability to merge with shadows. You have advantage on Stealth checks in dim light or darkness."],[84,"Darkling","A darkling snuffs out a light within 30 feet. You can see in the darkness."]]],["Courts",[[85,"Summer Court","A herald appears with a gift: a flower that heals 2d4 hit points when eaten."],[86,"Winter Court","A cold wind blows. You have resistance to cold damage, but fire damage against you is doubled for 1 minute."],[87,"Gloaming Court","A messenger delivers a cryptic message (DM's design)."],[88,"Unseelie Court","A pale lord sends a gift of cruelty. Your next attack deals extra 2d6 psychic damage, but you must be cruel (DM's call)."]]],["Archfey",[[89,"Archfey patron","An archfey takes notice of you. It may grant a boon or request a favor (DM's choice)."],[90,"Archfey","An archfey speaks through your mouth for 1 minute. You say what they want."],[91,"Archfey","An archfey borrows one of your spell slots (DM's choice). It returns it at dawn with interest."],[92,"Archfey","An archfey bestows a minor title: \"Knight of the Briar.\" Fey creatures respond to the title."],[93,"Archfey","An archfey sends a gift of a compass that points to what you want most. It works for 1 hour."],[94,"Archfey","An archfey challenges you to a game of chance. If you win, you get a boon; if you lose, you owe a favor."]]],["Strange Fae",[[95,"Pooka","You can change into a small animal once for up to 1 hour. You can't change back early."],[96,"Leprechaun","A coin appears in your pocket. If you spend it, it returns to the leprechaun with a curse."],[97,"Brownie","A brownie tidies your camp overnight. You and your allies have advantage on saves against exhaustion for the day."],[98,"Grig","A cricket chirps in your head, warning you of danger: you can't be surprised."],[99,"Changeling","A changeling swaps one trait with you (DM's choice) for 1 hour."],[100,"Unknown fae","A fae you've never met connects to you. Roll twice more on this table. Both connections apply."]]]];
+  const $ = (q) => document.querySelector(q), esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmt = t => esc(t).replace(/\*([^*]+)\*/g, '<i>$1</i>');
+  const dm = $('#dMagic'), di = $('#dItem');
+  const render = q => {
+    q = (q || '').trim().toLowerCase(); let out = '';
+    DATA.forEach(([g, rows]) => {
+      const hit = rows.filter(([n, who, text]) => !q || (n + ' ' + who + ' ' + text + ' ' + g).toLowerCase().includes(q));
+      if (!hit.length) return;
+      out += '<h3 class="gh2">' + esc(g) + '</h3>' + hit.map(([n, who, text]) => '<div class="wm" id="wm' + n + '"><span class="no">' + n + '</span><span><b>' + esc(who) + '.</b> ' + fmt(text) + '</span></div>').join('');
+    });
+    $('#mList').innerHTML = out || '<p class="intro">Nothing matches.</p>';
+  };
+  const open = d => { if (!d.open) d.showModal(); };
+  $('#bMagic').onclick = () => { render(''); $('#mQ').value = ''; $('#mRolled').textContent = ''; open(dm); };
+  $('#bItem').onclick = () => open(di);
+  $('#toMagic').onclick = () => { di.close(); $('#bMagic').click(); };
+  $('#mQ').oninput = e => render(e.target.value);
+  $('#mRoll').onclick = () => {
+    $('#mQ').value = ''; render('');
+    const r = 1 + Math.floor(Math.random() * 100); $('#mRolled').textContent = 'Rolled ' + r;
+    const el = document.getElementById('wm' + r); if (el) { el.classList.add('hit'); el.scrollIntoView({ block: 'center' }); }
+  };
+  [dm, di].forEach(d => { d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); }); });
+})();
 </script>
 </body>
 </html>
