@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=50d393c6';
-import { niceRound } from './money.js?v=50d393c6';
+} from './data.js?v=4da596af';
+import { niceRound } from './money.js?v=4da596af';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -182,8 +182,8 @@ export function estimate(q, ctx) {
       const hit = ((tb.tags && (entry.tags || []).some(t => tb.tags.includes(t))) || (tb.kinds && tb.kinds.includes(kind))) && (!tb.sides || tb.sides.includes(side));
       if (hit) { a *= tb.f[0]; b *= tb.f[1]; }
     }
-    const o = fo('mod:' + m.id); if (o) { a = o[0]; b = o[1]; }
-    list.push({ m, lo: a, hi: b, edited: !!o, saved: foSaved('mod:' + m.id), size: Math.abs(Math.log(mid(a, b))) });
+    const ok = fo('mod:' + m.id + ':' + side) ? 'mod:' + m.id + ':' + side : 'mod:' + m.id, o = fo(ok); if (o) { a = o[0]; b = o[1]; }
+    list.push({ m, lo: a, hi: b, edited: !!o, saved: foSaved(ok), size: Math.abs(Math.log(mid(a, b))) });
   }
   list.sort((x, y) => y.size - x.size);
   const strict = dials.stacking === 'strict';

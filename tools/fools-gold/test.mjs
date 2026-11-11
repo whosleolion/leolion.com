@@ -504,7 +504,7 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
 {
   const w = WORLD_PRESETS.srd(); const c = compileWorld(w);
   const r = x => readFact(x, c);
-  eq('MF1 takes N% reads as a circumstance', [r('black market takes 30%').kind, r('black market takes 30%').key], ['mod', 'mod:black-market']);
+  eq('MF1 takes N% reads as a circumstance', [r('black market takes 30%').kind, r('black market takes 30%').key], ['mod', 'mod:black-market:sell']);
   eq('MF2 takes 30% lands near 0.7', [r('black market takes 30%').lo, r('black market takes 30%').hi], [0.66, 0.74]);
   eq('MF3 pays 40% lands near 0.4', [r('the black market pays 40%').lo, r('the black market pays 40%').hi], [0.38, 0.42]);
   eq('MF4 N% more raises it', r('rush is 20% more expensive').lo > 1.1, true);
@@ -617,6 +617,32 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('N1 hostile worlds normalize and price', [crashed, uncompilable], [0, 0]);
   let threw = 0; for (const b of [null, [], 'x', 5]) { try { normalizeWorld(b); } catch (e) { threw++; } } eq('N2 non-objects rejected', threw, 4);
   const w = normalizeWorld({ dials: { priceLevel: '', volatility: -2, sellFraction: 50 } }); eq('N3 dials clamped', [w.dials.priceLevel, w.dials.volatility, w.dials.sellFraction], [1, 0, 1]);
+}
+
+// ---- audit round: hours, world scaling, list priority, sell-side facts, cart haggle on sales, removal words ----
+{
+  const { readFact: rf } = await import('../../src/building/fools-gold/js/facts.js');
+  const { readSentence: rs, emptyCart: ec, addToCart: ac, lineResult: lr, cartTotals: ct } = await import('../../src/building/fools-gold/js/cart.js');
+  const typ = (c, s) => estimate(parse(s, c).query, c).typical;
+  const lawyerDay = typ(modern, 'lawyer'), lawyerHours = typ(modern, 'lawyer for 2 hours');
+  t('AU1 hours price a fraction of a working day', lawyerHours < lawyerDay * 0.4 && lawyerHours > lawyerDay * 0.1, [lawyerDay, lawyerHours]);
+  const { normalizeWorld: nw } = await import('../../src/building/fools-gold/js/store.js');
+  const gp = WORLD_PRESETS.srd(); gp.lists = ['srd', 'fantasy', 'modern']; nw(gp); const gpc = compileWorld(gp);
+  const cof = typ(gpc, 'coffee'), car = typ(gpc, 'car');
+  t('AU2 the modern list reads in dollars-as-coins in a coin world', cof < 20 && car > 20000 && car < 100000, [cof, car]);
+  const usd = WORLD_PRESETS.modern(); usd.lists = ['srd', 'fantasy', 'modern']; nw(usd); const usdc = compileWorld(usd);
+  eq('AU3 a dollar world prefers the modern word', parse('hotel', usdc).query.subject, 'lodging.m-hotel-room');
+  const mm = rf('black market takes 30%', gpc);
+  const w2 = WORLD_PRESETS.srd(); nw(w2); w2.overrides[mm.key] = [mm.lo, mm.hi]; const c2 = compileWorld(w2);
+  t('AU4 a takes-fact moves selling, not buying', typ(c2, 'healing potion black market') === typ(compileWorld(WORLD_PRESETS.srd()), 'healing potion black market') && typ(c2, 'sell healing potion black market') > typ(compileWorld(WORLD_PRESETS.srd()), 'sell healing potion black market'));
+  eq('AU5 parser words cannot be redefined', rf('sell is a dagger', gpc).kind, 'blocked');
+  const r1 = rs('3 rope, remove the horse, drop 2 torches', gpc);
+  eq('AU6 removal words are read as removals', r1.removes.map(x => [x.n, x.text]), [[null, 'horse'], [2, 'torches']]);
+  const sc = ec(); ac(sc, { ...parse('sell 2 longswords', gpc).query }); ac(sc, { ...parse('sell a dagger', gpc).query }); sc.haggle = { pct: 10 };
+  const a1 = lr(sc.lines[0], sc, gpc);
+  t('AU7 a cart that only sells can be haggled up', a1.ok && a1.hgCart === 10 && a1.t > typ(gpc, 'sell 2 longswords'), [a1.hgCart, a1.t]);
+  t('AU8 a million is a number', parse('a million swords', gpc).query.qty && parse('a million swords', gpc).query.qty.lo === 1000000);
+  eq('AU9 absurd quantities are capped', parse('999999999999999999999 swords', gpc).query.qty.lo, 1000000);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

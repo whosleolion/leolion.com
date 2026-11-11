@@ -1,6 +1,6 @@
 // Facts typed as a sentence in World settings > Changes: "a healing potion costs 40 gp", "a shiv is a dagger",
 // "sellers pay 40%". Read by plain patterns, shown back for confirmation, then saved as a price, a word or a dial.
-import { parseSetting } from './setting.js?v=50d393c6';
+import { parseSetting } from './setting.js?v=4da596af';
 
 const clean = s => String(s || '').replace(/[.!]+$/g, '').replace(/\s+/g, ' ').trim();
 const ART = /^(?:an?|the|my|our)\s+/i;
@@ -19,9 +19,9 @@ function resolveMod(ctx, text) {
   return ctx.modList.find(m => m.label.toLowerCase() === t || m.aliases.some(a => a.toLowerCase() === t)) || null;
 }
 const r2 = n => Math.round(n * 100) / 100;
-function modFact(m, lo, hi, how) {
+function modFact(m, lo, hi, how, side) {
   lo = r2(lo); hi = r2(hi);
-  return { kind: 'mod', key: 'mod:' + m.id, lo, hi, label: m.label, line: `${m.label} × ${lo === hi ? lo : lo + ' to ' + hi}`, note: how };
+  return { kind: 'mod', key: 'mod:' + m.id + (side ? ':' + side : ''), lo, hi, label: m.label, line: `${m.label}${side ? ' (when you sell)' : ''} × ${lo === hi ? lo : lo + ' to ' + hi}`, note: how };
 }
 const pct = s => { const m = /(\d+(?:\.\d+)?)\s*(%|percent)/i.exec(s); return m ? +m[1] / 100 : null; };
 
@@ -44,7 +44,7 @@ export function readFact(text, ctx) {
   }
   if ((mm = /^(.+?)\s+(pays|gives|offers|takes|keeps|skims)\s+(?:you\s+)?(\d+(?:\.\d+)?)\s*%$/i.exec(t))) {
     const m = resolveMod(ctx, mm[1]);
-    if (m && +mm[3] > 0 && +mm[3] < 100) { const pays = /pays|gives|offers/i.test(mm[2]); const v = pays ? +mm[3] / 100 : 1 - +mm[3] / 100; return modFact(m, v * 0.95, v * 1.05, `${m.label} will ${pays ? 'pay' : 'take'} ${mm[3]}%, so a price lands at about ${Math.round(v * 100)}% of normal.`); }
+    if (m && +mm[3] > 0 && +mm[3] < 100) { const pays = /pays|gives|offers/i.test(mm[2]); const v = pays ? +mm[3] / 100 : 1 - +mm[3] / 100; return modFact(m, v * 0.95, v * 1.05, `${m.label} will ${pays ? 'pay' : 'take'} ${mm[3]}%, so what you sell for lands at about ${Math.round(v * 100)}% of normal. Buying from them is not changed.`, 'sell'); }
   }
   if ((mm = /^(.+?)\s+(?:is|=|multiplies by|at)\s*[x×]\s*(\d+(?:\.\d+)?)(?:\s*(?:to|-|–)\s*[x×]?\s*(\d+(?:\.\d+)?))?$/i.exec(t))) {
     const m = resolveMod(ctx, mm[1]), a = +mm[2], b = mm[3] ? +mm[3] : a;

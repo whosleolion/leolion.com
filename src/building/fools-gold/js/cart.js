@@ -1,8 +1,8 @@
 // The cart: a list of saved questions (queries), not saved prices. Each line is priced live by the engine,
 // so every factor stays editable by loading the line back into the price screen.
 // A haggle belongs to the question: { pct } moves with the other fields, { price } is an agreed amount that stays put.
-import { parse } from './parser.js?v=50d393c6';
-import { estimate } from './engine.js?v=50d393c6';
+import { parse } from './parser.js?v=4da596af';
+import { estimate } from './engine.js?v=4da596af';
 
 export const emptyCart = () => ({ lines: [], mods: [], next: 1, haggle: null });
 
@@ -60,7 +60,8 @@ export function lineResult(line, cart, ctx) {
   if (!q.subject || !ctx.byId.has(q.subject)) return { ok: false, reason: 'missing' };
   // a cart haggle is a change to what you buy, on top of any percent haggle on the line; an agreed price is left alone
   const hgLine = (!fixedOf(line.q) && line.q.haggle && line.q.haggle.pct) || 0;
-  const hgCart = q.action !== 'sell' && !fixedOf(line.q) && cart.haggle && cart.haggle.pct ? cart.haggle.pct : 0;
+  // a cart haggle moves what you buy; in a cart that only sells, it moves what you are paid
+  const sellsOnly = cart.lines.every(l => l.q.action === 'sell'), hgCart = (q.action === 'sell') === sellsOnly && !fixedOf(line.q) && cart.haggle && cart.haggle.pct ? cart.haggle.pct : 0;
   if (hgCart) q.haggle = { pct: Math.round(((1 + hgLine / 100) * (1 + hgCart / 100) - 1) * 1000) / 10 };
   const e = estimate(q, ctx);
   if (!e.ok) return { ok: false, reason: e.error || 'bad' };
