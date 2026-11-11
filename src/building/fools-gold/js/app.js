@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=a38fab67';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=a38fab67';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=a38fab67';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=a38fab67';
-import { findOffer } from './lists.js?v=a38fab67';
-import { suggestPrompts } from './suggest.js?v=a38fab67';
-import { readFact } from './facts.js?v=a38fab67';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=a38fab67';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=a38fab67';
+import { compileWorld } from './world.js?v=b492c0de';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=b492c0de';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=b492c0de';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=b492c0de';
+import { findOffer } from './lists.js?v=b492c0de';
+import { suggestPrompts } from './suggest.js?v=b492c0de';
+import { readFact } from './facts.js?v=b492c0de';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=b492c0de';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=b492c0de';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=a38fab67';
-import { applicable } from './engine.js?v=a38fab67';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=a38fab67';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=a38fab67';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=a38fab67';
-import { complete } from './complete.js?v=a38fab67';
-import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=a38fab67';
+} from './data.js?v=b492c0de';
+import { applicable } from './engine.js?v=b492c0de';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=b492c0de';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=b492c0de';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=b492c0de';
+import { complete } from './complete.js?v=b492c0de';
+import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=b492c0de';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -542,7 +542,7 @@ function pickerHtml(pickAct = 'pick-item', big = false) {
   items.sort((a, b) => (b.isCategory ? 1 : 0) - (a.isCategory ? 1 : 0) || unitBU(a) - unitBU(b) || a.name.localeCompare(b.name));
   const cur0 = st.query.subject;
   return `<input class="field" id="flowSearch" type="search" placeholder="Search all items" value="${esc(st.flow.search)}" aria-label="Search all items" style="width:100%">
-    ${big ? (sel || search ? (sel && !search ? `<button class="linkbtn" data-act="f-cat" data-v="" style="min-height:2.5rem;padding:0;color:var(--accent);font-weight:600;justify-self:start;text-align:left">&larr; All kinds &middot; ${esc((cats.find(c => c[0] === sel) || [])[1] || '')}</button>` : '') : `<div class="catgrid">${cats.map(([id, l]) => `<button class="catbtn" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`) : `<div class="quick" style="margin:0">${cats.map(([id, l]) => `<button class="q${sel === id && !search ? ' on' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`}
+    ${big ? '' : `<div class="quick" style="margin:0">${cats.map(([id, l]) => `<button class="q${sel === id && !search ? ' on' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`}
     ${items.length ? `<div class="fields">${items.slice(0, 80).map(e => {
       const per = e.curve ? 'by rarity' : money(unitBU(e)) + (timeUnit(e) ? ' / ' + timeUnit(e).word : e.unit === 'lb' ? ' / lb' : '');
       return `<button class="slot${cur0 === e.id ? ' open' : ''}" data-act="${pickAct}" data-v="${esc(e.id)}"><span class="v">${esc(e.name)}${e.isCategory ? ' <i>any</i>' : ''}</span><span class="hint">${esc(per)}</span></button>`;
@@ -558,13 +558,31 @@ function startHtml() {
   const a = st.start && st.start.action;
   if (!a) return `<p class="mini" style="color:var(--muted);margin:0 0 .75rem">What are you doing?</p><div class="startgrid">${START_ACTIONS.map(([id, l, s]) => `<button class="startbtn" data-act="start-action" data-v="${id}"><b>${l}</b><span>${s}</span></button>`).join('')}</div>`;
   const label = START_ACTIONS.find(x => x[0] === a)[1];
-  return `<div class="startcrumb"><button class="linkbtn" data-act="start-back">&larr; ${esc(label)}</button><span>Pick a kind, then the item</span></div>` + pickerHtml('start-pick', true);
+  const labelOf = id => (id === 'mine' ? 'My items' : (FLOW_CATS.find(c => c[0] === id) || [])[1] || id);
+  const have = id => ctx.entries.some(e => catOf(e) === id);
+  const groups = FLOW_GROUPS.map(([id, l, subs]) => [id, l, subs.filter(have)]).filter(g => g[2].length);
+  const fl = st.flow, grp = groups.find(g => g[0] === fl.group);
+  const searching = fl.search.trim();
+  let back = '', body = '', where = label;
+  if (!searching && !fl.cat && !grp) {
+    body = `<div class="catgrid">${groups.map(([id, l]) => `<button class="catbtn" data-act="f-group" data-v="${id}">${esc(l)}</button>`).join('')}</div>`;
+  } else if (!searching && !fl.cat && grp) {
+    where = grp[1]; back = 'f-group';
+    body = `<div class="catgrid">${grp[2].map(id => `<button class="catbtn" data-act="f-cat" data-v="${id}">${esc(labelOf(id))}</button>`).join('')}</div>`;
+  } else {
+    back = !searching && grp && grp[2].length > 1 ? 'f-up' : 'f-group'; where = searching ? 'Search' : labelOf(fl.cat);
+    body = '';
+  }
+  const crumb = `<div class="startcrumb">${back ? `<button class="linkbtn" data-act="${back === 'f-up' ? 'f-group' : back}" data-v="${back === 'f-up' ? (grp ? grp[0] : '') : ''}">&larr; ${back === 'f-up' ? esc(grp[1]) : 'All kinds'}</button>` : `<button class="linkbtn" data-act="start-back">&larr; ${esc(label)}</button>`}<span>${where === label ? esc(label) : esc(label) + ' &rsaquo; ' + esc(where)}</span></div>`;
+  const list = body ? '' : pickerHtml('start-pick', true);
+  return crumb + `<input class="field" id="flowSearch" type="search" placeholder="Search all items" value="${esc(fl.search)}" aria-label="Search all items" style="width:100%">` + body + list.replace(/<input class="field" id="flowSearch"[^>]*>/, '');
 }
 function renderSheet() {
   const sh = $('#sheet'), s = st.sheet, e = st.est;
   if (!s.open) { sh.hidden = true; return; }
   const body = $('#sheetBody'), top = body.scrollTop;
   sh.classList.toggle('cart', s.mode === 'cart');
+  sh.classList.toggle('full', s.mode === 'start');
   const acts = $('#sheetActs'); if (acts) acts.innerHTML = s.mode === 'cart' ? `<button class="sheet-x" data-act="cart-copy" aria-label="Copy the cart as text"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>` : '';
   if (s.mode === 'cart') {
     $('#sheetTitle').textContent = 'Cart';
@@ -731,6 +749,22 @@ const FLOW_CATS = [
   ['services', 'Other services', e => e.kind === 'service'],
   ['property', 'Property', e => e.kind === 'property'],
   ['gear', 'Gear, tools, clothes', e => e.kind === 'good'],
+];
+// the buy / sell flow reads in two steps: a group, then a kind inside it. Order is by how often a table reaches for them.
+const FLOW_GROUPS = [
+  ['gear', 'Gear and tools', ['gear']],
+  ['arms', 'Weapons and armor', ['weapons', 'armor', 'explosives']],
+  ['clothes', 'Clothes and jewelry', ['clothes', 'crowns']],
+  ['food', 'Food and drink', ['food']],
+  ['animals', 'Animals, mounts and vehicles', ['animals', 'mounts']],
+  ['plants', 'Plants and seeds', ['plants']],
+  ['magic', 'Potions and magic', ['potions', 'magic']],
+  ['help', 'Hired help and spells', ['labor', 'spell']],
+  ['stay', 'Lodging, rent and property', ['lodging', 'rent', 'property']],
+  ['go', 'Travel', ['travel']],
+  ['trade', 'Trade goods', ['trade']],
+  ['pay', 'Services, health and fees', ['services', 'health', 'fees']],
+  ['mine', 'My items', ['mine']],
 ];
 const has = (e, t) => (e.tags || []).includes(t);
 function catOf(e) { if (e.src === 'user') return 'mine'; return (FLOW_CATS.find(c => c[2](e)) || [])[0] || 'gear'; }
@@ -990,6 +1024,7 @@ document.addEventListener('click', e => {
       else { const m = ctx.mods.get(d.k); if (!m) return; if (x.mods.includes(d.k)) x.mods = x.mods.filter(z => z !== d.k); else { if (GROUPS[m.group].exclusive) x.mods = x.mods.filter(z => ctx.mods.get(z)?.group !== m.group); x.mods.push(d.k); } }
     }); break;
     case 'pick-item': st.sheet.open = false; flowEdit(x => { delete x.overrides; x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
+    case 'f-group': { st.flow.group = d.v || null; st.flow.cat = null; st.flow.search = ''; const g = FLOW_GROUPS.find(x => x[0] === d.v); const subs = g ? g[2].filter(id => ctx.entries.some(e => catOf(e) === id)) : []; if (subs.length === 1) st.flow.cat = subs[0]; renderSheet(); break; }
     case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderSheet(); break;
     case 'resolve': flowEdit(x => { const g = ctx.mods.get(d.id).group; x.mods = x.mods.filter(m => ctx.mods.get(m)?.group !== g || m === d.id); }); break;
     case 'copy': copyText(summaryLine(st.est), 'Copied'); flash(); break;
@@ -1051,10 +1086,10 @@ document.addEventListener('click', e => {
     case 'fact-cancel': st.fact.res = null; renderDrawer(); break;
     case 's-cancel': st.settingDismissed = st.text; st.setting = null; fromText(st.text, { noHistory: true }); break;
     case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
-    case 'start': st.start = { action: null }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: null, search: '' }; st.slot = null; renderSheet(); break;
+    case 'start': st.start = { action: null }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: null, group: null, search: '' }; st.slot = null; renderSheet(); break;
     case 'ac': { const r = (st.ac || [])[+d.i]; if (!r) break;
       if (r.type === 'item') { st.start = { action: r.verb }; st.sheet = { open: false, mode: 'start' }; startPick(r.id); }
-      else { st.start = { action: r.verb }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: r.type === 'cat' ? r.cat : null, search: '' }; st.slot = null; renderSheet(); }
+      else { st.start = { action: r.verb }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: r.type === 'cat' ? r.cat : null, group: r.type === 'cat' ? (FLOW_GROUPS.find(g => g[2].includes(r.cat)) || [])[0] || null : null, search: '' }; st.slot = null; renderSheet(); }
       break; }
     case 'start-action': st.start = { action: d.v }; renderSheet(); break;
     case 'start-back': st.start = { action: null }; renderSheet(); break;

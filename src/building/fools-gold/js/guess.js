@@ -1,8 +1,8 @@
 // Guessing for words the app does not know. No AI: a hand-made word-to-category list plus word overlap
 // with the catalog. It only ever proposes. The DM picks, nudges the price and confirms.
-import { stem } from './world.js?v=a38fab67';
-import { estimate, timeUnit } from './engine.js?v=a38fab67';
-import { niceRound } from './money.js?v=a38fab67';
+import { stem } from './world.js?v=b492c0de';
+import { estimate, timeUnit } from './engine.js?v=b492c0de';
+import { niceRound } from './money.js?v=b492c0de';
 
 // Word families. Each lists catalog ids to try, in order. Ids missing from the current world are skipped.
 const FAMILIES = [

@@ -1133,3 +1133,13 @@ html[data-big] .jump .q { white-space: nowrap; }
 .catgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .625rem; }
 .catbtn { min-height: 4rem; padding: .75rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 600 1.0625rem/1.25 var(--font-body); text-align: left; }
 .catbtn:active { border-color: var(--accent); }
+
+/* ---- the buy / sell flow takes the whole screen ---- */
+.sheet.full { align-items: stretch; }
+.sheet.full .sheet-back { background: var(--bg); }
+.sheet.full .sheet-panel { max-width: 760px; height: 100dvh; max-height: 100dvh; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top, 0px); }
+.sheet.full #sheetBody { flex: 1; min-height: 0; padding-bottom: 1.25rem; }
+.sheet.full .catgrid { flex: 1; align-content: start; grid-auto-rows: minmax(5.5rem, auto); }
+.sheet.full .catbtn { min-height: 5.5rem; font-size: 1.1875rem; display: flex; align-items: center; }
+.sheet.full .startgrid { flex: 1; grid-auto-rows: minmax(7rem, 1fr); max-height: 28rem; }
+@media (prefers-reduced-motion: no-preference) { .sheet.full .sheet-panel { animation: fade .18s ease-out; } }
