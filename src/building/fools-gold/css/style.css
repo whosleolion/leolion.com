@@ -1145,3 +1145,14 @@ html[data-big] .jump .q { white-space: nowrap; }
 .sheet.full #sheetBody { overflow-y: auto; }
 .sheet.full .startbtn { min-height: 4rem; }
 @media (prefers-reduced-motion: no-preference) { .sheet.full .sheet-panel { animation: fade .18s ease-out; } }
+
+/* ---- cart haggle as a small mode: drag the marker, or tap the total and type what you agreed ---- */
+.cbig.tapt { display: inline-flex; align-items: center; gap: .5rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; border-bottom: 1px dashed var(--muted); }
+.cbig.tapt svg { color: var(--muted); }
+.cbig.tedit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; width: 100%; }
+.cbig.tedit .field, .cbig.tedit .btn { min-height: 2.75rem; font-size: 1rem; }
+
+/* ---- unknown items in a typed list: say what it is, in one tap ---- */
+.ferr.unk { display: grid; gap: .375rem; list-style: none; }
+.unkopts { display: flex; flex-wrap: wrap; gap: .375rem; }
+.unkopts .q { min-height: 2.5rem; }
