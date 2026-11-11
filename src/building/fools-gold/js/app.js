@@ -1,20 +1,20 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=12a3fb10';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=12a3fb10';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=12a3fb10';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=12a3fb10';
-import { findOffer } from './lists.js?v=12a3fb10';
-import { suggestPrompts } from './suggest.js?v=12a3fb10';
-import { readFact } from './facts.js?v=12a3fb10';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=12a3fb10';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=12a3fb10';
+import { compileWorld } from './world.js?v=d6c6ccdd';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=d6c6ccdd';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=d6c6ccdd';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=d6c6ccdd';
+import { findOffer } from './lists.js?v=d6c6ccdd';
+import { suggestPrompts } from './suggest.js?v=d6c6ccdd';
+import { readFact } from './facts.js?v=d6c6ccdd';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=d6c6ccdd';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=d6c6ccdd';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=12a3fb10';
-import { applicable } from './engine.js?v=12a3fb10';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=12a3fb10';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=12a3fb10';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=12a3fb10';
+} from './data.js?v=d6c6ccdd';
+import { applicable } from './engine.js?v=d6c6ccdd';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=d6c6ccdd';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=d6c6ccdd';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=d6c6ccdd';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -250,7 +250,7 @@ function haggleHtml(e) {
   const memoText = memo ? (memo.price ? 'Agreed ' + money(memo.price) : pctText(memo.pct)) : '';
   return `<div class="hgpanel"><div class="quick hgchips">${haggleChips([-5, -10, -15, -25, 10], h && !h.fixed ? h.pct : null, 'haggle-set')}</div>
     <div class="hgin"><input class="field" id="hgIn" inputmode="decimal" placeholder="15% off, or the price you agreed" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Haggle by percent, or type the price you agreed"><button class="btn primary" data-act="haggle-in">Set</button></div>
-    <p class="mini">A percent moves with the other fields. A price you type stays put. You can also drag the marker along the range.</p>
+    <p class="mini">A percent moves with the other fields. A price you type stays put.</p>
     <div class="hgfoot row">${h && h.fixed ? '' : '<button class="btn" data-act="haggle-agree">Agree this price</button>'}${h ? '<button class="btn" data-act="haggle-off">Turn off</button>' : memo ? `<button class="btn" data-act="haggle-restore">Back to ${esc(memoText)}</button>` : ''}<button class="btn" data-act="haggle-close">Done</button></div></div>`;
 }
 // h is { pct } (moves with the other fields), { price } (agreed, stays put) or null
@@ -279,7 +279,7 @@ function dragMove(e) {
   d.pct = Math.round((p / d.typ - 1) * 100);
   const tick = d.bar.querySelector('.tick'); if (tick) tick.style.left = (pos * 100).toFixed(1) + '%';
   const sec = d.bar.closest('.price, .ctot');
-  const shown = d.typ * (1 + d.pct / 100), amt = d.cart ? (d.get > 0 ? Math.abs(d.get - shown) : shown) : shown;
+  const shown = d.typ * (1 + d.pct / 100), amt = shown;
   const num = sec && sec.querySelector('.pricebtn .num, .cbig b');
   if (num) { const pr = np(money(amt)); num.innerHTML = d.cart ? esc(money(amt)) : `${esc(pr.n)}${pr.u ? `<small>${esc(pr.u)}</small>` : ''}`; }
   const good = d.cart ? d.pct < 0 : favour(d.pct, st.query.action);
@@ -340,7 +340,7 @@ function offerHtml() {
   const r = st.cartOffer, shop = r.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean);
   return `<section class="guess cartoffer"><div class="gh">That reads as <b>${r.items.length} items</b>${shop.length ? ' (' + esc(shop.join(', ')) + ')' : ''}. Price them together in a cart?</div><ul class="slines">${r.items.map(q => { const e = ctx.byId.get(q.subject); return `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(e ? whatText(q, e) : '')}</li>`; }).join('')}${r.bad.map(b => `<li class="ferr">&ldquo;${esc(b)}&rdquo; is not in your lists, so it is left out.</li>`).join('')}</ul><button class="cta" data-act="cart-offer-add">Add ${r.items.length} to cart</button><button class="cta2" data-act="cart-offer-no">Not now</button></section>`;
 }
-const amtOf = t => (t.mixed ? Math.abs(t.net) : (t.spend || t.get));
+const amtOf = t => (t.spend || t.get);
 function renderCartPill() {
   const el = $('#cartPill'); if (!el) return;
   const c = cartOf(), n = c.lines.length;
@@ -368,11 +368,14 @@ function cartHaggleHtml() {
   const h = cartOf().haggle;
   return `<div class="hgpanel"><div class="quick hgchips">${haggleChips([-5, -10, -15, -20], h ? h.pct : null, 'cart-hg-set')}</div>
     <div class="hgin"><input class="field" id="cartHg" inputmode="decimal" placeholder="10% off" autocapitalize="none" autocomplete="off" aria-label="Haggle everything you buy by a percent"><button class="btn primary" data-act="cart-hg-in">Set</button></div>
-    <p class="mini">Changes everything you buy by this much. Lines with an agreed price and lines you sell are left alone. You can also drag the marker under the total.</p>
-    <div class="hgfoot row">${h ? '<button class="btn" data-act="cart-hg-off">Turn off</button>' : ''}<button class="btn" data-act="cart-haggle">Done</button></div></div>`;
+    <div class="hgfoot"><span class="mini">Applies to what you buy. Agreed and selling lines are left alone.</span><button class="btn" data-act="cart-haggle">Done</button></div></div>`;
 }
+const MINUS = '−';
 function cartHtml() {
-  const c = cartOf(), t = cartTotals(c, ctx), ref = t.pre || t;
+  const c = cartOf(), t = cartTotals(c, ctx), ref = t.pre || t, hg = c.haggle;
+  const sellOnly = !t.spend && t.get > 0;
+  // in a mixed cart every line carries a sign from your wallet's point of view: buying takes money out, selling brings it in
+  const sign = r => (r.sell ? '+ ' : t.mixed ? MINUS + ' ' : '');
   const rows = c.lines.map(line => {
     const r = lineResult(line, c, ctx);
     if (!r.ok) return `<div class="cline miss"><div class="l1"><span class="lbl">${esc(line.q.subject || 'An item')}</span><span class="ltot">&mdash;</span></div><div class="l2"><span class="csub">Not in your lists</span><button class="cx" data-act="cart-del" data-id="${line.id}" aria-label="Remove">&times;</button></div></div>`;
@@ -384,29 +387,31 @@ function cartHtml() {
     else if (r.hgLine) bits.push(`<span class="ctag ${favour(r.hgLine, r.q.action) ? 'is-good' : 'is-bad'}">haggled ${pctText(r.hgLine)}</span>`);
     const hgc = hl ? (hl.good ? ' hg-good' : ' hg-bad') : '';
     const rng = hl ? `was ${esc(money(r.was))}` : money(r.lo) === money(r.hi) ? '' : `${esc(money(r.lo))} to ${esc(money(r.hi))}`;
-    return `<div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot${hgc}">${r.sell ? '+ ' : ''}${esc(money(r.t))}</span></div><div class="l2"><span class="csub">${bits.join(' ')}<span class="crg">${rng}</span></span><button class="cx" data-act="cart-del" data-id="${line.id}" aria-label="Remove">&times;</button></div></div>`;
+    return `<div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot${hgc}">${sign(r)}${esc(money(r.t))}</span></div><div class="l2"><span class="csub">${bits.join(' ')}<span class="crg">${rng}</span></span><button class="cx" data-act="cart-del" data-id="${line.id}" aria-label="Remove">&times;</button></div></div>`;
   }).join('');
-  // totals
-  let head;
-  if (t.mixed) head = t.net < 0 ? 'Net: you pay' : 'Net: you receive'; else if (t.get > 0) head = 'You receive'; else head = 'Total';
-  const amt = amtOf(t), hg = c.haggle;
+
+  // the summary: what you pay, the haggle against it, and (if you sell too) what comes back
+  const head = sellOnly ? 'You receive' : 'You pay', amt = sellOnly ? t.get : t.spend;
   const canHaggle = ref.spend > 0;
   const bandLo = Math.max(ref.spendBand[0], ref.spend * 0.05), bandHi = Math.max(ref.spendBand[1], bandLo * 1.01);
   const posOf = p => Math.min(100, Math.max(0, (Math.log(Math.max(p, 1e-9)) - Math.log(bandLo)) / (Math.log(bandHi) - Math.log(bandLo)) * 100));
   const hgPill = !canHaggle ? '' : hg
     ? `<span class="hgwrap ${hg.pct < 0 ? 'good' : 'bad'}"><button class="haggle on" data-act="cart-haggle" aria-expanded="${st.cartHaggleOpen}">${HAG_I}<span>Haggled ${pctText(hg.pct)}</span></button><button class="hgx" data-act="cart-hg-off" aria-label="Turn haggle off">&times;</button></span>`
     : `<button class="haggle" data-act="cart-haggle" aria-expanded="${st.cartHaggleOpen}">${HAG_I}<span>Haggle</span></button>`;
-  const bar = !canHaggle ? '' : `<div class="span dragbar" data-scope="cart" role="slider" tabindex="0" aria-label="Haggle what you buy along its range" aria-valuenow="${Math.round(t.spend)}" data-lo="${bandLo}" data-hi="${bandHi}" data-typ="${ref.spend}" data-get="${t.get}"><div class="rule"></div><div class="band"></div>${hg ? `<div class="notch" style="left:${posOf(ref.spend).toFixed(1)}%"></div>` : ''}<div class="tick" style="left:${posOf(t.spend).toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(bandLo))}</span><span>${esc(money(bandHi))}</span></div>`;
-  const split = t.mixed ? `<span>Pay ${esc(money(t.spend))} &middot; Receive ${esc(money(t.get))}</span>` : '';
+  const bar = !canHaggle ? '' : `<div class="span dragbar" data-scope="cart" role="slider" tabindex="0" aria-label="Haggle what you pay along its range" aria-valuenow="${Math.round(t.spend)}" data-lo="${bandLo}" data-hi="${bandHi}" data-typ="${ref.spend}"><div class="rule"></div><div class="band"></div>${hg ? `<div class="notch" style="left:${posOf(ref.spend).toFixed(1)}%"></div>` : ''}<div class="tick" style="left:${posOf(t.spend).toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(bandLo))}</span><span>${esc(money(bandHi))}</span></div>`;
   const note = hg ? `<div class="hgnote">Haggled ${Math.abs(hg.pct)}% ${hg.pct < 0 ? 'off' : 'on top of'} what you buy. Was ${esc(money(ref.spend))}.</div>` : '';
+  const tally = t.mixed ? `<div class="ctally"><span>Selling +${esc(money(t.get))}</span><span>Net ${t.net < 0 ? MINUS : '+'}${esc(money(Math.abs(t.net)))}</span></div>` : '';
+
+  // the math: a tally you can read down, with the range explained once
+  const side = (n, text) => `<div class="sum"><span>${text}</span><b>${n}</b></div>`;
+  const why = st.cartWhy ? `<div class="cwhy"><div><span>Shop</span><b>${esc(shopLabel(c))}</b></div>${hg ? `<div><span>Haggle</span><b>${esc(pctText(hg.pct))} on what you buy</b></div>` : ''}${c.lines.map(line => { const r = lineResult(line, c, ctx); if (!r.ok) return ''; const steps = r.fixed ? 'agreed price' : r.e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => `${f.label} ×${fx(((f.effLo ?? f.lo) * (f.effHi ?? f.hi)) ** 0.5)}`).join(', ') || 'no circumstances'; return `<div><span>${r.sell ? '+' : MINUS} ${esc(whatText(r.q, r.e.entry))}<em>${esc(steps)}</em></span><b>${r.sell ? '+' : MINUS}${esc(money(r.t))}</b></div>`; }).join('')}${t.spend ? side(MINUS + esc(money(t.spend)), 'Buying') : ''}${t.get ? side('+' + esc(money(t.get)), 'Selling') : ''}${side((t.net < 0 ? MINUS : '+') + esc(money(Math.abs(t.net))), t.net < 0 ? 'You pay' : 'You receive').replace('class="sum"', 'class="sum last"')}<p class="mini">What you buy usually lands between ${esc(money(ref.spendBand[0]))} and ${esc(money(ref.spendBand[1]))}. Each line can vary on its own, so that is narrower than adding every low and every high (${esc(money((t.spend ? t.spendExt : t.getExt)[0]))} to ${esc(money((t.spend ? t.spendExt : t.getExt)[1]))}).</p></div>` : '';
+
   const read = st.cartRead ? `<div class="cread"><p>That reads as ${st.cartRead.items.length} items${st.cartRead.shop.length ? ' (' + esc(st.cartRead.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ')) + ')' : ''}.</p><ul>${st.cartRead.items.map(q => `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(whatText(q, ctx.byId.get(q.subject)))}</li>`).join('')}${st.cartRead.bad.map(b => `<li class="ferr">&ldquo;${esc(b)}&rdquo; is not in your lists.</li>`).join('')}</ul><div class="row"><button class="go" data-act="cart-read-add">Add ${st.cartRead.items.length} to cart</button><button data-act="cart-read-no">Cancel</button></div></div>` : '';
-  const why = st.cartWhy ? `<div class="cwhy"><div><span>Shop</span><b>${esc(shopLabel(c))}</b></div>${hg ? `<div><span>Haggle</span><b>${esc(pctText(hg.pct))} on what you buy</b></div>` : ''}${c.lines.map(line => { const r = lineResult(line, c, ctx); if (!r.ok) return ''; const steps = r.fixed ? 'agreed price' : r.e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => `${f.label} ×${fx(((f.effLo ?? f.lo) * (f.effHi ?? f.hi)) ** 0.5)}`).join(', ') || 'no circumstances'; return `<div><span>${esc(whatText(r.q, r.e.entry))}<em>${esc(steps)}</em></span><b>${esc(money(r.t))}</b></div>`; }).join('')}<div><span>Every low and every high added up</span><b>${esc(money((t.get > 0 && !t.spend ? t.getExt : t.spendExt)[0]))} to ${esc(money((t.get > 0 && !t.spend ? t.getExt : t.spendExt)[1]))}</b></div><p class="mini">The likely range assumes each line varies on its own, so it is narrower than adding every low and every high.</p></div>` : '';
   const body = c.lines.length ? rows : `<p class="empty">Nothing in the cart yet. Tap Add beside a price, or type a few items below.</p>`;
   const shopRow = `<div class="cfield"><button class="crow" data-act="cart-shop-toggle" aria-expanded="${st.cartShopOpen}"><span class="k">Shop</span><span class="v">${esc(shopLabel(c))}</span><span class="chev">${st.cartShopOpen ? '&#9662;' : '&rsaquo;'}</span></button>${st.cartShopOpen ? shopOptions(c, t) : ''}</div>`;
   return `${shopRow}${st.cartHaggleOpen ? cartHaggleHtml() : ''}<div class="clines">${body}</div>${c.lines.length ? '<button class="linkbtn cempty" data-act="cart-clear">Empty the cart</button>' : ''}${why}
-    <div class="cfoot">${read}<div class="cin"><input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="3 rope, 2 torches, sell 2 shortswords" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div>
-    <div class="ctot${hg ? ' hg ' + (hg.pct < 0 ? 'good' : 'bad') : ''}"><div class="t1"><span>${esc(head)}</span>${hgPill}</div><div class="cbig"><b>${esc(money(amt))}</b></div>${bar}${note}${split ? `<div class="t2">${split}</div>` : ''}</div>${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out of the total.</p>` : ''}
-    <div class="cacts"><button class="btn" data-act="cart-why">Why this total?</button><button class="btn" data-act="cart-copy">Copy cart</button></div></div>`;
+    <div class="cfoot"><div class="csum ctot${hg ? ' hg ' + (hg.pct < 0 ? 'good' : 'bad') : ''}"><div class="t1"><span>${head}</span>${hgPill}</div><div class="cbig"><b>${esc(money(amt))}</b></div>${bar}${note}${tally}${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out.</p>` : ''}<button class="linkbtn cmath" data-act="cart-why" aria-expanded="${st.cartWhy}">${st.cartWhy ? 'Hide the math' : 'Show the math'}</button></div>
+    <div class="cdock">${read}<div class="cin"><input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="Add more: 3 rope, 2 torches" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div></div></div>`;
 }
 function clearInput() { $('#q').value = ''; fromText(''); }
 function openCart() { st.sheet = { open: true, mode: 'cart' }; renderSheet(); }
@@ -500,6 +505,7 @@ function renderSheet() {
   if (!s.open) { sh.hidden = true; return; }
   const body = $('#sheetBody'), top = body.scrollTop;
   sh.classList.toggle('cart', s.mode === 'cart');
+  const acts = $('#sheetActs'); if (acts) acts.innerHTML = s.mode === 'cart' ? `<button class="sheet-x" data-act="cart-copy" aria-label="Copy the cart as text"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>` : '';
   if (s.mode === 'cart') {
     $('#sheetTitle').textContent = 'Cart';
     body.innerHTML = cartHtml();

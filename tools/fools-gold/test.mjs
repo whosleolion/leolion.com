@@ -563,7 +563,8 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const hostile = normalizeCart({ lines: [null, { q: 5 }, { id: 'x', q: { subject: 'good.rope', qty: { lo: 'a' }, mods: [1, 'village'] }, quote: 'no' }], mods: ['village', 3] });
   eq('CT18 a hostile saved cart loads clean', [hostile.lines.length, hostile.lines[0].q.qty, hostile.lines[0].q.mods, hostile.lines[0].quote, hostile.mods], [1, null, ['village'], null, ['village']]);
   const txt = cartText(c2, c, n => String(Math.round(n)), (r, line) => r ? r.e.entry.name : 'x');
-  t('CT19 the cart copies as plain text', /^Cart/.test(txt) && /Net:/.test(txt) && txt.split('\n').length >= 4);
+  t('CT19 the cart copies as a tally from your wallet', /^Cart/.test(txt) && /Buying: \u2212/.test(txt) && /Selling: \+/.test(txt) && /Net: [\u2212+]/.test(txt));
+  t('CT20 buying lines are minus and selling lines are plus', /: \u2212\d/.test(txt.split('\n')[1]) && txt.split('\n').some(l => /\(sell\)|Hemp rope/.test(l) && /: \+\d/.test(l)), txt);
 }
 
 // ---------- haggle ----------

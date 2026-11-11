@@ -1,8 +1,8 @@
 // The cart: a list of saved questions (queries), not saved prices. Each line is priced live by the engine,
 // so every factor stays editable by loading the line back into the price screen.
 // A haggle belongs to the question: { pct } moves with the other fields, { price } is an agreed amount that stays put.
-import { parse } from './parser.js?v=12a3fb10';
-import { estimate } from './engine.js?v=12a3fb10';
+import { parse } from './parser.js?v=d6c6ccdd';
+import { estimate } from './engine.js?v=d6c6ccdd';
 
 export const emptyCart = () => ({ lines: [], mods: [], next: 1, haggle: null });
 
@@ -124,16 +124,22 @@ export function readSentence(text, ctx) {
   return { items, shop, bad };
 }
 
-// plain text for pasting
+// plain text for pasting, as a tally from your wallet's side: buying takes money out (minus), selling brings it in (plus)
 export function cartText(cart, ctx, fmt, labelOf) {
-  const rows = [], t = cartTotals(cart, ctx);
+  const M = '\u2212', t = cartTotals(cart, ctx), rows = [];
   for (const line of cart.lines) {
     const r = lineResult(line, cart, ctx);
-    rows.push(r.ok ? `${labelOf(r)}${r.sell ? ' (sell)' : ''}${r.fixed ? ' (agreed)' : r.e.haggle ? ' (haggled)' : ''}: ${fmt(r.t)}` : `${labelOf(null, line)}: not in your lists`);
+    if (!r.ok) { rows.push(`${labelOf(null, line)}: not in your lists`); continue; }
+    rows.push(`${labelOf(r)}${r.fixed ? ' (agreed)' : r.e.haggle ? ' (haggled)' : ''}: ${r.sell ? '+' : M}${fmt(r.t)}`);
   }
   const shop = cart.mods.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ');
-  const total = t.get > 0 && t.spend > 0 ? `Net: you ${t.net < 0 ? 'pay' : 'receive'} ${fmt(Math.abs(t.net))}` : t.get > 0 ? `You receive ${fmt(t.get)}` : `Total: ${fmt(t.spend)}`;
-  return [shop ? `Cart, ${shop}` : 'Cart', ...rows, total].join('\n');
+  const out = [shop ? `Cart, ${shop.charAt(0).toUpperCase()}${shop.slice(1)}` : 'Cart', ...rows];
+  if (cart.haggle) out.push(`Haggle: ${cart.haggle.pct < 0 ? M : '+'}${Math.abs(cart.haggle.pct)}% on what you buy`);
+  if (t.spend) out.push(`Buying: ${M}${fmt(t.spend)}`);
+  if (t.get) out.push(`Selling: +${fmt(t.get)}`);
+  const net = `${t.net < 0 ? M : '+'}${fmt(Math.abs(t.net))}`;
+  out.push(t.mixed ? `Net: ${net} (you ${t.net < 0 ? 'pay' : 'receive'})` : `Total: ${net}`);
+  return out.join('\n');
 }
 
 const cleanHaggle = h => {
