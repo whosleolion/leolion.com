@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=4da596af';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=4da596af';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=4da596af';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=4da596af';
-import { findOffer } from './lists.js?v=4da596af';
-import { suggestPrompts } from './suggest.js?v=4da596af';
-import { readFact } from './facts.js?v=4da596af';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=4da596af';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=4da596af';
+import { compileWorld } from './world.js?v=842e564c';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=842e564c';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=842e564c';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=842e564c';
+import { findOffer } from './lists.js?v=842e564c';
+import { suggestPrompts } from './suggest.js?v=842e564c';
+import { readFact } from './facts.js?v=842e564c';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=842e564c';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=842e564c';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=4da596af';
-import { applicable } from './engine.js?v=4da596af';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=4da596af';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=4da596af';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=4da596af';
-import { complete } from './complete.js?v=4da596af';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=4da596af';
+} from './data.js?v=842e564c';
+import { applicable } from './engine.js?v=842e564c';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=842e564c';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=842e564c';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=842e564c';
+import { complete } from './complete.js?v=842e564c';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=842e564c';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -713,7 +713,7 @@ function guessCard() {
     if (qtxt && pv.full.ok) h += `<div class="gtot">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
   }
   const kindName = (KINDS.find(k => k.id === g.tags.kind) || KINDS[0]).label;
-  const seg = r => `<div class="grow"><div class="glab">${esc(rowLabel(r))}${g.found.includes(r) ? ' <i>from your words</i>' : ''}</div><div class="gseg" role="group" aria-label="${esc(rowLabel(r))}">${optionEffects(g.tags, r).map(o => `<button class="${o.now ? 'on' : ''}" data-act="g-tag" data-r="${r}" data-v="${esc(o.id)}" aria-pressed="${o.now}"><b>${esc(o.label)}</b><small>${o.now ? 'now' : esc(o.delta)}</small></button>`).join('')}</div></div>`;
+  const seg = r => `<div class="grow"><div class="glab">${esc(rowLabel(r))}${g.found.includes(r) ? ' <i>from your words</i>' : ''}</div><div class="gseg n${optionEffects(g.tags, r).length}${(o => o.length >= 5 && o.some(x => x.label.length > 7))(optionEffects(g.tags, r)) ? ' wrapseg' : ''}" role="group" aria-label="${esc(rowLabel(r))}">${optionEffects(g.tags, r).map(o => `<button class="${o.now ? 'on' : ''}" data-act="g-tag" data-r="${r}" data-v="${esc(o.id)}" aria-pressed="${o.now}"><b>${esc(o.label)}</b><small>${o.now ? 'now' : esc(o.delta)}</small></button>`).join('')}</div></div>`;
   const dflt = defaultsOf(g.tags);
   const shown = rowsFor(g.tags.kind), isOpen = r => g.more || g.found.includes(r) || g.touched.includes(r) || g.tags[r] !== dflt[r];
   const openRows = shown.filter(isOpen), foldRows = shown.filter(r => !isOpen(r));

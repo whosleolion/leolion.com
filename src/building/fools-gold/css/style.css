@@ -1206,7 +1206,7 @@ html[data-big] .jump .q { white-space: nowrap; }
 /* ---- touch targets ---- */
 .q, .haggle, .linkbtn, [data-act=cart-add] { min-height: 2.75rem; }
 .clear { width: 2.5rem; height: 2.5rem; }
-.guess .foldrow { margin-top: -.25rem; }
+
 
 /* ---- never wider than the screen: grid and flex children may shrink below their text ---- */
 .guess, .guess > *, .gtags, .gtags > *, .grow, .kindgrid > * { min-width: 0; }
@@ -1227,3 +1227,23 @@ html[data-big] .jump .q { white-space: nowrap; }
 .hgseg { flex-wrap: wrap; }
 @media (max-width: 380px) { .hgseg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .legend { margin: .25rem 0 0; font-size: .875rem; color: var(--muted); }
+
+/* ---- segments: equal cells that never overlap; long labels wrap onto a second row of cells ---- */
+.gseg { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.gseg button b { overflow-wrap: anywhere; line-height: 1.15; }
+/* longer scales read as separate tiles, three or four to a row, so no label is squeezed */
+.gseg.wrapseg { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .375rem; border: 0; background: none; overflow: visible; border-radius: 0; }
+.gseg.wrapseg.n7 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gseg.wrapseg button { margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.gseg.wrapseg button.on { background: var(--accent); border-color: var(--accent); }
+.guess .foldrow { margin-top: .375rem; }
+
+.gseg button b { overflow-wrap: normal; hyphens: none; }
+.gseg button { padding-left: .125rem; padding-right: .125rem; }
+.gseg.wrapseg button b { font-size: .875rem; }
+/* on the narrowest phones five short options also become tiles, so no word is cut */
+@media (max-width: 380px) {
+  .gseg.n5:not(.wrapseg) { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .375rem; border: 0; background: none; overflow: visible; border-radius: 0; }
+  .gseg.n5:not(.wrapseg) button { margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .gseg.n5:not(.wrapseg) button.on { background: var(--accent); border-color: var(--accent); }
+}
