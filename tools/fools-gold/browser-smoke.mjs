@@ -23,10 +23,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' zoom is locked', /user-scalable=no/.test(await page.getAttribute('meta[name=viewport]', 'content')));
   ok(name + ' no footer text', !(await page.$('.foot')));
   ok(name + ' sheet closed by default', await page.isHidden('#sheet'));
-  await page.click('#info');
-  ok(name + ' info tooltip opens', await page.isVisible('#infotip'));
-  await page.mouse.click(6, 420);
-  ok(name + ' info tooltip closes on outside tap', await page.isHidden('#infotip'));
+  ok(name + ' no info dot or footer, only a gear', !(await page.$('#info')) && !!(await page.$('#gear')));
 
   // empty state: examples on one line, nothing else
   await page.fill('#q', '');
@@ -102,9 +99,20 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' conflict resolved', !(await page.$('.conflict')));
 
   // settings as pushed pages, worlds, modern
-  await page.click('#worldBtn');
+  await page.click('#gear');
   ok(name + ' drawer opens', await page.isVisible('#drawer'));
-  ok(name + ' settings root is a short list', (await page.$$('.nrow')).length >= 9);
+  ok(name + ' settings root is a short grouped list', (await page.$$('.nrow')).length >= 10 && (await page.$$('.navgroup')).length === 3);
+  await goPage(page, 'About');
+  ok(name + ' the attribution lives in About', /Creative Commons/.test(await page.textContent('.sbody.page')));
+  await goBack(page);
+  await goPage(page, 'Appearance');
+  await page.click('input[data-bind=theme][value=dark]');
+  ok(name + ' theme can be forced dark', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
+  await page.click('input[data-bind=theme][value=light]');
+  ok(name + ' theme can be forced light', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'light');
+  await page.click('input[data-bind=theme][value=system]');
+  ok(name + ' match device clears the override', (await page.evaluate(() => document.documentElement.dataset.theme)) === undefined);
+  await goBack(page);
   await goPage(page, 'Your worlds');
   await page.click('[data-act=w-select][data-id=modern]');
   await goBack(page);
@@ -128,7 +136,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.fill('#q', "6 months of John's rent");
   ok(name + ' saved variable works in a longer question', (await price(page)).replace(/\s/g, '').startsWith('$4,800'), await price(page));
 
-  await page.click('#worldBtn'); await goPage(page, 'Your worlds'); await page.click('[data-act=w-select][data-id=vcm]'); await goBack(page); await page.click('[data-act=close-world]');
+  await page.click('#gear'); await goPage(page, 'Your worlds'); await page.click('[data-act=w-select][data-id=vcm]'); await goBack(page); await page.click('[data-act=close-world]');
   await page.fill('#q', 'a healing potion costs 40 gp here');
   await page.click('[data-act=s-set]');
   ok(name + ' override applies in the world', /^(3[6-9]|4[0-4])/.test(await price(page)), await price(page));
@@ -153,7 +161,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
 
   // hostile import
   let alerts = 0; page.on('dialog', d => { alerts++; d.dismiss(); });
-  await page.click('#worldBtn'); await goPage(page, 'Back up and share');
+  await page.click('#gear'); await goPage(page, 'Back up and share');
   await page.fill('#importBox', '{"name":"bad","items":[{}]}');
   await page.click('[data-act=w-import]');
   await page.fill('#importBox', '{"id":"i","name":"i","currency":{"denominations":[{"id":"gp","name":"gp","bu":"\\"><img src=x onerror=alert(1)>"}]},"dials":{"priceLevel":"\\"><img src=x onerror=alert(2)>"}}');
@@ -164,13 +172,19 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.waitForSelector('#q');
   ok(name + ' hostile import: app still boots after reload', !!(await page.$('#q')));
   ok(name + ' hostile import: no script ran', alerts === 0, alerts);
-  await page.click('#worldBtn'); await goPage(page, 'Money');
+  await page.click('#gear'); await goPage(page, 'Money');
   await page.focus('[data-bind=note]');
   await page.fill('[data-bind=note]', 'about a dollar'); await page.keyboard.press('Tab');
   ok(name + ' settings page keeps focus after an edit', await page.evaluate(() => document.activeElement && document.activeElement.tagName !== 'BODY'));
   await page.click('[data-act=close-world]');
+  await page.fill('#q', 'buy a longsword'); await page.press('#q', 'Enter');
   await page.fill('#q', '');
-  ok(name + ' recent list shows on the empty screen', true);
+  ok(name + ' recent list shows on the empty screen, dimmed', !!(await page.$('#history .hrow')) && parseFloat(await page.evaluate(() => getComputedStyle(document.querySelector('#history')).opacity)) < 0.9);
+  const nRecent = (await page.$$('#history .hrow')).length;
+  await page.click('#history [data-act=hist-del] >> nth=0');
+  ok(name + ' a recent search can be removed', (await page.$$('#history .hrow')).length === nRecent - 1 || nRecent === 1);
+  if (await page.$('[data-act=hist-clear]')) await page.click('[data-act=hist-clear]');
+  ok(name + ' recent searches can be cleared', !(await page.$('#history .hrow')));
   await page.screenshot({ path: `${out}/${name}-2.png` });
 
   // a saved copy with old files updates itself

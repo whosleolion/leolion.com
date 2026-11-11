@@ -538,3 +538,21 @@ body { background: var(--bg); color: var(--fg); font: 16px/1.35 var(--font-body)
 .input .clear { position: static; transform: none; right: auto; top: auto; width: 30px; height: 30px; }
 #q, #q:focus { border: 0; box-shadow: none; }
 .fields .slot.assumed .v { color: var(--fg); }
+
+/* gear menu, dim clearable recents */
+.wname { font-size: 13px; color: var(--muted); max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gear { width: 40px; height: 40px; border: 0; background: none; color: var(--muted); font: 22px/1 var(--font-body); padding: 0; border-radius: 50%; margin-right: -8px; }
+.gear:active { background: var(--surface2); }
+.history { margin-top: 10px; opacity: .72; }
+.history .hhead { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 4px 6px; }
+.history .hhead h3 { margin: 0; }
+.history .hhead .linkbtn { color: var(--muted); font-size: 13px; text-decoration: none; padding: 4px 0 4px 12px; }
+.history .list { background: none; border: 1px solid var(--line); }
+.history .hrow .h { color: var(--muted); }
+.history .hrow .hp { opacity: .8; }
+.history .del { border: 0; background: none; color: var(--muted); font-size: 18px; line-height: 1; padding: 10px 14px; }
+.theme { display: flex; flex-direction: column; background: var(--surface); border-radius: 12px; overflow: hidden; }
+.theme label { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 14px; border-top: 1px solid var(--line); font-size: 16px; }
+.theme label:first-child { border-top: 0; }
+.theme input { width: 20px; height: 20px; accent-color: var(--accent); }
+.navgroup { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 16px 4px 6px; }

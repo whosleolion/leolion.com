@@ -1,16 +1,16 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=b1bfe512';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=b1bfe512';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=b1bfe512';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=b1bfe512';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=b1bfe512';
+import { compileWorld } from './world.js?v=fc0f7817';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=fc0f7817';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=fc0f7817';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=fc0f7817';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=fc0f7817';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=b1bfe512';
-import { applicable } from './engine.js?v=b1bfe512';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=b1bfe512';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=b1bfe512';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=b1bfe512';
+} from './data.js?v=fc0f7817';
+import { applicable } from './engine.js?v=fc0f7817';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=fc0f7817';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=fc0f7817';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=fc0f7817';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -352,7 +352,7 @@ function recordHistory() {
   item.pin = !!(old && old.pin);
   S.history = S.history.filter(h => h !== old);
   S.history.unshift(item);
-  S.history = [...S.history.filter(h => h.pin), ...S.history.filter(h => !h.pin).slice(0, 25)].sort((x, y) => y.ts - x.ts);
+  S.history = S.history.slice(0, 30);
   persist(); renderHistory();
 }
 function scheduleHistory() { clearTimeout(st.histTimer); st.histTimer = setTimeout(recordHistory, 1800); }
@@ -360,10 +360,9 @@ function renderHistory() {
   const h = S.history.filter(x => x.world === world.id);
   const el = $('#history');
   if (st.text || !h.length) { el.innerHTML = ''; return; }
-  const sorted = [...h.filter(x => x.pin), ...h.filter(x => !x.pin)].slice(0, 8);
-  el.innerHTML = `<h3>Recent</h3><div class="list">` + sorted.map(x => {
+  el.innerHTML = `<div class="hhead"><h3>Recent</h3><button class="linkbtn" data-act="hist-clear">Clear</button></div><div class="list">` + h.slice(0, 8).map(x => {
     const i = S.history.indexOf(x);
-    return `<div class="hrow"><button class="h" data-act="hist" data-i="${i}"><span>${esc(x.text)}</span><span class="hp">${esc(x.price)}</span></button><button class="star${x.pin ? ' on' : ''}" data-act="star" data-i="${i}" aria-label="${x.pin ? 'Unstar' : 'Star'}" aria-pressed="${!!x.pin}">${x.pin ? '★' : '☆'}</button></div>`;
+    return `<div class="hrow"><button class="h" data-act="hist" data-i="${i}"><span>${esc(x.text)}</span><span class="hp">${esc(x.price)}</span></button><button class="del" data-act="hist-del" data-i="${i}" aria-label="Remove">&times;</button></div>`;
   }).join('') + `</div>`;
 }
 
@@ -412,10 +411,12 @@ function renderDrawer() {
   const secs = [...doc.querySelectorAll('details.sect')].map(d => ({ id: d.dataset.sec, sv: d.querySelector('.sv')?.textContent || '', title: d.querySelector('summary h3')?.textContent || d.dataset.sec, body: d.querySelector('.sbody').innerHTML }));
   const page = st.dpage && secs.find(x => x.id === st.dpage);
   if (page) {
-    panel.innerHTML = `<div class="nav"><button class="back" data-act="dpage" data-p="">‹ World</button><h2>${esc(page.title)}</h2><button class="btn primary" data-act="close-world">Done</button></div><div class="sbody page">${page.body}</div>`;
+    panel.innerHTML = `<div class="nav"><button class="back" data-act="dpage" data-p="">‹ Settings</button><h2>${esc(page.title)}</h2><button class="btn primary" data-act="close-world">Done</button></div><div class="sbody page">${page.body}</div>`;
   } else {
     st.dpage = null;
-    panel.innerHTML = `<div class="nav"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div><div class="group">${secs.map(x => `<button class="nrow" data-act="dpage" data-p="${esc(x.id)}"><span class="nl">${esc(x.title)}</span><span class="sv">${esc(x.sv)}</span><span class="chev">›</span></button>`).join('')}</div>`;
+    const grp = (label, ids) => { const rows = ids.map(id => secs.find(x => x.id === id)).filter(Boolean); return rows.length ? `<div class="navgroup">${label}</div><div class="group">${rows.map(x => `<button class="nrow" data-act="dpage" data-p="${esc(x.id)}"><span class="nl">${esc(x.title)}</span><span class="sv">${esc(x.sv)}</span><span class="chev">›</span></button>`).join('')}</div>` : ''; };
+    panel.innerHTML = `<div class="nav"><h2>Settings</h2><button class="btn primary" data-act="close-world">Done</button></div>` +
+      grp('App', ['Appearance', 'About']) + grp('World: ' + esc(world.name), ['Your worlds', 'Item list', 'Money', 'Economy', 'Dials', 'Custom words', 'My items', 'Adjustments']) + grp('Data', ['Back up and share']);
   }
   panel.scrollTop = page === undefined ? top : (st.dpageChanged ? 0 : top);
   st.dpageChanged = false;
@@ -432,7 +433,12 @@ function buildSettingsHtml() {
   const dens = w.currency.denominations;
   const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
+  const themeLabel = { system: 'Match device', light: 'Light', dark: 'Dark' }[S.theme || 'system'];
   const html = `
+  <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
+    <div class="theme">${[['system', 'Match device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<label><span>${l}</span><input type="radio" name="theme" data-bind="theme" value="${v}"${(S.theme || 'system') === v ? ' checked' : ''}></label>`).join('')}</div>
+  </div></details>
+
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
   <details class="sect" data-sec="Your worlds"${op('Your worlds')}><summary><h3>Your worlds</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
@@ -505,6 +511,7 @@ function buildSettingsHtml() {
 
   <details class="sect" id="about" data-sec="About"${op('About')}><summary><h3>About</h3><span class="sv"></span></summary><div class="sbody">
     <p>Estimates only. Every price is a range, with its reasons shown. Rules and word lists run in your browser, and nothing is sent anywhere.</p>
+    ${builtAs() ? `<p class="mini">Build ${esc(builtAs())}</p>` : ''}
     <p>${esc(SRD_ATTRIBUTION)}</p>
   </div></div></details>`;
   return html;
@@ -582,7 +589,6 @@ function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w
 // no pinch or double-tap zoom: this is an app, not a page
 for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
 document.addEventListener('click', e => {
-  if (!e.target.closest('#info, #infotip')) { const tip = $('#infotip'); if (tip && !tip.hidden) { tip.hidden = true; $('#info').setAttribute('aria-expanded', 'false'); } }
   const b = e.target.closest('[data-act]');
   if (!b) return;
   const a = b.dataset.act, d = b.dataset;
@@ -609,7 +615,8 @@ document.addEventListener('click', e => {
     case 'resolve': flowEdit(x => { const g = ctx.mods.get(d.id).group; x.mods = x.mods.filter(m => ctx.mods.get(m)?.group !== g || m === d.id); }); break;
     case 'copy': copyText(summaryLine(st.est), 'Copied'); break;
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
-    case 'star': { const h = S.history[+d.i]; h.pin = !h.pin; persist(); renderHistory(); break; }
+    case 'hist-del': S.history.splice(+d.i, 1); persist(); renderHistory(); break;
+    case 'hist-clear': S.history = S.history.filter(x => x.world !== world.id); persist(); renderHistory(); break;
     case 'sheet': st.sheet = { open: true, mode: d.mode || 'break' }; st.editRow = null; renderSheet(); break;
     case 'sheet-close': st.sheet.open = false; st.editRow = null; renderSheet(); break;
     case 'edit-row': st.editRow = st.editRow === d.key ? null : d.key; renderSheet(); break;
@@ -636,8 +643,7 @@ document.addEventListener('click', e => {
       if (c && c.entry) { world.vocabulary.push({ term, means: c.entry.id }); st.guess = null; worldChanged(); toast('"' + term + '" now means ' + c.entry.name.toLowerCase() + '. Edit it under World, Custom words.'); }
     } break;
     // drawer
-    case 'info': { const t = $('#infotip'); t.hidden = !t.hidden; $('#info').setAttribute('aria-expanded', String(!t.hidden)); break; }
-    case 'open-world': $('#infotip').hidden = true; openDrawer(d.scroll); break;
+    case 'open-world': openDrawer(d.scroll); break;
     case 'close-world': closeDrawer(); break;
     case 'w-select': useWorld(d.id); persist(); closeDrawerKeep(); break;
     case 'w-new': { const w = WORLD_PRESETS[$('#newPreset').value](); w.id = uniqueWorldId(w.id); w.name = w.name + ' (copy)'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
@@ -706,6 +712,7 @@ document.addEventListener('change', e => {
   const bind = t.dataset && t.dataset.bind;
   if (!bind) return;
   const w = world, p = bind.split('.');
+  if (bind === 'theme') { S.theme = t.value === 'system' ? null : t.value; applyTheme(); persist(); renderDrawer(); return; }
   if (bind === 'name') w.name = t.value.trim() || 'My world';
   else if (bind === 'baseline') w.baseline = t.value;
   else if (p[0] === 'den') { const d = w.currency.denominations[+p[1]]; if (p[2] === 'bu') d.bu = Math.max(0.01, +t.value || 1); else { d[p[2]] = t.value.trim() || d[p[2]]; if (p[2] === 'name') d.plural = d.name.endsWith('s') ? d.name : d.name + 's'; } }
@@ -725,6 +732,15 @@ document.addEventListener('change', e => {
   }
   worldChanged({ lite: true, el: t });
 });
+
+// ---------- theme: match device, light or dark ----------
+let themeSetByUs = false;
+function applyTheme() {
+  const t = S.theme;
+  if (t === 'light' || t === 'dark') { document.documentElement.dataset.theme = t; themeSetByUs = true; }
+  else if (themeSetByUs) { delete document.documentElement.dataset.theme; themeSetByUs = false; }
+}
+applyTheme();
 
 // ---------- self-update for saved copies (home screen apps keep old files) ----------
 const builtAs = () => (document.querySelector('meta[name="fg-build"]') || {}).content || '';

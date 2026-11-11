@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="fg-build" content="b1bfe512">
+<meta name="fg-build" content="fc0f7817">
 <meta name="robots" content="noindex">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Fool's Gold</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=b1bfe512">
+<link rel="stylesheet" href="css/style.css?v=fc0f7817">
 </head>
 <body>
 <!--FG-BODY-START-->
@@ -18,8 +18,8 @@
   <header class="top">
     <h1>Fool's Gold</h1>
     <div class="topr">
-      <button id="info" class="info" data-act="info" aria-label="About Fool's Gold" aria-expanded="false">i</button>
-      <button class="worldbtn" id="worldBtn" data-act="open-world" aria-haspopup="dialog"><span id="worldName"></span><span class="chev" aria-hidden="true">&#9662;</span></button>
+      <span class="wname" id="worldName"></span>
+      <button class="gear" id="gear" data-act="open-world" aria-haspopup="dialog" aria-label="Settings">&#9881;&#xFE0E;</button>
     </div>
   </header>
   <main class="main" id="main">
@@ -37,8 +37,7 @@
   </div>
 </div>
 
-<div id="infotip" class="infotip" role="tooltip" hidden>Estimates only. Rules and word lists, no AI. <button class="linkbtn" data-act="open-world" data-scroll="about">About</button></div>
-<div id="drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-label="World settings">
+<div id="drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-label="Settings">
   <div class="drawer-panel" id="drawerPanel"></div>
 </div>
 <div id="sheet" class="sheet" hidden>
@@ -51,6 +50,6 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <!--FG-BODY-END-->
-<script type="module" src="js/app.js?v=b1bfe512"></script>
+<script type="module" src="js/app.js?v=fc0f7817"></script>
 </body>
 </html>
