@@ -8,6 +8,7 @@ import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../
 import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
 import { parseSetting, baseFor, storedFor } from '../../src/building/fools-gold/js/setting.js';
 import { buildFields, applyNumber, tokenRoles } from '../../src/building/fools-gold/js/fields.js';
+import { readFact } from '../../src/building/fools-gold/js/facts.js';
 import { suggestPrompts } from '../../src/building/fools-gold/js/suggest.js';
 import { findOffer } from '../../src/building/fools-gold/js/lists.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
@@ -478,6 +479,24 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   t('SG5 every switched-on list is represented', /longsword|inn/.test(all) && /pulse pistol|interstellar|station/.test(all) && /laptop|flight|taxi|lawyer/.test(all), all);
   const [w1, c1] = mk(['srd', 'fantasy']); const d = suggestPrompts(w1, c1);
   t('SG6 a sell prompt and a stacked prompt both appear', d.some(x => /^sell /.test(x)) && d.some(x => /black market rush/.test(x)), d.join(' | '));
+}
+
+// ---------- facts typed as sentences ----------
+{
+  const w = WORLD_PRESETS.srd(); const c = compileWorld(w);
+  const k = x => { const r = readFact(x, c); return r ? r.kind : null; };
+  eq('FT1 a price reads as a price', k('a healing potion costs 40 gp'), 'price');
+  eq('FT2 a rent reads as a price', k("John's rent is 800 gp a month"), 'price');
+  eq('FT3 a word reads as a word', k('a shiv is a dagger'), 'word');
+  eq('FT4 a word keeps what it means', readFact('shiv means dagger', c).means, 'good.dagger');
+  eq('FT5 an unknown meaning is flagged', k('a shiv is a zzzz'), 'unknown');
+  eq('FT6 price level reads as a dial', readFact('price level 1.5', c), { kind: 'dial', key: 'priceLevel', value: 1.5, line: 'Price level 1.5', note: 'Scales every price. 1 is standard.' });
+  eq('FT7 sellers pay reads as a dial', [readFact('shops pay 40%', c).key, readFact('shops pay 40%', c).value], ['sellFraction', 0.4]);
+  eq('FT8 everything 20% more reads as 1.2', readFact('everything costs 20% more', c).value, 1.2);
+  eq('FT9 rounding on', [readFact('rounding on', c).key, readFact('rounding on', c).value], ['round', true]);
+  eq('FT10 gibberish is not a fact', k('banana'), null);
+  eq('FT11 a question is not a fact', k('how much is a longsword?'), null);
+  eq('FT12 empty is not a fact', k('  '), null);
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

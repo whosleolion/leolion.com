@@ -1,6 +1,6 @@
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=7dbdc286';
-import { compileWorld } from './world.js?v=7dbdc286';
+import { WORLD_PRESETS } from './data.js?v=ef593c24';
+import { compileWorld } from './world.js?v=ef593c24';
 
 const KEY = 'foolsgold.v1';
 let mem = null;

@@ -1,18 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=7dbdc286';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=7dbdc286';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=7dbdc286';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=7dbdc286';
-import { findOffer } from './lists.js?v=7dbdc286';
-import { suggestPrompts } from './suggest.js?v=7dbdc286';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=7dbdc286';
+import { compileWorld } from './world.js?v=ef593c24';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=ef593c24';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=ef593c24';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=ef593c24';
+import { findOffer } from './lists.js?v=ef593c24';
+import { suggestPrompts } from './suggest.js?v=ef593c24';
+import { readFact } from './facts.js?v=ef593c24';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=ef593c24';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=7dbdc286';
-import { applicable } from './engine.js?v=7dbdc286';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=7dbdc286';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=7dbdc286';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=7dbdc286';
+} from './data.js?v=ef593c24';
+import { applicable } from './engine.js?v=ef593c24';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=ef593c24';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=ef593c24';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=ef593c24';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -21,7 +22,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -151,7 +152,7 @@ function slotRow(s) {
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
-  if (!st.text) { el.innerHTML = `<p class="empty">Describe what you want priced. Say how many or how long, buying or selling, where, how fast and how good.</p>`; return; }
+  if (!st.text) { el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>`; return; }
   if (!q.subject && st.offer) {
     const o = st.offer;
     el.innerHTML = `<section class="guess offer"><div class="gh"><b>${esc(o.item)}</b> is in the <b>${esc(o.label)}</b> list, which is off for this world.</div><button class="cta" data-act="offer-on">Turn on ${esc(o.label)}</button><button class="cta2" data-act="offer-no">Not now</button></section>`;
@@ -333,8 +334,8 @@ function guessCard() {
 }
 
 // ---------- settings typed into the box ----------
-function settingCard() {
-  const s = st.setting, c = cur();
+function settingCard(s = st.setting, acts = null, head = 'Set this value?') {
+  const c = cur();
   const unitTxt = s.unit === 'each' ? 'each' : 'per ' + (s.unit === 'day' && s.draft.kind === 'lodging' ? 'night' : s.unit);
   const lines = [];
   if (s.viaBase && s.current) lines.push(`Replaces the price of ${esc(s.analog.name.toLowerCase())}, now ${esc(money(s.current))} ${unitTxt}.`);
@@ -342,13 +343,12 @@ function settingCard() {
   if (s.rarityPriced) lines.push(`${esc(s.analog.name)} is priced by rarity. This sets one fixed price, and rarity will no longer change it.`);
   if (!s.analog) lines.push('New item. Nothing similar was found, so it is priced as entered.');
   if (s.note) lines.push(esc(s.note));
-  return `<section class="setting"><div class="sh">Set this value?</div>
+  return `<section class="setting"><div class="sh">${esc(head)}</div>
     <div class="sline"><b>${esc(s.name)}</b><span class="arrow">→</span><b class="sval">${esc(formatFull(s.perUnitBU, c))}</b> <span class="mini">${unitTxt}</span></div>
     <ul class="slines">${lines.map(l => `<li>${l}</li>`).join('')}</ul>
-    <div class="row gact"><button class="btn primary" data-act="s-set">Set it</button><button class="btn" data-act="s-cancel">Cancel</button></div></section>`;
+    <div class="row gact">${acts || '<button class="btn primary" data-act="s-set">Set it</button><button class="btn" data-act="s-cancel">Cancel</button>'}</div></section>`;
 }
-function applySetting() {
-  const s = st.setting;
+function applySetting(s = st.setting, keep = false) {
   if (!s) return;
   let text;
   if (s.viaBase) {
@@ -361,8 +361,7 @@ function applySetting() {
     text = s.name.toLowerCase();
   }
   const label = s.name;
-  st.setting = null; st.settingDismissed = '';
-  $('#q').value = text; st.text = text;
+  if (!keep) { st.setting = null; st.settingDismissed = ''; $('#q').value = text; st.text = text; }
   worldChanged();
   toast('Set. ' + label + ' is now ' + formatFull(s.perUnitBU, cur()) + (s.unit === 'each' ? ' each' : ' per ' + s.unit) + '.');
 }
@@ -440,6 +439,35 @@ function meansLabel(id) {
   if (id.startsWith('mod:')) return ctx.mods.get(id.slice(4))?.label || '';
   return ctx.byId.get(id)?.name || '';
 }
+function factPreview() {
+  const r = st.fact.res; if (!r) return '';
+  const acts = '<button class="btn primary" data-act="fact-save">Save</button><button class="btn" data-act="fact-cancel">Cancel</button>';
+  if (r.kind === 'price') return settingCard(r.setting, acts, 'Save this price?');
+  const line = r.kind === 'word' ? `<b>${esc(r.term)}</b><span class="arrow">&rarr;</span><b class="sval">${esc(r.label)}</b>` : `<b>${esc(r.line)}</b>`;
+  const note = r.kind === 'word' ? 'Whenever you write that word, it counts as this.' : r.note;
+  return `<section class="setting"><div class="sh">${r.kind === 'word' ? 'Teach this word?' : 'Change this dial?'}</div><div class="sline">${line}</div><ul class="slines"><li>${esc(note)}</li></ul><div class="row gact">${acts}</div></section>`;
+}
+function factGo() {
+  const text = (st.fact.text || '').trim();
+  st.fact.res = null; st.fact.err = '';
+  if (!text) { st.fact.err = 'Type a sentence first.'; renderDrawer(); return; }
+  const r = readFact(text, ctx);
+  if (!r) st.fact.err = 'I could not read that. Try a price like "a healing potion costs 40 gp", or a word like "a shiv is a dagger".';
+  else if (r.kind === 'unknown') st.fact.err = `I do not know "${r.meansText}". Say what ${r.term} means with an item that is in your lists, such as "${r.term} is a dagger".`;
+  else st.fact.res = r;
+  renderDrawer();
+}
+function factSave() {
+  const r = st.fact.res; if (!r) return;
+  if (r.kind === 'price') applySetting(r.setting, true);
+  else if (r.kind === 'word') {
+    world.vocabulary = world.vocabulary.filter(v => v.term.toLowerCase() !== r.term);
+    world.vocabulary.push({ term: r.term, means: r.means });
+    worldChanged(); toast('Saved. ' + r.term + ' now means ' + r.label + '.');
+  } else if (r.kind === 'dial') { world.dials[r.key] = r.value; worldChanged(); toast('Saved. ' + r.line + '.'); }
+  st.fact = { text: '', res: null, err: '' };
+  renderDrawer();
+}
 function resolveMeans(text) {
   const t = text.trim().toLowerCase();
   if (!t) return '';
@@ -504,6 +532,7 @@ function buildSettingsHtml() {
   const json = JSON.stringify(w, null, 1);
   const styleNow = S.skin || S.theme || 'dark';
   const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1];
+  const curSet = w.currency.symbol ? 'usd' : dens.length === 1 ? 'one' : dens.map(d => d.id).join() === 'gp,sp,cp' ? 'gsc' : '';
   const html = `
   <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
     <div class="theme skins">${STYLES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="style" data-bind="style" value="${v}"${styleNow === v ? ' checked' : ''}></label>`).join('')}</div>
@@ -523,7 +552,7 @@ function buildSettingsHtml() {
 
   <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">
     <p>Prices are stored as one number, the <b>base unit</b> (1 is a copper piece by default). Set what each coin is worth in base units. A one-coin world has one row.</p>
-    <div class="row"><button class="btn" data-act="w-cur" data-v="gsc">Gold, silver, copper</button><button class="btn" data-act="w-cur" data-v="one">One coin</button><button class="btn" data-act="w-cur" data-v="usd">US dollars</button></div>
+    <div class="curpick" role="radiogroup" aria-label="Currency">${[['gsc', 'Gold, silver, copper', '12 <span class="cg">G</span> 5 <span class="cg">S</span>'], ['one', 'One coin', '12 coins'], ['usd', 'US dollars', '$12.50']].map(([v, t, ex]) => `<button class="curcard${curSet === v ? ' on' : ''}" role="radio" aria-checked="${curSet === v}" data-act="w-cur" data-v="${v}"><b>${t}</b><span class="cs">${ex}</span></button>`).join('')}</div>
     ${dens.map((d, i) => `<div class="coin"><div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">&times;</button>` : '<span></span>'}</div>
       <label class="lab">Worth in base units<input class="field" type="number" min="0.01" step="any" inputmode="decimal" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>
       <div class="lab">Symbol<div class="glyphs" role="group" aria-label="Symbol for ${esc(d.name)}"><button class="gl${d.glyph ? '' : ' on'}" data-act="glyph" data-i="${i}" data-v="" title="Plain letters">${esc(d.id.toUpperCase())}</button>${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => `<button class="gl${d.glyph === L ? ' on' : ''}" data-act="glyph" data-i="${i}" data-v="${L}" aria-label="Letter ${L}"><span class="cg">${L}</span></button>`).join('')}</div></div></div>`).join('')}
@@ -554,6 +583,9 @@ function buildSettingsHtml() {
   </div></details>
 
   <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || 'none'}</span></summary><div class="sbody">
+    <div class="factbox"><label class="lab">Tell it a fact<div class="factrow"><input class="field" id="factIn" value="${esc(st.fact.text)}" placeholder="a healing potion costs 40 gp" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"><button class="btn primary" data-act="fact-go">Add</button></div></label>
+      ${st.fact.err ? `<p class="ferr">${esc(st.fact.err)}</p>` : ''}${factPreview()}
+      ${st.fact.res || st.fact.err ? '' : '<p class="mini">Write it the way you would say it: "John\'s rent is $800 a month", "a shiv is a dagger", "sellers pay 40%", "price level 1.2".</p>'}</div>
     <p>Everything you have added or changed in this world: your own items, words you taught it, and prices you edited.</p>
     ${w.items.map((it, i) => `<div class="coin"><div class="kindtag">Item</div><div class="denrow single"><label class="lab">Name<input class="field" data-bind="item.${i}.name" value="${esc(it.name)}"></label><button class="xbtn" data-act="w-del-item" data-i="${i}" aria-label="Remove item">&times;</button></div>
       <div class="grid2"><label class="lab">Kind<select class="field" data-bind="item.${i}.kind">${['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'].map(k => `<option${it.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><label class="lab">Per<select class="field" data-bind="item.${i}.unit">${['each', 'day', 'week', 'month', 'year', 'lb'].map(k => `<option${it.unit === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label></div>
@@ -698,6 +730,9 @@ document.addEventListener('click', e => {
     case 'dpage': st.dpage = d.p || null; st.dpageChanged = true; renderDrawer(); break;
     case 'round': world.dials.round = !world.dials.round; persist(); renderAll(); break;
     case 's-set': applySetting(); break;
+    case 'fact-go': factGo(); break;
+    case 'fact-save': factSave(); break;
+    case 'fact-cancel': st.fact.res = null; renderDrawer(); break;
     case 's-cancel': st.settingDismissed = st.text; st.setting = null; fromText(st.text, { noHistory: true }); break;
     case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
     case 'g-exact': if (st.guess) { st.guess.exact = true; renderResult(); const i = $('#gPrice'); if (i) i.focus(); } break;
@@ -734,7 +769,7 @@ document.addEventListener('click', e => {
       if (d.v === 'usd') { world.currency.denominations = [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }]; world.currency.symbol = '$'; world.currency.decimal = 100; world.anchors.wage = 12000; }
       else world.currency.denominations = d.v === 'one'
         ? [{ id: 'coin', name: 'coin', plural: 'coins', bu: 100 }]
-        : [{ id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100 }, { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10 }, { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1 }];
+        : [{ id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100, glyph: 'G' }, { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10, glyph: 'S' }, { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1, glyph: 'C' }];
       worldChanged(); break;
     case 'glyph': world.currency.denominations[+d.i].glyph = d.v; worldChanged(); break;
     case 'w-add-den': world.currency.denominations.push({ id: 'new', name: 'new coin', plural: 'new coins', bu: 1 }); worldChanged(); break;
@@ -767,7 +802,7 @@ function afterWorldSwitch() { renderDrawer(); st.query = emptyQuery(); if (st.te
 $('#q').addEventListener('input', e => fromText(e.target.value));
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); e.target.blur(); } });
 $('#q').addEventListener('focus', () => { st.slot = null; st.numOpen = false; renderTray(); renderResult(); });
-document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'factIn') { e.preventDefault(); factGo(); return; } if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
 
 // drawer and flow inputs
@@ -775,6 +810,7 @@ document.addEventListener('toggle', e => {
   const t = e.target;
 }, true);
 document.addEventListener('input', e => {
+  if (e.target.id === 'factIn') { st.fact.text = e.target.value; if (st.fact.res || st.fact.err) { st.fact.res = null; st.fact.err = ''; } return; }
   if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderSheet(); const i = $('#flowSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   if (e.target.id === 'gSearch' && st.guess) { st.guess.q = e.target.value; renderResult(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 });

@@ -1,8 +1,8 @@
 // The typed sentence as editable fields. Pure logic: given a Query, the Estimate and the world, list the fields
 // (item, deal, amount, rarity, class, and the circumstance groups that apply), say which are set, and price
 // every option so an empty field can show how far it would move the answer.
-import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js?v=7dbdc286';
-import { estimate, applicable, timeUnit } from './engine.js?v=7dbdc286';
+import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js?v=ef593c24';
+import { estimate, applicable, timeUnit } from './engine.js?v=ef593c24';
 
 const clone = q => JSON.parse(JSON.stringify(q));
 const ORDER = {
