@@ -1,9 +1,9 @@
 // Settings typed into the question box: "John's rent is $800 a month", "a healing potion costs 40 gp here".
 // Recognized by plain patterns, never applied silently: the UI asks for confirmation first.
-import { parse } from './parser.js?v=cce675aa';
-import { parseMoney, formatFull } from './money.js?v=cce675aa';
-import { estimate, timeUnit } from './engine.js?v=cce675aa';
-import { ACTION_TERMS } from './data.js?v=cce675aa';
+import { parse } from './parser.js?v=90a3a8e3';
+import { parseMoney, formatFull } from './money.js?v=90a3a8e3';
+import { estimate, timeUnit } from './engine.js?v=90a3a8e3';
+import { ACTION_TERMS } from './data.js?v=90a3a8e3';
 
 const QUESTION = /^(how|what|which|when|where|why|who|can|could|should|would|will|do|does|did)\b/i;
 const VERB = /\s*(?:=|\bnow costs?\b|\bcosts?\b|\bsells? for\b|\bgoes for\b|\bpriced at\b|\bshould be\b|\bis now\b|\bare now\b|\bis\b|\bare\b|\bruns\b|\bto\b(?=\s*[$\d]))\s*/i;

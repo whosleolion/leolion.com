@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=cce675aa';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=cce675aa';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=cce675aa';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=cce675aa';
-import { findOffer } from './lists.js?v=cce675aa';
-import { suggestPrompts } from './suggest.js?v=cce675aa';
-import { readFact } from './facts.js?v=cce675aa';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=cce675aa';
+import { compileWorld } from './world.js?v=90a3a8e3';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=90a3a8e3';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=90a3a8e3';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=90a3a8e3';
+import { findOffer } from './lists.js?v=90a3a8e3';
+import { suggestPrompts } from './suggest.js?v=90a3a8e3';
+import { readFact } from './facts.js?v=90a3a8e3';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=90a3a8e3';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=cce675aa';
-import { applicable } from './engine.js?v=cce675aa';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=cce675aa';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=cce675aa';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=cce675aa';
+} from './data.js?v=90a3a8e3';
+import { applicable } from './engine.js?v=90a3a8e3';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=90a3a8e3';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=90a3a8e3';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=90a3a8e3';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -152,7 +152,7 @@ function slotRow(s) {
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
-  if (!st.text) { el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>`; return; }
+  if (!st.text) { st.glintKey = ''; el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>`; return; }
   if (!q.subject && st.offer) {
     const o = st.offer;
     el.innerHTML = `<section class="guess offer"><div class="gh"><b>${esc(o.item)}</b> is in the <b>${esc(o.label)}</b> list, which is off for this world.</div><button class="cta" data-act="offer-on">Turn on ${esc(o.label)}</button><button class="cta2" data-act="offer-no">Not now</button></section>`;
@@ -175,6 +175,7 @@ function renderResult() {
   const f = st.fields || { shown: [], more: [] };
   const rows = [...f.shown, ...(st.more ? f.more : [])].map(slotRow).join('');
   const moreRow = f.more.length ? `<button class="slot more" data-act="more"><span>${st.more ? 'Fewer fields' : 'More fields'}</span><span class="hint">${f.more.length}</span></button>` : '';
+  const glintNow = st.glintKey !== ent.id; st.glintKey = ent.id;
   el.innerHTML = `<section class="price">
     <div class="what">${esc(what)}</div>
     <button class="pricebtn" data-act="copy" aria-label="Copy price"><span class="num">${esc(pr.n)}${pr.u ? `<small>${esc(pr.u)}</small>` : ''}</span></button>
@@ -184,6 +185,7 @@ function renderResult() {
   </section>
   <div class="sep"><span>Fields from your sentence</span></div>
   <div class="fields">${rows}${moreRow}</div>`;
+  if (glintNow) flash();
 }
 
 // ---------- docked tray: the options for the open field, or quick modifiers ----------
@@ -366,6 +368,11 @@ function applySetting(s = st.setting, keep = false) {
   toast('Set. ' + label + ' is now ' + formatFull(s.perUnitBU, cur()) + (s.unit === 'each' ? ' each' : ' per ' + s.unit) + '.');
 }
 
+function flash() {
+  const n = $('#result .pricebtn .num');
+  if (!n) return;
+  n.classList.remove('glint'); void n.offsetWidth; n.classList.add('glint');
+}
 function summaryLine(e) {
   const ent = e.entry, q = st.query;
   const bits = [ent.name.toLowerCase()];
@@ -706,7 +713,7 @@ document.addEventListener('click', e => {
     case 'pick-item': st.sheet.open = false; flowEdit(x => { delete x.overrides; x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
     case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderSheet(); break;
     case 'resolve': flowEdit(x => { const g = ctx.mods.get(d.id).group; x.mods = x.mods.filter(m => ctx.mods.get(m)?.group !== g || m === d.id); }); break;
-    case 'copy': copyText(summaryLine(st.est), 'Copied'); break;
+    case 'copy': copyText(summaryLine(st.est), 'Copied'); flash(); break;
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
     case 'hist-del': S.history.splice(+d.i, 1); persist(); renderHistory(); break;
     case 'hist-clear': S.history = S.history.filter(x => x.world !== world.id); persist(); renderHistory(); break;
@@ -908,6 +915,18 @@ async function checkForUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
 // offline: keep every file so the app opens and prices with no network (the site only; the single-file preview has no build tag)
+function launchSplash() {
+  try {
+    if (!builtAs() || matchMedia('(prefers-reduced-motion: reduce)').matches || sessionStorage.getItem('fgSplash')) return;
+    sessionStorage.setItem('fgSplash', '1');
+  } catch (e) { return; }
+  const d = document.createElement('div');
+  d.id = 'launch'; d.setAttribute('aria-hidden', 'true');
+  d.innerHTML = '<div class="lmark">Fool&rsquo;s <span class="struck">G</span>old<i class="shim"></i></div>';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1600);
+}
+launchSplash();
 if ('serviceWorker' in navigator && builtAs()) navigator.serviceWorker.register('sw.js').catch(() => {});
 try { if (sessionStorage.getItem('fg-updated')) { sessionStorage.removeItem('fg-updated'); setTimeout(() => toast('Updated to the latest version.'), 400); } } catch (e) { /* ignore */ }
 checkForUpdate();

@@ -28,7 +28,7 @@ function stamped(f, text) {
     return t.replace(/(<meta name="fg-build" content=")"/, `$1${H}"`);
   }
   if (f === 'sw.js') {
-    const list = ["'./'", "'index.html'", `'css/style.css?v=${H}'`, ...jsFiles.map(j => `'${j}?v=${H}'`)].join(', ');
+    const list = ["'./'", "'index.html'", "'manifest.json'", "'favicon.svg'", "'icon-180.png'", "'icon-192.png'", "'icon-512.png'", `'css/style.css?v=${H}'`, ...jsFiles.map(j => `'${j}?v=${H}'`)].join(', ');
     return norm(f, text).replace("const BUILD = '';", `const BUILD = '${H}';`).replace('const FILES = [];', `const FILES = [${list}];`);
   }
   if (f.endsWith('.js')) return strip(text).replace(/(from\s+'\.\/[\w-]+\.js)'/g, `$1?v=${H}'`);

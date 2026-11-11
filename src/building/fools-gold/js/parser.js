@@ -1,6 +1,6 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=cce675aa';
-import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=cce675aa';
+import { tokenize, stem } from './world.js?v=90a3a8e3';
+import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=90a3a8e3';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, dozen: 12 };
