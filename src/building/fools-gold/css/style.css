@@ -1109,3 +1109,12 @@ html[data-big] .jump .q { white-space: nowrap; }
 .gopts::-webkit-scrollbar { display: none; }
 .gopts button { flex: 0 0 auto; min-height: 2.5rem; padding: 0 .875rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 500 .9375rem var(--font-body); white-space: nowrap; }
 .gopts button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+
+/* ---- the tap starter: a button that leads into buy / sell, a kind, then an item ---- */
+.starter { margin: 0 0 .5rem; min-height: 2.75rem; }
+.startgrid { display: grid; gap: .625rem; }
+.startbtn { display: grid; gap: .125rem; text-align: left; min-height: 3.5rem; padding: .75rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 500 1rem var(--font-body); }
+.startbtn b { font: 700 1.125rem var(--font-display); }
+.startbtn span { color: var(--muted); font-size: .875rem; }
+.startcrumb { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .625rem; font-size: .875rem; color: var(--muted); }
+.startcrumb .linkbtn { min-height: 2.5rem; padding: 0; color: var(--accent); font-weight: 600; }
