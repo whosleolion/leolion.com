@@ -1175,3 +1175,18 @@ html[data-big] .jump .q { white-space: nowrap; }
 .gseg button.on small { color: inherit; opacity: .8; }
 .gsave { position: sticky; bottom: 0; padding: .75rem 0 .25rem; background: linear-gradient(transparent, var(--bg) 28%); }
 .gsave .cta { margin: 0; }
+
+/* ---- room to breathe in the guess card ---- */
+.guess { gap: 1rem; }
+.guess .gh { line-height: 1.45; }
+.gwhy { display: block; margin-top: .25rem; font-size: .875rem; color: var(--muted); }
+.gtags { gap: 1rem; }
+.grow { gap: .5rem; }
+.glab { font-size: .875rem; }
+.gseg button { min-height: 3.5rem; padding: .375rem .25rem; font-size: .9375rem; gap: .125rem; }
+.gseg button small { font-size: .8125rem; }
+.kindgrid { gap: .5rem; }
+.kindgrid button { min-height: 3rem; font-size: .9375rem; }
+.foldrow span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guess .sep { margin: .25rem 0 -.25rem; }
+.guess .fields .slot { min-height: 3.25rem; }

@@ -1,8 +1,8 @@
 // Guessing for words the app does not know. No AI: a hand-made word-to-category list plus word overlap
 // with the catalog. It only ever proposes. The DM picks, nudges the price and confirms.
-import { stem } from './world.js?v=92e69e7a';
-import { estimate, timeUnit } from './engine.js?v=92e69e7a';
-import { niceRound } from './money.js?v=92e69e7a';
+import { stem } from './world.js?v=df97fefd';
+import { estimate, timeUnit } from './engine.js?v=df97fefd';
+import { niceRound } from './money.js?v=df97fefd';
 
 // Word families. Each lists catalog ids to try, in order. Ids missing from the current world are skipped.
 const FAMILIES = [
@@ -92,5 +92,19 @@ export function newItemFrom(name, phrase, cand, bu) {
   const aliases = [...new Set([phrase.toLowerCase(), phrase.toLowerCase().split(' ').map((w, i, a) => (i === a.length - 1 ? stem(w) : w)).join(' ')])].filter(a => a && a !== name.toLowerCase());
   const unitOk = u => ['each', 'day', 'lb', 'week', 'month', 'year'].includes(u);
   return { name, kind: base ? base.kind : cand.kind || 'good', unit: base ? (!base.curve && unitOk(base.unit) ? base.unit : 'each') : unitOk(cand.unit) ? cand.unit : 'each', bu: +bu.toPrecision(5), tags: base ? [...new Set([...(base.tags || []), 'custom'])] : cand.tags || ['custom'], aliases, spread: 0.2 };
+}
+// real things of the same kind, nearest in price to the guess: "is it more like a rat, or a cat?"
+export function comparablesFor(kindTest, target, ctx, skip) {
+  const pool = ctx.entries.filter(e => !skip.has(e.id) && kindTest(e) && !e.curve);
+  const priced = [];
+  for (const e of pool) { const c = candidateFromEntry(e, ctx, 'About the same price and kind'); if (c) priced.push(c); }
+  const dist = c => Math.abs(Math.log(Math.max(c.bu, 1) / Math.max(target, 1)));
+  priced.sort((a, b) => dist(a) - dist(b));
+  const real = priced.filter(c => !c.entry.isCategory), any = priced.find(c => c.entry.isCategory);
+  // the nearest below, the nearest above and the closest overall, shown from cheap to dear, so you can say "smaller than that" or "bigger"
+  const below = real.filter(c => c.bu <= target).slice(0, 2), above = real.filter(c => c.bu > target).slice(0, 1), pick = [...below, ...above];
+  for (const c of real) { if (pick.length >= 3) break; if (!pick.includes(c)) pick.push(c); }
+  pick.sort((a, b) => a.bu - b.bu);
+  return any ? [...pick, any] : pick;
 }
 export { niceRound };

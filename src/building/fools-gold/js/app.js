@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=92e69e7a';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=92e69e7a';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=92e69e7a';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=92e69e7a';
-import { findOffer } from './lists.js?v=92e69e7a';
-import { suggestPrompts } from './suggest.js?v=92e69e7a';
-import { readFact } from './facts.js?v=92e69e7a';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=92e69e7a';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=92e69e7a';
+import { compileWorld } from './world.js?v=df97fefd';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=df97fefd';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=df97fefd';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=df97fefd';
+import { findOffer } from './lists.js?v=df97fefd';
+import { suggestPrompts } from './suggest.js?v=df97fefd';
+import { readFact } from './facts.js?v=df97fefd';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=df97fefd';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=df97fefd';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=92e69e7a';
-import { applicable } from './engine.js?v=92e69e7a';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=92e69e7a';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=92e69e7a';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=92e69e7a';
-import { complete } from './complete.js?v=92e69e7a';
-import { inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=92e69e7a';
+} from './data.js?v=df97fefd';
+import { applicable } from './engine.js?v=df97fefd';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=df97fefd';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=df97fefd';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=df97fefd';
+import { complete } from './complete.js?v=df97fefd';
+import { sameKind, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=df97fefd';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -658,7 +658,7 @@ function guessCard() {
   const all = guessAll(), c = all[g.sel];
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
   const tagged = c && c.tagged;
-  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list yet. ${tagged ? 'This is a guess from its tags: ' + esc(c.why) + '.' : 'Using <b>' + esc(c.label.toLowerCase()) + '</b> as the guide.'}</div>`;
+  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list yet.${tagged ? `<span class="gwhy">A guess from its tags: ${esc(c.why)}</span>` : `<span class="gwhy">Using ${esc(c.label.toLowerCase())} as the guide</span>`}</div>`;
   if (c) {
     const pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
     const one = pv.one.ok ? pv.one.typical : g.bu, pr = np(money(one));
@@ -675,7 +675,7 @@ function guessCard() {
     ? `<div class="kindgrid" role="group" aria-label="Kind">${KINDS.map(k => `<button class="${g.tags.kind === k.id ? 'on' : ''}" data-act="g-tag" data-r="kind" data-v="${k.id}" aria-pressed="${g.tags.kind === k.id}">${esc(k.label)}</button>`).join('')}</div>`
     : `<button class="kindrow" data-act="g-kind-open"><span>Kind</span><b>${esc(kindName)}</b><i>Change</i></button>`}${openRows.map(seg).join('')}${foldRows.length ? `<button class="foldrow" data-act="g-more"><span>${esc(foldText)}</span><i>Adjust</i></button>` : ''}</div>`;
   const near = all.slice(1);
-  if (near.length) h += `<div class="sep"><span>Or compare with a real item</span></div><div class="fields">${near.map((x, k) => { const i = k + 1; return `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(x.label)}</span><span class="hint">${esc(money(x.bu))}${x.unit && x.unit !== 'each' ? ' / ' + esc(x.unit) : ''}</span></button>`; }).join('')}</div>`;
+  if (near.length) h += `<div class="sep"><span>Is it more like&hellip;</span></div><div class="fields">${near.map((x, k) => { const i = k + 1; return `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(x.label)}</span><span class="hint">${esc(money(x.bu))}${x.unit && x.unit !== 'each' ? ' / ' + esc(x.unit) : ''}</span></button>`; }).join('')}</div>`;
   h += `<input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
   if (c) {
     h += g.exact ? `<input class="field gsearch" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" style="margin-top:8px" data-act="g-exact">Type an exact price</button>`;
@@ -1002,7 +1002,10 @@ function guessAll() {
   const g = st.guess;
   if (!g) return [];
   const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
-  return [tagCandidate(g.tags, g.found, g.phrase), ...g.cands, ...found];
+  const tc = tagCandidate(g.tags, g.found, g.phrase), seen = new Set(g.cands.map(c => c.id));
+  // words first, then real things of the kind the tags name, nearest in price
+  const kindComps = g.q ? [] : comparablesFor(e => sameKind(g.tags.kind, e), tc.bu, ctx, seen).map(c => ({ ...c, why: 'Same kind, near this price' }));
+  return [tc, ...g.cands, ...kindComps.filter(c => !seen.has(c.id)).slice(0, Math.max(0, 5 - g.cands.length)), ...found];
 }
 function toast(msg, undo) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;

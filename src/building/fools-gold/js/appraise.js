@@ -1,7 +1,7 @@
 // Appraising a thing the app has no entry for, from tags a DM can read at a glance: what kind of thing it is,
 // how big, what it is made of, how much craft went in, how rare, how wanted. No AI: a plain product of multipliers,
 // started from the words of the phrase, then adjusted by tapping. All numbers are original estimates, 1 bu = 1 cp (fantasy scale).
-import { stem } from './world.js?v=92e69e7a';
+import { stem } from './world.js?v=df97fefd';
 
 export const KINDS = [
   { id: 'thing', label: 'Everyday thing', base: 60, unit: 'each', words: 'thing item object box basket pot pan bowl cup jar bottle bucket candle brush mirror comb toy doll book' },
@@ -9,7 +9,7 @@ export const KINDS = [
   { id: 'tool', label: 'Tool or gear', base: 150, unit: 'each', words: 'tool kit rope lantern pick hammer saw drill lockpick compass map lens shovel tent bag pack harness tackle' },
   { id: 'weapon', label: 'Weapon', base: 400, unit: 'each', words: 'weapon sword blade knife dagger axe bow crossbow spear lance club mace staff gun pistol rifle musket cannon whip shield' },
   { id: 'jewelry', label: 'Jewelry or luxury', base: 600, unit: 'each', words: 'ring necklace bracelet crown tiara diadem circlet brooch pendant earring locket gem gemstone jewel ruby emerald sapphire diamond pearl perfume silk velvet' },
-  { id: 'animal', label: 'Animal', base: 250, unit: 'each', words: 'animal beast pet dog cat bird hawk falcon horse pony mule cow sheep goat pig hen rooster duck rabbit snake lizard dragon wolf ferret' },
+  { id: 'animal', label: 'Animal', base: 250, unit: 'each', words: 'animal beast pet dog cat bird hawk falcon horse pony mule cow sheep goat pig hen rooster duck rabbit snake lizard dragon wolf ferret weasel stoat otter mink mouse rat squirrel fox deer boar bear lion tiger elk moose frog toad bat owl eagle crow spider crab fish shark whale monkey ape badger beaver hare raccoon skunk lizard turtle' },
   { id: 'plant', label: 'Plant or food', base: 8, unit: 'each', words: 'plant seed flower herb tree fruit apple bread cheese meat stew soup pie cake jerky pastry grain root berry berries vegetable' },
   { id: 'medicine', label: 'Medicine or potion', base: 300, unit: 'each', words: 'medicine cream salve ointment tonic remedy antidote poison elixir potion bandage ointment balm lotion' },
   { id: 'magic', label: 'Magic item', base: 4000, unit: 'each', words: 'magic magical enchanted wand charm talisman amulet orb relic idol rune scroll arcane' },
@@ -92,3 +92,12 @@ export const defaultsOf = tags => {
   else if (tags.kind === 'magic') { base.craft = 'skilled'; base.rarity = 'uncommon'; }
   return base;
 };
+
+// which catalog entries count as this kind of thing, so a guess can be set beside real ones
+const KIND_TEST = {
+  animal: e => has(e, 'animal'), clothes: e => has(e, 'clothing'), weapon: e => has(e, 'weapon') && !has(e, 'magic'), tool: e => has(e, 'tool') || has(e, 'gadget'), jewelry: e => has(e, 'jewelry') || has(e, 'gem'),
+  plant: e => has(e, 'plant') || has(e, 'food'), medicine: e => has(e, 'medicine'), magic: e => has(e, 'magic') && e.kind === 'good', explosive: e => e.library === 'explosives', vehicle: e => has(e, 'vehicle'),
+  labor: e => e.kind === 'labor', fee: e => e.library === 'fees' || has(e, 'fee'), thing: e => e.kind === 'good' && !has(e, 'weapon') && !has(e, 'magic'),
+};
+const has = (e, t) => (e.tags || []).includes(t);
+export const sameKind = (kind, e) => (KIND_TEST[kind] || KIND_TEST.thing)(e);
