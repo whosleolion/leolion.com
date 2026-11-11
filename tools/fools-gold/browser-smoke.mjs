@@ -142,6 +142,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=w-del-voc]');
   await goBack(page);
   await goPage(page, 'Appearance');
+  ok(name + ' Night is the default', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
   await page.click('input[data-bind=style][value=light]'); await page.click('input[data-bind=style][value=dark]');
   ok(name + ' theme can be forced dark', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
   await page.click('input[data-bind=style][value=light]');
