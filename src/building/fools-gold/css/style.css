@@ -782,3 +782,14 @@ details.sub .tagrow { padding: 8px 0; }
 .presetbox .curpick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .curcard.arm { border-color: var(--up); box-shadow: inset 0 0 0 1px var(--up); }
 .curcard.arm .cs { color: var(--up); font-weight: 600; }
+
+/* My changes: the input, then one plain line per saved change */
+.chg { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.chg .ct { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.chg .mini { font-weight: 400; margin-left: 6px; }
+.factbox + .chg { border-top: 0; }
+.world-row.edit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px; }
+.renin { min-width: 0; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--bg); color: var(--fg); font: 700 18px var(--font-display); }
+
+/* price unit reads as part of the price: brand-coloured, set on the baseline */
+.pricebtn .num small { color: var(--accent); font-size: 26px; font-weight: 600; }

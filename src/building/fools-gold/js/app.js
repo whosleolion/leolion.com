@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=c198cc38';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=c198cc38';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=c198cc38';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=c198cc38';
-import { findOffer } from './lists.js?v=c198cc38';
-import { suggestPrompts } from './suggest.js?v=c198cc38';
-import { readFact } from './facts.js?v=c198cc38';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=c198cc38';
+import { compileWorld } from './world.js?v=557e9ca1';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=557e9ca1';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=557e9ca1';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=557e9ca1';
+import { findOffer } from './lists.js?v=557e9ca1';
+import { suggestPrompts } from './suggest.js?v=557e9ca1';
+import { readFact } from './facts.js?v=557e9ca1';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=557e9ca1';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=c198cc38';
-import { applicable } from './engine.js?v=c198cc38';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=c198cc38';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=c198cc38';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=c198cc38';
+} from './data.js?v=557e9ca1';
+import { applicable } from './engine.js?v=557e9ca1';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=557e9ca1';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=557e9ca1';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=557e9ca1';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -439,6 +439,7 @@ function meansLabel(id) {
   if (id.startsWith('mod:')) return ctx.mods.get(id.slice(4))?.label || '';
   return ctx.byId.get(id)?.name || '';
 }
+const chg = (html, attrs) => `<div class="chg"><span class="ct">${html}</span><button class="xbtn" ${attrs} aria-label="Remove">&times;</button></div>`;
 function factPreview() {
   const r = st.fact.res; if (!r) return '';
   const acts = '<button class="btn primary" data-act="fact-save">Save</button><button class="btn" data-act="fact-cancel">Cancel</button>';
@@ -483,12 +484,12 @@ const PAGES = {
 function worldPicker() {
   const sq = `<button class="wsq" data-act="w-modal" aria-haspopup="dialog"><span class="wl">World</span><span class="wv">${esc(world.name)}</span><span class="wc">&#9662;</span></button>`;
   if (!st.wmodal) return `<div class="wpick">${sq}</div>`;
-  const rows = S.worlds.map(x => `<button class="world-row${x.id === world.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}"><span><span class="wn">${esc(x.name)}</span>${x.id === world.id ? '<span class="wb">In use</span>' : ''}</span></button>`).join('');
+  const rows = S.worlds.map(x => x.id === world.id && st.wrename ? `<div class="world-row sel edit"><input class="renin" id="renameIn" value="${esc(x.name)}" aria-label="World name" maxlength="40" autocapitalize="words" enterkeyhint="done"><button class="btn primary" data-act="w-rename">Save</button></div>` : `<button class="world-row${x.id === world.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}"><span><span class="wn">${esc(x.name)}</span>${x.id === world.id ? '<span class="wb">In use</span>' : ''}</span></button>`).join('');
   const presets = Object.entries(WORLD_PRESETS).map(([id, mk]) => { const p = mk(); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span><span class="plus">+</span></button>`; }).join('');
   return `<div class="wpick">${sq}</div><div class="wmodal" role="dialog" aria-label="Worlds"><div class="wback" data-act="w-modal-close"></div><div class="wcard">
     <div class="wch"><h3>Worlds</h3><button class="btn" data-act="w-modal-close">Close</button></div>
     <div class="wlist">${rows}</div>
-    ${st.wrename ? `<div class="row"><input class="field" data-bind="name" value="${esc(world.name)}" aria-label="World name" autofocus><button class="btn primary" data-act="w-rename">Done</button></div>` : `<div class="row"><button class="btn" data-act="w-rename">Rename</button><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>`}
+    ${st.wrename ? '' : `<div class="row"><button class="btn" data-act="w-rename">Rename</button><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>`}
     ${st.wnew ? `<div class="lab">Start from a preset</div><div class="wlist">${presets}</div>` : `<button class="btn wide" data-act="w-newtoggle">+ New world</button>`}
   </div></div>`;
 }
@@ -528,7 +529,6 @@ function buildSettingsHtml() {
   const w = world;
   const op = () => '';
   const dens = w.currency.denominations;
-  const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
   const styleNow = S.skin || S.theme || 'dark';
   const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1];
@@ -563,7 +563,6 @@ function buildSettingsHtml() {
       <button class="presethead" data-act="cur-toggle" aria-expanded="${st.curOpen}"><span><b>Start over with a preset</b><span class="mini">Replaces the coins above. You will rarely need it.</span></span><span class="chev">${st.curOpen ? '&#9662;' : '&#9656;'}</span></button>
       ${st.curOpen ? `<div class="curpick" role="radiogroup" aria-label="Currency preset">${Object.entries(CURRENCY_PRESETS).map(([v, p]) => `<button class="curcard${curSet === v ? ' on' : ''}${st.curArm === v ? ' arm' : ''}" role="radio" aria-checked="${curSet === v}" data-act="w-cur" data-v="${v}"><b>${esc(p.title)}</b><span class="cs">${st.curArm === v ? 'Tap again to replace' : p.example}</span></button>`).join('')}</div>` : ''}
     </div>
-    <p id="curPrev">Shown as: ${esc(curPrev)} for 1, 12, 130, 1,500, 25,000 and 800,000 base units.</p>
   </div></div></details>
 
   <details class="sect" data-sec="Economy"${op('Economy')}><summary><h3>Economy</h3><span class="sv">${w.economyTags.length ? w.economyTags.length + ' on' : 'none'}</span></summary><div class="sbody">
@@ -585,21 +584,13 @@ function buildSettingsHtml() {
     ${ctx.entries.some(e => e.group === 'rent') ? `<label class="dialrow"><span class="dt"><b>"Rent"</b><span class="mini">Which rental it prices.</span></span><select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
   </div></details>
 
-  <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || 'none'}</span></summary><div class="sbody">
-    <div class="factbox"><label class="lab">Tell it a fact<div class="factrow"><input class="field" id="factIn" value="${esc(st.fact.text)}" placeholder="a healing potion costs 40 gp" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"><button class="btn primary" data-act="fact-go">Add</button></div></label>
-      ${st.fact.err ? `<p class="ferr">${esc(st.fact.err)}</p>` : ''}${factPreview()}
-      ${st.fact.res || st.fact.err ? '' : '<p class="mini">Write it the way you would say it: "John\'s rent is $800 a month", "a shiv is a dagger", "sellers pay 40%", "price level 1.2".</p>'}</div>
-    <p>Everything you have added or changed in this world: your own items, words you taught it, and prices you edited.</p>
-    ${w.items.map((it, i) => `<div class="coin"><div class="kindtag">Item</div><div class="denrow single"><label class="lab">Name<input class="field" data-bind="item.${i}.name" value="${esc(it.name)}"></label><button class="xbtn" data-act="w-del-item" data-i="${i}" aria-label="Remove item">&times;</button></div>
-      <div class="grid2"><label class="lab">Kind<select class="field" data-bind="item.${i}.kind">${['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'].map(k => `<option${it.kind === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label><label class="lab">Per<select class="field" data-bind="item.${i}.unit">${['each', 'day', 'week', 'month', 'year', 'lb'].map(k => `<option${it.unit === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label></div>
-      <label class="lab">Price<input class="field" data-bind="item.${i}.price" value="${esc(formatFull(it.bu, w.currency))}" inputmode="decimal"></label>
-      <label class="lab">Tags, separated by spaces<input class="field" data-bind="item.${i}.tags" value="${esc((it.tags || []).join(' '))}" autocapitalize="none" placeholder="weapon metal"></label></div>`).join('')}
-    ${w.vocabulary.map((v, i) => `<div class="coin"><div class="kindtag">Word</div><div class="vrow"><input class="field" data-bind="voc.${i}.term" value="${esc(v.term)}" placeholder="word or phrase" aria-label="Word" autocapitalize="none" autocomplete="off"><input class="field" data-bind="voc.${i}.means" list="vocList" value="${esc(meansLabel(v.means))}" placeholder="means..." aria-label="Means" autocapitalize="none" autocomplete="off"><button class="xbtn" data-act="w-del-voc" data-i="${i}" aria-label="Remove word">&times;</button></div></div>`).join('')}
-    ${Object.entries(w.baseOverrides).map(([id, bu]) => `<div class="coin slim"><div class="kindtag">Price</div><div class="pline"><span>${esc((ctx.byId.get(id) || {}).name || id)}</span><span class="mini">${esc(formatFull(bu, w.currency))}</span><button class="xbtn" data-act="w-del-bo" data-key="${esc(id)}" aria-label="Remove price">&times;</button></div></div>`).join('')}
-    ${Object.entries(w.overrides).map(([k, v]) => `<div class="coin slim"><div class="kindtag">Price</div><div class="pline"><span>${esc(overrideLabel(k))}</span><span class="mini">&times; ${esc(fx(v[0]))} to ${esc(fx(v[1]))}</span><button class="xbtn" data-act="w-del-ov" data-key="${esc(k)}" aria-label="Remove change">&times;</button></div></div>`).join('')}
-    ${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length ? '' : '<p class="mini">Nothing yet. Add an item or a word below, type a setting like "healing potion costs 40 gp", or tap a row in a breakdown and keep your change.</p>'}
-    <div class="row"><button class="btn" data-act="w-add-item">Add an item</button><button class="btn" data-act="w-add-voc">Add a word</button></div>
-    <datalist id="vocList">${meansList().map(n => `<option value="${esc(n)}"></option>`).join('')}</datalist>
+  <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || ''}</span></summary><div class="sbody">
+    <div class="factbox"><div class="factrow"><input class="field" id="factIn" value="${esc(st.fact.text)}" placeholder="a healing potion costs 40 gp" aria-label="Tell it a fact" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"><button class="btn primary" data-act="fact-go">Add</button></div>
+      ${st.fact.err ? `<p class="ferr">${esc(st.fact.err)}</p>` : ''}${factPreview()}</div>
+    ${w.items.map((it, i) => chg(`${esc(it.name)} <span class="mini">${esc(formatFull(it.bu, w.currency))} ${it.unit === 'each' ? 'each' : 'per ' + esc(it.unit)}</span>`, `data-act="w-del-item" data-i="${i}"`)).join('')}
+    ${w.vocabulary.map((v, i) => chg(`${esc(v.term)} <span class="mini">means ${esc(meansLabel(v.means))}</span>`, `data-act="w-del-voc" data-i="${i}"`)).join('')}
+    ${Object.entries(w.baseOverrides).map(([id, bu]) => chg(`${esc((ctx.byId.get(id) || {}).name || id)} <span class="mini">${esc(formatFull(bu, w.currency))}</span>`, `data-act="w-del-bo" data-key="${esc(id)}"`)).join('')}
+    ${Object.entries(w.overrides).map(([k, v]) => chg(`${esc(overrideLabel(k))} <span class="mini">&times;${esc(fx(v[0]))} to ${esc(fx(v[1]))}</span>`, `data-act="w-del-ov" data-key="${esc(k)}"`)).join('')}
   </div></div></details>
   <details class="sect" data-sec="Back up and share"${op('Back up and share')}><summary><h3>Back up and share</h3><span class="sv"></span></summary><div class="sbody">
     <p>Copy this world to keep it or share it. Paste one below to load it.</p>
@@ -681,9 +672,6 @@ function worldChanged(opts = {}) {
     const t = opts.el, p = t && t.dataset.bind ? t.dataset.bind.split('.') : [];
     if (p[0] === 'dial') t.value = world.dials[p[1]];
     if (p[0] === 'den' && p[2] === 'bu') t.value = world.currency.denominations[+p[1]].bu;
-    const prev = document.getElementById('curPrev');
-    if (prev) prev.textContent = 'Shown as: ' + [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ') + ' for 1, 12, 130, 1,500, 25,000 and 800,000 base units.';
-    if (prev) glyphify(prev);
   } else renderDrawer();
 }
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
@@ -756,7 +744,11 @@ document.addEventListener('click', e => {
     case 'w-select': st.wmodal = false; useWorld(d.id); persist(); closeDrawerKeep(); break;
     case 'w-modal': st.wmodal = true; st.wrename = false; st.wnew = false; renderDrawer(); break;
     case 'w-modal-close': st.wmodal = false; renderDrawer(); break;
-    case 'w-rename': st.wrename = !st.wrename; renderDrawer(); break;
+    case 'w-rename': {
+      if (st.wrename) { const i = $('#renameIn'); world.name = (i && i.value.trim()) || world.name; st.wrename = false; persist(); renderDrawer(); }
+      else { st.wrename = true; renderDrawer(); const i = $('#renameIn'); if (i) { i.focus(); i.select(); } }
+      break;
+    }
     case 'w-newtoggle': st.wnew = true; renderDrawer(); break;
     case 'w-new-preset': { st.wmodal = false; const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
     case 'wtab': st.wtab = d.id; st.dpageChanged = true; renderDrawer(); break;
@@ -809,7 +801,7 @@ function afterWorldSwitch() { renderDrawer(); st.query = emptyQuery(); if (st.te
 $('#q').addEventListener('input', e => fromText(e.target.value));
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); e.target.blur(); } });
 $('#q').addEventListener('focus', () => { st.slot = null; st.numOpen = false; renderTray(); renderResult(); });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'factIn') { e.preventDefault(); factGo(); return; } if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'factIn') { e.preventDefault(); factGo(); return; } if (e.target.id === 'renameIn') { if (e.key === 'Enter') { e.preventDefault(); const i = $('#renameIn'); world.name = i.value.trim() || world.name; st.wrename = false; persist(); renderDrawer(); } else if (e.key === 'Escape') { st.wrename = false; renderDrawer(); } return; } if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
 
 // drawer and flow inputs
