@@ -1,7 +1,7 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
 import {
   CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
-} from './data.js?v=c6091ad0';
+} from './data.js?v=5b4e6fc0';
 
 export function stem(w) {
   w = w.toLowerCase();
@@ -58,6 +58,14 @@ export function compileWorld(world) {
   const lists = worldLists(world);
   const base = lists.includes('modern') && !lists.includes('fantasy') && !lists.includes('srd') && !lists.includes('scifi') ? 'modern' : 'other';
   const entries = CATALOG.filter(e => e.src === 'modern' ? lists.includes('modern') : e.src === 'scifi' ? lists.includes('scifi') : (e.src === 'srd' && !e.generic) ? lists.includes('srd') : lists.includes('fantasy')).map(e => ({ ...e }));
+  // a dollar world counts cents, while the fantasy and sci-fi lists count roughly one coin to the dollar:
+  // lift those entries by 100 so a 5 sp blanket reads as about $5, not 50 cents
+  const cur = world.currency || {};
+  if (cur.symbol === '$' && cur.decimal === 100) for (const e of entries) {
+    if (e.src === 'modern' || e.src === 'user') continue;
+    if (e.bu) e.bu *= 100; if (e.perMile) e.perMile *= 100;
+    if (e.curve) e.scale = (e.scale || 1) * 100;
+  }
   const byId = new Map(entries.map(e => [e.id, e]));
   // user items
   for (const it of world.items || []) {

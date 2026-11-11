@@ -49,3 +49,26 @@ export const libraryEntries = [
     'Assassin;300gp;;dangerous;hitman, hit man, hired killer, contract killer', 'Minion;1sp;day;;lackey, henchman, flunky, goon',
   ]),
 ];
+
+// ---- modern list additions: typical US prices in dollars, around 2025 (stored as cents) ----
+const usd = n => Math.round(n * 100);
+function M(kind, group, tags, list) {
+  return list.map(line => {
+    const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim());
+    return { id: kind + '.m-' + slug(name), name, kind, src: 'modern', bu: usd(parseFloat(price)), unit: unit || 'each', tags: [...tags, 'derived', ...(more ? more.split(/\s+/) : [])], aliases: aliases ? aliases.split(',').map(x => x.trim()).filter(Boolean) : [], spread: 0.25, library: group };
+  });
+}
+export const modernLibrary = [
+  ...M('good', 'clothes', ['clothing', 'crafted'], [
+    'T-shirt;15;;;t shirt, tee, shirt', 'Dress shirt;40', 'Dress;60;;;gown', 'Hat;20;;;cap', 'Socks;12;;;sock', 'Gloves;20;;;glove', 'Work boots;120;;;boots, boot', 'Dress shoes;90',
+  ]),
+  ...M('good', 'bedding', ['household', 'crafted'], ['Blanket;25;;;throw blanket, blankets', 'Wool blanket;70', 'Pillow;18', 'Bed sheets;40;;;sheets']),
+  ...M('good', 'care', ['medicine', 'crafted'], ['Foot cream;9;;;toe cream, heel cream', 'Hand lotion;7;;;lotion', 'Sunscreen;12']),
+  ...M('good', 'gear', ['tool', 'crafted'], ['Fire starter kit;15;;;fire kit, firestarter', 'Camping stove;35', 'Flashlight;15;;;torch']),
+  ...M('good', 'plants', ['plant', 'raw'], ['Seed packet;3;;;seeds, seed', 'Potted plant;20;;;houseplant', 'Sapling;25;;;seedling', 'Flower bouquet;30;;;flowers, bouquet']),
+  ...M('good', 'animals', ['animal', 'living'], ['Chicken;12;;livestock;hen, rooster', 'Sheep;250;;livestock', 'Goat;300;;livestock', 'Cow;1800;;livestock', 'Horse;3500;;livestock;pony', 'Adopted dog;300;;pet;dog, puppy', 'Adopted cat;150;;pet;cat, kitten']),
+  ...M('good', 'explosives', ['weapon', 'volatile'], ['Firecrackers;10;;;fireworks, firecracker', 'Fireworks box;80']),
+  ...M('good', 'paper', ['household'], ['Printer paper;8;;;ream of paper', 'Notebook;4;;;notepad']),
+  ...M('service', 'fees', ['fee'], ['Parking fee;20;;;parking', 'Business permit;75;;;permit, license, licence', 'Late fee;35']),
+  ...M('labor', 'hired', ['labor', 'service'], ['Tailoring job;25;;;tailor, alterations, hemming', 'Hair coloring;120;;;stylist, hair color', 'Tour guide;200;day;;guide']),
+];

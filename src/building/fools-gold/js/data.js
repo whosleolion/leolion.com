@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=c6091ad0';
-import { libraryEntries } from './library.js?v=c6091ad0';
+import { scifiEntries } from './scifi.js?v=5b4e6fc0';
+import { libraryEntries, modernLibrary } from './library.js?v=5b4e6fc0';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -266,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {
