@@ -1,6 +1,6 @@
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=0bdd92cf';
-import { compileWorld } from './world.js?v=0bdd92cf';
+import { WORLD_PRESETS } from './data.js?v=88a2bde3';
+import { compileWorld } from './world.js?v=88a2bde3';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
@@ -8,7 +8,7 @@ let mem = null;
 function defaults() {
   const worlds = [WORLD_PRESETS.srd()];
   worlds.forEach(normalizeWorld);
-  return { v: 2, worlds, activeId: 'srd', history: [], theme: null };
+  return { v: 3, worlds, activeId: 'srd', history: [], theme: null };
 }
 export function load() {
   let raw = null;
@@ -32,6 +32,11 @@ export function load() {
             if (w.id === 'srd' && w.name === 'Standard fantasy (SRD)') w.name = 'Standard Fantasy';
           }
           if (s.worlds.some(w => w.id === 'srd')) s.activeId = 'srd';
+        }
+        // v3: one preloaded world. Industrial Fantasy, Modern day and the rest are presets to create, not worlds to carry
+        if (!(s.v >= 3)) {
+          s.v = 3;
+          if (s.worlds.some(w => w.id === 'srd')) { s.worlds = s.worlds.filter(w => w.id === 'srd'); s.activeId = 'srd'; }
         }
         // the old Titanium Frontier sample world was replaced by the modern world
         s.worlds = s.worlds.map(w => (w.id === 'titanium' && w.name === 'Titanium Frontier' ? WORLD_PRESETS.modern() : w));

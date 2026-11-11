@@ -1,17 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=0bdd92cf';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=0bdd92cf';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=0bdd92cf';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=0bdd92cf';
-import { findOffer } from './lists.js?v=0bdd92cf';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=0bdd92cf';
+import { compileWorld } from './world.js?v=88a2bde3';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=88a2bde3';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=88a2bde3';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=88a2bde3';
+import { findOffer } from './lists.js?v=88a2bde3';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=88a2bde3';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=0bdd92cf';
-import { applicable } from './engine.js?v=0bdd92cf';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=0bdd92cf';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=0bdd92cf';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=0bdd92cf';
+} from './data.js?v=88a2bde3';
+import { applicable } from './engine.js?v=88a2bde3';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=88a2bde3';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=88a2bde3';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=88a2bde3';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -472,7 +472,7 @@ function renderDrawer() {
       `<div class="navgroup">App</div><div class="group">${row('Appearance', 'Appearance', byId('Appearance').sv)}${row('About', 'About', '')}</div>` +
       `<div class="navgroup">More</div><div class="group">${row('Worlds', 'Worlds', byId('Worlds').sv)}${row('Back up and share', 'Back up and share', '')}</div>`;
   }
-  panel.querySelectorAll('.glyphs').forEach(g => { const on = g.querySelector('.gl.on'); if (on) g.scrollLeft = Math.max(0, on.offsetLeft - 24); });
+  panel.querySelectorAll('.glyphs').forEach(g => { const on = g.querySelector('.gl.on:not(:first-child)'); if (on) g.scrollLeft = Math.max(0, on.getBoundingClientRect().left - g.getBoundingClientRect().left + g.scrollLeft - 70); });
   panel.scrollTop = st.dpageChanged ? 0 : top;
   st.dpageChanged = false;
 }
@@ -522,7 +522,7 @@ function buildSettingsHtml() {
     <div class="row"><button class="btn" data-act="w-cur" data-v="gsc">Gold, silver, copper</button><button class="btn" data-act="w-cur" data-v="one">One coin</button><button class="btn" data-act="w-cur" data-v="usd">US dollars</button></div>
     ${dens.map((d, i) => `<div class="coin"><div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">&times;</button>` : '<span></span>'}</div>
       <label class="lab">Worth in base units<input class="field" type="number" min="0.01" step="any" inputmode="decimal" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>
-      <div class="lab">Symbol<div class="glyphs" role="group" aria-label="Symbol for ${esc(d.name)}"><button class="gl${d.glyph ? '' : ' on'}" data-act="glyph" data-i="${i}" data-v="">${esc(d.id)}</button>${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => `<button class="gl${d.glyph === L ? ' on' : ''}" data-act="glyph" data-i="${i}" data-v="${L}" aria-label="Letter ${L}"><span class="cg">${L}</span></button>`).join('')}</div></div></div>`).join('')}
+      <div class="lab">Symbol<div class="glyphs" role="group" aria-label="Symbol for ${esc(d.name)}"><button class="gl${d.glyph ? '' : ' on'}" data-act="glyph" data-i="${i}" data-v="" title="Plain letters">${esc(d.id.toUpperCase())}</button>${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => `<button class="gl${d.glyph === L ? ' on' : ''}" data-act="glyph" data-i="${i}" data-v="${L}" aria-label="Letter ${L}"><span class="cg">${L}</span></button>`).join('')}</div></div></div>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-den">Add a coin</button></div>
     <label class="lab">Amounts smaller than the smallest coin<select class="field" data-bind="belowSmallest"><option value="round"${w.currency.belowSmallest !== 'decimals' ? ' selected' : ''}>Round to one coin</option><option value="decimals"${w.currency.belowSmallest === 'decimals' ? ' selected' : ''}>Show decimals (0.4 coins)</option><option value="round"${w.currency.belowSmallest === 'round' ? ' selected' : ''}>Round up to one coin</option></select></label>
     <label class="lab">Your note on what one base unit is worth<input class="field" data-bind="note" value="${esc(w.currency.note || '')}" placeholder="for example: roughly a dollar"></label>
@@ -535,17 +535,19 @@ function buildSettingsHtml() {
     ${ECONOMY_TAGS.map(t => `<label class="tagrow"><input type="checkbox" data-bind="econ.${t.id}"${w.economyTags.includes(t.id) ? ' checked' : ''}><span><b>${esc(t.label)}</b>${esc(t.describe)}</span></label>`).join('')}
   </div></div></details>
 
-  <details class="sect" data-sec="Dials"${op('Dials')}><summary><h3>Dials</h3><span class="sv">${w.dials.round ? 'rounded' : 'exact'}</span></summary><div class="sbody">
-    <label class="tagrow"><input type="checkbox" data-bind="dial.round"${w.dials.round ? ' checked' : ''}><span><b>Round prices to whole coins</b>Shows 5 sp 9 cp as 6 sp, and $7.50 as $8. Small amounts keep their detail.</span></label>
-    <div class="grid2">
-      <label class="lab">Price level (1 is standard)<input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${esc(w.dials.priceLevel)}"></label>
-      <label class="lab">Range width (0 exact, 1 wide)<input class="field" type="number" min="0" max="1" step="0.1" data-bind="dial.volatility" value="${esc(w.dials.volatility)}"></label>
-      <label class="lab">Share of price paid to sellers<input class="field" type="number" min="0.1" max="1" step="0.05" data-bind="dial.sellFraction" value="${esc(w.dials.sellFraction)}"></label>
-      <label class="lab">Stacking circumstances<select class="field" data-bind="dial.stacking"><option value="dampened"${w.dials.stacking === 'dampened' ? ' selected' : ''}>Dampened (recommended)</option><option value="strict"${w.dials.stacking === 'strict' ? ' selected' : ''}>Strict multiplication</option></select></label>
-      <label class="lab">When you just say "travel"<select class="field" data-bind="defaults.travel">${ctx.entries.filter(e => e.group === 'travel').map(e => `<option value="${esc(e.id)}"${w.defaults.travel === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>
-      ${ctx.entries.some(e => e.group === 'rent') ? `<label class="lab">When you just say "rent"<select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
-    </div>
-  </div></div></details>
+  <details class="sect" data-sec="Dials"${op('Dials')}><summary><h3>Dials</h3><span class="sv">${w.dials.priceLevel === 1 ? 'standard' : '×' + fx(w.dials.priceLevel)}</span></summary><div class="sbody">
+    <div class="dialgroup">Prices</div>
+    <label class="dialrow"><span class="dt"><b>Price level</b><span class="mini">Scales every price. 1 is standard, 1.5 is a pricier world.</span></span><input class="field" type="number" min="0.1" max="10" step="0.05" data-bind="dial.priceLevel" value="${esc(w.dials.priceLevel)}" inputmode="decimal"></label>
+    <label class="dialrow"><span class="dt"><b>Sellers get</b><span class="mini">The share of a price a shop pays when it buys from you.</span></span><select class="field" data-bind="dial.sellFraction">${[0.25, 0.3, 0.4, 0.5, 0.6, 0.75, 1].map(v => `<option value="${v}"${+w.dials.sellFraction === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}${[0.25, 0.3, 0.4, 0.5, 0.6, 0.75, 1].includes(+w.dials.sellFraction) ? '' : `<option value="${esc(w.dials.sellFraction)}" selected>${Math.round(w.dials.sellFraction * 100)}%</option>`}</select></label>
+    <div class="dialgroup">Ranges</div>
+    <label class="dialrow"><span class="dt"><b>Range width</b><span class="mini">How far low and high prices sit from the typical one.</span></span><select class="field" data-bind="dial.volatility">${[[0, 'Exact'], [0.3, 'Narrow'], [0.5, 'Normal'], [0.8, 'Wide'], [1, 'Very wide']].map(([v, l]) => `<option value="${v}"${+w.dials.volatility === v ? ' selected' : ''}>${l}</option>`).join('')}${[0, 0.3, 0.5, 0.8, 1].includes(+w.dials.volatility) ? '' : `<option value="${esc(w.dials.volatility)}" selected>Custom (${esc(w.dials.volatility)})</option>`}</select></label>
+    <label class="dialrow"><span class="dt"><b>Stacking circumstances</b><span class="mini">Rush, black market and the like. Dampened keeps several at once from piling up.</span></span><select class="field" data-bind="dial.stacking"><option value="dampened"${w.dials.stacking === 'dampened' ? ' selected' : ''}>Dampened</option><option value="strict"${w.dials.stacking === 'strict' ? ' selected' : ''}>Strict multiplication</option></select></label>
+    <div class="dialgroup">Display</div>
+    <label class="dialrow check"><span class="dt"><b>Round to whole coins</b><span class="mini">Shows 5 sp 9 cp as 6 sp. Small amounts keep their detail.</span></span><input type="checkbox" data-bind="dial.round"${w.dials.round ? ' checked' : ''}></label>
+    <div class="dialgroup">When you only say it</div>
+    <label class="dialrow"><span class="dt"><b>"Travel"</b><span class="mini">Which trip it prices.</span></span><select class="field" data-bind="defaults.travel">${ctx.entries.filter(e => e.group === 'travel').map(e => `<option value="${esc(e.id)}"${w.defaults.travel === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>
+    ${ctx.entries.some(e => e.group === 'rent') ? `<label class="dialrow"><span class="dt"><b>"Rent"</b><span class="mini">Which rental it prices.</span></span><select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
+  </div></details>
 
   <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || 'none'}</span></summary><div class="sbody">
     <p>Everything you have added or changed in this world: your own items, words you taught it, and prices you edited.</p>

@@ -709,3 +709,19 @@ details.sub .tagrow { padding: 8px 0; }
 :root[data-skin="pyrite"] .slot .v { font-family: var(--font-mono); font-size: 14px; }
 :root[data-skin="pyrite"] .cta, :root[data-skin="pyrite"] .btn.primary { border-radius: 2px; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; box-shadow: 0 0 16px rgba(232,193,74,.25); }
 :root[data-skin="pyrite"] .dock { background: linear-gradient(transparent, var(--bg) 30%); }
+
+/* Dials: one setting per row, name and help on the left, control on the right */
+.dialgroup { font: 600 12px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 6px 0 -2px; }
+.dialgroup:first-child { margin-top: 0; }
+.dialrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(96px, 42%); gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.dialgroup + .dialrow { border-top: 0; }
+.dialrow .dt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dialrow .dt b { font-weight: 600; font-size: 16px; }
+.dialrow .field { width: 100%; min-width: 0; }
+.dialrow.check { grid-template-columns: minmax(0, 1fr) auto; }
+.dialrow.check input { width: 26px; height: 26px; }
+
+/* symbol picker: the plain-letters choice stays pinned at the left while the glyphs scroll */
+.glyphs .gl:first-child { position: sticky; left: 0; z-index: 1; font-family: var(--font-body); font-size: 15px; letter-spacing: .04em; box-shadow: 8px 0 8px -4px var(--bg); }
+/* jump bar covers what scrolls under it */
+.jump { background: var(--bg); padding-bottom: 8px; box-shadow: 0 6px 6px -6px rgba(0,0,0,.12); }
