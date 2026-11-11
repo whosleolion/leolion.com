@@ -209,6 +209,41 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=g-alias]');
   ok(name + ' alias prices it', /healing/i.test(await page.textContent('.price .what')));
 
+  // the cart
+  await page.fill('#q', 'buy a longsword');
+  ok(name + ' no cart pill until something is added', await page.isHidden('#cartPill'));
+  ok(name + ' a small Add sits beside the price', await page.isVisible('[data-act=cart-add]'));
+  await page.click('[data-act=cart-add]');
+  ok(name + ' adding starts a cart in the corner', await page.isVisible('#cartPill') && /Cart\s*1/.test(await page.textContent('#cartPill')));
+  ok(name + ' the button shows what is in the cart', /In cart/.test(await page.textContent('[data-act=cart-add]')));
+  await page.click('[data-act=cart-add]');
+  ok(name + ' adding the same again merges', /In cart . 2/.test(await page.textContent('[data-act=cart-add]')) && /Cart\s*1/.test(await page.textContent('#cartPill')));
+  await page.fill('#q', '3 rope, 2 torches, sell 1 shortsword in a village');
+  ok(name + ' several items offer a cart', !!(await page.$('[data-act=cart-offer-add]')) && /3 items/.test(await page.textContent('.cartoffer')));
+  await page.click('[data-act=cart-offer-add]');
+  ok(name + ' the offer fills the cart and opens it', await page.isVisible('.sheet.cart') && (await page.$$('.cline')).length === 4);
+  ok(name + ' the shop is set from the sentence', await page.getAttribute('[data-act=cart-shop][data-id=village]', 'aria-pressed') === 'true');
+  const t0 = await page.textContent('.ctot .t1 b');
+  await page.click('[data-act=cart-shop][data-id=capital]');
+  ok(name + ' changing the shop moves the total', t0 !== (await page.textContent('.ctot .t1 b')));
+  await page.click('.cline >> nth=0 >> [data-act=cart-lock]');
+  ok(name + ' a line can be locked at its price', /agreed/.test(await page.textContent('.cline >> nth=0')));
+  ok(name + ' mixed buying and selling shows a net', /Net/.test(await page.textContent('.ctot')));
+  await page.click('[data-act=cart-why]');
+  ok(name + ' the total explains itself', /Shop/.test(await page.textContent('.cwhy')));
+  await page.click('.cline >> nth=1 >> .lbl');
+  ok(name + ' tapping a line edits it on the price screen', await page.isVisible('.editbar') && await page.isHidden('.sheet.cart'));
+  await page.click('[data-act=cart-cancel]');
+  ok(name + ' cancel returns to the cart', await page.isVisible('.sheet.cart'));
+  await page.fill('#cartIn', '2 lanterns'); await page.press('#cartIn', 'Enter');
+  ok(name + ' one more item can be typed into the cart', (await page.$$('.cline')).length === 5);
+  await page.click('.cline >> nth=4 >> [data-act=cart-del]');
+  ok(name + ' a line can be removed', (await page.$$('.cline')).length === 4);
+  await page.reload({ waitUntil: 'load' }); await page.waitForSelector('#q');
+  ok(name + ' the cart survives a reload', /Cart\s*4/.test(await page.textContent('#cartPill')));
+  await page.click('#cartPill'); await page.click('[data-act=cart-clear]'); await page.click('[data-act=cart-clear]');
+  ok(name + ' the cart can be emptied', await page.isHidden('#cartPill'));
+
   // hostile import
   let alerts = 0; page.on('dialog', d => { alerts++; d.dismiss(); });
   await page.click('#gear'); await goPage(page, 'Back up and share');

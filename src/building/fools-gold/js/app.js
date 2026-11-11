@@ -1,19 +1,20 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=7656d9e0';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=7656d9e0';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=7656d9e0';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=7656d9e0';
-import { findOffer } from './lists.js?v=7656d9e0';
-import { suggestPrompts } from './suggest.js?v=7656d9e0';
-import { readFact } from './facts.js?v=7656d9e0';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=7656d9e0';
+import { compileWorld } from './world.js?v=8d53b51a';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=8d53b51a';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=8d53b51a';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=8d53b51a';
+import { findOffer } from './lists.js?v=8d53b51a';
+import { suggestPrompts } from './suggest.js?v=8d53b51a';
+import { readFact } from './facts.js?v=8d53b51a';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=8d53b51a';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=8d53b51a';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=7656d9e0';
-import { applicable } from './engine.js?v=7656d9e0';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=7656d9e0';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=7656d9e0';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=7656d9e0';
+} from './data.js?v=8d53b51a';
+import { applicable } from './engine.js?v=8d53b51a';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=8d53b51a';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=8d53b51a';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=8d53b51a';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,7 +23,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, dpage: null, wmodal: false, curOpen: false, curArm: '', fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, dpage: null, wmodal: false, cartEdit: null, cartOffer: null, cartOfferDismissed: '', cartRead: null, cartText: '', cartWhy: false, curOpen: false, curArm: '', fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -59,6 +60,8 @@ function run(opts = {}) {
   st.est = q.subject ? estimate(q, ctx) : null;
   if (q.subject) st.guess = null; // a priced thing ends any unknown-word card
   st.offer = !q.subject && st.text && !st.setting && st.offerDismissed !== st.text ? findOffer(st.text, world, ctx) : null;
+  st.cartOffer = null;
+  if (st.text && st.text.length > 6 && st.text !== st.cartOfferDismissed && !st.setting && !st.cartEdit) { const r = readSentence(st.text, ctx); if (r.items.length >= 2) st.cartOffer = r; }
   st.fields = st.est && st.est.ok ? buildFields(q, st.est, ctx) : null;
   if (st.slot && !(st.fields && st.fields.slots.some(x => x.id === st.slot))) { st.slot = null; st.numOpen = false; }
   S.last = st.text; persist();
@@ -95,7 +98,7 @@ function glyphify(root) {
 }
 function renderAll() {
   $('#clearBtn').hidden = !st.text;
-  renderUnderstanding(); renderResult(); renderTray(); renderInput(); renderSheet(); renderHistory();
+  renderUnderstanding(); renderResult(); renderTray(); renderInput(); renderSheet(); renderHistory(); renderCartPill();
 }
 
 // ---------- the sentence, colored by what each word did ----------
@@ -119,6 +122,7 @@ function renderInput() {
 
 // ---------- hints: only what needs an answer ----------
 function renderUnderstanding() {
+  if (st.cartOffer) { $('#understanding').innerHTML = ''; return; }
   const p = st.parsed, out = [];
   if (p && !st.setting) {
     for (const [i, s] of p.suggestions.entries()) out.push(`<div class="hint">Did you mean <button class="pill" data-act="fix" data-i="${i}">${esc(s.to)}</button> instead of <span class="ign">${esc(s.from)}</span>?</div>`);
@@ -149,6 +153,14 @@ function slotRow(s) {
   return `<button class="slot r-${s.role}${s.filled ? '' : (s.assumed ? ' assumed unset' : ' unset')}${open ? ' open' : ''}" data-act="slot" data-id="${esc(s.id)}"><span class="k">${esc(s.label)}</span><span class="v">${v}</span>${hint}<span class="chev">${open ? '&#9662;' : '&#8250;'}</span></button>`;
 }
 function renderResult() {
+  renderResultCore();
+  let pre = '';
+  if (st.cartEdit) pre += editBarHtml();
+  if (st.cartOffer) pre += offerHtml();
+  if (st.cartOffer) { $('#result').innerHTML = pre; return; }
+  if (pre) $('#result').insertAdjacentHTML('afterbegin', pre);
+}
+function renderResultCore() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
   if (!st.text) { st.glintKey = ''; el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>`; return; }
@@ -159,7 +171,7 @@ function renderResult() {
   }
   if (!q.subject) {
     const g = guessCard();
-    el.innerHTML = g || `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or search the list with the item field once something is priced.</p>`; return;
+    el.innerHTML = g || (st.cartOffer ? '' : `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or search the list with the item field once something is priced.</p>`); return;
   }
   if (!e.ok && e.error === 'conflict') {
     el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(GROUPS[c.group].ask)}:</b> pick one.</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
@@ -177,7 +189,7 @@ function renderResult() {
   const glintNow = st.glintKey !== ent.id; st.glintKey = ent.id;
   el.innerHTML = `<section class="price">
     <div class="what">${esc(what)}</div>
-    <button class="pricebtn" data-act="copy" aria-label="Copy price"><span class="num">${esc(pr.n)}${pr.u ? `<small>${esc(pr.u)}</small>` : ''}</span></button>
+    <div class="prow"><button class="pricebtn" data-act="copy" aria-label="Copy price"><span class="num">${esc(pr.n)}${pr.u ? `<small>${esc(pr.u)}</small>` : ''}</span></button>${addCartBtn(q)}</div>
     <div class="span" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="rule"></div><div class="band"></div><div class="tick" style="left:${pos.toFixed(1)}%"></div></div>
     <div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div>
     ${meta.length ? `<div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>` : ''}
@@ -191,7 +203,7 @@ function renderResult() {
 function slotById(id) { const f = st.fields; return f ? f.slots.find(x => x.id === id) : null; }
 function renderTray() {
   const t = $('#tray'), e = st.est;
-  if (st.setting || st.guess) { t.innerHTML = ''; return; }
+  if (st.setting || st.guess || st.cartOffer) { t.innerHTML = ''; return; }
   if (!st.text) { t.innerHTML = `<div class="quick">${sampleList().map((x, i) => `<button class="q sample" data-act="sample" data-i="${i}">${esc(x)}</button>`).join('')}</div>`; return; }
   if (!(e && e.ok && st.query.subject)) { t.innerHTML = ''; return; }
   const slot = st.slot ? slotById(st.slot) : null;
@@ -214,6 +226,96 @@ function renderTray() {
   chips.push(`<button class="q${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}">Round</button>`);
   chips.push(`<button class="q" data-act="sheet" data-mode="break">Why this price?</button>`);
   t.innerHTML = `<div class="quick">${chips.join('')}</div>`;
+}
+
+
+// ---------- the cart ----------
+const CART_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2 11h10l2-8H7"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>';
+const cartOf = () => (S.carts[world.id] ||= emptyCart());
+function whatText(q, ent) {
+  const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
+  const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
+  return qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
+}
+function addCartBtn(q) {
+  if (st.cartEdit || q.action === 'value') return '';
+  const n = unitsInCart(cartOf(), stripShop(q, cartOf().mods));
+  return `<button class="addcart${n ? ' in' : ''}" data-act="cart-add" aria-label="Add to cart">${CART_SVG}<span>${n ? 'In cart · ' + n : 'Add'}</span></button>`;
+}
+function editBarHtml() {
+  const line = cartOf().lines.find(l => l.id === st.cartEdit.id), ent = line && ctx.byId.get(line.q.subject);
+  return `<div class="editbar"><span>Editing <b>${esc(ent ? ent.name : 'a line')}</b> in the cart</span><span class="row"><button data-act="cart-cancel">Cancel</button><button class="go" data-act="cart-update">Update</button></span></div>`;
+}
+function offerHtml() {
+  const r = st.cartOffer, shop = r.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean);
+  return `<section class="guess cartoffer"><div class="gh">That reads as <b>${r.items.length} items</b>${shop.length ? ' (' + esc(shop.join(', ')) + ')' : ''}. Price them together in a cart?</div><ul class="slines">${r.items.map(q => { const e = ctx.byId.get(q.subject); return `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(e ? whatText(q, e) : '')}</li>`; }).join('')}${r.bad.map(b => `<li class="ferr">&ldquo;${esc(b)}&rdquo; is not in your lists, so it is left out.</li>`).join('')}</ul><button class="cta" data-act="cart-offer-add">Add ${r.items.length} to cart</button><button class="cta2" data-act="cart-offer-no">Not now</button></section>`;
+}
+function renderCartPill() {
+  const el = $('#cartPill'); if (!el) return;
+  const c = cartOf(), n = c.lines.length;
+  el.hidden = !n; if (!n) return;
+  const t = cartTotals(c, ctx), amt = t.mixed ? Math.abs(t.net) : (t.spend || t.get);
+  el.innerHTML = `<span>Cart</span><b>${n}</b><span class="amt">${esc(money(amt))}</span>`;
+}
+const SHOP_SHORT = { capital: 'Capital', city: 'City', town: 'Town', village: 'Village', outpost: 'Outpost', remote: 'Wilderness', wholesale: 'Wholesale' };
+function cartHtml() {
+  const c = cartOf(), t = cartTotals(c, ctx);
+  const shop = ctx.modList.filter(m => m.group === 'place' || m.id === 'wholesale').map(m => `<button class="q${c.mods.includes(m.id) ? ' on' : ''}" data-act="cart-shop" data-id="${esc(m.id)}" aria-pressed="${c.mods.includes(m.id)}">${esc(SHOP_SHORT[m.id] || m.aliases[0] || m.label)}</button>`).join('');
+  const rows = c.lines.map(line => {
+    const r = lineResult(line, c, ctx);
+    if (!r.ok) return `<div class="cline miss"><div class="l1"><span class="lbl">${esc(line.q.subject || 'An item')}</span><span class="ltot">&mdash;</span></div><div class="l2"><span class="csub">Not in your lists<button class="lk" data-act="cart-del" data-id="${line.id}">Remove</button></span></div></div>`;
+    const bits = [];
+    if (r.sell) bits.push('<span class="ctag is-sell">sell</span>');
+    for (const id of r.q.mods) { const m = ctx.mods.get(id); if (m && !c.mods.includes(id)) bits.push(esc((m.aliases[0] || m.label))); }
+    if (r.quoted) bits.push('<span class="ctag is-q">agreed</span>');
+    const rng = r.quoted || money(r.lo) === money(r.hi) ? '' : `${esc(money(r.lo))} to ${esc(money(r.hi))}`;
+    return `<div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot">${r.sell ? '+ ' : ''}${esc(money(r.t))}</span></div><div class="l2"><span class="csub">${bits.join(' ')}<button class="lk" data-act="cart-lock" data-id="${line.id}">${r.quoted ? 'Unlock' : 'Lock price'}</button><button class="lk" data-act="cart-del" data-id="${line.id}">Remove</button></span><span class="crg">${rng}</span></div></div>`;
+  }).join('');
+  // totals
+  let head, amt, band;
+  if (t.mixed) { head = t.net < 0 ? 'Net: you pay' : 'Net: you receive'; amt = Math.abs(t.net); const b = t.netBand.map(Math.abs); band = t.netBand[0] < 0 && t.netBand[1] > 0 ? 'Could come out about even' : `Likely ${money(Math.min(...b))} to ${money(Math.max(...b))}`; }
+  else if (t.get > 0) { head = 'You receive'; amt = t.get; band = `Likely ${money(t.getBand[0])} to ${money(t.getBand[1])}`; }
+  else { head = 'Total'; amt = t.spend; band = t.spend ? `Likely ${money(t.spendBand[0])} to ${money(t.spendBand[1])}` : ''; }
+  const split = t.mixed ? `<span>Pay ${esc(money(t.spend))} &middot; Receive ${esc(money(t.get))}</span>` : '';
+  const read = st.cartRead ? `<div class="cread"><p>That reads as ${st.cartRead.items.length} items${st.cartRead.shop.length ? ' (' + esc(st.cartRead.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ')) + ')' : ''}.</p><ul>${st.cartRead.items.map(q => `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(whatText(q, ctx.byId.get(q.subject)))}</li>`).join('')}${st.cartRead.bad.map(b => `<li class="ferr">&ldquo;${esc(b)}&rdquo; is not in your lists.</li>`).join('')}</ul><div class="row"><button class="go" data-act="cart-read-add">Add ${st.cartRead.items.length} to cart</button><button data-act="cart-read-no">Cancel</button></div></div>` : '';
+  const why = st.cartWhy ? `<div class="cwhy"><div><span>Shop</span><b>${esc(c.mods.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ') || 'none set')}</b></div>${c.lines.map(line => { const r = lineResult(line, c, ctx); if (!r.ok) return ''; const steps = r.quoted ? 'agreed price' : r.e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => `${f.label} ×${fx(((f.effLo ?? f.lo) * (f.effHi ?? f.hi)) ** 0.5)}`).join(', ') || 'no circumstances'; return `<div><span>${esc(whatText(r.q, r.e.entry))}<em>${esc(steps)}</em></span><b>${esc(money(r.t))}</b></div>`; }).join('')}${t.mixed ? '' : `<div><span>Every low and every high added up</span><b>${esc(money((t.get > 0 ? t.getExt : t.spendExt)[0]))} to ${esc(money((t.get > 0 ? t.getExt : t.spendExt)[1]))}</b></div>`}<p class="mini">The likely range assumes each line varies on its own, so it is narrower than adding every low and every high.</p></div>` : '';
+  const body = c.lines.length ? rows : `<p class="empty">Nothing in the cart yet. Tap Add beside a price, or type a few items below.</p>`;
+  return `<div class="cshop"><span class="lab">Shop</span><div class="quick">${shop}</div></div><div class="clines">${body}</div>${why}
+    <div class="cfoot">${read}<div class="cin"><input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="3 rope, 2 torches, sell 2 shortswords" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div>
+    <div class="ctot"><div class="t1"><span>${esc(head)}</span><b>${esc(money(amt))}</b></div><div class="t2"><span>${esc(band)}</span>${split}</div></div>${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out of the total.</p>` : ''}
+    <div class="cacts"><button class="btn" data-act="cart-why">Why this total?</button><button class="btn" data-act="cart-copy">Copy cart</button><button class="btn" data-act="cart-clear">Empty</button></div></div>`;
+}
+function clearInput() { $('#q').value = ''; fromText(''); }
+function openCart() { st.sheet = { open: true, mode: 'cart' }; renderSheet(); }
+function afterCart(opts = {}) {
+  persist(); renderCartPill(); renderResult(); if (st.sheet.open && st.sheet.mode === 'cart') renderSheet();
+  if (opts.focus) { const i = $('#cartIn'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+}
+function mergeShop(c, shop) {
+  for (const id of shop) {
+    const m = ctx.mods.get(id); if (!m) continue;
+    c.mods = c.mods.filter(x => ctx.mods.get(x)?.group !== m.group || m.group === undefined);
+    if (!c.mods.includes(id)) c.mods.push(id);
+  }
+}
+function addItems(items, shop) {
+  const c = cartOf(); mergeShop(c, shop);
+  for (const q of items) addToCart(c, stripShop(q, c.mods));
+}
+function flyCoin(from, first) {
+  const pill = $('#cartPill'); if (!pill || pill.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const to = pill.getBoundingClientRect(), f = document.createElement('div');
+  f.className = 'fly'; f.textContent = '+'; f.style.left = (from.left + from.width / 2 - 13) + 'px'; f.style.top = (from.top + from.height / 2 - 13) + 'px';
+  document.body.appendChild(f);
+  if (first) pill.style.opacity = '0';
+  requestAnimationFrame(() => requestAnimationFrame(() => { f.style.transform = `translate(${to.left + to.width / 2 - from.left - from.width / 2}px,${to.top + to.height / 2 - from.top - from.height / 2}px) scale(.8)`; f.style.opacity = '.4'; }));
+  setTimeout(() => { f.remove(); pill.style.opacity = ''; pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump'); }, 560);
+}
+function cartRead() {
+  const r = readSentence(st.cartText, ctx);
+  if (!r.items.length) { toast(r.bad.length ? `"${r.bad[0]}" is not in your lists.` : 'Type what to add, like "3 rope, 2 torches".'); return; }
+  if (r.items.length === 1 && !r.bad.length) { addItems(r.items, r.shop); st.cartText = ''; st.cartRead = null; afterCart({ focus: true }); toast('Added to the cart'); return; }
+  st.cartRead = r; renderSheet();
 }
 
 // ---------- bottom sheet: the breakdown, or the item picker ----------
@@ -274,7 +376,11 @@ function renderSheet() {
   const sh = $('#sheet'), s = st.sheet, e = st.est;
   if (!s.open) { sh.hidden = true; return; }
   const body = $('#sheetBody'), top = body.scrollTop;
-  if (s.mode === 'item') {
+  sh.classList.toggle('cart', s.mode === 'cart');
+  if (s.mode === 'cart') {
+    $('#sheetTitle').textContent = 'Cart';
+    body.innerHTML = cartHtml();
+  } else if (s.mode === 'item') {
     $('#sheetTitle').textContent = 'Choose item';
     body.innerHTML = pickerHtml();
   } else {
@@ -625,9 +731,10 @@ function guessAll() {
   const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
   return [...g.cands, ...found];
 }
-function toast(msg) {
+function toast(msg, undo) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
-  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200);
+  if (undo) { const b = document.createElement('button'); b.className = 'tundo'; b.textContent = 'Undo'; b.onclick = () => { undo(); t.hidden = true; }; t.append(' ', b); }
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, undo ? 4200 : 2200);
 }
 async function copyText(text, okMsg) {
   try { await navigator.clipboard.writeText(text); toast(okMsg); }
@@ -686,6 +793,31 @@ document.addEventListener('click', e => {
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
     case 'hist-del': S.history.splice(+d.i, 1); persist(); renderHistory(); break;
     case 'hist-clear': S.history = S.history.filter(x => x.world !== world.id); persist(); renderHistory(); break;
+    case 'cart-open': openCart(); break;
+    case 'cart-add': {
+      const c = cartOf(), first = !c.lines.length, snap = clone(c), from = b.getBoundingClientRect();
+      addToCart(c, stripShop(st.query, c.mods)); afterCart(); flyCoin(from, first);
+      toast('Added to the cart', () => { S.carts[world.id] = snap; afterCart(); });
+      break;
+    }
+    case 'cart-shop': { const c = cartOf(), m = ctx.mods.get(d.id); if (!m) break; if (c.mods.includes(d.id)) c.mods = c.mods.filter(x => x !== d.id); else { c.mods = c.mods.filter(x => ctx.mods.get(x)?.group !== m.group); c.mods.push(d.id); } afterCart(); break; }
+    case 'cart-lock': { const c = cartOf(), l = c.lines.find(x => x.id === +d.id); if (!l) break; if (l.quote != null) { l.quote = null; toast('Unlocked. It follows the shop again.'); } else { const r = lineResult(l, c, ctx); if (r.ok) { l.quote = Math.round(r.e.typical * 1000) / 1000; toast('Price agreed. It will not move.'); } } afterCart(); break; }
+    case 'cart-del': { const c = cartOf(), snap = clone(c); c.lines = c.lines.filter(x => x.id !== +d.id); afterCart(); toast('Removed', () => { S.carts[world.id] = snap; afterCart(); }); break; }
+    case 'cart-edit': { const c = cartOf(), l = c.lines.find(x => x.id === +d.id); if (!l || !ctx.byId.has(l.q.subject)) break; st.cartEdit = { id: l.id }; st.sheet.open = false; renderSheet(); fromQuery(withShop(l.q, c.mods, ctx)); window.scrollTo(0, 0); break; }
+    case 'cart-update': {
+      const c = cartOf(), l = c.lines.find(x => x.id === (st.cartEdit && st.cartEdit.id));
+      if (l && st.query.subject) { const q = stripShop(st.query, c.mods); delete q.overrides; l.q = q; l.quote = null; }
+      st.cartEdit = null; persist(); clearInput(); openCart(); toast('Line updated'); break;
+    }
+    case 'cart-cancel': st.cartEdit = null; clearInput(); openCart(); break;
+    case 'cart-read': cartRead(); break;
+    case 'cart-read-add': if (st.cartRead) { addItems(st.cartRead.items, st.cartRead.shop); const n = st.cartRead.items.length; st.cartRead = null; st.cartText = ''; afterCart({ focus: true }); toast('Added ' + n + ' to the cart'); } break;
+    case 'cart-read-no': st.cartRead = null; renderSheet(); break;
+    case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart'); } break;
+    case 'cart-offer-no': st.cartOfferDismissed = st.text; st.cartOffer = null; renderResult(); break;
+    case 'cart-why': st.cartWhy = !st.cartWhy; renderSheet(); break;
+    case 'cart-copy': { const c = cartOf(); copyText(cartText(c, ctx, n => money(n), (r, line) => r ? whatText(r.q, r.e.entry) : (line.q.subject || 'An item')), 'Cart copied'); break; }
+    case 'cart-clear': { const c = cartOf(); if (b.dataset.armed) { const snap = clone(c); S.carts[world.id] = emptyCart(); st.sheet.open = false; afterCart(); renderSheet(); toast('Cart emptied', () => { S.carts[world.id] = snap; afterCart(); }); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to empty'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Empty'; } }, 3500); } break; }
     case 'copy-receipt': if (st.est && st.est.ok) copyText(receiptText(st.est), 'Receipt copied'); break;
     case 'open-changes': st.sheet.open = false; renderSheet(); st.dpage = 'World'; st.wtab = 'My changes'; st.dpageChanged = true; $('#drawer').hidden = false; document.body.style.overflow = 'hidden'; renderDrawer(); setTimeout(() => { const i = $('#factIn'); if (i) i.focus(); }, 50); break;
     case 'sheet': st.sheet = { open: true, mode: d.mode || 'break' }; renderSheet(); break;
@@ -730,7 +862,7 @@ document.addEventListener('click', e => {
     case 'w-dup': { const w = clone(world); w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
     case 'w-del':
       if (S.worlds.length > 1) {
-        if (b.dataset.armed) { const gone = world.id; S.worlds = S.worlds.filter(w => w.id !== gone); S.history = S.history.filter(h => h.world !== gone); useWorld(S.worlds[0].id); persist(); afterWorldSwitch(); }
+        if (b.dataset.armed) { const gone = world.id; S.worlds = S.worlds.filter(w => w.id !== gone); S.history = S.history.filter(h => h.world !== gone); delete S.carts[gone]; useWorld(S.worlds[0].id); persist(); afterWorldSwitch(); }
         else { b.dataset.armed = '1'; b.textContent = 'Click again to delete'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Delete this one'; } }, 3500); }
       } break;
     case 'cur-toggle': st.curOpen = !st.curOpen; st.curArm = ''; renderDrawer(); break;
@@ -775,7 +907,7 @@ function afterWorldSwitch() { renderDrawer(); st.query = emptyQuery(); if (st.te
 $('#q').addEventListener('input', e => fromText(e.target.value));
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); e.target.blur(); } });
 $('#q').addEventListener('focus', () => { st.slot = null; st.numOpen = false; renderTray(); renderResult(); });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'factIn') { e.preventDefault(); factGo(); return; } if (e.target.id === 'renameIn') { if (e.key === 'Enter') { e.preventDefault(); const i = $('#renameIn'); world.name = i.value.trim() || world.name; st.wrename = false; persist(); renderDrawer(); } else if (e.key === 'Escape') { st.wrename = false; renderDrawer(); } return; } if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'cartIn') { e.preventDefault(); cartRead(); return; } if (e.key === 'Enter' && e.target.id === 'factIn') { e.preventDefault(); factGo(); return; } if (e.target.id === 'renameIn') { if (e.key === 'Enter') { e.preventDefault(); const i = $('#renameIn'); world.name = i.value.trim() || world.name; st.wrename = false; persist(); renderDrawer(); } else if (e.key === 'Escape') { st.wrename = false; renderDrawer(); } return; } if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
 
 // drawer and flow inputs
@@ -783,6 +915,7 @@ document.addEventListener('toggle', e => {
   const t = e.target;
 }, true);
 document.addEventListener('input', e => {
+  if (e.target.id === 'cartIn') { st.cartText = e.target.value; if (st.cartRead) { st.cartRead = null; renderSheet(); const i = $('#cartIn'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } } return; }
   if (e.target.id === 'factIn') { st.fact.text = e.target.value; if (st.fact.res || st.fact.err) { st.fact.res = null; st.fact.err = ''; } return; }
   if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderSheet(); const i = $('#flowSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   if (e.target.id === 'gSearch' && st.guess) { st.guess.q = e.target.value; renderResult(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
@@ -834,7 +967,7 @@ document.addEventListener('change', e => {
 // Glyphs are applied whenever any part of the screen is redrawn, so no render path can miss them.
 {
   let queued = false;
-  const roots = ['#result', '#tray', '#sheetBody', '#history', '#drawerPanel'].map(id => $(id)).filter(Boolean);
+  const roots = ['#result', '#tray', '#sheetBody', '#history', '#drawerPanel', '#cartPill'].map(id => $(id)).filter(Boolean);
   const run = () => { queued = false; for (const r of roots) glyphify(r); };
   const mo = new MutationObserver(() => { run(); });
   for (const r of roots) mo.observe(r, { childList: true, subtree: true });

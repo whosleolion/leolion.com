@@ -8,6 +8,7 @@ import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../
 import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
 import { parseSetting, baseFor, storedFor } from '../../src/building/fools-gold/js/setting.js';
 import { buildFields, applyNumber, tokenRoles } from '../../src/building/fools-gold/js/fields.js';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, normalizeCart, unitsInCart, cartText } from '../../src/building/fools-gold/js/cart.js';
 import { readFact } from '../../src/building/fools-gold/js/facts.js';
 import { suggestPrompts } from '../../src/building/fools-gold/js/suggest.js';
 import { findOffer } from '../../src/building/fools-gold/js/lists.js';
@@ -516,6 +517,53 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const q = { action: 'sell', subject: 'good.longsword', family: null, qty: null, span: null, rarity: null, tier: null, mods: ['black-market'], assumed: [] };
   const a = estimate(q, c), b = estimate(q, c2);
   t('MF9 a saved circumstance changes the price', a.ok && b.ok && b.typical < a.typical * 0.7, a.typical + ' vs ' + b.typical);
+}
+
+// ---------- the cart ----------
+{
+  const w = WORLD_PRESETS.srd(); const c = compileWorld(w);
+  const Q = x => parse(x, c).query;
+  const cart = emptyCart();
+  addToCart(cart, Q('2 rope')); addToCart(cart, Q('3 rope'));
+  eq('CT1 the same line merges its quantity', [cart.lines.length, cart.lines[0].q.qty.lo], [1, 5]);
+  addToCart(cart, Q('rope black market'));
+  eq('CT2 a different circumstance is its own line', cart.lines.length, 2);
+  eq('CT3 units in the cart count the merged line', unitsInCart(cart, Q('rope')), 5);
+  const t1 = cartTotals(cart, c), e1 = estimate(Q('5 rope'), c), e2 = estimate(Q('rope black market'), c);
+  t('CT4 spend is the sum of each line', Math.abs(t1.spend - (e1.typical + e2.typical)) < 1e-6, t1.spend + ' vs ' + (e1.typical + e2.typical));
+  const c2 = emptyCart(); addToCart(c2, Q('buy 2 longswords')); addToCart(c2, Q('sell 3 rope'));
+  const t2 = cartTotals(c2, c);
+  t('CT5 selling counts as receiving and net is the difference', t2.get > 0 && t2.spend > 0 && Math.abs(t2.net - (t2.get - t2.spend)) < 1e-9);
+  // shop
+  const cs = emptyCart(); addToCart(cs, Q('longsword')); const base = lineResult(cs.lines[0], cs, c).t; cs.mods = ['capital'];
+  const cap = lineResult(cs.lines[0], cs, c).t; cs.mods = ['village']; const vil = lineResult(cs.lines[0], cs, c).t;
+  t('CT6 the shop moves every line', cap > base && vil < base, [base, cap, vil].join(' '));
+  const own = emptyCart(); addToCart(own, Q('longsword capital')); own.mods = ['village'];
+  eq('CT7 a line keeps its own place over the shop', withShop(own.lines[0].q, own.mods, c).mods, ['capital']);
+  eq('CT8 saving from the screen leaves the shop with the cart', stripShop({ ...Q('longsword'), mods: ['village', 'rush'] }, ['village']).mods, ['rush']);
+  // quote
+  cs.lines[0].quote = 1234; cs.mods = ['capital'];
+  eq('CT9 a quoted line ignores the shop', lineResult(cs.lines[0], cs, c).t, 1234);
+  const gone = emptyCart(); gone.lines.push({ id: 1, q: { ...Q('longsword'), subject: 'good.nothing' }, quote: null });
+  eq('CT10 an item that no longer exists is counted as missing', cartTotals(gone, c).missing, 1);
+  // bands
+  const many = emptyCart(); for (const x of ['longsword', 'rope', 'torch', 'dagger', 'shield', 'lantern']) addToCart(many, Q(x));
+  const tm = cartTotals(many, c); let ext = 0; for (const l of many.lines) ext += lineResult(l, many, c).hi;
+  t('CT11 the likely band is narrower than every high added up', tm.spendBand[1] < ext && tm.spendBand[0] > 0 && tm.spendBand[0] < tm.spend && tm.spend < tm.spendBand[1]);
+  // sentences
+  const rs = readSentence('3 rope, 2 torches, 10 rations in a village', c);
+  eq('CT12 several items in one sentence', [rs.items.length, rs.shop, rs.bad.length], [3, ['village'], 0]);
+  eq('CT13 the quantity of each is kept', rs.items.map(x => x.qty && x.qty.lo), [3, 2, 10]);
+  const rs2 = readSentence('sell 2 longswords, 3 rope', c);
+  eq('CT14 a later item inherits an earlier sell', rs2.items.map(x => x.action), ['sell', 'sell']);
+  eq('CT15 one item is not a cart sentence', readSentence('buy a longsword', c).items.length, 1);
+  t('CT16 a single question with a comma is not a cart sentence', readSentence('price for train ride between two major capital cities, 3 days travel expensive', c).items.length < 2);
+  eq('CT17 unknown words are reported, not guessed', readSentence('3 rope, zibblewump', c).bad, ['zibblewump']);
+  // storage
+  const hostile = normalizeCart({ lines: [null, { q: 5 }, { id: 'x', q: { subject: 'good.rope', qty: { lo: 'a' }, mods: [1, 'village'] }, quote: 'no' }], mods: ['village', 3] });
+  eq('CT18 a hostile saved cart loads clean', [hostile.lines.length, hostile.lines[0].q.qty, hostile.lines[0].q.mods, hostile.lines[0].quote, hostile.mods], [1, null, ['village'], null, ['village']]);
+  const txt = cartText(c2, c, n => String(Math.round(n)), (r, line) => r ? r.e.entry.name : 'x');
+  t('CT19 the cart copies as plain text', /^Cart/.test(txt) && /Net:/.test(txt) && txt.split('\n').length >= 4);
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

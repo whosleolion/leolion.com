@@ -1,6 +1,7 @@
+import { normalizeCart } from './cart.js?v=8d53b51a';
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=7656d9e0';
-import { compileWorld } from './world.js?v=7656d9e0';
+import { WORLD_PRESETS } from './data.js?v=8d53b51a';
+import { compileWorld } from './world.js?v=8d53b51a';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
@@ -8,7 +9,7 @@ let mem = null;
 function defaults() {
   const worlds = [WORLD_PRESETS.srd()];
   worlds.forEach(normalizeWorld);
-  return { v: 3, worlds, activeId: 'srd', history: [], theme: null };
+  return { v: 3, worlds, activeId: 'srd', history: [], theme: null, carts: {} };
 }
 export function load() {
   let raw = null;
@@ -44,6 +45,9 @@ export function load() {
         if (!s.worlds.length) return mem || (mem = defaults());
         if (!s.worlds.some(w => w.id === s.activeId)) s.activeId = s.worlds[0].id;
         s.history = s.history.filter(h => h && typeof h.text === 'string' && s.worlds.some(w => w.id === h.world));
+        const carts = {};
+        for (const w of s.worlds) if (s.carts && s.carts[w.id]) carts[w.id] = normalizeCart(s.carts[w.id]);
+        s.carts = carts;
         return s;
       }
     } catch (e) { /* corrupt, fall through */ }
