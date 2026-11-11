@@ -1,17 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=1d46f3a6';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=1d46f3a6';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=1d46f3a6';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=1d46f3a6';
-import { findOffer } from './lists.js?v=1d46f3a6';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=1d46f3a6';
+import { compileWorld } from './world.js?v=8e8597c7';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=8e8597c7';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=8e8597c7';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=8e8597c7';
+import { findOffer } from './lists.js?v=8e8597c7';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=8e8597c7';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=1d46f3a6';
-import { applicable } from './engine.js?v=1d46f3a6';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=1d46f3a6';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=1d46f3a6';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=1d46f3a6';
+} from './data.js?v=8e8597c7';
+import { applicable } from './engine.js?v=8e8597c7';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=8e8597c7';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=8e8597c7';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=8e8597c7';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,7 +20,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, addWorld: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -449,12 +449,20 @@ function resolveMeans(text) {
 }
 
 const PAGES = {
-  World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes', 'This world'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Mine'], ['This world', 'World']] },
+  World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Mine']] },
 };
 function worldPicker() {
-  const chips = S.worlds.map(x => `<button class="wchip${x.id === world.id ? ' on' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}">${esc(x.name)}</button>`).join('');
-  const cards = st.addWorld ? `<div class="wnew"><div class="lab">Start a new world from a preset</div>${Object.entries(WORLD_PRESETS).map(([id, mk]) => { const p = mk(); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span><span class="plus">+</span></button>`; }).join('')}</div>` : '';
-  return `<div class="wpick" role="group" aria-label="World">${chips}<button class="wchip add${st.addWorld ? ' on' : ''}" data-act="w-add-toggle" aria-label="New world">${st.addWorld ? 'Cancel' : '+ New'}</button></div>${cards}`;
+  const sq = `<button class="wsq" data-act="w-modal" aria-haspopup="dialog"><span class="wl">World</span><span class="wv">${esc(world.name)}</span><span class="wc">&#9662;</span></button>`;
+  if (!st.wmodal) return `<div class="wpick">${sq}</div>`;
+  const rows = S.worlds.map(x => `<button class="world-row${x.id === world.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}"><span><span class="wn">${esc(x.name)}</span>${x.id === world.id ? '<span class="wb">In use</span>' : ''}</span></button>`).join('');
+  const presets = Object.entries(WORLD_PRESETS).map(([id, mk]) => { const p = mk(); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span><span class="plus">+</span></button>`; }).join('');
+  return `<div class="wpick">${sq}</div><div class="wmodal" role="dialog" aria-label="Worlds"><div class="wback" data-act="w-modal-close"></div><div class="wcard">
+    <div class="wch"><h3>Worlds</h3><button class="btn" data-act="w-modal-close">Close</button></div>
+    <div class="wlist">${rows}</div>
+    <label class="lab">Name of the world in use<input class="field" data-bind="name" value="${esc(world.name)}"></label>
+    <div class="row"><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>
+    <div class="lab">New world from a preset</div><div class="wlist">${presets}</div>
+  </div></div>`;
 }
 function renderDrawer() {
   const panel = $('#drawerPanel'), top = panel.scrollTop;
@@ -501,10 +509,6 @@ function buildSettingsHtml() {
 
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
-  <details class="sect" data-sec="This world"${op('This world')}><summary><h3>This world</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
-    <label class="lab">Name<input class="field" data-bind="name" value="${esc(w.name)}"></label>
-    <div class="row"><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>
-  </div></details>
   <details class="sect" data-sec="Item lists"${op('Item lists')}><summary><h3>Item lists</h3><span class="sv">${esc([['srd', '5e SRD'], ['fantasy', 'Fantasy'], ['scifi', 'Sci-fi'], ['modern', 'Modern']].filter(([k]) => w.lists.includes(k)).map(x => x[1]).join(' + '))}</span></summary><div class="sbody">
     <p>Turn on every list this world draws prices from. Your own items and settings always override them.</p>
     <div class="listbox">
@@ -709,9 +713,10 @@ document.addEventListener('click', e => {
     // drawer
     case 'open-world': openDrawer(d.scroll); break;
     case 'close-world': closeDrawer(); break;
-    case 'w-select': useWorld(d.id); persist(); closeDrawerKeep(); break;
-    case 'w-add-toggle': st.addWorld = !st.addWorld; renderDrawer(); break;
-    case 'w-new-preset': { st.addWorld = false; const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
+    case 'w-select': st.wmodal = false; useWorld(d.id); persist(); closeDrawerKeep(); break;
+    case 'w-modal': st.wmodal = true; renderDrawer(); break;
+    case 'w-modal-close': st.wmodal = false; renderDrawer(); break;
+    case 'w-new-preset': { st.wmodal = false; const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
     case 'jump': { const el = document.getElementById('ws-' + d.id.replace(/\W+/g, '-')); const panel = $('#drawerPanel'); if (el) panel.scrollTo({ top: el.offsetTop - 118, behavior: 'smooth' }); break; }
     case 'w-dup': { const w = clone(world); w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
     case 'w-del':

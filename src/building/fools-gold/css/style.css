@@ -734,3 +734,18 @@ details.sub .tagrow { padding: 8px 0; }
 .wchip.add { background: none; border-style: dashed; color: var(--accent); }
 .wchip.add.on { background: none; color: var(--muted); }
 .wnew { display: grid; gap: 8px; padding-bottom: 10px; }
+
+/* world picker: one square with the name, a small modal for the rest; section tabs fit the width */
+.wpick { display: block; overflow: visible; padding: 4px 0 12px; }
+.wsq { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l c" "v c"; align-items: center; column-gap: 12px; width: 100%; text-align: left; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.wsq .wl { grid-area: l; font: 600 11px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.wsq .wv { grid-area: v; font: 700 18px var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsq .wc { grid-area: c; color: var(--accent); font-size: 16px; }
+.wmodal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+.wback { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+.wcard { position: relative; width: 100%; max-width: 520px; max-height: 82vh; overflow-y: auto; background: var(--bg); border-radius: 18px 18px 0 0; padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; }
+.wch { display: flex; align-items: center; justify-content: space-between; }
+.wch h3 { margin: 0; font: 700 22px var(--font-display); }
+.wlist { display: grid; gap: 8px; }
+.jump { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; overflow: visible; margin-right: 0; padding: 8px 0; }
+.jump .q { min-height: 36px; padding: 6px 0; font-size: 12px; text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
