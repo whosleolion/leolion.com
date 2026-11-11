@@ -1,16 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=6dd15706';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=6dd15706';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=6dd15706';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=6dd15706';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=6dd15706';
+import { compileWorld } from './world.js?v=11daf5c9';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=11daf5c9';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=11daf5c9';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=11daf5c9';
+import { findOffer } from './lists.js?v=11daf5c9';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=11daf5c9';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=6dd15706';
-import { applicable } from './engine.js?v=6dd15706';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=6dd15706';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=6dd15706';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=6dd15706';
+} from './data.js?v=11daf5c9';
+import { applicable } from './engine.js?v=11daf5c9';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=11daf5c9';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=11daf5c9';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=11daf5c9';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,7 +20,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, subOpen: {}, guess: null, slot: null, numOpen: false, more: false, text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, subOpen: {}, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -39,6 +40,7 @@ function fromText(text, opts = {}) {
   st.parsed = parse(text, ctx);
   st.query = st.parsed.query;
   if (text !== st.settingDismissed) st.settingDismissed = '';
+  if (text !== st.offerDismissed) st.offerDismissed = '';
   st.setting = st.settingDismissed ? null : parseSetting(text, ctx);
   run(opts);
 }
@@ -54,6 +56,7 @@ function run(opts = {}) {
   const q = st.query;
   st.est = q.subject ? estimate(q, ctx) : null;
   if (q.subject) st.guess = null; // a priced thing ends any unknown-word card
+  st.offer = !q.subject && st.text && !st.setting && st.offerDismissed !== st.text ? findOffer(st.text, world, ctx) : null;
   st.fields = st.est && st.est.ok ? buildFields(q, st.est, ctx) : null;
   if (st.slot && !(st.fields && st.fields.slots.some(x => x.id === st.slot))) { st.slot = null; st.numOpen = false; }
   S.last = st.text; persist();
@@ -148,6 +151,11 @@ function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
   if (!st.text) { el.innerHTML = `<p class="empty">Describe what you want priced. Say how many or how long, buying or selling, where, how fast and how good.</p>`; return; }
+  if (!q.subject && st.offer) {
+    const o = st.offer;
+    el.innerHTML = `<section class="guess offer"><div class="gh"><b>${esc(o.item)}</b> is in the <b>${esc(o.label)}</b> list, which is off for this world.</div><button class="cta" data-act="offer-on">Turn on ${esc(o.label)}</button><button class="cta2" data-act="offer-no">Not now</button></section>`;
+    return;
+  }
   if (!q.subject) {
     const g = guessCard();
     el.innerHTML = g || `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or search the list with the item field once something is priced.</p>`; return;
@@ -653,6 +661,8 @@ document.addEventListener('click', e => {
   const a = b.dataset.act, d = b.dataset;
   const q = st.query;
   switch (a) {
+    case 'offer-on': if (st.offer) { const l = st.offer.list, label = st.offer.label; world.lists = ['srd', 'fantasy', 'modern'].filter(x => x === l || world.lists.includes(x)); st.offer = null; worldChanged(); toast('Turned on ' + label + '. Change it under Settings, Items and words.'); } break;
+    case 'offer-no': st.offerDismissed = st.text; st.offer = null; renderResult(); renderTray(); break;
     case 'clear': $('#q').value = ''; st.slot = null; st.guess = null; fromText('', { noHistory: true }); break;
     case 'go': recordHistory(); $('#q').blur(); break;
     case 'sample': { const t = sampleList()[+d.i]; $('#q').value = t; fromText(t); break; }

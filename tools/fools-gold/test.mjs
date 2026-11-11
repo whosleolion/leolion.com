@@ -8,6 +8,7 @@ import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../
 import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
 import { parseSetting, baseFor, storedFor } from '../../src/building/fools-gold/js/setting.js';
 import { buildFields, applyNumber, tokenRoles } from '../../src/building/fools-gold/js/fields.js';
+import { findOffer } from '../../src/building/fools-gold/js/lists.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
 
 let pass = 0, fail = 0;
@@ -424,6 +425,22 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('IL7 old worlds with a baseline still load', [nw({ baseline: 'generic' }).lists, nw({ baseline: 'modern' }).lists, nw({ baseline: 'srd' }).lists], [['fantasy'], ['modern'], ['srd', 'fantasy']]);
   eq('IL8 modern place labels only when modern is the only list', [mod.mods.get('capital').label, both.mods.get('capital').label.includes('capital')], ['major city', true]);
   eq('IL9 a combined world still prices from both', [parse('taxi ride', both).query.subject, parse('sell a rapier', all3).query.subject], ['service.m-taxi-ride', 'good.rapier']);
+}
+
+// ---------- offering a switched-off item list ----------
+{
+  const { normalizeWorld: nw } = await import('../../src/building/fools-gold/js/store.js');
+  const mk = lists => { const w = WORLD_PRESETS.srd(); w.lists = lists; const n = nw(w); return [n, compileWorld(n)]; };
+  const [w1, c1] = mk(['srd', 'fantasy']), [w2, c2] = mk(['srd']), [w3, c3] = mk(['fantasy']), [w4, c4] = mk(['modern']);
+  eq('OF1 a modern thing in a fantasy world offers the modern list', findOffer('buy a laptop', w1, c1)?.list, 'modern');
+  eq('OF2 the offer names the item and the list', (() => { const o = findOffer('taxi ride', w1, c1); return [o.item, o.label]; })(), ['Taxi ride', 'Modern day']);
+  eq('OF3 a fantasy basic missing from an SRD-only world offers fantasy', findOffer('train ride', w2, c2)?.list, 'fantasy');
+  eq('OF4 an SRD item missing from fantasy-only offers SRD', findOffer('longsword', w3, c3)?.list, 'srd');
+  eq('OF5 a fantasy thing in a modern world offers fantasy', findOffer('longsword', w4, c4)?.list, 'srd');
+  eq('OF6 nothing to offer when the item is already available', findOffer('longsword', w1, c1), null);
+  eq('OF7 nothing to offer for words no list knows', findOffer('zibblewump', w1, c1), null);
+  eq('OF8 empty text offers nothing', findOffer('   ', w1, c1), null);
+  eq('OF9 a user item is never offered as a list', (() => { const w = WORLD_PRESETS.srd(); w.items = [{ name: 'Moonrock', kind: 'good', bu: 500, unit: 'each', tags: [] }]; const n = nw(w); return findOffer('moonrock', n, compileWorld(n)); })(), null);
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

@@ -176,6 +176,18 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=s-set]');
   ok(name + ' override applies in the world', /^(3[6-9]|4[0-4])/.test(await price(page)), await price(page));
 
+  // a word from a switched-off list offers to turn the list on
+  await page.fill('#q', 'buy a laptop');
+  ok(name + ' a word from an off list asks to turn it on', !!(await page.$('[data-act=offer-on]')) && /Modern day/.test(await page.textContent('.offer')));
+  await page.click('[data-act=offer-no]');
+  ok(name + ' Not now dismisses the offer', !(await page.$('.offer')));
+  await page.fill('#q', 'buy a laptop 2');
+  await page.fill('#q', 'buy a laptop');
+  await page.click('[data-act=offer-on]');
+  ok(name + ' turning it on prices the item', !!(await page.$('.pricebtn')) && /Laptop/i.test(await page.textContent('.price .what')));
+  await page.click('#gear'); await goPage(page, 'Item list');
+  ok(name + ' the list is now checked in settings', await page.isChecked('input[data-bind="list.modern"]'));
+  await page.click('input[data-bind="list.modern"]'); await goBack(page); await page.click('[data-act=close-world]');
   // unknown word
   await page.fill('#q', '10 monster parts');
   ok(name + ' unknown word shows the card', !!(await page.$('.guess')));
