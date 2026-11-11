@@ -1,7 +1,7 @@
 // Appraising a thing the app has no entry for, from tags a DM can read at a glance: what kind of thing it is,
 // how big, what it is made of, how much craft went in, how rare, how wanted. No AI: a plain product of multipliers,
 // started from the words of the phrase, then adjusted by tapping. All numbers are original estimates, 1 bu = 1 cp (fantasy scale).
-import { stem } from './world.js?v=2747a2cb';
+import { stem } from './world.js?v=92e69e7a';
 
 export const KINDS = [
   { id: 'thing', label: 'Everyday thing', base: 60, unit: 'each', words: 'thing item object box basket pot pan bowl cup jar bottle bucket candle brush mirror comb toy doll book' },
@@ -22,8 +22,8 @@ const KIND_BY = new Map(KINDS.map(k => [k.id, k]));
 
 export const ROWS = {
   size: { label: 'Size', opts: [['tiny', 'Tiny', 0.25], ['small', 'Small', 0.45], ['medium', 'Medium', 1], ['large', 'Large', 2.5], ['huge', 'Huge', 8]], words: { tiny: 'tiny miniature pocket little', small: 'small short light', large: 'large big great long heavy', huge: 'huge giant massive enormous' } },
-  made: { label: 'Made of', opts: [['plain', 'Plain', 1], ['cloth', 'Cloth or wood', 1], ['leather', 'Leather or iron', 1.6], ['steel', 'Steel', 3], ['silver', 'Silver', 9], ['gold', 'Gold', 40], ['gems', 'Gems', 90]], words: { cloth: 'cloth wool linen cotton wooden wood paper straw', leather: 'leather iron bronze copper hide brass', steel: 'steel', silver: 'silver', gold: 'gold golden', gems: 'jeweled jewelled crystal gem diamond ruby emerald' } },
-  craft: { label: 'Craft', opts: [['crude', 'Crude', 0.6], ['some', 'Ordinary', 1], ['skilled', 'Skilled', 2], ['master', 'Master-made', 5]], words: { crude: 'crude rough homemade cheap', skilled: 'skilled fine quality handmade', master: 'masterwork masterful exquisite master' } },
+  made: { label: 'Made of', opts: [['plain', 'Plain', 1], ['cloth', 'Cloth, wood', 1], ['leather', 'Leather, iron', 1.6], ['steel', 'Steel', 3], ['silver', 'Silver', 9], ['gold', 'Gold', 40], ['gems', 'Gems', 90]], words: { cloth: 'cloth wool linen cotton wooden wood paper straw', leather: 'leather iron bronze copper hide brass', steel: 'steel', silver: 'silver', gold: 'gold golden', gems: 'jeweled jewelled crystal gem diamond ruby emerald' } },
+  craft: { label: 'Craft', opts: [['crude', 'Crude', 0.6], ['some', 'Ordinary', 1], ['skilled', 'Skilled', 2], ['master', 'Master', 5]], words: { crude: 'crude rough homemade cheap', skilled: 'skilled fine quality handmade', master: 'masterwork masterful exquisite master' } },
   rarity: { label: 'Rarity', opts: [['common', 'Common', 1], ['uncommon', 'Uncommon', 3], ['rare', 'Rare', 12], ['very rare', 'Very rare', 60], ['legendary', 'Legendary', 400]], words: { uncommon: 'uncommon unusual', rare: 'rare scarce exotic', 'very rare': 'unique', legendary: 'legendary mythic' } },
   demand: { label: 'Wanted by', opts: [['few', 'Few', 0.6], ['usual', 'The usual', 1], ['many', 'Many', 1.7], ['craved', 'Everyone', 3.5]], words: { few: 'obscure', many: 'popular useful', craved: 'essential vital' } },
 };
@@ -76,3 +76,19 @@ export const tagCandidate = (tags, found, phrase) => {
 };
 export const optionsOf = row => ROWS[row].opts.map(o => ({ id: o[0], label: o[1] }));
 export const rowLabel = row => ROWS[row].label;
+
+// what tapping each option would do to the price, against the one now chosen: "-55%", "+60%", "x12"
+export function optionEffects(tags, row) {
+  const k = KIND_BY.get(tags.kind) || KINDS[0], cur = optOf(row, tags[row])[2];
+  return ROWS[row].opts.map(o => {
+    const r = o[2] / cur, now = o[0] === optOf(row, tags[row])[0];
+    const d = now ? '' : r >= 2 ? '\u00d7' + (r >= 10 ? Math.round(r) : +r.toFixed(1)) : (r >= 1 ? '+' : '\u2212') + Math.round(Math.abs(r - 1) * 100) + '%';
+    return { id: o[0], label: o[1], delta: d, now };
+  });
+}
+export const defaultsOf = tags => {
+  const base = { size: 'medium', made: 'plain', craft: 'some', rarity: 'common', demand: 'usual' };
+  if (tags.kind === 'weapon') base.made = 'steel'; else if (tags.kind === 'jewelry') { base.made = 'silver'; base.size = 'small'; base.craft = 'skilled'; } else if (tags.kind === 'clothes') base.made = 'cloth'; else if (tags.kind === 'tool') base.made = 'leather';
+  else if (tags.kind === 'magic') { base.craft = 'skilled'; base.rarity = 'uncommon'; }
+  return base;
+};

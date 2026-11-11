@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=2747a2cb';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=2747a2cb';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=2747a2cb';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=2747a2cb';
-import { findOffer } from './lists.js?v=2747a2cb';
-import { suggestPrompts } from './suggest.js?v=2747a2cb';
-import { readFact } from './facts.js?v=2747a2cb';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=2747a2cb';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=2747a2cb';
+import { compileWorld } from './world.js?v=92e69e7a';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=92e69e7a';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=92e69e7a';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=92e69e7a';
+import { findOffer } from './lists.js?v=92e69e7a';
+import { suggestPrompts } from './suggest.js?v=92e69e7a';
+import { readFact } from './facts.js?v=92e69e7a';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=92e69e7a';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=92e69e7a';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=2747a2cb';
-import { applicable } from './engine.js?v=2747a2cb';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=2747a2cb';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=2747a2cb';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=2747a2cb';
-import { complete } from './complete.js?v=2747a2cb';
-import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=2747a2cb';
+} from './data.js?v=92e69e7a';
+import { applicable } from './engine.js?v=92e69e7a';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=92e69e7a';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=92e69e7a';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=92e69e7a';
+import { complete } from './complete.js?v=92e69e7a';
+import { inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=92e69e7a';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -641,9 +641,10 @@ function unknownRunOf(p) {
 }
 function ensureGuess(phrase) {
   if (!st.guess || st.guess.phrase !== phrase) {
-    const cands = candidatesFor(phrase, ctx).filter(c => !String(c.id).startsWith('tier:'));
+    // only a real item that shares a word, or whose family the words name, is worth comparing with
+    const cands = candidatesFor(phrase, ctx).filter(c => !String(c.id).startsWith('tier:') && c.score >= 2);
     const { tags, found } = inferTags(phrase);
-    st.guess = { phrase, cands, tags, found, sel: 0, bu: tagCandidate(tags, found, phrase).bu, q: '', exact: false };
+    st.guess = { phrase, cands, tags, found, touched: [], kindOpen: !found.includes('kind'), more: false, sel: 0, bu: tagCandidate(tags, found, phrase).bu, q: '', exact: false };
   }
   return st.guess;
 }
@@ -664,14 +665,22 @@ function guessCard() {
     h += `<div class="stepper"><button class="sb" data-act="g-lower" aria-label="Lower the price">&minus;</button><div class="gval"><div class="num">${esc(pr.n)}<small>${esc(pr.u)}</small></div><div class="gtot">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}</div></div><button class="sb" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
     if (qtxt && pv.full.ok) h += `<div class="gtot">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
   }
-  const row = (r, label, opts, cur) => `<div class="grow"><div class="glab">${esc(label)}</div><div class="gopts" role="group" aria-label="${esc(label)}">${opts.map(o => `<button class="${cur === o.id ? 'on' : ''}" data-act="g-tag" data-r="${r}" data-v="${esc(o.id)}">${esc(o.label)}</button>`).join('')}</div></div>`;
-  h += `<div class="sep"><span>What kind of thing is it?</span></div><div class="gtags">${row('kind', 'Kind', KINDS.map(k => ({ id: k.id, label: k.label })), g.tags.kind)}${rowsFor(g.tags.kind).map(r => row(r, rowLabel(r), optionsOf(r), g.tags[r])).join('')}</div>`;
+  const kindName = (KINDS.find(k => k.id === g.tags.kind) || KINDS[0]).label;
+  const seg = r => `<div class="grow"><div class="glab">${esc(rowLabel(r))}${g.found.includes(r) ? ' <i>from your words</i>' : ''}</div><div class="gseg" role="group" aria-label="${esc(rowLabel(r))}">${optionEffects(g.tags, r).map(o => `<button class="${o.now ? 'on' : ''}" data-act="g-tag" data-r="${r}" data-v="${esc(o.id)}" aria-pressed="${o.now}"><b>${esc(o.label)}</b><small>${o.now ? 'now' : esc(o.delta)}</small></button>`).join('')}</div></div>`;
+  const dflt = defaultsOf(g.tags);
+  const shown = rowsFor(g.tags.kind), isOpen = r => g.more || g.found.includes(r) || g.touched.includes(r) || g.tags[r] !== dflt[r];
+  const openRows = shown.filter(isOpen), foldRows = shown.filter(r => !isOpen(r));
+  const foldText = foldRows.map(r => (optionEffects(g.tags, r).find(o => o.now) || {}).label).filter(Boolean).join(' \u00b7 ');
+  h += `<div class="sep"><span>What kind of thing is it?</span></div><div class="gtags">${g.kindOpen
+    ? `<div class="kindgrid" role="group" aria-label="Kind">${KINDS.map(k => `<button class="${g.tags.kind === k.id ? 'on' : ''}" data-act="g-tag" data-r="kind" data-v="${k.id}" aria-pressed="${g.tags.kind === k.id}">${esc(k.label)}</button>`).join('')}</div>`
+    : `<button class="kindrow" data-act="g-kind-open"><span>Kind</span><b>${esc(kindName)}</b><i>Change</i></button>`}${openRows.map(seg).join('')}${foldRows.length ? `<button class="foldrow" data-act="g-more"><span>${esc(foldText)}</span><i>Adjust</i></button>` : ''}</div>`;
   const near = all.slice(1);
   if (near.length) h += `<div class="sep"><span>Or compare with a real item</span></div><div class="fields">${near.map((x, k) => { const i = k + 1; return `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(x.label)}</span><span class="hint">${esc(money(x.bu))}${x.unit && x.unit !== 'each' ? ' / ' + esc(x.unit) : ''}</span></button>`; }).join('')}</div>`;
   h += `<input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
   if (c) {
     h += g.exact ? `<input class="field gsearch" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" style="margin-top:8px" data-act="g-exact">Type an exact price</button>`;
-    h += `<button class="cta" data-act="g-set">Save and price it</button>${c.entry && !c.tier ? `<button class="cta2" data-act="g-alias">Same as ${esc(c.label.toLowerCase())}</button>` : ''}`;
+    const unitWord = c.unit && c.unit !== 'each' ? 'per ' + c.unit : 'each';
+    h += `${c.entry && !c.tier ? `<button class="cta2" data-act="g-alias">Same as ${esc(c.label.toLowerCase())}</button>` : ''}<div class="gsave"><button class="cta" data-act="g-set">Save at ${esc(money(g.bu))} ${esc(unitWord)}</button></div>`;
   }
   return h + `</section>`;
 }
@@ -1124,9 +1133,14 @@ document.addEventListener('click', e => {
     case 'start-pick': startPick(d.v); break;
     case 'browse': st.sheet = { open: true, mode: 'item' }; st.flow = { cat: null, search: '' }; st.slot = null; renderSheet(); break;
     case 'g-tag': if (st.guess && d.r) {
-      st.guess.tags[d.r] = d.v; st.guess.sel = 0; st.guess.exact = false;
+      const g = st.guess;
+      if (d.r === 'kind') { g.tags.kind = d.v; g.kindOpen = false; const df = defaultsOf(g.tags); for (const r of Object.keys(df)) if (!g.touched.includes(r) && !g.found.includes(r)) g.tags[r] = df[r]; }
+      else { g.tags[d.r] = d.v; if (!g.touched.includes(d.r)) g.touched.push(d.r); }
+      st.guess.sel = 0; st.guess.exact = false;
       st.guess.bu = guessAll()[0].bu; renderResult();
     } break;
+    case 'g-kind-open': if (st.guess) { st.guess.kindOpen = true; renderResult(); } break;
+    case 'g-more': if (st.guess) { st.guess.more = true; renderResult(); } break;
     case 'g-exact': if (st.guess) { st.guess.exact = true; renderResult(); const i = $('#gPrice'); if (i) i.focus(); } break;
     case 'g-raise': case 'g-lower': if (st.guess && st.guess.sel != null) { const f = a === 'g-raise' ? 1.25 : 0.8; st.guess.bu = niceRound(st.guess.bu * f, 3); renderResult(); } break;
     case 'g-set': if (st.guess && st.guess.sel != null) {
