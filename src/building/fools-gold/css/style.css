@@ -1128,3 +1128,8 @@ html[data-big] .jump .q { white-space: nowrap; }
 .q.ac i { font-style: normal; color: var(--muted); font-size: .8125rem; }
 .q.ac i::after { content: '\203A'; margin-left: .375rem; }
 .q.ac b { font-weight: 600; }
+
+/* ---- the buy / sell flow lays its kinds out as big buttons, all visible, nothing hidden by scrolling sideways ---- */
+.catgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .625rem; }
+.catbtn { min-height: 4rem; padding: .75rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 600 1.0625rem/1.25 var(--font-body); text-align: left; }
+.catbtn:active { border-color: var(--accent); }

@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=4361057f';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=4361057f';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=4361057f';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=4361057f';
-import { findOffer } from './lists.js?v=4361057f';
-import { suggestPrompts } from './suggest.js?v=4361057f';
-import { readFact } from './facts.js?v=4361057f';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=4361057f';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=4361057f';
+import { compileWorld } from './world.js?v=a38fab67';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=a38fab67';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=a38fab67';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=a38fab67';
+import { findOffer } from './lists.js?v=a38fab67';
+import { suggestPrompts } from './suggest.js?v=a38fab67';
+import { readFact } from './facts.js?v=a38fab67';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=a38fab67';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=a38fab67';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=4361057f';
-import { applicable } from './engine.js?v=4361057f';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=4361057f';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=4361057f';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=4361057f';
-import { complete } from './complete.js?v=4361057f';
-import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=4361057f';
+} from './data.js?v=a38fab67';
+import { applicable } from './engine.js?v=a38fab67';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=a38fab67';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=a38fab67';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=a38fab67';
+import { complete } from './complete.js?v=a38fab67';
+import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=a38fab67';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -533,7 +533,7 @@ function breakdownHtml(e) {
   const rows = receiptLines(e).map(x => `<div class="lrow ${x.f.kind || 'mult'}"><div class="l1"><span class="lbl">${esc(x.label)}</span><span class="ltot">${esc(x.total)}</span></div><div class="l2"><span class="lfx ${x.dir}">${x.fx}</span></div>${x.say ? `<p class="lwhy">${esc(x.say)}</p>` : ''}</div>`).join('');
   return `<p class="story">${esc(receiptStory(e))}</p>` + bar + `<div class="fx ledger">${rows}<div class="lsum"><span>Typical price</span><b>${esc(money(e.typical))}</b></div></div>`;
 }
-function pickerHtml(pickAct = 'pick-item') {
+function pickerHtml(pickAct = 'pick-item', big = false) {
   const cats = [...FLOW_CATS.map(c => [c[0], c[1]]), ['mine', 'My items']].filter(([id]) => ctx.entries.some(e => catOf(e) === id));
   const sel = st.flow.cat;
   const unitBU = e => e.perMile ? e.perMile * e.mpd : (e.bu ?? 0);
@@ -542,7 +542,7 @@ function pickerHtml(pickAct = 'pick-item') {
   items.sort((a, b) => (b.isCategory ? 1 : 0) - (a.isCategory ? 1 : 0) || unitBU(a) - unitBU(b) || a.name.localeCompare(b.name));
   const cur0 = st.query.subject;
   return `<input class="field" id="flowSearch" type="search" placeholder="Search all items" value="${esc(st.flow.search)}" aria-label="Search all items" style="width:100%">
-    <div class="quick" style="margin:0">${cats.map(([id, l]) => `<button class="q${sel === id && !search ? ' on' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>
+    ${big ? (sel || search ? (sel && !search ? `<button class="linkbtn" data-act="f-cat" data-v="" style="min-height:2.5rem;padding:0;color:var(--accent);font-weight:600;justify-self:start;text-align:left">&larr; All kinds &middot; ${esc((cats.find(c => c[0] === sel) || [])[1] || '')}</button>` : '') : `<div class="catgrid">${cats.map(([id, l]) => `<button class="catbtn" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`) : `<div class="quick" style="margin:0">${cats.map(([id, l]) => `<button class="q${sel === id && !search ? ' on' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>`}
     ${items.length ? `<div class="fields">${items.slice(0, 80).map(e => {
       const per = e.curve ? 'by rarity' : money(unitBU(e)) + (timeUnit(e) ? ' / ' + timeUnit(e).word : e.unit === 'lb' ? ' / lb' : '');
       return `<button class="slot${cur0 === e.id ? ' open' : ''}" data-act="${pickAct}" data-v="${esc(e.id)}"><span class="v">${esc(e.name)}${e.isCategory ? ' <i>any</i>' : ''}</span><span class="hint">${esc(per)}</span></button>`;
@@ -558,7 +558,7 @@ function startHtml() {
   const a = st.start && st.start.action;
   if (!a) return `<p class="mini" style="color:var(--muted);margin:0 0 .75rem">What are you doing?</p><div class="startgrid">${START_ACTIONS.map(([id, l, s]) => `<button class="startbtn" data-act="start-action" data-v="${id}"><b>${l}</b><span>${s}</span></button>`).join('')}</div>`;
   const label = START_ACTIONS.find(x => x[0] === a)[1];
-  return `<div class="startcrumb"><button class="linkbtn" data-act="start-back">&larr; ${esc(label)}</button><span>Pick a kind, then the item</span></div>` + pickerHtml('start-pick');
+  return `<div class="startcrumb"><button class="linkbtn" data-act="start-back">&larr; ${esc(label)}</button><span>Pick a kind, then the item</span></div>` + pickerHtml('start-pick', true);
 }
 function renderSheet() {
   const sh = $('#sheet'), s = st.sheet, e = st.est;
