@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=9bd4859a';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=9bd4859a';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=9bd4859a';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=9bd4859a';
-import { findOffer } from './lists.js?v=9bd4859a';
-import { suggestPrompts } from './suggest.js?v=9bd4859a';
-import { readFact } from './facts.js?v=9bd4859a';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=9bd4859a';
+import { compileWorld } from './world.js?v=0787de98';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=0787de98';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=0787de98';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=0787de98';
+import { findOffer } from './lists.js?v=0787de98';
+import { suggestPrompts } from './suggest.js?v=0787de98';
+import { readFact } from './facts.js?v=0787de98';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=0787de98';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=9bd4859a';
-import { applicable } from './engine.js?v=9bd4859a';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=9bd4859a';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=9bd4859a';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=9bd4859a';
+} from './data.js?v=0787de98';
+import { applicable } from './engine.js?v=0787de98';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=0787de98';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=0787de98';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=0787de98';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -538,10 +538,14 @@ function buildSettingsHtml() {
   const dens = w.currency.denominations;
   const json = JSON.stringify(w, null, 1);
   const styleNow = S.skin || S.theme || 'dark';
-  const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1];
+  const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1] + (S.textSize ? ', ' + TEXT_SIZES.find(x => x[0] === S.textSize)[1].toLowerCase() + ' text' : '');
   const curSet = currencyPresetOf(w.currency);
   const html = `
   <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
+    <div class="lab">Text size</div>
+    <div class="theme skins">${TEXT_SIZES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="textsize" data-bind="textsize" value="${v}"${(S.textSize || 'auto') === v ? ' checked' : ''}></label>`).join('')}</div>
+    <div class="sample-type" aria-hidden="true"><div class="st-a">5 &times; Potion, rare</div><div class="st-b">680 gp</div><div class="st-c">260 gp to 1,700 gp</div></div>
+    <div class="lab">Style</div>
     <div class="theme skins">${STYLES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="style" data-bind="style" value="${v}"${styleNow === v ? ' checked' : ''}></label>`).join('')}</div>
   </div></details>
 
@@ -830,6 +834,7 @@ document.addEventListener('change', e => {
   const bind = t.dataset && t.dataset.bind;
   if (!bind) return;
   const w = world, p = bind.split('.');
+  if (bind === 'textsize') { S.textSize = t.value === 'auto' ? null : t.value; applyTextSize(); persist(); renderDrawer(); return; }
   if (bind === 'style') { const v = t.value; S.skin = SKIN_FONTS[v] ? v : null; S.theme = v === 'light' || v === 'dark' ? v : null; applyTheme(); applySkin(); persist(); renderDrawer(); return; }
   if (bind === 'theme') { S.theme = t.value === 'system' ? null : t.value; applyTheme(); persist(); renderDrawer(); return; }
   if (bind === 'name') w.name = t.value.trim() || 'My world';
@@ -879,6 +884,20 @@ function applyTheme() {
   document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark'; // Night unless Day is chosen
 }
 applyTheme();
+const TEXT_SIZES = [['auto', 'Match my phone', 0], ['s', 'Small', 0.9], ['m', 'Default', 1], ['l', 'Large', 1.15], ['xl', 'Larger', 1.3], ['xxl', 'Largest', 1.5]];
+// iOS Dynamic Type: measure the system body size once and scale against the 17px default
+function phoneScale() {
+  try {
+    if (!(window.CSS && CSS.supports('font', '-apple-system-body'))) return 1;
+    const d = document.createElement('div');
+    d.style.cssText = 'font:-apple-system-body;position:absolute;visibility:hidden;pointer-events:none';
+    d.textContent = 'A'; document.body.appendChild(d);
+    const px = parseFloat(getComputedStyle(d).fontSize); d.remove();
+    return px > 0 ? Math.min(1.6, Math.max(0.85, px / 17)) : 1;
+  } catch (e) { return 1; }
+}
+function textScale() { const t = TEXT_SIZES.find(x => x[0] === (S.textSize || 'auto')); return t && t[2] ? t[2] : phoneScale(); }
+function applyTextSize() { const k = textScale(), h = document.documentElement; h.style.setProperty('--ts', String(+k.toFixed(3))); if (k >= 1.25) h.dataset.big = '1'; else delete h.dataset.big; }
 const STYLES = [['dark', 'Night'], ['light', 'Day'], ['spellbook', 'Spellbook'], ['receipt', 'Receipt'], ['pyrite', 'Pyrite']];
 const SKIN_FONTS = {
   spellbook: 'family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:wght@500;700',
@@ -894,6 +913,8 @@ function applySkin() {
   } else delete document.documentElement.dataset.skin;
 }
 applySkin();
+applyTextSize();
+addEventListener('resize', () => { if (!S.textSize) applyTextSize(); });
 
 // ---------- self-update for saved copies (home screen apps keep old files) ----------
 const builtAs = () => (document.querySelector('meta[name="fg-build"]') || {}).content || '';
@@ -913,7 +934,7 @@ async function checkForUpdate() {
     location.replace(location.pathname + '?v=' + v);
   } catch (e) { /* offline or blocked: keep running the copy we have */ }
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (!S.textSize) applyTextSize(); checkForUpdate(); } });
 // offline: keep every file so the app opens and prices with no network (the site only; the single-file preview has no build tag)
 function launchSplash() {
   try {

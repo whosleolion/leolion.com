@@ -146,6 +146,11 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' a change can be removed', !(await page.$('.chg')));
   await goBack(page);
   await goPage(page, 'Appearance');
+  await page.click('input[data-bind=textsize][value=xxl]');
+  ok(name + ' Largest text scales the whole page', (await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)) === '24px');
+  ok(name + ' large text does not overflow sideways', (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
+  await page.click('input[data-bind=textsize][value=m]');
+  ok(name + ' Default text is 16px', (await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)) === '16px');
   ok(name + ' Night is the default', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
   await page.click('input[data-bind=style][value=light]'); await page.click('input[data-bind=style][value=dark]');
   ok(name + ' theme can be forced dark', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
