@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=557e9ca1';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=557e9ca1';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=557e9ca1';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=557e9ca1';
-import { findOffer } from './lists.js?v=557e9ca1';
-import { suggestPrompts } from './suggest.js?v=557e9ca1';
-import { readFact } from './facts.js?v=557e9ca1';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=557e9ca1';
+import { compileWorld } from './world.js?v=cce675aa';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=cce675aa';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=cce675aa';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=cce675aa';
+import { findOffer } from './lists.js?v=cce675aa';
+import { suggestPrompts } from './suggest.js?v=cce675aa';
+import { readFact } from './facts.js?v=cce675aa';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=cce675aa';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=557e9ca1';
-import { applicable } from './engine.js?v=557e9ca1';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=557e9ca1';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=557e9ca1';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=557e9ca1';
+} from './data.js?v=cce675aa';
+import { applicable } from './engine.js?v=cce675aa';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=cce675aa';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=cce675aa';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=cce675aa';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

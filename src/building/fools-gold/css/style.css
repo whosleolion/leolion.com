@@ -793,3 +793,14 @@ details.sub .tagrow { padding: 8px 0; }
 
 /* price unit reads as part of the price: brand-coloured, set on the baseline */
 .pricebtn .num small { color: var(--accent); font-size: 26px; font-weight: 600; }
+
+/* coin glyphs next to figures: sized to the digits, on the baseline, with a fine short strike */
+.cg { font-size: .9em; font-weight: 600; margin-left: .1em; vertical-align: baseline; }
+.cg::after { top: -.08em; bottom: -.1em; width: .05em; min-width: 1px; opacity: .85; }
+.o span .cg::after, .slot .hint .cg::after, .ends .cg::after { top: -.04em; bottom: -.06em; }
+.pricebtn .num small .cg { font-size: 1em; margin-left: 0; }
+.slot .hint .cg, .ends .cg, .hrow .hp .cg { font-size: .88em; }
+.cg { margin-left: 0; }
+.pricebtn .num small { font-size: .4em; line-height: 1; }
+.pricebtn .num small .cg::after { top: -.05em; bottom: -.07em; width: .045em; opacity: 1; }
+.pricebtn .num { gap: 6px; }
