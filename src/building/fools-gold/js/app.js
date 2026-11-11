@@ -1,17 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=92d0321e';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=92d0321e';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=92d0321e';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=92d0321e';
-import { findOffer } from './lists.js?v=92d0321e';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=92d0321e';
+import { compileWorld } from './world.js?v=1d46f3a6';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=1d46f3a6';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=1d46f3a6';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=1d46f3a6';
+import { findOffer } from './lists.js?v=1d46f3a6';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=1d46f3a6';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=92d0321e';
-import { applicable } from './engine.js?v=92d0321e';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=92d0321e';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=92d0321e';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=92d0321e';
+} from './data.js?v=1d46f3a6';
+import { applicable } from './engine.js?v=1d46f3a6';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=1d46f3a6';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=1d46f3a6';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=1d46f3a6';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -492,8 +492,8 @@ function buildSettingsHtml() {
   const dens = w.currency.denominations;
   const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
-  const styleNow = S.skin || S.theme || 'auto';
-  const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1];
+  const styleNow = S.skin || S.theme || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1] + (S.skin || S.theme ? '' : ' (follows your phone)');
   const html = `
   <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
     <div class="theme skins">${STYLES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="style" data-bind="style" value="${v}"${styleNow === v ? ' checked' : ''}></label>`).join('')}</div>
@@ -829,7 +829,7 @@ function applyTheme() {
   else if (themeSetByUs) { delete document.documentElement.dataset.theme; themeSetByUs = false; }
 }
 applyTheme();
-const STYLES = [['auto', 'Standard, match device'], ['light', 'Standard Light'], ['dark', 'Standard Dark'], ['spellbook', 'Spellbook'], ['receipt', 'Receipt'], ['pyrite', 'Pyrite']];
+const STYLES = [['light', 'Standard Light'], ['dark', 'Standard Dark'], ['spellbook', 'Spellbook'], ['receipt', 'Receipt'], ['pyrite', 'Pyrite']];
 const SKIN_FONTS = {
   spellbook: 'family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:wght@500;700',
   receipt: 'family=Courier+Prime:wght@400;700',
