@@ -651,7 +651,7 @@ details.sub .tagrow { padding: 8px 0; }
   --r-item: #2b1d12; --r-act: #5a4630; --r-len: #2f5d4f; --r-where: #4b3a7a; --r-speed: #a4561a; --r-class: #8a2f5a; --r-who: #8a6a1a; --r-bad: #a02d2d;
   --font-display: "IM Fell English", "Iowan Old Style", Palatino, Georgia, serif;
   --font-body: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
-  --font-mono: "IM Fell English", Palatino, Georgia, serif;
+  --font-mono: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
   --radius: 4px; color-scheme: light;
 }
 :root[data-skin="spellbook"] body { background: var(--bg) radial-gradient(120% 80% at 50% 0%, #f6ecd2 0%, #e9dbb9 70%, #d9c79f 100%); font-size: 18px; }
@@ -749,3 +749,14 @@ details.sub .tagrow { padding: 8px 0; }
 .wlist { display: grid; gap: 8px; }
 .jump { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; overflow: visible; margin-right: 0; padding: 8px 0; }
 .jump .q { min-height: 36px; padding: 6px 0; font-size: 12px; text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* section tabs: a tab bar with an underline on the section in view */
+.jump { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 0; margin: 0 0 4px; border-bottom: 1px solid var(--line); box-shadow: none; background: var(--bg); }
+.jump .q { min-height: 44px; padding: 0 2px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: var(--muted); font: 600 13px var(--font-body); text-align: center; margin-bottom: -1px; }
+.jump .q.on { color: var(--fg); border-bottom-color: var(--accent); }
+.btn.wide { width: 100%; }
+
+/* Spellbook numbers: lining figures, a steadier face for the big price */
+:root[data-skin="spellbook"] { font-variant-numeric: lining-nums; }
+:root[data-skin="spellbook"] .res .price, :root[data-skin="spellbook"] .pricebtn .big, :root[data-skin="spellbook"] .stepper .num, :root[data-skin="spellbook"] .num { font-family: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif; font-weight: 700; font-variant-numeric: lining-nums tabular-nums; letter-spacing: 0; }
+:root[data-skin="spellbook"] * { font-variant-numeric: lining-nums tabular-nums; }

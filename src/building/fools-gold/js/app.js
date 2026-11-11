@@ -1,17 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=95759047';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=95759047';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=95759047';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=95759047';
-import { findOffer } from './lists.js?v=95759047';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=95759047';
+import { compileWorld } from './world.js?v=3ccb7cb4';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=3ccb7cb4';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=3ccb7cb4';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=3ccb7cb4';
+import { findOffer } from './lists.js?v=3ccb7cb4';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=3ccb7cb4';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=95759047';
-import { applicable } from './engine.js?v=95759047';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=95759047';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=95759047';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=95759047';
+} from './data.js?v=3ccb7cb4';
+import { applicable } from './engine.js?v=3ccb7cb4';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=3ccb7cb4';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=3ccb7cb4';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=3ccb7cb4';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,7 +20,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -459,10 +459,18 @@ function worldPicker() {
   return `<div class="wpick">${sq}</div><div class="wmodal" role="dialog" aria-label="Worlds"><div class="wback" data-act="w-modal-close"></div><div class="wcard">
     <div class="wch"><h3>Worlds</h3><button class="btn" data-act="w-modal-close">Close</button></div>
     <div class="wlist">${rows}</div>
-    <label class="lab">Name of the world in use<input class="field" data-bind="name" value="${esc(world.name)}"></label>
-    <div class="row"><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>
-    <div class="lab">New world from a preset</div><div class="wlist">${presets}</div>
+    ${st.wrename ? `<div class="row"><input class="field" data-bind="name" value="${esc(world.name)}" aria-label="World name" autofocus><button class="btn primary" data-act="w-rename">Done</button></div>` : `<div class="row"><button class="btn" data-act="w-rename">Rename</button><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>`}
+    ${st.wnew ? `<div class="lab">Start from a preset</div><div class="wlist">${presets}</div>` : `<button class="btn wide" data-act="w-newtoggle">+ New world</button>`}
   </div></div>`;
+}
+function markTab() {
+  const panel = $('#drawerPanel'); const secs = [...panel.querySelectorAll('.wsec')]; if (!secs.length) return;
+  let cur = secs[0];
+  const top0 = panel.getBoundingClientRect().top;
+  for (const x of secs) if (x.getBoundingClientRect().top - top0 <= 250) cur = x;
+  const atEnd = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
+  if (atEnd) cur = secs[secs.length - 1];
+  panel.querySelectorAll('.jump .q').forEach(b => b.classList.toggle('on', 'ws-' + b.dataset.id.replace(/\W+/g, '-') === cur.id));
 }
 function renderDrawer() {
   const panel = $('#drawerPanel'), top = panel.scrollTop;
@@ -485,7 +493,9 @@ function renderDrawer() {
       `<div class="navgroup">App</div><div class="group">${row('Appearance', 'Appearance', byId('Appearance').sv)}${row('About', 'About', '')}${row('Back up and share', 'Back up and share', '')}</div>`;
   }
   panel.querySelectorAll('.glyphs').forEach(g => { const on = g.querySelector('.gl.on:not(:first-child)'); if (on) g.scrollLeft = Math.max(0, on.getBoundingClientRect().left - g.getBoundingClientRect().left + g.scrollLeft - 70); });
+  panel.onscroll = PAGES[st.dpage] ? markTab : null;
   panel.scrollTop = st.dpageChanged ? 0 : top;
+  if (PAGES[st.dpage]) markTab();
   st.dpageChanged = false;
 }
 function overrideLabel(k) {
@@ -714,8 +724,10 @@ document.addEventListener('click', e => {
     case 'open-world': openDrawer(d.scroll); break;
     case 'close-world': closeDrawer(); break;
     case 'w-select': st.wmodal = false; useWorld(d.id); persist(); closeDrawerKeep(); break;
-    case 'w-modal': st.wmodal = true; renderDrawer(); break;
+    case 'w-modal': st.wmodal = true; st.wrename = false; st.wnew = false; renderDrawer(); break;
     case 'w-modal-close': st.wmodal = false; renderDrawer(); break;
+    case 'w-rename': st.wrename = !st.wrename; renderDrawer(); break;
+    case 'w-newtoggle': st.wnew = true; renderDrawer(); break;
     case 'w-new-preset': { st.wmodal = false; const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
     case 'jump': { const el = document.getElementById('ws-' + d.id.replace(/\W+/g, '-')); const panel = $('#drawerPanel'); if (el) panel.scrollTo({ top: el.offsetTop - 118, behavior: 'smooth' }); break; }
     case 'w-dup': { const w = clone(world); w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }

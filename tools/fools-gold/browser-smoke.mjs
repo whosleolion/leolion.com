@@ -10,7 +10,7 @@ let failed = 0;
 const ok = (n, c, d) => { if (!c) { failed++; console.log('FAIL', n, d ?? ''); } else console.log('ok  ', n); };
 const WP = { Money: 1, Economy: 1, Dials: 1, 'Item list': 'Item lists', 'Custom words': 'My changes', 'My items': 'My changes', Adjustments: 'My changes' };
 const goPage = async (page, p) => {
-  if (p === 'Your worlds') { if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]'); if (!(await page.$('.wmodal'))) await page.click('.wsq'); return; }
+  if (p === 'Your worlds') { if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]'); if (!(await page.$('.wmodal'))) await page.click('.wsq'); if (!(await page.$('[data-act=w-new-preset]'))) await page.click('[data-act=w-newtoggle]'); return; }
   const k = WP[p];
   if (!k) { await page.click(`.nrow[data-p="${p}"]`); return; }
   if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]');
