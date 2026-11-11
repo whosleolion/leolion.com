@@ -1100,3 +1100,12 @@ html[data-big] .jump .q { white-space: nowrap; }
 .hglinks { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
 .hglinks .linkbtn { min-height: 2.5rem; padding: 0; color: var(--muted); font-size: .9375rem; }
 .cfoot .hgpanel, .sheet.cart .hgpanel { background: var(--surface); }
+
+/* ---- guessing from tags: one row per question, a strip of choices that scrolls sideways ---- */
+.gtags { display: grid; gap: .625rem; }
+.grow { display: grid; gap: .25rem; min-width: 0; }
+.glab { font-size: .8125rem; color: var(--muted); font-weight: 600; }
+.gopts { display: flex; gap: .375rem; overflow-x: auto; padding-bottom: .125rem; scrollbar-width: none; }
+.gopts::-webkit-scrollbar { display: none; }
+.gopts button { flex: 0 0 auto; min-height: 2.5rem; padding: 0 .875rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 500 .9375rem var(--font-body); white-space: nowrap; }
+.gopts button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }

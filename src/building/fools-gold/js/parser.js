@@ -1,7 +1,7 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=71dd6481';
-import { parseMoney, formatFull } from './money.js?v=71dd6481';
-import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=71dd6481';
+import { tokenize, stem } from './world.js?v=c6091ad0';
+import { parseMoney, formatFull } from './money.js?v=c6091ad0';
+import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=c6091ad0';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, dozen: 12 };
@@ -171,6 +171,10 @@ export function parse(text, ctx) {
   // rarity, tier
   const rars = concept('rarity'); if (rars.length) { q.rarity = rars[0].id; if (rars.some(r => r.id !== rars[0].id)) notes.push('Several rarities given. Using ' + rars[0].id + '.'); }
   const tiers = concept('tier'); if (tiers.length) { q.tier = tiers[0].id; if (tiers.some(r => r.id !== tiers[0].id)) notes.push('Several classes given. Using ' + tiers[0].id + '.'); }
+  // "very cheap", "extremely expensive", "super rare": the word before pushes one step further out
+  const pushed = c => { const k = parts.indexOf(c); return k > 0 && parts[k - 1].k === 'f' && INTENSIFIERS.has(parts[k - 1].raw); };
+  if (tiers.length && pushed(tiers[0]) && q.tier !== 'standard') { const o = TIER_NAMES.indexOf(q.tier), n = o + (o < 2 ? -1 : 1); if (o >= 0 && n >= 0 && n < TIER_NAMES.length) q.tier = TIER_NAMES[n]; notes.push('"' + parts[parts.indexOf(tiers[0]) - 1].raw + '" pushes the class one step further.'); }
+  if (rars.length && pushed(rars[0]) && RARITIES.indexOf(q.rarity) >= 0 && RARITIES.indexOf(q.rarity) < RARITIES.length - 1 && q.rarity !== 'very rare') q.rarity = RARITIES[RARITIES.indexOf(q.rarity) + 1];
   for (const p of rars.slice(0)) p.used = true;
   for (const p of tiers) p.used = true;
   for (const p of acts) p.used = true;

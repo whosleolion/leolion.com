@@ -1,8 +1,8 @@
 // Guessing for words the app does not know. No AI: a hand-made word-to-category list plus word overlap
 // with the catalog. It only ever proposes. The DM picks, nudges the price and confirms.
-import { stem } from './world.js?v=71dd6481';
-import { estimate, timeUnit } from './engine.js?v=71dd6481';
-import { niceRound } from './money.js?v=71dd6481';
+import { stem } from './world.js?v=c6091ad0';
+import { estimate, timeUnit } from './engine.js?v=c6091ad0';
+import { niceRound } from './money.js?v=c6091ad0';
 
 // Word families. Each lists catalog ids to try, in order. Ids missing from the current world are skipped.
 const FAMILIES = [
@@ -66,7 +66,7 @@ export function candidatesFor(phrase, ctx) {
 // Price of one unit if the new thing were set to `target`, including this world's adjustments.
 function tempEntry(name, cand, bu) {
   const base = cand.entry;
-  return { id: 'tmp.guess', name, kind: base ? (base.kind === 'good' || base.kind === 'service' ? base.kind : base.kind) : 'good', unit: base && !base.curve ? base.unit : 'each', bu, src: 'user', spread: 0.15, tags: base ? [...base.tags.filter(t => !['magic', 'potion', 'scroll'].includes(t) || true)] : ['custom'], aliases: [], group: undefined };
+  return { id: 'tmp.guess', name, kind: base ? base.kind : cand.kind || 'good', unit: base ? (!base.curve ? base.unit : 'each') : cand.unit || 'each', bu, src: 'user', spread: 0.15, tags: base ? [...base.tags] : cand.tags || ['custom'], aliases: [], group: undefined };
 }
 export function previewWith(ctx, name, cand, bu, q) {
   const t = tempEntry(name, cand, bu);
@@ -90,6 +90,7 @@ export function storedPrice(ctx, name, cand, target) {
 export function newItemFrom(name, phrase, cand, bu) {
   const base = cand.entry;
   const aliases = [...new Set([phrase.toLowerCase(), phrase.toLowerCase().split(' ').map((w, i, a) => (i === a.length - 1 ? stem(w) : w)).join(' ')])].filter(a => a && a !== name.toLowerCase());
-  return { name, kind: base ? base.kind : 'good', unit: base && !base.curve && ['each', 'day', 'lb', 'week', 'month', 'year'].includes(base.unit) ? base.unit : 'each', bu: +bu.toPrecision(5), tags: base ? [...new Set([...(base.tags || []), 'custom'])] : ['custom'], aliases, spread: 0.2 };
+  const unitOk = u => ['each', 'day', 'lb', 'week', 'month', 'year'].includes(u);
+  return { name, kind: base ? base.kind : cand.kind || 'good', unit: base ? (!base.curve && unitOk(base.unit) ? base.unit : 'each') : unitOk(cand.unit) ? cand.unit : 'each', bu: +bu.toPrecision(5), tags: base ? [...new Set([...(base.tags || []), 'custom'])] : cand.tags || ['custom'], aliases, spread: 0.2 };
 }
 export { niceRound };

@@ -1,20 +1,21 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=71dd6481';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=71dd6481';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=71dd6481';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=71dd6481';
-import { findOffer } from './lists.js?v=71dd6481';
-import { suggestPrompts } from './suggest.js?v=71dd6481';
-import { readFact } from './facts.js?v=71dd6481';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=71dd6481';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=71dd6481';
+import { compileWorld } from './world.js?v=c6091ad0';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=c6091ad0';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=c6091ad0';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=c6091ad0';
+import { findOffer } from './lists.js?v=c6091ad0';
+import { suggestPrompts } from './suggest.js?v=c6091ad0';
+import { readFact } from './facts.js?v=c6091ad0';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=c6091ad0';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=c6091ad0';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=71dd6481';
-import { applicable } from './engine.js?v=71dd6481';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=71dd6481';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=71dd6481';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=71dd6481';
+} from './data.js?v=c6091ad0';
+import { applicable } from './engine.js?v=c6091ad0';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=c6091ad0';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=c6091ad0';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=c6091ad0';
+import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=c6091ad0';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -163,7 +164,7 @@ function renderResult() {
 function renderResultCore() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
-  if (!st.text) { st.glintKey = ''; el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>`; return; }
+  if (!st.text) { st.glintKey = ''; el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p><button class="cta2" data-act="browse">Or browse the list</button>`; return; }
   if (!q.subject && st.offer) {
     const o = st.offer;
     el.innerHTML = `<section class="guess offer"><div class="gh"><b>${esc(o.item)}</b> is in the <b>${esc(o.label)}</b> list, which is off for this world.</div><button class="cta" data-act="offer-on">Turn on ${esc(o.label)}</button><button class="cta2" data-act="offer-no">Not now</button></section>`;
@@ -171,7 +172,7 @@ function renderResultCore() {
   }
   if (!q.subject) {
     const g = guessCard();
-    el.innerHTML = g || (st.cartOffer ? '' : `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or search the list with the item field once something is priced.</p>`); return;
+    el.innerHTML = g || (st.cartOffer ? '' : `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or pick from the list.</p><button class="cta2" data-act="browse">Browse the list</button>`); return;
   }
   if (!e.ok && e.error === 'conflict') {
     el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(GROUPS[c.group].ask)}:</b> pick one.</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
@@ -573,8 +574,9 @@ function unknownPhrase() {
 }
 function ensureGuess(phrase) {
   if (!st.guess || st.guess.phrase !== phrase) {
-    const cands = candidatesFor(phrase, ctx);
-    st.guess = { phrase, cands, sel: cands.length ? 0 : null, bu: cands.length ? cands[0].bu : 0, q: '', exact: false };
+    const cands = candidatesFor(phrase, ctx).filter(c => !String(c.id).startsWith('tier:'));
+    const { tags, found } = inferTags(phrase);
+    st.guess = { phrase, cands, tags, found, sel: 0, bu: tagCandidate(tags, found, phrase).bu, q: '', exact: false };
   }
   return st.guess;
 }
@@ -583,20 +585,22 @@ function guessCard() {
   const phrase = unknownPhrase();
   if (!phrase) { st.guess = null; return ''; }
   const g = ensureGuess(phrase), name = capital(phrase);
-  const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
-  const all = [...g.cands, ...found];
+  const all = guessAll(), c = all[g.sel];
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
-  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list.${all[g.sel] ? ' Closest match: <b>' + esc(all[g.sel].label) + '</b>.' : ''}</div>`;
-  if (g.sel != null && all[g.sel]) {
-    const c = all[g.sel], pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
+  const tagged = c && c.tagged;
+  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list yet. ${tagged ? 'This is a guess from its tags: ' + esc(c.why) + '.' : 'Using <b>' + esc(c.label.toLowerCase()) + '</b> as the guide.'}</div>`;
+  if (c) {
+    const pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
     const one = pv.one.ok ? pv.one.typical : g.bu, pr = np(money(one));
     h += `<div class="stepper"><button class="sb" data-act="g-lower" aria-label="Lower the price">&minus;</button><div class="gval"><div class="num">${esc(pr.n)}<small>${esc(pr.u)}</small></div><div class="gtot">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}</div></div><button class="sb" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
     if (qtxt && pv.full.ok) h += `<div class="gtot">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
   }
-  h += `<div class="sep"><span>Closest matches</span></div><div class="fields">${all.map((c, i) => `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(c.label)}</span><span class="hint">${esc(money(c.bu))}${c.unit && c.unit !== 'each' ? ' / ' + esc(c.unit) : ''}</span></button>`).join('')}</div>
-    <input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
-  if (g.sel != null && all[g.sel]) {
-    const c = all[g.sel];
+  const row = (r, label, opts, cur) => `<div class="grow"><div class="glab">${esc(label)}</div><div class="gopts" role="group" aria-label="${esc(label)}">${opts.map(o => `<button class="${cur === o.id ? 'on' : ''}" data-act="g-tag" data-r="${r}" data-v="${esc(o.id)}">${esc(o.label)}</button>`).join('')}</div></div>`;
+  h += `<div class="sep"><span>What kind of thing is it?</span></div><div class="gtags">${row('kind', 'Kind', KINDS.map(k => ({ id: k.id, label: k.label })), g.tags.kind)}${rowsFor(g.tags.kind).map(r => row(r, rowLabel(r), optionsOf(r), g.tags[r])).join('')}</div>`;
+  const near = all.slice(1);
+  if (near.length) h += `<div class="sep"><span>Or compare with a real item</span></div><div class="fields">${near.map((x, k) => { const i = k + 1; return `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(x.label)}</span><span class="hint">${esc(money(x.bu))}${x.unit && x.unit !== 'each' ? ' / ' + esc(x.unit) : ''}</span></button>`; }).join('')}</div>`;
+  h += `<input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
+  if (c) {
     h += g.exact ? `<input class="field gsearch" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" style="margin-top:8px" data-act="g-exact">Type an exact price</button>`;
     h += `<button class="cta" data-act="g-set">Save and price it</button>${c.entry && !c.tier ? `<button class="cta2" data-act="g-alias">Same as ${esc(c.label.toLowerCase())}</button>` : ''}`;
   }
@@ -678,6 +682,12 @@ function renderHistory() {
 
 // ---------- item kinds (for the picker) ----------
 const FLOW_CATS = [
+  ['explosives', 'Explosives', e => e.library === 'explosives'],
+  ['fees', 'Fees and tolls', e => e.library === 'fees'],
+  ['crowns', 'Crowns and jewelry', e => e.library === 'headwear' || has(e, 'jewelry')],
+  ['clothes', 'Clothes', e => e.kind === 'good' && has(e, 'clothing')],
+  ['animals', 'Animals', e => has(e, 'animal') || has(e, 'livestock')],
+  ['plants', 'Plants and seeds', e => has(e, 'plant') && e.kind === 'good'],
   ['weapons', 'Weapons', e => e.kind === 'good' && has(e, 'weapon') && !has(e, 'magic')],
   ['armor', 'Armor', e => e.kind === 'good' && has(e, 'armor') && !has(e, 'magic')],
   ['potions', 'Potions and scrolls', e => has(e, 'potion') || has(e, 'scroll')],
@@ -895,7 +905,7 @@ function guessAll() {
   const g = st.guess;
   if (!g) return [];
   const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
-  return [...g.cands, ...found];
+  return [tagCandidate(g.tags, g.found, g.phrase), ...g.cands, ...found];
 }
 function toast(msg, undo) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
@@ -1014,6 +1024,11 @@ document.addEventListener('click', e => {
     case 'fact-cancel': st.fact.res = null; renderDrawer(); break;
     case 's-cancel': st.settingDismissed = st.text; st.setting = null; fromText(st.text, { noHistory: true }); break;
     case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
+    case 'browse': st.sheet = { open: true, mode: 'item' }; st.flow = { cat: null, search: '' }; st.slot = null; renderSheet(); break;
+    case 'g-tag': if (st.guess && d.r) {
+      st.guess.tags[d.r] = d.v; st.guess.sel = 0; st.guess.exact = false;
+      st.guess.bu = guessAll()[0].bu; renderResult();
+    } break;
     case 'g-exact': if (st.guess) { st.guess.exact = true; renderResult(); const i = $('#gPrice'); if (i) i.focus(); } break;
     case 'g-raise': case 'g-lower': if (st.guess && st.guess.sel != null) { const f = a === 'g-raise' ? 1.25 : 0.8; st.guess.bu = niceRound(st.guess.bu * f, 3); renderResult(); } break;
     case 'g-set': if (st.guess && st.guess.sel != null) {

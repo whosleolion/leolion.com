@@ -1,4 +1,5 @@
-import { scifiEntries } from './scifi.js?v=71dd6481';
+import { scifiEntries } from './scifi.js?v=c6091ad0';
+import { libraryEntries } from './library.js?v=c6091ad0';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -90,7 +91,7 @@ const srdGoods = [
 
 const srdServices = [
   ...rows('service', 'srd', ['transport'], ['City cab ride;1cp;;;cab, hansom, hackney, cab ride'], { generic: true }),
-  ...rows('labor', 'srd', ['labor', 'unskilled'], ['Untrained hireling;2sp;day;;laborer, labourer, unskilled worker, hand, hired hand, porter'], { generic: true }),
+  ...rows('labor', 'srd', ['labor', 'unskilled'], ['Untrained hireling;2sp;day;;laborer, labourer, unskilled worker, hand, hired hand, hireling, porter'], { generic: true }),
   ...rows('labor', 'srd', ['labor', 'skilled'], ['Skilled hireling;2gp;day;;skilled worker, craftsman, artisan, tradesman'], { generic: true }),
   ...rows('lodging', 'srd', ['lodging'], ['Inn room;5sp;day;;inn, inn stay, room, tavern room, lodging, hotel, bed, board'], { generic: true }),
   ...rows('service', 'srd', ['food', 'meal'], ['Meal;3sp;each;;meals, dinner, supper, lunch, breakfast'], { generic: true }),
@@ -265,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {
@@ -427,9 +428,9 @@ export const RARITY_TERMS = {
   common: ['common', 'ordinary'], uncommon: ['uncommon'], rare: ['rare'], 'very rare': ['very rare', 'veryrare'], legendary: ['legendary item', 'legendary', 'mythic', 'artifact rarity'],
 };
 export const TIER_TERMS = {
-  budget: ['cheap', 'budget', 'economy', 'third class', '3rd class', 'steerage', 'basic', 'bargain', 'low end', 'low-end', 'frugal', 'lowest'],
-  standard: ['standard', 'regular price', 'average', 'normal', 'second class', '2nd class', 'mid range', 'mid-range', 'typical'],
-  expensive: ['expensive', 'pricey', 'first class', '1st class', 'premium', 'deluxe', 'high end', 'high-end', 'upscale', 'fancy', 'costly', 'top shelf', 'top-shelf', 'posh'],
+  budget: ['cheap', 'budget', 'crappy', 'rough', 'economy', 'third class', '3rd class', 'steerage', 'basic', 'bargain', 'low end', 'low-end', 'frugal', 'lowest'],
+  standard: ['standard', 'plain', 'ordinary quality', 'regular price', 'average', 'normal', 'second class', '2nd class', 'mid range', 'mid-range', 'typical'],
+  expensive: ['expensive', 'pricey', 'nice', 'first class', '1st class', 'premium', 'deluxe', 'high end', 'high-end', 'upscale', 'fancy', 'costly', 'top shelf', 'top-shelf', 'posh'],
   luxury: ['luxury', 'luxurious', 'opulent', 'lavish', 'royal', 'five star', '5 star', 'five-star', 'palatial'],
 };
 export const UNIT_TERMS = {
@@ -442,7 +443,7 @@ export const FILLERS = new Set(('price prices cost costs costing how much many w
   'in at on from between both and with per about around approx approximately roughly estimate estimated please give tell want wanna need looking look to or then also if one ' +
   'ride trip journey fare passage skilled unskilled untrained experienced during while amid when major big large main some any each by be there that this these those get got has have into onto up down over under just only really very quite pretty ' +
   'cities city town ones thing things item items stuff piece pieces unit units set pair pairs worth of ride rides lot lots whole entire total overall ' +
-  'sell buy').split(/\s+/).filter(Boolean));
+  'sell buy extremely super incredibly ultra insanely awfully').split(/\s+/).filter(Boolean));
 // 'sell'/'buy' handled as actions before fillers; keep out of fillers:
 FILLERS.delete('sell'); FILLERS.delete('buy'); FILLERS.delete('cities'); FILLERS.delete('city'); FILLERS.delete('town'); FILLERS.delete('worth');
 FILLERS.delete('big'); FILLERS.delete('large'); FILLERS.delete('get');
@@ -502,3 +503,6 @@ export const SAMPLE_QUERIES = [
   'sell 20 rations at a trading outpost',
   'wand during a siege',
 ];
+
+// words that push a class or rarity one step further ("very cheap", "extremely rare")
+export const INTENSIFIERS = new Set(['very', 'really', 'extremely', 'super', 'incredibly', 'ultra', 'insanely', 'awfully']);
