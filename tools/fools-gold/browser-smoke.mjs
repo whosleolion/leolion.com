@@ -288,6 +288,10 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' cancel returns to the cart', await page.isVisible('.sheet.cart'));
   await page.fill('#cartIn', '2 lanterns'); await page.press('#cartIn', 'Enter');
   ok(name + ' one more item can be typed into the cart', (await page.$$('.cline')).length === 5);
+  await page.fill('#cartIn', '3 rope, 2 torches, sell 2 shortswords'); await page.click('[data-act=cart-read]');
+  ok(name + ' the cart sentence reads back before adding', !!(await page.$('.cread')));
+  ok(name + ' no button in the read-back is squeezed or clipped', await page.$$eval('.cread button', bs => bs.length === 2 && bs.every(b => b.scrollWidth <= b.clientWidth + 1 && b.getBoundingClientRect().height < 60)));
+  await page.click('[data-act=cart-read-no]');
   await page.click('.cline >> nth=4 >> [data-act=cart-del]');
   ok(name + ' a line can be removed', (await page.$$('.cline')).length === 4);
   await page.reload({ waitUntil: 'load' }); await page.waitForSelector('#q');

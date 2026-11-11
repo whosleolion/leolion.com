@@ -1051,3 +1051,13 @@ html[data-big] .cfoot { position: static; margin-top: 1rem; }
 .cwhy .sum { border-top: 1px solid var(--line); padding-top: .5rem; color: var(--fg); }
 .cwhy .sum span { color: var(--muted); }
 .cwhy .sum.last b { font: 700 1.0625rem var(--font-body); }
+
+/* every row of action buttons keeps each label whole and wraps to a new line instead of squeezing one */
+.row > button, .row > .btn, .cread .row button, .hgfoot button, .editbar .eb button { min-width: max-content; max-width: 100%; white-space: nowrap; }
+.cread .row, .hgfoot, .hgfoot .row { flex-wrap: wrap; }
+.cread .row button { flex: 1 1 auto; }
+
+/* at large text the five tabs take two rows instead of clipping their names */
+html[data-big] .jump { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html[data-big] .jump .q { white-space: nowrap; }
+@media (max-width: 350px) { .jump { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

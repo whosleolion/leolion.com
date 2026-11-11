@@ -1,20 +1,20 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=d6c6ccdd';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=d6c6ccdd';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=d6c6ccdd';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=d6c6ccdd';
-import { findOffer } from './lists.js?v=d6c6ccdd';
-import { suggestPrompts } from './suggest.js?v=d6c6ccdd';
-import { readFact } from './facts.js?v=d6c6ccdd';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=d6c6ccdd';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=d6c6ccdd';
+import { compileWorld } from './world.js?v=0062a8ef';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=0062a8ef';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=0062a8ef';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=0062a8ef';
+import { findOffer } from './lists.js?v=0062a8ef';
+import { suggestPrompts } from './suggest.js?v=0062a8ef';
+import { readFact } from './facts.js?v=0062a8ef';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=0062a8ef';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=0062a8ef';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=d6c6ccdd';
-import { applicable } from './engine.js?v=d6c6ccdd';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=d6c6ccdd';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=d6c6ccdd';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=d6c6ccdd';
+} from './data.js?v=0062a8ef';
+import { applicable } from './engine.js?v=0062a8ef';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=0062a8ef';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=0062a8ef';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=0062a8ef';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
