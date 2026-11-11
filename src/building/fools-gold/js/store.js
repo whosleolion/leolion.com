@@ -1,14 +1,14 @@
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=fc0f7817';
-import { compileWorld } from './world.js?v=fc0f7817';
+import { WORLD_PRESETS } from './data.js?v=efcf198a';
+import { compileWorld } from './world.js?v=efcf198a';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
 
 function defaults() {
-  const worlds = [WORLD_PRESETS.vcm(), WORLD_PRESETS.srd(), WORLD_PRESETS.modern()];
+  const worlds = [WORLD_PRESETS.srd(), WORLD_PRESETS.vcm(), WORLD_PRESETS.modern()];
   worlds.forEach(normalizeWorld);
-  return { v: 1, worlds, activeId: 'vcm', history: [], theme: null };
+  return { v: 2, worlds, activeId: 'srd', history: [], theme: null };
 }
 export function load() {
   let raw = null;
@@ -19,6 +19,20 @@ export function load() {
       if (s && Array.isArray(s.worlds) && s.worlds.length) {
         s.history = Array.isArray(s.history) ? s.history : [];
         if (!s.worlds.some(w => w.id === s.activeId)) s.activeId = s.worlds[0].id;
+        // v2: rounding below the smallest coin is the default, coin letters get glyphs, worlds renamed, Standard Fantasy opens first
+        if (!(s.v >= 2)) {
+          s.v = 2;
+          const glyphOf = { gp: 'G', sp: 'S', cp: 'C' };
+          for (const w of s.worlds) {
+            if (w.currency) {
+              w.currency.belowSmallest = 'round';
+              for (const d of w.currency.denominations || []) if (d && d.glyph === undefined && glyphOf[d.id]) d.glyph = glyphOf[d.id];
+            }
+            if (w.id === 'vcm' && w.name === 'Vista City Mondays') { w.name = 'Industrial Fantasy'; w.blurb = 'Rail, factories and arcane streetlights.'; }
+            if (w.id === 'srd' && w.name === 'Standard fantasy (SRD)') w.name = 'Standard Fantasy';
+          }
+          if (s.worlds.some(w => w.id === 'srd')) s.activeId = 'srd';
+        }
         // the old Titanium Frontier sample world was replaced by the modern world
         s.worlds = s.worlds.map(w => (w.id === 'titanium' && w.name === 'Titanium Frontier' ? WORLD_PRESETS.modern() : w));
         s.worlds = s.worlds.filter(w => { try { normalizeWorld(w); compileWorld(w); return true; } catch (e) { return false; } });
@@ -37,7 +51,7 @@ export function save(state) {
 }
 const num = (v, d, lo = -Infinity, hi = Infinity) => { const n = typeof v === 'number' ? v : parseFloat(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 const str = (v, d = '') => (typeof v === 'string' ? v : v == null ? d : String(v));
-const GSC = [{ id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100 }, { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10 }, { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1 }];
+const GSC = [{ id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100, glyph: 'G' }, { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10, glyph: 'S' }, { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1, glyph: 'C' }];
 const KINDS = ['good', 'service', 'labor', 'lodging', 'travel', 'spell', 'property'];
 let seq = 0;
 export const newItemId = () => 'user.i' + Date.now().toString(36) + (seq++).toString(36);
@@ -48,11 +62,11 @@ export function normalizeWorld(w) {
   w.baseline = w.baseline === 'generic' ? 'generic' : w.baseline === 'modern' ? 'modern' : 'srd';
   const cur = w.currency && typeof w.currency === 'object' ? w.currency : {};
   let dens = (Array.isArray(cur.denominations) ? cur.denominations : []).filter(d => d && typeof d === 'object')
-    .map(d => ({ id: str(d.id).trim() || 'coin', name: str(d.name).trim() || str(d.id).trim() || 'coin', plural: str(d.plural).trim(), bu: num(d.bu, NaN) }))
+    .map(d => ({ id: str(d.id).trim() || 'coin', name: str(d.name).trim() || str(d.id).trim() || 'coin', plural: str(d.plural).trim(), bu: num(d.bu, NaN), glyph: /^[A-Z]$/.test(str(d.glyph)) ? str(d.glyph) : '' }))
     .filter(d => d.bu > 0).slice(0, 12);
   if (!dens.length) dens = GSC.map(d => ({ ...d }));
   for (const d of dens) if (!d.plural) d.plural = /s$/.test(d.name) ? d.name : d.name + 's';
-  w.currency = { denominations: dens, belowSmallest: cur.belowSmallest === 'round' ? 'round' : 'decimals', note: str(cur.note) };
+  w.currency = { denominations: dens, belowSmallest: cur.belowSmallest === 'decimals' ? 'decimals' : 'round', note: str(cur.note) };
   if (typeof cur.symbol === 'string' && cur.symbol && num(cur.decimal, 0) > 0) { w.currency.symbol = cur.symbol.slice(0, 3); w.currency.decimal = num(cur.decimal, 100, 0.01, 1e9); }
   w.anchors = { wage: num(w.anchors && w.anchors.wage, 20, 0.01, 1e9) };
   w.economyTags = (Array.isArray(w.economyTags) ? w.economyTags : []).filter(t => typeof t === 'string');

@@ -12,11 +12,11 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../src/building/fools-gold');
 const check = process.argv.includes('--check');
 const jsFiles = readdirSync(join(root, 'js')).filter(f => f.endsWith('.js')).sort().map(f => 'js/' + f);
-const files = ['index.html', 'css/style.css', ...jsFiles];
+const files = ['index.html', 'css/style.css', 'sw.js', ...jsFiles];
 
 const strip = t => t.replace(/\?v=[0-9a-f]{8}/g, '').replace(/(<meta name="fg-build" content=")[0-9a-f]{0,8}"/, '$1"');
 const withMeta = t => (/<meta name="fg-build"/.test(t) ? t : t.replace('<meta name="robots"', '<meta name="fg-build" content="">\n<meta name="robots"'));
-const norm = (f, t) => (f === 'index.html' ? strip(withMeta(t)) : strip(t));
+const norm = (f, t) => (f === 'index.html' ? strip(withMeta(t)) : f === 'sw.js' ? t.replace(/const BUILD = '[0-9a-f]*';/, "const BUILD = '';").replace(/const FILES = \[[^\]]*\];/, 'const FILES = [];') : strip(t));
 const hash = createHash('sha1');
 for (const f of files) { hash.update(f + '\n'); hash.update(norm(f, readFileSync(join(root, f), 'utf8'))); }
 const H = hash.digest('hex').slice(0, 8);
@@ -26,6 +26,10 @@ function stamped(f, text) {
     let t = norm(f, text);
     t = t.replace(/(href="css\/style\.css)"/, `$1?v=${H}"`).replace(/(src="js\/app\.js)"/, `$1?v=${H}"`);
     return t.replace(/(<meta name="fg-build" content=")"/, `$1${H}"`);
+  }
+  if (f === 'sw.js') {
+    const list = ["'./'", "'index.html'", `'css/style.css?v=${H}'`, ...jsFiles.map(j => `'${j}?v=${H}'`)].join(', ');
+    return norm(f, text).replace("const BUILD = '';", `const BUILD = '${H}';`).replace('const FILES = [];', `const FILES = [${list}];`);
   }
   if (f.endsWith('.js')) return strip(text).replace(/(from\s+'\.\/[\w-]+\.js)'/g, `$1?v=${H}'`);
   return text;

@@ -24,6 +24,11 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' no footer text', !(await page.$('.foot')));
   ok(name + ' sheet closed by default', await page.isHidden('#sheet'));
   ok(name + ' no info dot or footer, only a gear', !(await page.$('#info')) && !!(await page.$('#gear')));
+  ok(name + ' the world name is not shown beside the gear', !(await page.$('#worldName')));
+  ok(name + ' the blurb does not mention what you leave out', !/leave out/i.test(await page.textContent('#result')) || (await page.inputValue('#q')).length > 0);
+  await page.click('#gear');
+  ok(name + ' Standard Fantasy is the default world', /Standard Fantasy/.test(await page.textContent('.navgroup:nth-of-type(2), #drawerPanel')));
+  await page.click('[data-act=close-world]');
 
   // empty state: examples on one line, nothing else
   await page.fill('#q', '');
@@ -36,6 +41,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');
   await page.waitForSelector('.slot');
   ok(name + ' words are colored by role', (await page.$$('#mirror .tok')).length >= 4);
+  ok(name + ' coins show as letter glyphs, not gp and cp', (await page.$$('.pricebtn .cg')).length >= 1 && !/\d\s?(gp|sp|cp)\b/.test(await page.textContent('.pricebtn')));
   ok(name + ' fields list the set values', /3 days/.test(await page.textContent('.fields')) && /expensive/.test(await page.textContent('.fields')));
   ok(name + ' an empty field shows its swing', / to /.test(await page.textContent('[data-id="g:urgency"]')));
   ok(name + ' home fits without scrolling', (await page.evaluate(() => { const m = document.querySelector('#main'); return m.scrollHeight - m.clientHeight; })) <= 4);
@@ -104,6 +110,20 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' settings root is a short grouped list', (await page.$$('.nrow')).length >= 10 && (await page.$$('.navgroup')).length === 3);
   await goPage(page, 'About');
   ok(name + ' the attribution lives in About', /Creative Commons/.test(await page.textContent('.sbody.page')));
+  await goBack(page);
+  await goPage(page, 'Money');
+  ok(name + ' money settings offer all 26 letters as symbols', (await page.$$('.glyphs')).length >= 3 && (await (await page.$$('.glyphs'))[0].$$('.gl')).length === 27);
+  await page.click('.glyphs >> nth=0 >> css=.gl[data-v=Z]');
+  await goBack(page); await page.click('[data-act=close-world]');
+  await page.fill('#q', 'buy a longsword');
+  ok(name + ' a chosen letter glyph shows on prices', (await page.textContent('.pricebtn .cg')) === 'Z');
+  await page.click('#gear'); await goPage(page, 'Money'); await page.click('.glyphs >> nth=0 >> css=.gl[data-v=G]'); await goBack(page);
+  await goPage(page, 'Custom words'); await page.click('[data-act=w-add-voc]');
+  await page.fill('[data-bind="voc.0.term"]', 'shiv'); await page.fill('[data-bind="voc.0.means"]', 'dagger'); await page.keyboard.press('Tab');
+  ok(name + ' a custom word can be typed, not just picked', (await page.inputValue('[data-bind="voc.0.means"]')) === 'Dagger');
+  await page.fill('[data-bind="voc.0.means"]', 'zzzz'); await page.keyboard.press('Tab');
+  ok(name + ' an unknown meaning is refused', /No item called/.test(await page.textContent('#toast')));
+  await page.click('[data-act=w-del-voc]');
   await goBack(page);
   await goPage(page, 'Appearance');
   await page.click('input[data-bind=theme][value=dark]');
@@ -188,7 +208,8 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.screenshot({ path: `${out}/${name}-2.png` });
 
   // a saved copy with old files updates itself
-  const stale = await ctx.newPage();
+  const plain = await browser.newContext({ serviceWorkers: 'block', viewport: vp, colorScheme: scheme });
+  const stale = await plain.newPage();
   await stale.route('**/version.json*', r => r.fulfill({ contentType: 'application/json', body: '{"v":"deadbeef"}' }));
   await stale.goto(url, { waitUntil: 'load' });
   await stale.waitForURL(/\?v=deadbeef/, { timeout: 8000 }).catch(() => {});
@@ -197,11 +218,24 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await stale.waitForTimeout(1200);
   ok(name + ' update reload happens once, never loops', /\?v=deadbeef$/.test(stale.url()));
   await stale.close();
-  const fresh = await ctx.newPage();
+  const fresh = await plain.newPage();
   let navs = 0; fresh.on('framenavigated', f => { if (f === fresh.mainFrame()) navs++; });
   await fresh.goto(url, { waitUntil: 'load' }); await fresh.waitForTimeout(1200);
   ok(name + ' an up-to-date copy does not reload', navs === 1, navs);
   await fresh.close();
+  await plain.close();
+  const off = await ctx.newPage();
+  await off.goto(url, { waitUntil: 'load' });
+  const swOk = await off.evaluate(async () => { if (!('serviceWorker' in navigator)) return 'unsupported'; await navigator.serviceWorker.ready; return 'ready'; }).catch(() => 'error');
+  ok(name + ' offline support installs', swOk === 'ready', swOk);
+  await off.waitForTimeout(800);
+  await ctx.setOffline(true);
+  await off.reload({ waitUntil: 'domcontentloaded' });
+  await off.waitForSelector('#q', { timeout: 8000 });
+  await off.fill('#q', 'buy a longsword');
+  ok(name + ' works with no network', (await off.textContent('.pricebtn .num')).length > 0);
+  await ctx.setOffline(false);
+  await off.close();
   await ctx.close();
 }
 await browser.close();

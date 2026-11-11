@@ -454,26 +454,26 @@ export const NUMBER_WORDS = {
 
 // ---- World presets ----
 const GSC = [
-  { id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100 },
-  { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10 },
-  { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1 },
+  { id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100, glyph: 'G' },
+  { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10, glyph: 'S' },
+  { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1, glyph: 'C' },
 ];
 const baseDials = { priceLevel: 1, volatility: 0.5, stacking: 'dampened', sellFraction: 0.5 };
 export const WORLD_PRESETS = {
   vcm: () => ({
-    id: 'vcm', name: 'Vista City Mondays', blurb: 'Industrial Victorian fantasy. Rail and arcane streetlights.',
-    baseline: 'srd', currency: { denominations: GSC.map(d => ({ ...d })), belowSmallest: 'decimals', note: '1 cp is roughly a dollar' },
+    id: 'vcm', name: 'Industrial Fantasy', blurb: 'Rail, factories and arcane streetlights.',
+    baseline: 'srd', currency: { denominations: GSC.map(d => ({ ...d })), belowSmallest: 'round', note: '1 cp is roughly a dollar' },
     anchors: { wage: 25 }, economyTags: ['industrial-boom', 'magic-rich'],
     dials: { ...baseDials }, defaults: { travel: 'travel.rail' }, vocabulary: [], items: [],
   }),
   srd: () => ({
-    id: 'srd', name: 'Standard fantasy (SRD)', blurb: 'Straight SRD prices, no world adjustments.',
-    baseline: 'srd', currency: { denominations: GSC.map(d => ({ ...d })), belowSmallest: 'decimals', note: '' },
+    id: 'srd', name: 'Standard Fantasy', blurb: 'Straight SRD prices, no world adjustments.',
+    baseline: 'srd', currency: { denominations: GSC.map(d => ({ ...d })), belowSmallest: 'round', note: '' },
     anchors: { wage: 20 }, economyTags: [], dials: { ...baseDials }, defaults: { travel: 'travel.coach' }, vocabulary: [], items: [],
   }),
   modern: () => ({
     id: 'modern', name: 'Modern day, real world', blurb: 'Current US prices for rent, meals, flights and services.',
-    baseline: 'modern', currency: { denominations: [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }], belowSmallest: 'decimals', note: '1 base unit is one cent', symbol: '$', decimal: 100 },
+    baseline: 'modern', currency: { denominations: [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }], belowSmallest: 'round', note: '1 base unit is one cent', symbol: '$', decimal: 100 },
     anchors: { wage: 12000 }, economyTags: [], dials: { ...baseDials, sellFraction: 0.5 }, defaults: { travel: 'travel.intercity-train', rent: 'lodging.m-apartment-rent-medium' }, vocabulary: [], items: [],
     samples: ['a month of rent in a major city, medium apartment', '6 months of rent in a city', 'dinner for 2 at a fancy restaurant', 'flight 1500 miles', 'hire a lawyer for 2 days', 'taxi ride in the capital', 'buy a laptop', 'sell a used car'],
   }),

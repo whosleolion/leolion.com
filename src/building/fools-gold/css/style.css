@@ -556,3 +556,40 @@ body { background: var(--bg); color: var(--fg); font: 16px/1.35 var(--font-body)
 .theme label:first-child { border-top: 0; }
 .theme input { width: 20px; height: 20px; accent-color: var(--accent); }
 .navgroup { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 16px 4px 6px; }
+
+/* currency letter glyphs: any letter with a vertical stroke, like $ and the cent sign */
+.cg { position: relative; display: inline-block; font-style: normal; font-weight: inherit; line-height: 1; padding: 0 .06em; margin-left: .04em; }
+.cg::after { content: ""; position: absolute; left: 50%; top: -.14em; bottom: -.14em; width: .09em; min-width: 1px; background: currentColor; transform: translateX(-50%); border-radius: 1px; }
+.num small .cg { font-weight: 700; }
+.glyphs { display: flex; gap: 6px; overflow-x: auto; margin-top: 4px; padding: 2px 2px 8px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.gl { flex: none; min-width: 40px; height: 40px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font-size: 17px; font-weight: 600; text-transform: none; }
+.gl.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.coin { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); border-radius: 12px; }
+.about { text-align: center; padding: 28px 0 8px; }
+.about .aname { font: 700 30px var(--font-display); margin-bottom: 8px; }
+.about p { margin: 6px 0; font-size: 15px; color: var(--fg); }
+.about .fine { font-size: 11px; line-height: 1.45; color: var(--muted); margin-top: 18px; text-align: left; }
+
+/* settings pages: nothing wider than the screen, every row aligned */
+.sbody.page, .sbody.page > *, .coin, .coin > * { min-width: 0; max-width: 100%; }
+.lab { min-width: 0; }
+.lab .field, .lab select, .lab input, .field { width: 100%; max-width: 100%; min-width: 0; }
+.grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.denrow { display: grid; grid-template-columns: 84px minmax(0, 1fr) 36px; gap: 8px; align-items: end; }
+.denrow.single { grid-template-columns: minmax(0, 1fr) 36px; }
+.denrow .xbtn, .vrow .xbtn { width: 36px; height: 44px; padding: 0; font-size: 22px; line-height: 1; }
+.vrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 36px; gap: 8px; align-items: center; }
+.sbody.page .field { min-height: 44px; }
+.sbody.page .tagrow { padding: 10px 2px; }
+.sbody.page .world-row { min-width: 0; }
+.sbody.page .row { flex-wrap: wrap; }
+.sbody.page textarea.mono { max-width: 100%; }
+.group, .fields, .theme, .coin { max-width: 100%; }
+
+/* settings header: back link on its own line, then the title with Done */
+.nav { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+.nav .back { grid-column: 1 / -1; justify-self: start; }
+.nav h2, .drawer-panel > .nav:first-child h2 { grid-column: 1; text-align: left; font: 700 28px/1.1 var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; margin: 0; }
+.nav .btn { grid-column: 2; }
+.cg::after { top: -.1em; bottom: -.1em; width: .07em; }
+.o span .cg::after, .slot .hint .cg::after, .ends .cg::after { top: -.06em; bottom: -.06em; }
