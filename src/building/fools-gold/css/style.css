@@ -1084,3 +1084,19 @@ html[data-big] .jump .q { white-space: nowrap; }
 .cbarrow > span { flex: none; }
 .cbarrow .span.dragbar { flex: 1; min-width: 0; margin: 0; }
 .cdock .cin .field, .cdock .cin .btn { min-height: 2.75rem; }
+
+/* ---- the haggle panel: a title, one row of quick cuts, a field for the price you agreed ---- */
+.hgpanel { margin-top: .75rem; padding: .25rem .875rem .875rem; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); display: grid; gap: .625rem; }
+.hghead { display: flex; align-items: center; justify-content: space-between; min-height: 2.75rem; }
+.hghead b { font: 700 1.0625rem var(--font-display); }
+.hghead .linkbtn { min-height: 2.75rem; padding: 0 .25rem; color: var(--accent); font-weight: 600; text-decoration: none; }
+.hghint { margin: -.375rem 0 0; font-size: .875rem; color: var(--muted); line-height: 1.4; }
+.hgseg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.hgseg button { min-height: 2.75rem; border: 0; border-left: 1px solid var(--line); background: none; color: var(--fg); font: 600 1rem var(--font-body); font-variant-numeric: tabular-nums; }
+.hgseg button:first-child { border-left: 0; }
+.hgseg button.on { background: var(--accent); color: var(--accent-ink); }
+.hgin { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; }
+.hgin .field, .hgin .btn { min-height: 2.75rem; }
+.hglinks { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
+.hglinks .linkbtn { min-height: 2.5rem; padding: 0; color: var(--muted); font-size: .9375rem; }
+.cfoot .hgpanel, .sheet.cart .hgpanel { background: var(--surface); }

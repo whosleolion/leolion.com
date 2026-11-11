@@ -1,20 +1,20 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=82a76fa1';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=82a76fa1';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=82a76fa1';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=82a76fa1';
-import { findOffer } from './lists.js?v=82a76fa1';
-import { suggestPrompts } from './suggest.js?v=82a76fa1';
-import { readFact } from './facts.js?v=82a76fa1';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=82a76fa1';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=82a76fa1';
+import { compileWorld } from './world.js?v=71dd6481';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=71dd6481';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=71dd6481';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=71dd6481';
+import { findOffer } from './lists.js?v=71dd6481';
+import { suggestPrompts } from './suggest.js?v=71dd6481';
+import { readFact } from './facts.js?v=71dd6481';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=71dd6481';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=71dd6481';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=82a76fa1';
-import { applicable } from './engine.js?v=82a76fa1';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=82a76fa1';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=82a76fa1';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=82a76fa1';
+} from './data.js?v=71dd6481';
+import { applicable } from './engine.js?v=71dd6481';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=71dd6481';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=71dd6481';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=71dd6481';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -244,14 +244,19 @@ function haggleBtn(q) {
   if (h) return `<span class="hgwrap ${h.good ? 'good' : 'bad'}"><button class="haggle on" data-act="haggle-open" aria-expanded="${st.haggleOpen}">${HAG_I}<span>${esc(haggleLabel(h))}</span></button><button class="hgx" data-act="haggle-off" aria-label="Turn haggle off">&times;</button></span>`;
   return `<button class="haggle" data-act="haggle-open" aria-expanded="${st.haggleOpen}">${HAG_I}<span>Haggle</span></button>`;
 }
-function haggleChips(vals, cur, act) { return vals.map(v => `<button class="q${cur === v ? ' on' : ''}" data-act="${act}" data-v="${v}">${pctText(v)}</button>`).join(''); }
+function hgPanel(o) {
+  return `<div class="hgpanel"><div class="hghead"><b>${o.title}</b><button class="linkbtn" data-act="${o.done}">Done</button></div>
+    <p class="hghint">${o.hint}</p>
+    <div class="hgseg" role="group" aria-label="Quick haggles">${o.vals.map(v => `<button class="${o.cur === v ? 'on' : ''}" data-act="${o.set}" data-v="${v}">${pctText(v)}</button>`).join('')}</div>
+    <div class="hgin"><input class="field" id="${o.id}" inputmode="decimal" placeholder="${o.ph}" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="${o.label}"><button class="btn primary" data-act="${o.inAct}">Set</button></div>
+    ${o.links ? `<div class="hglinks">${o.links}</div>` : ''}</div>`;
+}
+const hgLink = (act, text) => `<button class="linkbtn" data-act="${act}">${text}</button>`;
 function haggleHtml(e) {
   const h = e.haggle, memo = !h && st.hgMemo;
   const memoText = memo ? (memo.price ? 'Agreed ' + money(memo.price) : pctText(memo.pct)) : '';
-  return `<div class="hgpanel"><div class="quick hgchips">${haggleChips([-5, -10, -15, -25, 10], h && !h.fixed ? h.pct : null, 'haggle-set')}</div>
-    <div class="hgin"><input class="field" id="hgIn" inputmode="decimal" placeholder="15% off, or the price you agreed" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Haggle by percent, or type the price you agreed"><button class="btn primary" data-act="haggle-in">Set</button></div>
-    <p class="mini">A percent moves with the other fields. A price you type stays put.</p>
-    <div class="hgfoot row">${h && h.fixed ? '' : '<button class="btn" data-act="haggle-agree">Agree this price</button>'}${h ? '<button class="btn" data-act="haggle-off">Turn off</button>' : memo ? `<button class="btn" data-act="haggle-restore">Back to ${esc(memoText)}</button>` : ''}<button class="btn" data-act="haggle-close">Done</button></div></div>`;
+  const links = [h && h.fixed ? '' : hgLink('haggle-agree', 'Agree this price'), h ? hgLink('haggle-off', 'Turn off') : memo ? hgLink('haggle-restore', 'Back to ' + esc(memoText)) : ''].filter(Boolean).join('');
+  return hgPanel({ title: 'Haggle', done: 'haggle-close', hint: 'Drag the marker, pick one, or type a price you agreed.', vals: [-5, -10, -15, -25], cur: h && !h.fixed ? h.pct : null, set: 'haggle-set', id: 'hgIn', ph: 'Agreed price, like 40 gp', label: 'Type the price you agreed, or a percent', inAct: 'haggle-in', links });
 }
 // h is { pct } (moves with the other fields), { price } (agreed, stays put) or null
 function setHaggle(h) {
@@ -398,11 +403,9 @@ function shopOptions(c, t) {
 }
 function cartHaggleHtml() {
   const h = cartOf().haggle;
-  return `<div class="hgpanel"><div class="quick hgchips">${haggleChips([-5, -10, -15, -20], h ? h.pct : null, 'cart-hg-set')}</div>
-    <div class="hgin"><input class="field" id="cartHg" inputmode="decimal" placeholder="10% off" autocapitalize="none" autocomplete="off" aria-label="Haggle everything you buy by a percent"><button class="btn primary" data-act="cart-hg-in">Set</button></div>
-    <div class="hgfoot"><span class="mini">Applies to what you buy. Agreed and selling lines are left alone.</span><button class="btn" data-act="cart-haggle">Done</button></div></div>`;
+  return hgPanel({ title: 'Haggle what you buy', done: 'cart-haggle', hint: 'Changes every line you buy. Agreed prices and sales are left alone.', vals: [-5, -10, -15, -20], cur: h ? h.pct : null, set: 'cart-hg-set', id: 'cartHg', ph: 'Percent off, like 10%', label: 'Haggle everything you buy by a percent', inAct: 'cart-hg-in', links: h ? hgLink('cart-hg-off', 'Turn off') : '' });
 }
-const MINUS = '−';
+const MINUS = '\u2212';
 function cartHtml() {
   const c = cartOf(), t = cartTotals(c, ctx), ref = t.pre || t, hg = c.haggle;
   const sellOnly = !t.spend && t.get > 0;
