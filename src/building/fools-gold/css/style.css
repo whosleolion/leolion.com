@@ -725,3 +725,12 @@ details.sub .tagrow { padding: 8px 0; }
 .glyphs .gl:first-child { position: sticky; left: 0; z-index: 1; font-family: var(--font-body); font-size: 15px; letter-spacing: .04em; box-shadow: 8px 0 8px -4px var(--bg); }
 /* jump bar covers what scrolls under it */
 .jump { background: var(--bg); padding-bottom: 8px; box-shadow: 0 6px 6px -6px rgba(0,0,0,.12); }
+
+/* world picker at the top of World settings */
+.wpick { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 10px; scrollbar-width: none; }
+.wpick::-webkit-scrollbar { display: none; }
+.wchip { flex: none; max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: 600 15px var(--font-body); }
+.wchip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.wchip.add { background: none; border-style: dashed; color: var(--accent); }
+.wchip.add.on { background: none; color: var(--muted); }
+.wnew { display: grid; gap: 8px; padding-bottom: 10px; }

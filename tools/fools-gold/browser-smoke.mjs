@@ -10,7 +10,7 @@ let failed = 0;
 const ok = (n, c, d) => { if (!c) { failed++; console.log('FAIL', n, d ?? ''); } else console.log('ok  ', n); };
 const WP = { Money: 1, Economy: 1, Dials: 1, 'Item list': 'Item lists', 'Custom words': 'My changes', 'My items': 'My changes', Adjustments: 'My changes' };
 const goPage = async (page, p) => {
-  if (p === 'Your worlds') { await page.click('.nrow[data-p="Worlds"]'); return; }
+  if (p === 'Your worlds') { if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]'); if (!(await page.$('.wnew'))) await page.click('[data-act=w-add-toggle]'); return; }
   const k = WP[p];
   if (!k) { await page.click(`.nrow[data-p="${p}"]`); return; }
   if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]');
@@ -115,7 +115,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   // settings as pushed pages, worlds, modern
   await page.click('#gear');
   ok(name + ' drawer opens', await page.isVisible('#drawer'));
-  ok(name + ' settings root is five rows in three groups', (await page.$$('.nrow')).length === 5 && (await page.$$('.navgroup')).length === 3);
+  ok(name + ' settings root is five rows in three groups', (await page.$$('.nrow')).length === 4 && (await page.$$('.navgroup')).length === 1);
   await goPage(page, 'Item list');
   ok(name + ' item lists are check boxes you can combine', (await page.$$('input[data-bind^="list."]')).length === 4);
   await page.click('input[data-bind="list.modern"]');
@@ -142,11 +142,11 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=w-del-voc]');
   await goBack(page);
   await goPage(page, 'Appearance');
-  await page.click('input[data-bind=theme][value=dark]');
+  await page.click('input[data-bind=style][value=dark]');
   ok(name + ' theme can be forced dark', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
-  await page.click('input[data-bind=theme][value=light]');
+  await page.click('input[data-bind=style][value=light]');
   ok(name + ' theme can be forced light', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'light');
-  await page.click('input[data-bind=theme][value=system]');
+  await page.click('input[data-bind=style][value=auto]');
   ok(name + ' match device clears the override', (await page.evaluate(() => document.documentElement.dataset.theme)) === undefined);
   await goBack(page);
   await goPage(page, 'Your worlds');

@@ -1,17 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=88a2bde3';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=88a2bde3';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=88a2bde3';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=88a2bde3';
-import { findOffer } from './lists.js?v=88a2bde3';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=88a2bde3';
+import { compileWorld } from './world.js?v=92d0321e';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=92d0321e';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=92d0321e';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=92d0321e';
+import { findOffer } from './lists.js?v=92d0321e';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=92d0321e';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=88a2bde3';
-import { applicable } from './engine.js?v=88a2bde3';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=88a2bde3';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=88a2bde3';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=88a2bde3';
+} from './data.js?v=92d0321e';
+import { applicable } from './engine.js?v=92d0321e';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=92d0321e';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=92d0321e';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=92d0321e';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,7 +20,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, addWorld: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -449,8 +449,13 @@ function resolveMeans(text) {
 }
 
 const PAGES = {
-  World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Mine']] },
+  World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes', 'This world'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Mine'], ['This world', 'World']] },
 };
+function worldPicker() {
+  const chips = S.worlds.map(x => `<button class="wchip${x.id === world.id ? ' on' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}">${esc(x.name)}</button>`).join('');
+  const cards = st.addWorld ? `<div class="wnew"><div class="lab">Start a new world from a preset</div>${Object.entries(WORLD_PRESETS).map(([id, mk]) => { const p = mk(); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span><span class="plus">+</span></button>`; }).join('')}</div>` : '';
+  return `<div class="wpick" role="group" aria-label="World">${chips}<button class="wchip add${st.addWorld ? ' on' : ''}" data-act="w-add-toggle" aria-label="New world">${st.addWorld ? 'Cancel' : '+ New'}</button></div>${cards}`;
+}
 function renderDrawer() {
   const panel = $('#drawerPanel'), top = panel.scrollTop;
   const doc = new DOMParser().parseFromString('<div>' + buildSettingsHtml() + '</div>', 'text/html');
@@ -460,7 +465,7 @@ function renderDrawer() {
   const nav = (title, back) => `<div class="nav">${back ? '<button class="back" data-act="dpage" data-p="">&lsaquo; Settings</button>' : ''}<h2>${esc(title)}</h2><button class="btn primary" data-act="close-world">Done</button></div>`;
   if (page && PAGES[st.dpage]) {
     const P = PAGES[st.dpage];
-    panel.innerHTML = nav(P.title, true) + `<div class="jump" role="navigation" aria-label="Jump to">${P.jump.map(([id, l]) => `<button class="q" data-act="jump" data-id="${esc(id)}">${esc(l)}</button>`).join('')}</div>` +
+    panel.innerHTML = nav(P.title, true) + worldPicker() + `<div class="jump" role="navigation" aria-label="Jump to">${P.jump.map(([id, l]) => `<button class="q" data-act="jump" data-id="${esc(id)}">${esc(l)}</button>`).join('')}</div>` +
       P.subs.map(id => byId(id)).filter(Boolean).map(x => `<section class="wsec" id="ws-${esc(x.id.replace(/\W+/g, '-'))}"><h3 class="wh"><span>${esc(x.title)}</span><span class="sv">${esc(x.sv)}</span></h3><div class="sbody page">${x.body}</div></section>`).join('');
   } else if (page) {
     panel.innerHTML = nav(page.title, true) + `<div class="sbody page">${page.body}</div>`;
@@ -468,9 +473,8 @@ function renderDrawer() {
     st.dpage = null;
     const row = (id, title, sv) => `<button class="nrow" data-act="dpage" data-p="${esc(id)}"><span class="nl">${esc(title)}</span><span class="sv">${esc(sv)}</span><span class="chev">&rsaquo;</span></button>`;
     panel.innerHTML = nav('Settings', false) +
-      `<div class="navgroup">${esc(world.name)}</div><div class="group">${row('World', 'World settings', byId('Item lists').sv)}</div>` +
-      `<div class="navgroup">App</div><div class="group">${row('Appearance', 'Appearance', byId('Appearance').sv)}${row('About', 'About', '')}</div>` +
-      `<div class="navgroup">More</div><div class="group">${row('Worlds', 'Worlds', byId('Worlds').sv)}${row('Back up and share', 'Back up and share', '')}</div>`;
+      `<div class="group">${row('World', 'World settings', world.name)}</div>` +
+      `<div class="navgroup">App</div><div class="group">${row('Appearance', 'Appearance', byId('Appearance').sv)}${row('About', 'About', '')}${row('Back up and share', 'Back up and share', '')}</div>`;
   }
   panel.querySelectorAll('.glyphs').forEach(g => { const on = g.querySelector('.gl.on:not(:first-child)'); if (on) g.scrollLeft = Math.max(0, on.getBoundingClientRect().left - g.getBoundingClientRect().left + g.scrollLeft - 70); });
   panel.scrollTop = st.dpageChanged ? 0 : top;
@@ -488,25 +492,19 @@ function buildSettingsHtml() {
   const dens = w.currency.denominations;
   const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
-  const themeLabel = (S.skin ? (SKINS.find(x => x[0] === S.skin) || [0, ''])[1] + ', ' : '') + { system: 'Match device', light: 'Light', dark: 'Dark' }[S.theme || 'system'];
+  const styleNow = S.skin || S.theme || 'auto';
+  const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1];
   const html = `
   <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
-    <div class="lab">Style</div><div class="theme skins">${SKINS.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="skin" data-bind="skin" value="${v}"${(S.skin || 'standard') === v ? ' checked' : ''}></label>`).join('')}</div>
-    <div class="lab">Light or dark${S.skin && S.skin !== 'standard' ? ' (this style keeps its own colors)' : ''}</div>
-    <div class="theme">${[['system', 'Match device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<label><span>${l}</span><input type="radio" name="theme" data-bind="theme" value="${v}"${(S.theme || 'system') === v ? ' checked' : ''}></label>`).join('')}</div>
+    <div class="theme skins">${STYLES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="style" data-bind="style" value="${v}"${styleNow === v ? ' checked' : ''}></label>`).join('')}</div>
   </div></details>
 
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
-  <details class="sect" data-sec="Worlds"${op('Worlds')}><summary><h3>Worlds</h3><span class="sv">${S.worlds.length === 1 ? '1 world' : S.worlds.length + ' worlds'}</span></summary><div class="sbody">
-    <p>You start with one world, and its settings are under World settings. Add another only when a campaign needs different prices.</p>
-    <div class="lab">Your worlds</div>
-    ${S.worlds.map(x => `<button class="world-row${x.id === w.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}"><span><span class="wn">${esc(x.name)}</span><span class="wb">${esc(x.id === w.id ? 'In use' : (x.blurb || 'Tap to switch'))}</span></span></button>`).join('')}
-    <label class="lab">Name of the world in use<input class="field" data-bind="name" value="${esc(w.name)}"></label>
-    <div class="row"><button class="btn" data-act="w-dup">Duplicate it</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete it</button>` : ''}</div>
-    <div class="lab">Start another world from a preset</div>
-    ${Object.entries(WORLD_PRESETS).map(([id, mk]) => { const p = mk(); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span><span class="plus">+</span></button>`; }).join('')}
-  </div></div></details>
+  <details class="sect" data-sec="This world"${op('This world')}><summary><h3>This world</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
+    <label class="lab">Name<input class="field" data-bind="name" value="${esc(w.name)}"></label>
+    <div class="row"><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>
+  </div></details>
   <details class="sect" data-sec="Item lists"${op('Item lists')}><summary><h3>Item lists</h3><span class="sv">${esc([['srd', '5e SRD'], ['fantasy', 'Fantasy'], ['scifi', 'Sci-fi'], ['modern', 'Modern']].filter(([k]) => w.lists.includes(k)).map(x => x[1]).join(' + '))}</span></summary><div class="sbody">
     <p>Turn on every list this world draws prices from. Your own items and settings always override them.</p>
     <div class="listbox">
@@ -712,7 +710,8 @@ document.addEventListener('click', e => {
     case 'open-world': openDrawer(d.scroll); break;
     case 'close-world': closeDrawer(); break;
     case 'w-select': useWorld(d.id); persist(); closeDrawerKeep(); break;
-    case 'w-new-preset': { const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
+    case 'w-add-toggle': st.addWorld = !st.addWorld; renderDrawer(); break;
+    case 'w-new-preset': { st.addWorld = false; const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
     case 'jump': { const el = document.getElementById('ws-' + d.id.replace(/\W+/g, '-')); const panel = $('#drawerPanel'); if (el) panel.scrollTo({ top: el.offsetTop - 118, behavior: 'smooth' }); break; }
     case 'w-dup': { const w = clone(world); w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
     case 'w-del':
@@ -779,7 +778,7 @@ document.addEventListener('change', e => {
   const bind = t.dataset && t.dataset.bind;
   if (!bind) return;
   const w = world, p = bind.split('.');
-  if (bind === 'skin') { S.skin = t.value === 'standard' ? null : t.value; applySkin(); persist(); renderDrawer(); return; }
+  if (bind === 'style') { const v = t.value; S.skin = SKIN_FONTS[v] ? v : null; S.theme = v === 'light' || v === 'dark' ? v : null; applyTheme(); applySkin(); persist(); renderDrawer(); return; }
   if (bind === 'theme') { S.theme = t.value === 'system' ? null : t.value; applyTheme(); persist(); renderDrawer(); return; }
   if (bind === 'name') w.name = t.value.trim() || 'My world';
   else if (p[0] === 'list') {
@@ -830,7 +829,7 @@ function applyTheme() {
   else if (themeSetByUs) { delete document.documentElement.dataset.theme; themeSetByUs = false; }
 }
 applyTheme();
-const SKINS = [['standard', 'Standard'], ['spellbook', 'Spellbook'], ['receipt', 'Receipt'], ['pyrite', 'Pyrite']];
+const STYLES = [['auto', 'Standard, match device'], ['light', 'Standard Light'], ['dark', 'Standard Dark'], ['spellbook', 'Spellbook'], ['receipt', 'Receipt'], ['pyrite', 'Pyrite']];
 const SKIN_FONTS = {
   spellbook: 'family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:wght@500;700',
   receipt: 'family=Courier+Prime:wght@400;700',
