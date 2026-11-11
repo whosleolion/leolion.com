@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=5b4e6fc0';
-import { libraryEntries, modernLibrary } from './library.js?v=5b4e6fc0';
+import { scifiEntries } from './scifi.js?v=e893ea51';
+import { libraryEntries, modernLibrary } from './library.js?v=e893ea51';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
