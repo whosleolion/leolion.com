@@ -1,7 +1,7 @@
 // Offline support for Fool's Gold. The numbers all come from files, so once these are cached the app runs with no network.
 // BUILD and FILES are written by tools/fools-gold/stamp.mjs.
-const BUILD = '52c8a9d7';
-const FILES = ['./', 'index.html', 'css/style.css?v=52c8a9d7', 'js/app.js?v=52c8a9d7', 'js/data.js?v=52c8a9d7', 'js/engine.js?v=52c8a9d7', 'js/fields.js?v=52c8a9d7', 'js/guess.js?v=52c8a9d7', 'js/lists.js?v=52c8a9d7', 'js/money.js?v=52c8a9d7', 'js/parser.js?v=52c8a9d7', 'js/scifi.js?v=52c8a9d7', 'js/setting.js?v=52c8a9d7', 'js/store.js?v=52c8a9d7', 'js/unstated.js?v=52c8a9d7', 'js/world.js?v=52c8a9d7'];
+const BUILD = '0bdd92cf';
+const FILES = ['./', 'index.html', 'css/style.css?v=0bdd92cf', 'js/app.js?v=0bdd92cf', 'js/data.js?v=0bdd92cf', 'js/engine.js?v=0bdd92cf', 'js/fields.js?v=0bdd92cf', 'js/guess.js?v=0bdd92cf', 'js/lists.js?v=0bdd92cf', 'js/money.js?v=0bdd92cf', 'js/parser.js?v=0bdd92cf', 'js/scifi.js?v=0bdd92cf', 'js/setting.js?v=0bdd92cf', 'js/store.js?v=0bdd92cf', 'js/unstated.js?v=0bdd92cf', 'js/world.js?v=0bdd92cf'];
 const CACHE = 'fg-' + BUILD;
 
 self.addEventListener('install', e => {

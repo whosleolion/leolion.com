@@ -641,3 +641,71 @@ details.sub .tagrow { padding: 8px 0; }
 .cg::after { top: -.2em; bottom: -.16em; width: .05em; min-width: 1px; opacity: .9; border-radius: 0; }
 .o span .cg::after, .slot .hint .cg::after, .ends .cg::after { top: -.12em; bottom: -.1em; }
 .gl { font-family: var(--font-display, 'Fraunces'), 'Iowan Old Style', Georgia, serif; font-size: 20px; font-weight: 600; position: relative; }
+
+/* ================= skins: a style is a palette, two typefaces and a few flourishes ================= */
+
+/* ---- Spellbook: vellum, iron-gall ink, a ruled margin ---- */
+:root[data-skin="spellbook"] {
+  --bg: #efe3c8; --surface: #f7edd6; --surface2: #e6d6b3; --line: #c9b58a; --fg: #2b1d12; --muted: #6e5a42;
+  --accent: #7a1f1f; --accent-hi: #a02d2d; --accent-lo: #561414; --accent-ink: #f7edd6; --blue-soft: #ead9b4; --focus: #7a1f1f;
+  --r-item: #2b1d12; --r-act: #5a4630; --r-len: #2f5d4f; --r-where: #4b3a7a; --r-speed: #a4561a; --r-class: #8a2f5a; --r-who: #8a6a1a; --r-bad: #a02d2d;
+  --font-display: "IM Fell English", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-body: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-mono: "IM Fell English", Palatino, Georgia, serif;
+  --radius: 4px; color-scheme: light;
+}
+:root[data-skin="spellbook"] body { background: var(--bg) radial-gradient(120% 80% at 50% 0%, #f6ecd2 0%, #e9dbb9 70%, #d9c79f 100%); font-size: 18px; }
+:root[data-skin="spellbook"] h1 { font-style: italic; font-weight: 400; letter-spacing: .01em; }
+:root[data-skin="spellbook"] h1::first-letter { color: var(--accent); font-size: 1.25em; }
+:root[data-skin="spellbook"] .res .price, :root[data-skin="spellbook"] .pricebtn .big { font-weight: 400; letter-spacing: 0; }
+:root[data-skin="spellbook"] .slot, :root[data-skin="spellbook"] .hrow, :root[data-skin="spellbook"] .coin, :root[data-skin="spellbook"] .group, :root[data-skin="spellbook"] .nrow { border-color: var(--line); }
+:root[data-skin="spellbook"] .slot .k, :root[data-skin="spellbook"] .slot .v i { font-variant: small-caps; text-transform: none; letter-spacing: .06em; font-size: 15px; }
+:root[data-skin="spellbook"] .cta, :root[data-skin="spellbook"] .btn.primary { border-radius: 3px; box-shadow: inset 0 0 0 2px #f7edd6, inset 0 0 0 3px var(--accent-lo); font-variant: small-caps; letter-spacing: .06em; }
+:root[data-skin="spellbook"] .sheet-panel, :root[data-skin="spellbook"] #drawerPanel { background: var(--surface); }
+:root[data-skin="spellbook"] .res { border-left: 3px double var(--accent); padding-left: 14px; }
+:root[data-skin="spellbook"] .cg { font-family: "IM Fell English", Georgia, serif; font-weight: 400; }
+
+/* ---- Receipt: thermal paper, monospace, torn edges ---- */
+:root[data-skin="receipt"] {
+  --bg: #e7e5df; --surface: #fbfaf6; --surface2: #efede6; --line: #bdb9ac; --fg: #1d1d1b; --muted: #6a6862;
+  --accent: #1d1d1b; --accent-hi: #3a3a36; --accent-lo: #000; --accent-ink: #fbfaf6; --blue-soft: #efede6; --focus: #1d1d1b;
+  --up: #b3331f; --down: #1c6a4b;
+  --r-item: #1d1d1b; --r-act: #55534d; --r-len: #1c6a4b; --r-where: #44449a; --r-speed: #b3331f; --r-class: #1d1d1b; --r-who: #55534d; --r-bad: #b3331f;
+  --font-display: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --font-body: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --font-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --radius: 0px; color-scheme: light;
+}
+:root[data-skin="receipt"] body { background: var(--bg); font-size: 15px; }
+:root[data-skin="receipt"] h1 { text-transform: uppercase; letter-spacing: .14em; font-size: 20px; font-weight: 700; }
+:root[data-skin="receipt"] h1::after { content: ""; display: block; margin-top: 6px; border-bottom: 2px dashed var(--fg); }
+:root[data-skin="receipt"] .res .price, :root[data-skin="receipt"] .pricebtn .big { font-weight: 700; letter-spacing: -.02em; color: var(--fg); }
+:root[data-skin="receipt"] .res { background: var(--surface); padding: 16px 16px 20px; margin: 0 -2px; box-shadow: 0 1px 0 rgba(0,0,0,.08); -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%; mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%; padding-bottom: 28px; }
+:root[data-skin="receipt"] .slot { border-bottom: 1px dashed var(--line); }
+:root[data-skin="receipt"] .slot .v { font-weight: 700; text-transform: uppercase; font-size: 14px; }
+:root[data-skin="receipt"] .slot .k { text-transform: uppercase; font-size: 12px; letter-spacing: .08em; }
+:root[data-skin="receipt"] .cta, :root[data-skin="receipt"] .btn.primary { border-radius: 0; text-transform: uppercase; letter-spacing: .1em; }
+:root[data-skin="receipt"] .btn, :root[data-skin="receipt"] .coin, :root[data-skin="receipt"] .group, :root[data-skin="receipt"] .field { border-radius: 0; border-style: dashed; }
+:root[data-skin="receipt"] .cg { font-family: "Courier Prime", "Courier New", monospace; font-weight: 700; }
+
+/* ---- Pyrite: a ship's console, dark glass, gold phosphor ---- */
+:root[data-skin="pyrite"] {
+  --bg: #07090c; --surface: #0e1217; --surface2: #151b22; --line: #243039; --fg: #dfe7ea; --muted: #7d8c95;
+  --accent: #e8c14a; --accent-hi: #ffd86b; --accent-lo: #a8841d; --accent-ink: #0a0c0f; --blue-soft: #151b22; --focus: #5ad4e6;
+  --up: #ff7a5c; --down: #4ee0b0; --warn: #ffb03b;
+  --r-item: #dfe7ea; --r-act: #8fa0aa; --r-len: #4ee0b0; --r-where: #8f8cff; --r-speed: #ff9a4a; --r-class: #ff7ac0; --r-who: #e8c14a; --r-bad: #ff7a5c;
+  --font-display: "Chakra Petch", "Eurostile", "Bahnschrift", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Chakra Petch", "Bahnschrift", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 2px; color-scheme: dark;
+}
+:root[data-skin="pyrite"] body { background: var(--bg) linear-gradient(rgba(232,193,74,.035) 1px, transparent 1px) 0 0 / 100% 4px; }
+:root[data-skin="pyrite"] h1 { text-transform: uppercase; letter-spacing: .2em; font-size: 17px; font-weight: 600; color: var(--accent); }
+:root[data-skin="pyrite"] h1::before { content: "\25B8 "; }
+:root[data-skin="pyrite"] .res .price, :root[data-skin="pyrite"] .pricebtn .big { font-weight: 600; text-shadow: 0 0 18px rgba(232,193,74,.35); font-variant-numeric: tabular-nums; }
+:root[data-skin="pyrite"] .res { border: 1px solid var(--line); border-top: 2px solid var(--accent); background: var(--surface); padding: 14px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); }
+:root[data-skin="pyrite"] .slot { border-bottom: 1px solid var(--line); }
+:root[data-skin="pyrite"] .slot .k, :root[data-skin="pyrite"] .nrow .nl, :root[data-skin="pyrite"] .navgroup { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
+:root[data-skin="pyrite"] .slot .v { font-family: var(--font-mono); font-size: 14px; }
+:root[data-skin="pyrite"] .cta, :root[data-skin="pyrite"] .btn.primary { border-radius: 2px; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; box-shadow: 0 0 16px rgba(232,193,74,.25); }
+:root[data-skin="pyrite"] .dock { background: linear-gradient(transparent, var(--bg) 30%); }

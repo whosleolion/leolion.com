@@ -1,17 +1,17 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=52c8a9d7';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=52c8a9d7';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=52c8a9d7';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=52c8a9d7';
-import { findOffer } from './lists.js?v=52c8a9d7';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=52c8a9d7';
+import { compileWorld } from './world.js?v=0bdd92cf';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=0bdd92cf';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=0bdd92cf';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=0bdd92cf';
+import { findOffer } from './lists.js?v=0bdd92cf';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=0bdd92cf';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=52c8a9d7';
-import { applicable } from './engine.js?v=52c8a9d7';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=52c8a9d7';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=52c8a9d7';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=52c8a9d7';
+} from './data.js?v=0bdd92cf';
+import { applicable } from './engine.js?v=0bdd92cf';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=0bdd92cf';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=0bdd92cf';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=0bdd92cf';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -488,9 +488,11 @@ function buildSettingsHtml() {
   const dens = w.currency.denominations;
   const curPrev = [1, 12, 130, 1500, 25000, 800000].map(n => money(n)).join(', ');
   const json = JSON.stringify(w, null, 1);
-  const themeLabel = { system: 'Match device', light: 'Light', dark: 'Dark' }[S.theme || 'system'];
+  const themeLabel = (S.skin ? (SKINS.find(x => x[0] === S.skin) || [0, ''])[1] + ', ' : '') + { system: 'Match device', light: 'Light', dark: 'Dark' }[S.theme || 'system'];
   const html = `
   <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
+    <div class="lab">Style</div><div class="theme skins">${SKINS.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="skin" data-bind="skin" value="${v}"${(S.skin || 'standard') === v ? ' checked' : ''}></label>`).join('')}</div>
+    <div class="lab">Light or dark${S.skin && S.skin !== 'standard' ? ' (this style keeps its own colors)' : ''}</div>
     <div class="theme">${[['system', 'Match device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<label><span>${l}</span><input type="radio" name="theme" data-bind="theme" value="${v}"${(S.theme || 'system') === v ? ' checked' : ''}></label>`).join('')}</div>
   </div></details>
 
@@ -775,6 +777,7 @@ document.addEventListener('change', e => {
   const bind = t.dataset && t.dataset.bind;
   if (!bind) return;
   const w = world, p = bind.split('.');
+  if (bind === 'skin') { S.skin = t.value === 'standard' ? null : t.value; applySkin(); persist(); renderDrawer(); return; }
   if (bind === 'theme') { S.theme = t.value === 'system' ? null : t.value; applyTheme(); persist(); renderDrawer(); return; }
   if (bind === 'name') w.name = t.value.trim() || 'My world';
   else if (p[0] === 'list') {
@@ -825,6 +828,21 @@ function applyTheme() {
   else if (themeSetByUs) { delete document.documentElement.dataset.theme; themeSetByUs = false; }
 }
 applyTheme();
+const SKINS = [['standard', 'Standard'], ['spellbook', 'Spellbook'], ['receipt', 'Receipt'], ['pyrite', 'Pyrite']];
+const SKIN_FONTS = {
+  spellbook: 'family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:wght@500;700',
+  receipt: 'family=Courier+Prime:wght@400;700',
+  pyrite: 'family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;600',
+};
+function applySkin() {
+  const sk = window.__FG_SKIN || S.skin, k = sk && SKIN_FONTS[sk] ? sk : null;
+  if (k) {
+    document.documentElement.dataset.skin = k;
+    if (!document.getElementById('skinFont')) { const l = document.createElement('link'); l.id = 'skinFont'; l.rel = 'stylesheet'; document.head.appendChild(l); }
+    document.getElementById('skinFont').href = 'https://fonts.googleapis.com/css2?' + SKIN_FONTS[k] + '&display=swap';
+  } else delete document.documentElement.dataset.skin;
+}
+applySkin();
 
 // ---------- self-update for saved copies (home screen apps keep old files) ----------
 const builtAs = () => (document.querySelector('meta[name="fg-build"]') || {}).content || '';
@@ -851,6 +869,8 @@ try { if (sessionStorage.getItem('fg-updated')) { sessionStorage.removeItem('fg-
 checkForUpdate();
 
 // ---------- boot ----------
+if (window.__FG_WORLD && WORLD_PRESETS[window.__FG_WORLD] && !S.worlds.some(w => w.id === window.__FG_WORLD)) S.worlds.push(WORLD_PRESETS[window.__FG_WORLD]());
+if (window.__FG_WORLD) S.activeId = window.__FG_WORLD;
 useWorld(S.activeId);
 const first = S.last ?? sampleList()[0];
 $('#q').value = first;

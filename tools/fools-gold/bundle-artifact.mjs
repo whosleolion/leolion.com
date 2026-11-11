@@ -1,5 +1,5 @@
 // Build a single-file page (fragment) from src/building/fools-gold for publishing as an Artifact.
-// Usage: node bundle-artifact.mjs <esbuild-bin> <out.html>
+// Usage: node bundle-artifact.mjs <esbuild-bin> <out.html> [skin] [world-preset]
 // Needs esbuild only for this step; the site itself has no build step.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, readdirSync } from 'node:fs';
@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../src/building/fools-gold');
-const [esbuild, out] = process.argv.slice(2);
+const [esbuild, out, skin, world] = process.argv.slice(2);
 const tmp = mkdtempSync(join(tmpdir(), 'fg-'));
 const js = join(tmp, 'app.js');
 // the site versions its imports (?v=HASH) for cache busting; the single file does not need them
@@ -27,6 +27,7 @@ ${css}
 </style>
 ${body}
 <script>
+${skin ? `window.__FG_SKIN = ${JSON.stringify(skin)};` : ''}${world ? `window.__FG_WORLD = ${JSON.stringify(world)};` : ''}
 ${readFileSync(js, 'utf8').replace(/<\/script/gi, '<\\/script')}
 </script>
 `;
