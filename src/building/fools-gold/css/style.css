@@ -1118,3 +1118,13 @@ html[data-big] .jump .q { white-space: nowrap; }
 .startbtn span { color: var(--muted); font-size: .875rem; }
 .startcrumb { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .625rem; font-size: .875rem; color: var(--muted); }
 .startcrumb .linkbtn { min-height: 2.5rem; padding: 0; color: var(--accent); font-weight: 600; }
+
+/* ---- the tray row: a plus that stays put, and suggestions that scroll beside it ---- */
+.trayrow { display: flex; align-items: center; gap: .5rem; }
+.trayrow .quick { flex: 1 1 auto; min-width: 0; margin: 0; padding: 2px 0; }
+.plus { flex: 0 0 auto; width: 2.75rem; height: 2.75rem; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); }
+.plus:active { background: var(--accent); color: var(--accent-ink); }
+.q.ac { display: inline-flex; align-items: baseline; gap: .375rem; }
+.q.ac i { font-style: normal; color: var(--muted); font-size: .8125rem; }
+.q.ac i::after { content: '\203A'; margin-left: .375rem; }
+.q.ac b { font-weight: 600; }

@@ -1,21 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=bf6dbdcb';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=bf6dbdcb';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=bf6dbdcb';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=bf6dbdcb';
-import { findOffer } from './lists.js?v=bf6dbdcb';
-import { suggestPrompts } from './suggest.js?v=bf6dbdcb';
-import { readFact } from './facts.js?v=bf6dbdcb';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=bf6dbdcb';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=bf6dbdcb';
+import { compileWorld } from './world.js?v=4361057f';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=4361057f';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=4361057f';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=4361057f';
+import { findOffer } from './lists.js?v=4361057f';
+import { suggestPrompts } from './suggest.js?v=4361057f';
+import { readFact } from './facts.js?v=4361057f';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=4361057f';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=4361057f';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=bf6dbdcb';
-import { applicable } from './engine.js?v=bf6dbdcb';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=bf6dbdcb';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=bf6dbdcb';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=bf6dbdcb';
-import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=bf6dbdcb';
+} from './data.js?v=4361057f';
+import { applicable } from './engine.js?v=4361057f';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=4361057f';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=4361057f';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=4361057f';
+import { complete } from './complete.js?v=4361057f';
+import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=4361057f';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -208,8 +209,17 @@ function renderResultCore() {
 function slotById(id) { const f = st.fields; return f ? f.slots.find(x => x.id === id) : null; }
 function renderTray() {
   const t = $('#tray'), e = st.est;
-  if (st.setting || st.guess || st.cartOffer) { t.innerHTML = ''; return; }
-  if (!st.text) { t.innerHTML = `<button class="cta2 starter" data-act="start">Buy or sell, with buttons</button><div class="quick">${sampleList().map((x, i) => `<button class="q sample" data-act="sample" data-i="${i}">${esc(x)}</button>`).join('')}</div>`; return; }
+  if (st.setting || st.cartOffer) { t.innerHTML = ''; return; }
+  const plus = `<button class="plus" data-act="start" aria-label="Buy or sell, with buttons" title="Buy or sell, with buttons"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>`;
+  const unsure = !(e && e.ok && st.query.subject);
+  if (st.text && (unsure || st.guess)) {
+    const rows = complete(st.text, ctx, { cats: FLOW_CATS, catOf });
+    st.ac = rows;
+    t.innerHTML = rows.length ? `<div class="trayrow">${plus}<div class="quick" role="listbox" aria-label="Suggestions">${rows.map((r, i) => `<button class="q ac" role="option" data-act="ac" data-i="${i}">${r.path.map((x, k) => k === r.path.length - 1 ? `<b>${esc(x)}</b>` : `<i>${esc(x)}</i>`).join('')}</button>`).join('')}</div></div>` : '';
+    return;
+  }
+  if (st.guess) { t.innerHTML = ''; return; }
+  if (!st.text) { t.innerHTML = `<div class="trayrow">${plus}<div class="quick">${sampleList().map((x, i) => `<button class="q sample" data-act="sample" data-i="${i}">${esc(x)}</button>`).join('')}</div></div>`; return; }
   if (!(e && e.ok && st.query.subject)) { t.innerHTML = ''; return; }
   const slot = st.slot ? slotById(st.slot) : null;
   if (slot && slot.id !== 'item') {
@@ -538,6 +548,11 @@ function pickerHtml(pickAct = 'pick-item') {
       return `<button class="slot${cur0 === e.id ? ' open' : ''}" data-act="${pickAct}" data-v="${esc(e.id)}"><span class="v">${esc(e.name)}${e.isCategory ? ' <i>any</i>' : ''}</span><span class="hint">${esc(per)}</span></button>`;
     }).join('')}</div>` : `<p class="mini" style="color:var(--muted)">${sel || search ? 'Nothing matches.' : 'Pick a kind above or search.'}</p>`}`;
 }
+function startPick(id) {
+  const act = st.start && st.start.action; st.sheet.open = false; st.start = null;
+  flowEdit(x => { delete x.overrides; x.subject = id; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode' && (!act || z !== 'action')); if (act) x.action = act; x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(id); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); });
+  renderSheet();
+}
 const START_ACTIONS = [['buy', 'Buy', 'Something I would pay for'], ['sell', 'Sell', 'Something I would be paid for'], ['value', 'Appraise', 'What something is worth']];
 function startHtml() {
   const a = st.start && st.start.action;
@@ -594,6 +609,8 @@ const capital = s => s.charAt(0).toUpperCase() + s.slice(1);
 function guessCard() {
   const phrase = unknownPhrase();
   if (!phrase) { st.guess = null; return ''; }
+  // still typing a word that starts a real item: let the suggestions lead, not the guess
+  if (complete(st.text, ctx, { cats: FLOW_CATS, catOf }).some(r => r.type === 'item' && [r.label, ...(r.entry.aliases || [])].some(n => n.toLowerCase().split(/\s+/).some(w => w.startsWith(phrase.split(' ').pop()))))) { st.guess = null; return ''; }
   const g = ensureGuess(phrase), name = capital(phrase);
   const all = guessAll(), c = all[g.sel];
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
@@ -1035,11 +1052,13 @@ document.addEventListener('click', e => {
     case 's-cancel': st.settingDismissed = st.text; st.setting = null; fromText(st.text, { noHistory: true }); break;
     case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
     case 'start': st.start = { action: null }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: null, search: '' }; st.slot = null; renderSheet(); break;
+    case 'ac': { const r = (st.ac || [])[+d.i]; if (!r) break;
+      if (r.type === 'item') { st.start = { action: r.verb }; st.sheet = { open: false, mode: 'start' }; startPick(r.id); }
+      else { st.start = { action: r.verb }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: r.type === 'cat' ? r.cat : null, search: '' }; st.slot = null; renderSheet(); }
+      break; }
     case 'start-action': st.start = { action: d.v }; renderSheet(); break;
     case 'start-back': st.start = { action: null }; renderSheet(); break;
-    case 'start-pick': { const act = st.start && st.start.action; st.sheet.open = false; st.start = null;
-      flowEdit(x => { delete x.overrides; x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode' && z !== 'action'); if (act) x.action = act; x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); });
-      renderSheet(); break; }
+    case 'start-pick': startPick(d.v); break;
     case 'browse': st.sheet = { open: true, mode: 'item' }; st.flow = { cat: null, search: '' }; st.slot = null; renderSheet(); break;
     case 'g-tag': if (st.guess && d.r) {
       st.guess.tags[d.r] = d.v; st.guess.sel = 0; st.guess.exact = false;
