@@ -8,6 +8,7 @@ import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../
 import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
 import { parseSetting, baseFor, storedFor } from '../../src/building/fools-gold/js/setting.js';
 import { buildFields, applyNumber, tokenRoles } from '../../src/building/fools-gold/js/fields.js';
+import { suggestPrompts } from '../../src/building/fools-gold/js/suggest.js';
 import { findOffer } from '../../src/building/fools-gold/js/lists.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
 
@@ -459,6 +460,24 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const clash = new Map(); for (const p of sf.phrases) { if (p.type !== 'entry') continue; const set = clash.get(p.key) || new Set(); set.add(p.id); clash.set(p.key, set); }
   const amb = [...clash].filter(([, v]) => v.size > 1).map(([k, v]) => k + ' => ' + [...v].join(' | '));
   t('SF7 no two sci-fi things share a word', amb.length === 0, '\n   ' + amb.join('\n   '));
+}
+
+// ---------- suggested prompts ----------
+{
+  const { normalizeWorld: nw } = await import('../../src/building/fools-gold/js/store.js');
+  const mk = lists => { const w = WORLD_PRESETS.srd(); w.lists = lists; const n = nw(w); return [n, compileWorld(n)]; };
+  for (const lists of [['srd', 'fantasy'], ['srd'], ['fantasy'], ['scifi'], ['modern'], ['srd', 'fantasy', 'scifi', 'modern']]) {
+    const [w, c] = mk(lists); const out = suggestPrompts(w, c);
+    t('SG1 ' + lists.join('+') + ' has several suggestions', out.length >= 4 && out.length <= 14, out.length);
+    const bad = out.filter(x => { const r = parse(x, c).query; return !(r.subject || r.family); });
+    t('SG2 ' + lists.join('+') + ' every suggestion reads in this world', bad.length === 0, bad.join(' | '));
+    t('SG3 ' + lists.join('+') + ' suggestions are unique', new Set(out).size === out.length);
+    t('SG4 ' + lists.join('+') + ' starts with a plain item', out[0].split(/\s+/).length <= 5, out[0]);
+  }
+  const [w4, c4] = mk(['srd', 'fantasy', 'scifi', 'modern']); const all = suggestPrompts(w4, c4).join(' | ');
+  t('SG5 every switched-on list is represented', /longsword|inn/.test(all) && /pulse pistol|interstellar|station/.test(all) && /laptop|flight|taxi|lawyer/.test(all), all);
+  const [w1, c1] = mk(['srd', 'fantasy']); const d = suggestPrompts(w1, c1);
+  t('SG6 a sell prompt and a stacked prompt both appear', d.some(x => /^sell /.test(x)) && d.some(x => /black market rush/.test(x)), d.join(' | '));
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

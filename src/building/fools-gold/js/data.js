@@ -1,4 +1,4 @@
-import { scifiEntries } from './scifi.js?v=c99eebe7';
+import { scifiEntries } from './scifi.js?v=7dbdc286';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -476,7 +476,6 @@ export const WORLD_PRESETS = {
     id: 'modern', name: 'Modern day, real world', blurb: 'Current US prices for rent, meals, flights and services.',
     baseline: 'modern', lists: ['modern'], currency: { denominations: [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }], belowSmallest: 'round', note: '1 base unit is one cent', symbol: '$', decimal: 100 },
     anchors: { wage: 12000 }, economyTags: [], dials: { ...baseDials, sellFraction: 0.5 }, defaults: { travel: 'travel.intercity-train', rent: 'lodging.m-apartment-rent-medium' }, vocabulary: [], items: [],
-    samples: ['a month of rent in a major city, medium apartment', '6 months of rent in a city', 'dinner for 2 at a fancy restaurant', 'flight 1500 miles', 'hire a lawyer for 2 days', 'taxi ride in the capital', 'buy a laptop', 'sell a used car'],
   }),
   scifi: () => ({
     id: 'scifi', name: 'Science fiction', blurb: 'Credits, blasters, cyberware and station rent.',

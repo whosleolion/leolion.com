@@ -1,17 +1,18 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=c99eebe7';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=c99eebe7';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=c99eebe7';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=c99eebe7';
-import { findOffer } from './lists.js?v=c99eebe7';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=c99eebe7';
+import { compileWorld } from './world.js?v=7dbdc286';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=7dbdc286';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=7dbdc286';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=7dbdc286';
+import { findOffer } from './lists.js?v=7dbdc286';
+import { suggestPrompts } from './suggest.js?v=7dbdc286';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=7dbdc286';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=c99eebe7';
-import { applicable } from './engine.js?v=c99eebe7';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=c99eebe7';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=c99eebe7';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=c99eebe7';
+} from './data.js?v=7dbdc286';
+import { applicable } from './engine.js?v=7dbdc286';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=7dbdc286';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=7dbdc286';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=7dbdc286';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -126,7 +127,7 @@ function renderUnderstanding() {
   }
   $('#understanding').innerHTML = out.length ? `<div class="hints">${out.join('')}</div>` : '';
 }
-const sampleList = () => [...(world.samples && world.samples.length ? world.samples : SAMPLE_QUERIES)].sort((a, b) => a.length - b.length);
+const sampleList = () => suggestPrompts(world, ctx);
 const hasEdits = q => !!(q.overrides && ((q.overrides.f && Object.keys(q.overrides.f).length) || q.overrides.base));
 function factsList(e) {
   const facts = [];
