@@ -1214,3 +1214,15 @@ html[data-big] .jump .q { white-space: nowrap; }
 .kindgrid { grid-template-columns: repeat(auto-fill, minmax(min(6.5rem, 100%), 1fr)); }
 .foldrow, .kindrow { max-width: 100%; }
 .main { overflow-x: hidden; }
+
+/* ---- audit fixes: the cart total bar stays above the lines, bigger touch targets, price that fits at the largest text ---- */
+.cfoot { z-index: 3; }
+.sellrow b { color: var(--accent); }
+.sheet-x { width: 2.75rem; height: 2.75rem; }
+.gear { width: 2.75rem; height: 2.75rem; }
+.clear { width: 2.75rem; height: 2.75rem; }
+.pricebtn .num { font-size: min(clamp(3.75rem, 19vw, 5.75rem), 17vw); }
+.cartpill { min-height: 2.75rem; }
+.clabel { min-height: 2.75rem; }
+.hgseg { flex-wrap: wrap; }
+@media (max-width: 380px) { .hgseg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

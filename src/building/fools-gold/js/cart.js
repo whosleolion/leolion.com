@@ -1,8 +1,8 @@
 // The cart: a list of saved questions (queries), not saved prices. Each line is priced live by the engine,
 // so every factor stays editable by loading the line back into the price screen.
 // A haggle belongs to the question: { pct } moves with the other fields, { price } is an agreed amount that stays put.
-import { parse } from './parser.js?v=631ab3e4';
-import { estimate } from './engine.js?v=631ab3e4';
+import { parse } from './parser.js?v=50d393c6';
+import { estimate } from './engine.js?v=50d393c6';
 
 export const emptyCart = () => ({ lines: [], mods: [], next: 1, haggle: null });
 
@@ -101,9 +101,12 @@ export function cartTotals(cart, ctx) {
 // "3 rope, 2 torches, sell 2 longswords in a village": several items in one sentence
 export function readSentence(text, ctx) {
   const segs = String(text || '').split(/\s*(?:,|;|\n|\band\b)\s*/i).map(s => s.trim()).filter(Boolean);
-  const items = [], shared = [], bad = [];
+  const items = [], shared = [], bad = [], removes = [];
   let lastAction = null;
   for (const seg of segs) {
+    // "remove the horse", "drop 2 torches", "no rope", "-2 torches": take things off instead of adding them
+    const rm = /^(?:please\s+)?(?:remove|drop|delete|cancel|scrap|skip|take (?:off|out)|minus|no|-)\s*(\d+)?\s*(?:of\s+)?(?:the\s+|a\s+|an\s+)?(.+)$/i.exec(seg);
+    if (rm && rm[2]) { removes.push({ n: rm[1] ? +rm[1] : null, text: rm[2].trim() }); continue; }
     const p = parse(seg, ctx), q = p.query;
     if (q.family && q.assumed.includes('mode') && items.length) continue; // "3 days travel" after a trip is a detail of that trip
     if (q.subject || q.family) {
@@ -121,7 +124,7 @@ export function readSentence(text, ctx) {
   // one place at most
   const placed = shared.filter(id => ctx.mods.get(id)?.group === 'place');
   const shop = [...shared.filter(id => ctx.mods.get(id)?.group !== 'place'), ...placed.slice(-1)];
-  return { items, shop, bad };
+  return { items, shop, bad, removes };
 }
 
 // plain text for pasting, as a tally from your wallet's side: buying takes money out (minus), selling brings it in (plus)

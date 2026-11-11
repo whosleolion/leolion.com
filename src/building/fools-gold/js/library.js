@@ -92,7 +92,7 @@ export const modernWorld = [
   ]),
   ...M('good', 'plants', ['plant', 'raw'], [
     'Tomato plant;5;;;tomato seedling', 'Herb plant;4;;;basil plant, herbs, potted herb', 'Lawn seed;25;;;grass seed', 'Bonsai tree;60;;;bonsai', 'Venus flytrap;10;;;flytrap', 'Palm tree;150;;;palm', 'Mature tree, installed;800;;;tree installation, large tree', 'Pumpkin;5',
-    'Dozen roses;60;;;roses, cut roses, dozen red roses', 'Hay bale;8;;;hay', 'Firewood cord;300;;;cord of wood, firewood', 'Bamboo;25;;;bamboo plant', 'Cactus, large;50;;;saguaro', 'Wreath;40;;;holiday wreath', 'Sunflower seeds;3;;;birdseed', 'Hops;15;;;hop plant',
+    'Rose;5;;;roses, cut roses, red rose', 'Hay bale;8;;;hay', 'Firewood cord;300;;;cord of wood, firewood', 'Bamboo;25;;;bamboo plant', 'Cactus, large;50;;;saguaro', 'Wreath;40;;;holiday wreath', 'Sunflower seeds;3;;;birdseed', 'Hops;15;;;hop plant',
   ]),
   ...M('good', 'household', ['household', 'manufactured'], [
     'Hammer;15;;;claw hammer', 'Screwdriver set;20', 'Cordless drill;90;;;power drill, drill', 'Circular saw;120;;;power saw', 'Wrench set;40;;;spanner set, wrenches', 'Ladder;90', 'Shovel;30;;;spade', 'Paracord;15;;;nylon rope, cord, rope',
@@ -105,7 +105,7 @@ export const modernWorld = [
     'Router;80;;;wifi router', 'Printer;150', 'Monitor;200;;;computer monitor, screen', 'Keyboard;60', 'Walkie-talkie;40;;;walkie talkie, two-way radio, radio', 'Binoculars;80;;;field glasses', 'GPS unit;120;;;gps, satnav',
   ]),
   ...M('good', 'food', ['food'], [
-    'Loaf of bread;4;;;bread', 'Gallon of milk;4;;;milk', 'Dozen eggs;4;;;eggs', 'Hamburger;6;;;cheeseburger', 'Hot dog;4', 'Bottled water;2;;;water bottle, water', 'Soda;2;;;pop, soft drink, cola', 'Candy bar;2;;;chocolate bar, candy', 'Ice cream;5;;;ice cream cone',
+    'Loaf of bread;4;;;bread', 'Gallon of milk;4;;;milk', 'Egg;0.4;;;eggs', 'Hamburger;6;;;cheeseburger', 'Hot dog;4', 'Bottled water;2;;;water bottle, water', 'Soda;2;;;pop, soft drink, cola', 'Candy bar;2;;;chocolate bar, candy', 'Ice cream;5;;;ice cream cone',
     'Bag of rice;12;;;rice', 'Block of cheese;6;;;cheese', 'Steak;18;;;steak dinner, ribeye', 'Bottle of whiskey;35;;;whiskey, whisky, liquor, bourbon', 'Cigar;12;;;cigars',
   ]),
   ...M('service', 'services', ['service'], [
@@ -116,4 +116,18 @@ export const modernWorld = [
   ...M('good', 'vehicles', ['vehicle', 'manufactured'], [
     'Electric scooter;400;;;e-scooter, scooter', 'Skateboard;100', 'Pickup truck;35000;;;pickup', 'Used car;12000;;;second-hand car, secondhand car', 'Boat;20000;;;motorboat, speedboat', 'Camper van;80000;;;rv, campervan, motorhome', 'Kayak;500;;;canoe', 'Electric bike;1500;;;e-bike', 'Moped;2000',
   ]),
+];
+
+// ---- heist, road and everyday words a modern table reaches for first ----
+export const modernEveryday = [
+  ...M('service', 'ride', ['service', 'transport'], ['Rental van;90;day;;rent a van, van rental', 'Tow;150;;;tow truck, towing', 'Limo;300;;;limousine, limo rental', 'Ferry ticket;25;;;ferry', 'International flight;1000;;;plane ticket to europe, overseas flight, flight abroad', 'Gallon of gas;3.2;;;gas, gasoline, petrol, fuel']),
+  ...M('good', 'heist', ['manufactured', 'tool', 'crafted'], [
+    'Lockpick set;25;;;lockpick, lockpicks, lock pick, picks, lock picks', 'Zip ties;8;;;zip tie, cable ties, flex cuffs', 'Bolt cutters;40;;;bolt cutter', 'Duffel bag;40;;;duffle bag, gym bag, suitcase, luggage, briefcase', 'Night vision goggles;600;;;night vision, nvg', 'Ski mask;12;;;balaclava, mask, face mask',
+    'Disguise kit;60;;;wig, costume, fake mustache', 'Burner SIM;15;;;sim card, prepaid sim', 'USB drive;12;;;flash drive, thumb drive, usb stick', 'Toolbox;45;;;tool kit', 'Chainsaw;250', 'Welding torch;150;;;blowtorch, cutting torch', 'Gas mask;40;;;respirator', 'Hazmat suit;60;;;hazmat', 'Flare gun;40;;;signal flare', 'Surveillance bug;50;;;bug, wiretap, listening device',
+    'Lighter;3;;;matches, book of matches', 'Rope ladder;60', 'Glow sticks;8;;;glowsticks', 'Fake ID;150;;;forged id, fake license, fake driver license', 'Fake passport;2500;;;forged passport, forged documents, forged papers', 'Suppressor;600;;;silencer',
+    'Handgun, cheap;250;;;saturday night special, cheap pistol', 'Glock;650;;;glock 19, semi-automatic pistol, 9mm', 'Bandages;8;;;bandage, gauze, dressing', 'Antibiotics;40;;;antibiotic', 'Lawn mower;300;;;mower',
+  ]),
+  ...M('good', 'places', ['property'], ['Penthouse apartment;6000;month;;penthouse', 'Mansion;4000000;;;luxury mansion, estate', 'Yacht;400000;;;luxury yacht', 'Helicopter;1500000;;;chopper', 'Private jet;5000000;;;jet, learjet', 'Coffin;2500;;;casket']),
+  ...M('good', 'foods', ['food'], ['Taco;3;;;tacos', 'Salad;9', 'Fries;4;;;french fries, chips', 'Sushi roll;10;;;sushi', 'Noodles;12;;;ramen, pad thai', 'Kebab;8;;;doner, gyro', 'Apple;1;;;apples', 'Energy drink;3;;;red bull, monster energy', 'Gum;2;;;chewing gum', 'Shot of whiskey;9;;;shot, a drink, drink', 'Takeout;18;;;take-out, takeaway, delivery food', 'Big Mac;6;;;mcdonalds, burger combo']),
+  ...M('service', 'crime', ['service', 'dangerous'], ['Hacker;800;day;;hack, hackers, black hat', 'Forger;500;;;document forger', 'Hitman;15000;;;assassin, hit man, contract killer', 'Getaway driver;600;day;;wheelman, driver for hire', 'Fixer;400;day;;fence', 'Cop bribe;300;;;bribe cop, pay off a cop, bribe', 'Official bribe;5000;;;bribe official, bribe a judge', 'Burglar;400;day;;thief, safecracker']),
 ];

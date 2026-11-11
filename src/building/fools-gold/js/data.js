@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=631ab3e4';
-import { libraryEntries, modernLibrary, modernWorld } from './library.js?v=631ab3e4';
+import { scifiEntries } from './scifi.js?v=50d393c6';
+import { libraryEntries, modernLibrary, modernWorld, modernEveryday } from './library.js?v=50d393c6';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -216,7 +216,7 @@ const modernEntries = [
   ...modern('service', ['service', 'food'], ['Weekly groceries;150;week;;groceries, grocery shopping, grocery run']),
   ...modern('good', ['food', 'drink', 'consumable'], ['Beer;7.50;;;pint, draft beer', 'Cocktail;16;;;mixed drink', 'Bottle of wine;24;;;wine']),
   ...modern('service', ['service', 'transport'], [
-    'Taxi ride;26;;;taxi, cab, rideshare, ride share, car service', 'Subway ride;3;;;subway, metro, bus fare, bus ride, light rail', 'Parking;22;;;parking spot, parking garage', 'Toll;6;;;road toll',
+    'Taxi ride;26;;;taxi, cab, rideshare, ride share, car service, uber, lyft, uber ride, lyft ride, rideshare', 'Subway ride;3;;;subway, metro, bus fare, bus ride, light rail', 'Parking;22;;;parking spot, parking garage', 'Toll;6;;;road toll',
     'Gas tank;55;;;gas, fuel, petrol, fill up',
   ]),
   ...modern('service', ['service', 'transport'], ['Rental car;70;day;;car rental, hire car']),
@@ -243,7 +243,7 @@ const modernEntries = [
   ...modern('good', ['manufactured', 'luxury'], ['Luxury watch;9000;;;rolex style watch, expensive watch', 'Engagement ring;5500;;;diamond ring', 'Wristwatch;250;;;watch']),
   ...modern('good', ['manufactured'], [
     'Book;20;;book;paperback, hardcover', 'Newspaper;3;;newspaper;paper', 'Pack of cigarettes;9.50;;;cigarettes, smokes', 'Bicycle;520;;vehicle;bike', 'Motorcycle;9500;;vehicle;motorbike', 'Car;38000;;vehicle;automobile, new car, sedan, suv',
-    'Sofa;900;;;couch', 'Mattress;1000;;;bed frame', 'Refrigerator;1300;;;fridge', 'Over the counter medicine;12;;medicine;medicine, painkillers, cold medicine', 'Prescription medication;60;;medicine;prescription, meds',
+    'Sofa;900;;;couch', 'Mattress;1000;;;bed frame', 'Refrigerator;1300;;;fridge', 'Over the counter medicine;12;;medicine;medicine, painkillers, cold medicine, ibuprofen, aspirin, tylenol, advil, pills', 'Prescription medication;60;;medicine;prescription, meds',
   ]),
   ...modern('good', ['manufactured', 'weapon', 'metal'], ['Handgun;600;;;pistol, gun, firearm', 'Hunting rifle;900;;;rifle', 'Pocketknife;45;;;knife', 'Bulletproof vest;650;;armor;body armor, kevlar vest']),
   ...modern('property', ['property'], ['House;420000;;;home, family home, house purchase', 'Condo;360000;;;condominium', 'Acre of land;6000;;;acre, land'], { placeScale: 3 }),
@@ -266,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {
@@ -434,6 +434,7 @@ export const TIER_TERMS = {
   luxury: ['luxury', 'luxurious', 'opulent', 'lavish', 'royal', 'five star', '5 star', 'five-star', 'palatial'],
 };
 export const UNIT_TERMS = {
+  hour: ['hour', 'hours', 'hr', 'hrs'],
   day: ['day', 'days', 'daily'], night: ['night', 'nights'], week: ['week', 'weeks'], month: ['month', 'months', 'monthly'], year: ['year', 'years', 'yearly', 'annual'],
   mile: ['mile', 'miles', 'mi'], league: ['league', 'leagues'], lb: ['lb', 'lbs', 'pounds of', 'pound of', 'pound'],
 };

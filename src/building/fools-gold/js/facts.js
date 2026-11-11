@@ -1,6 +1,6 @@
 // Facts typed as a sentence in World settings > Changes: "a healing potion costs 40 gp", "a shiv is a dagger",
 // "sellers pay 40%". Read by plain patterns, shown back for confirmation, then saved as a price, a word or a dial.
-import { parseSetting } from './setting.js?v=631ab3e4';
+import { parseSetting } from './setting.js?v=50d393c6';
 
 const clean = s => String(s || '').replace(/[.!]+$/g, '').replace(/\s+/g, ' ').trim();
 const ART = /^(?:an?|the|my|our)\s+/i;
@@ -60,6 +60,9 @@ export function readFact(text, ctx) {
   if (w) {
     const term = clean(w[1]).replace(ART, '').toLowerCase(), meansText = clean(w[2]);
     if (term && term.length <= 40 && !/\d/.test(term)) {
+      // words the parser itself runs on (buy, sell, gp, day, rush, cheap...) cannot be re-taught
+      const own = (ctx.phrases || []).find(p => p.key === term && p.type !== 'entry' && p.type !== 'family');
+      if (own) return { kind: 'blocked', term, why: own.type };
       const r = resolve(ctx, meansText);
       if (r) return { kind: 'word', term, means: r.id, label: r.label };
       return { kind: 'unknown', term, meansText };

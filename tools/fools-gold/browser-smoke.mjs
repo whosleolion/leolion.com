@@ -28,7 +28,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.waitForSelector('.pricebtn');
   ok(name + ' price shown on load', (await price(page)).length > 0);
   ok(name + ' no horizontal overflow', (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
-  ok(name + ' zoom is locked', /user-scalable=no/.test(await page.getAttribute('meta[name=viewport]', 'content')));
+  ok(name + ' pinch-zoom is allowed', !/user-scalable=no/.test(await page.getAttribute('meta[name=viewport]', 'content')));
   ok(name + ' no footer text', !(await page.$('.foot')));
   ok(name + ' sheet closed by default', await page.isHidden('#sheet'));
   ok(name + ' no info dot or footer, only a gear', !(await page.$('#info')) && !!(await page.$('#gear')));
@@ -270,7 +270,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=cart-add]');
   ok(name + ' adding starts a cart in the corner', await page.isVisible('#cartPill') && /Cart\s*1/.test(await page.textContent('#cartPill')));
   ok(name + ' the button shows what is in the cart', /In cart/.test(await page.textContent('[data-act=cart-add]')));
-  await page.click('[data-act=cart-add]');
+  await page.waitForTimeout(500); await page.click('[data-act=cart-add]');
   ok(name + ' adding the same again merges', /In cart . 2/.test(await page.textContent('[data-act=cart-add]')) && /Cart\s*1/.test(await page.textContent('#cartPill')));
   await page.fill('#q', '3 rope, 2 torches, sell 1 shortsword in a village');
   ok(name + ' several items offer a cart', !!(await page.$('[data-act=cart-offer-add]')) && /3 items/.test(await page.textContent('.cartoffer')));

@@ -1,7 +1,7 @@
 // Appraising a thing the app has no entry for, from tags a DM can read at a glance: what kind of thing it is,
 // how big, what it is made of, how much craft went in, how rare, how wanted. No AI: a plain product of multipliers,
 // started from the words of the phrase, then adjusted by tapping. All numbers are original estimates, 1 bu = 1 cp (fantasy scale).
-import { stem } from './world.js?v=631ab3e4';
+import { stem } from './world.js?v=50d393c6';
 
 export const KINDS = [
   { id: 'thing', label: 'Everyday thing', base: 60, unit: 'each', words: 'thing item object box basket pot pan bowl cup jar bottle bucket candle brush mirror comb toy doll book' },
@@ -70,8 +70,15 @@ export function why(tags, found) {
   return parts.join(', ');
 }
 
-export const tagCandidate = (tags, found, phrase) => {
-  const a = appraise(tags);
+// base units are cp-like. A dollar world counts cents: with the coin lists on, 1 cp is about $1 (x100); with the modern list alone,
+// everyday things should land near real prices (x30)
+export function guessScale(ctx) {
+  const cur = (ctx.world && ctx.world.currency) || {};
+  if (cur.symbol !== '$' || cur.decimal !== 100) return 1;
+  return ctx.entries.some(e => e.src === 'srd' || e.src === 'core') ? 100 : 30;
+}
+export const tagCandidate = (tags, found, phrase, scale = 1) => {
+  const a = appraise(tags); a.bu *= scale;
   return { id: 'tags', label: 'Your tags', why: why(tags, found), unit: a.unit, bu: a.bu, entry: null, kind: a.kind.id === 'labor' ? 'labor' : a.kind.id === 'fee' ? 'service' : 'good', tags: ['custom', a.kind.id, ...(tags.rarity !== 'common' ? [tags.rarity] : [])], score: 100, tagged: true };
 };
 export const optionsOf = row => ROWS[row].opts.map(o => ({ id: o[0], label: o[1] }));

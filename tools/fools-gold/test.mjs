@@ -239,7 +239,7 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const gc = P('20 gold pieces', srd); eq('A11 gold pieces is a sum of money', [gc.query.subject, gc.notes.some(n => /as money/.test(n))], [null, true]);
   eq('A13 formatFull', [formatFull(1350, gsc), formatFull(5, gsc), formatFull(100, gsc)], ['13 gp 5 sp', '5 cp', '1 gp']);
   eq('A16 zero and negative qty ignored', [Q('0 daggers').qty, Q('-3 daggers').qty, P('0 daggers').notes.length > 0], [null, null, true]);
-  eq('A16b huge noted', P('999999999999 daggers').notes.some(n => /very large/i.test(n)), true);
+  eq('A16b huge noted', P('999999999999 daggers').notes.some(n => /more than a million/i.test(n)), true);
   eq('A15 sell property uses the sell side', E('sell a cottage', srd).side, 'sell');
   eq('A17 rent note', P('rent a house').notes.some(n => /rent/i.test(n)), true);
   eq('A18 tram is a tram fare', Q('tram ticket').subject, 'service.tram-fare'); eq('A18b suit of plate', Q('a suit of plate armor', srd).subject, 'good.plate-armor'); eq('A18c wizard', Q('hire a wizard').subject, 'labor.wizard-for-hire');

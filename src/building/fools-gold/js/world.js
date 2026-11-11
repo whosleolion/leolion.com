@@ -1,7 +1,8 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
+import { listOf } from './lists.js?v=50d393c6';
 import {
   CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
-} from './data.js?v=631ab3e4';
+} from './data.js?v=50d393c6';
 
 export function stem(w) {
   w = w.toLowerCase();
@@ -66,6 +67,12 @@ export function compileWorld(world) {
     if (e.bu) e.bu *= 100; if (e.perMile) e.perMile *= 100;
     if (e.curve) e.scale = (e.scale || 1) * 100;
   }
+  // the modern list is written in cents; every world that does not count cents counts roughly one unit to the dollar
+  else for (const e of entries) {
+    if (e.src !== 'modern') continue;
+    if (e.bu) e.bu = Math.max(1, Math.round(e.bu / 100)); if (e.perMile) e.perMile = Math.max(0.01, e.perMile / 100);
+    if (e.curve) e.scale = (e.scale || 1) / 100;
+  }
   const byId = new Map(entries.map(e => [e.id, e]));
   // user items
   for (const it of world.items || []) {
@@ -129,7 +136,9 @@ export function compileWorld(world) {
     if (!index.has(p.words[0])) index.set(p.words[0], []);
     index.get(p.words[0]).push(p);
   }
-  for (const arr of index.values()) arr.sort((a, b) => b.words.length - a.words.length || a.prio - b.prio);
+  const home = world.baseline === 'modern' || (world.currency && world.currency.symbol === '$') ? 'modern' : world.baseline === 'scifi' ? 'scifi' : null;
+  const rankOf = p => { if (p.type !== 'entry' || !home) return 0; const e = byId.get(p.id); return e && listOf(e) === home ? 0 : 1; };
+  for (const arr of index.values()) arr.sort((a, b) => b.words.length - a.words.length || a.prio - b.prio || rankOf(a) - rankOf(b));
 
   return { world, entries: list, byId, mods, modList, econ, phrases, index };
 }

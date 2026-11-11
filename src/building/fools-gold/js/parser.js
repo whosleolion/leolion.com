@@ -1,10 +1,10 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=631ab3e4';
-import { parseMoney, formatFull } from './money.js?v=631ab3e4';
-import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=631ab3e4';
+import { tokenize, stem } from './world.js?v=50d393c6';
+import { parseMoney, formatFull } from './money.js?v=50d393c6';
+import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=50d393c6';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
-const BIGNUM = { hundred: 100, thousand: 1000, dozen: 12 };
+const BIGNUM = { hundred: 100, thousand: 1000, million: 1000000, dozen: 12 };
 
 function matchAt(toks, i, ctx) {
   const t = toks[i];
@@ -38,6 +38,7 @@ function numberWords(toks, i) {
     if (BIGNUM[w]) {
       if (w === 'hundred') cur = (cur || 1) * 100;
       else if (w === 'thousand') { total += (cur || 1) * 1000; cur = 0; }
+      else if (w === 'million') { total += (cur || 1) * 1000000; cur = 0; }
       else cur = (cur || 1) * 12;
       any = true; continue;
     }
@@ -288,7 +289,7 @@ export function parse(text, ctx) {
   for (const key of ['qty', 'span']) {
     const v = q[key];
     if (v && (!(v.lo > 0) || !(v.hi > 0) || !isFinite(v.lo) || !isFinite(v.hi))) { notes.push('Ignored a zero or negative ' + (key === 'qty' ? 'amount' : 'length') + '.'); q[key] = null; }
-    else if (v && Math.max(v.lo, v.hi) > 1e7) notes.push('Very large number. Check it.');
+    else if (v && Math.max(v.lo, v.hi) > 1e6) { notes.push('That is more than a million. Using 1,000,000.'); v.lo = Math.min(v.lo, 1e6); v.hi = Math.min(v.hi, 1e6); }
   }
   if (subjectEntry && (subjectEntry.tags || []).includes('trade') && q.qty && !q.qty.unit && ctx.world.currency?.denominations?.some(d => String(d.name).toLowerCase().split(' ')[0] === subjectEntry.name.toLowerCase().split(' ')[0])) notes.push('Priced as ' + q.qty.lo + ' lb of ' + subjectEntry.name.toLowerCase() + '. Coins count as money, not an item.');
   for (const p of parts) if (p.k === 'ench') notes.push('"' + p.raw + '" is an enchantment bonus and is not priced directly. Use a rarity instead, such as "rare magic weapon".');

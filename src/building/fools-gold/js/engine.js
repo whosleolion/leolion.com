@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=631ab3e4';
-import { niceRound } from './money.js?v=631ab3e4';
+} from './data.js?v=50d393c6';
+import { niceRound } from './money.js?v=50d393c6';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -109,7 +109,8 @@ export function estimate(q, ctx) {
       assumptions.push({ id: 'span', text: '1 ' + word });
     } else {
       const s = q.span;
-      if (DAYS[s.unit]) { dLo = s.lo * DAYS[s.unit] / tu.days; dHi = s.hi * DAYS[s.unit] / tu.days; }
+      const perDay = s.unit === 'hour' ? (entry.kind === 'labor' ? 1 / 8 : 1 / 24) : DAYS[s.unit];   // a working day is 8 hours, a night is 24
+      if (perDay) { dLo = s.lo * perDay / tu.days; dHi = s.hi * perDay / tu.days; if (s.unit === 'hour') word = 'hour'; }
       else if (MILES[s.unit]) {
         if (entry.mpd) {
           dLo = s.lo * MILES[s.unit] / entry.mpd / tu.days; dHi = s.hi * MILES[s.unit] / entry.mpd / tu.days;
@@ -117,7 +118,7 @@ export function estimate(q, ctx) {
         } else { notes.push('Distance ignored: ' + entry.name.toLowerCase() + ' is not priced by distance.'); assumptions.push({ id: 'span', text: '1 ' + word }); }
       }
     }
-    if (dLo !== 1 || dHi !== 1) push({ kind: 'qty', label: '× ' + (dLo === dHi ? +dLo.toFixed(2) : +dLo.toFixed(2) + ' to ' + +dHi.toFixed(2)) + ' ' + word + (dHi === 1 ? '' : 's'), lo: dLo, hi: dHi, why: '' });
+    if (dLo !== 1 || dHi !== 1) push({ kind: 'qty', label: q.span && q.span.unit === 'hour' ? '× ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' hour' + (q.span.hi === 1 ? '' : 's') : '× ' + (dLo === dHi ? +dLo.toFixed(2) : +dLo.toFixed(2) + ' to ' + +dHi.toFixed(2)) + ' ' + word + (dHi === 1 ? '' : 's'), lo: dLo, hi: dHi, why: '' });
     if (qty.lo !== 1 || qty.hi !== 1) push({ kind: 'qty', label: '× ' + (qty.lo === qty.hi ? qty.lo : qty.lo + ' to ' + qty.hi) + (kind === 'labor' ? ' workers' : ' people'), lo: qty.lo, hi: qty.hi, why: '' });
   } else {
     if (q.span && entry.perDay && DAYS[q.span.unit]) {

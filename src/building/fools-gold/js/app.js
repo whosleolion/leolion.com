@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=631ab3e4';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=631ab3e4';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=631ab3e4';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=631ab3e4';
-import { findOffer } from './lists.js?v=631ab3e4';
-import { suggestPrompts } from './suggest.js?v=631ab3e4';
-import { readFact } from './facts.js?v=631ab3e4';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=631ab3e4';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=631ab3e4';
+import { compileWorld } from './world.js?v=50d393c6';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=50d393c6';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=50d393c6';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=50d393c6';
+import { findOffer } from './lists.js?v=50d393c6';
+import { suggestPrompts } from './suggest.js?v=50d393c6';
+import { readFact } from './facts.js?v=50d393c6';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=50d393c6';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=50d393c6';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=631ab3e4';
-import { applicable } from './engine.js?v=631ab3e4';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=631ab3e4';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=631ab3e4';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=631ab3e4';
-import { complete } from './complete.js?v=631ab3e4';
-import { sameKind, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=631ab3e4';
+} from './data.js?v=50d393c6';
+import { applicable } from './engine.js?v=50d393c6';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=50d393c6';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=50d393c6';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=50d393c6';
+import { complete } from './complete.js?v=50d393c6';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=50d393c6';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -63,7 +63,7 @@ function run(opts = {}) {
   if (q.subject) st.guess = null; // a priced thing ends any unknown-word card
   st.offer = !q.subject && st.text && !st.setting && st.offerDismissed !== st.text ? findOffer(st.text, world, ctx) : null;
   st.cartOffer = null;
-  if (st.text && st.text.length > 6 && st.text !== st.cartOfferDismissed && !st.setting && !st.cartEdit) { const r = readSentence(st.text, ctx); if (r.items.length >= 2 || (r.items.length >= 1 && r.bad.some(b => { const pq = parse(b, ctx); return pq.query.qty && !pq.query.span && pq.unrecognized.length; }))) st.cartOffer = r; }
+  if (st.text && st.text.length > 6 && st.text !== st.cartOfferDismissed && !st.setting && !st.cartEdit) { const r = readSentence(st.text, ctx); if (r.items.length >= 2 || (r.items.length >= 1 && r.bad.some(b => { const pq = parse(b, ctx), qq = pq.query; return pq.unrecognized.length && !qq.span && !qq.tier && !qq.rarity && !(qq.mods || []).length; }))) st.cartOffer = r; }
   st.fields = st.est && st.est.ok ? buildFields(q, st.est, ctx) : null;
   if (st.slot && !(st.fields && st.fields.slots.some(x => x.id === st.slot))) { st.slot = null; st.numOpen = false; }
   S.last = st.text; persist();
@@ -173,7 +173,8 @@ function renderResultCore() {
   }
   if (!q.subject) {
     const g = guessCard();
-    el.innerHTML = g || (st.cartOffer ? '' : `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or pick from the list.</p><button class="cta2" data-act="browse">Browse the list</button>`); return;
+    const bareNum = /^[\d.,\s]+$/.test(String(st.text).trim());
+    el.innerHTML = g || (st.cartOffer ? '' : bareNum ? `<p class="empty">${esc(String(st.text).trim())} of what? Try &ldquo;${esc(String(st.text).trim())} arrows&rdquo;, or pick from the list.</p><button class="cta2" data-act="start">Pick from the list</button>` : `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or pick from the list.</p><button class="cta2" data-act="browse">Browse the list</button>`); return;
   }
   if (!e.ok && e.error === 'conflict') {
     el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(GROUPS[c.group].ask)}:</b> pick one.</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
@@ -313,11 +314,16 @@ document.addEventListener('pointerdown', ev => {
 document.addEventListener('pointermove', ev => { if (drag && ev.pointerId === drag.id) dragMove(ev); });
 // a typed total for what you buy becomes the percent that gets you there
 function setCartTotal(v) {
-  const bu = parseMoney(String(v || '').trim().toLowerCase(), cur()), c = cartOf(), ref = (cartTotals(c, ctx).pre || cartTotals(c, ctx)).spend;
+  let s = String(v || '').trim().toLowerCase().replace(/(\d)\s*g$/, '$1 gp').replace(/(\d)\s*s$/, '$1 sp').replace(/(\d)\s*c$/, '$1 cp');
+  const c = cartOf(), ref = (cartTotals(c, ctx).pre || cartTotals(c, ctx)).spend;
+  // a bare number means the biggest coin that fits the total, so "120" on a 140 gp cart is 120 gp
+  if (/^[\d.,]+$/.test(s)) { const dens = (cur().denominations || []).filter(d => d.bu <= Math.max(ref, 1)).sort((a, b) => b.bu - a.bu); if (dens[0]) s = s + ' ' + dens[0].id; }
+  const bu = parseMoney(s, cur());
+  if (!(bu > 0) || !(ref > 0)) { toast('Try a total like "40 gp".'); renderSheet(); const i = $('#cartTot'); if (i) { i.value = String(v || ''); i.focus(); } return; }
   st.cartTotalEdit = false;
-  if (!(bu > 0) || !(ref > 0)) { toast('Try a total like "40 gp".'); renderSheet(); return; }
   const pct = (bu / ref - 1) * 100;
   if (pct > 50) toast('That is ' + Math.round(pct) + '% above the list price. Set anyway.');
+  else if (pct < -90) toast('That is more than 90% off, so it was held at 90% off.');
   setCartHaggle(pct);
 }
 function setCartHaggle(pct) {
@@ -410,7 +416,7 @@ function pruneOneOffs() {
 function badInfo(seg) {
   const phrase = unknownRunOf(parse(seg, ctx)) || seg.toLowerCase();
   const cands = candidatesFor(phrase, ctx).filter(c => c.entry && !String(c.id).startsWith('tier:')).slice(0, 3);
-  const { tags, found } = inferTags(phrase), tc = tagCandidate(tags, found, phrase);
+  const { tags, found } = inferTags(phrase), tc = tagCandidate(tags, found, phrase, guessScale(ctx));
   return { seg, phrase, cands, tc };
 }
 function badRows(bad, where) {
@@ -427,7 +433,7 @@ function resolveBad(a, where, i, k) {
 }
 function offerHtml() {
   const r = st.cartOffer, shop = r.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean);
-  return `<section class="guess cartoffer"><div class="gh">That reads as <b>${r.items.length} item${r.items.length === 1 ? '' : 's'}</b>${shop.length ? ' (' + esc(shop.join(', ')) + ')' : ''}. Price them together in a cart?</div><ul class="slines">${r.items.map(q => { const e = ctx.byId.get(q.subject); return `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(e ? whatText(q, e) : '')}</li>`; }).join('')}${badRows(r.bad, 'offer')}</ul><button class="cta" data-act="cart-offer-add">Add ${r.items.length} to cart</button><button class="cta2" data-act="cart-offer-no">Not now</button></section>`;
+  return `<section class="guess cartoffer"><div class="gh">That reads as <b>${r.items.length} item${r.items.length === 1 ? '' : 's'}</b>${shop.length ? ' (' + esc(shop.join(', ')) + ')' : ''}. Price them together in a cart?</div><ul class="slines">${r.items.map(q => { const e = ctx.byId.get(q.subject); return `<li${q.action === 'sell' ? ' class="sellrow"' : ''}>${q.action === 'sell' ? '<b>Sell</b> ' : ''}${esc(e ? whatText(q, e) : '')}</li>`; }).join('')}${badRows(r.bad, 'offer')}</ul><button class="cta" data-act="cart-offer-add">Add ${r.items.length} to cart</button><button class="cta2" data-act="cart-offer-no">Not now</button></section>`;
 }
 const amtOf = t => (t.spend || t.get);
 function renderCartPill() {
@@ -500,7 +506,7 @@ function cartHtml() {
   const side = (n, text) => `<div class="sum"><span>${text}</span><b>${n}</b></div>`;
   const why = st.cartWhy ? `<div class="cwhy"><div><span>Shop</span><b>${esc(shopLabel(c))}</b></div>${hg ? `<div><span>Haggle</span><b>${esc(pctText(hg.pct))} on what you buy</b></div>` : ''}${c.lines.map(line => { const r = lineResult(line, c, ctx); if (!r.ok) return ''; const steps = r.fixed ? 'agreed price' : r.e.factors.filter(f => f.kind !== 'base' && f.kind !== 'qty').map(f => `${f.label} ×${fx(((f.effLo ?? f.lo) * (f.effHi ?? f.hi)) ** 0.5)}`).join(', ') || 'no circumstances'; return `<div><span>${r.sell ? '+' : MINUS} ${esc(whatText(r.q, r.e.entry))}<em>${esc(steps)}</em></span><b>${r.sell ? '+' : MINUS}${esc(money(r.t))}</b></div>`; }).join('')}${t.spend ? side(MINUS + esc(money(t.spend)), 'Buying') : ''}${t.get ? side('+' + esc(money(t.get)), 'Selling') : ''}${side((t.net < 0 ? MINUS : '+') + esc(money(Math.abs(t.net))), t.net < 0 ? 'You pay' : 'You receive').replace('class="sum"', 'class="sum last"')}<p class="mini">What you buy usually lands between ${esc(money(ref.spendBand[0]))} and ${esc(money(ref.spendBand[1]))}. Each line can vary on its own, so that is narrower than adding every low and every high (${esc(money((t.spend ? t.spendExt : t.getExt)[0]))} to ${esc(money((t.spend ? t.spendExt : t.getExt)[1]))}).</p></div>` : '';
 
-  const read = st.cartRead ? `<div class="cread"><p>That reads as ${st.cartRead.items.length} items${st.cartRead.shop.length ? ' (' + esc(st.cartRead.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ')) + ')' : ''}.</p><ul>${st.cartRead.items.map(q => `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(whatText(q, ctx.byId.get(q.subject)))}</li>`).join('')}${badRows(st.cartRead.bad, 'read')}</ul><div class="row"><button class="go" data-act="cart-read-add">Add ${st.cartRead.items.length} to cart</button><button data-act="cart-read-no">Cancel</button></div></div>` : '';
+  const read = st.cartRead ? `<div class="cread"><p>${st.cartRead.items.length ? 'That reads as ' + st.cartRead.items.length + ' item' + (st.cartRead.items.length === 1 ? '' : 's') : 'Not in your lists yet'}${st.cartRead.shop.length ? ' (' + esc(st.cartRead.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ')) + ')' : ''}.</p><ul>${st.cartRead.items.map(q => `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(whatText(q, ctx.byId.get(q.subject)))}</li>`).join('')}${badRows(st.cartRead.bad, 'read')}</ul><div class="row">${st.cartRead.items.length ? `<button class="go" data-act="cart-read-add">Add ${st.cartRead.items.length} to cart</button>` : ''}<button data-act="cart-read-no">Cancel</button></div></div>` : '';
   const body = c.lines.length ? rows : `<p class="empty">Nothing in the cart yet. Tap Add beside a price, or type a few items below.</p>`;
   const shopRow = `<div class="cfield"><button class="crow" data-act="cart-shop-toggle" aria-expanded="${st.cartShopOpen}"><span class="k">Shop</span><span class="v">${esc(shopLabel(c))}</span><span class="chev">${st.cartShopOpen ? '&#9662;' : '&rsaquo;'}</span></button>${st.cartShopOpen ? shopOptions(c, t) : ''}</div>`;
   return `${shopRow}<div class="clines">${body}</div>${c.lines.length ? '<button class="linkbtn cempty" data-act="cart-clear">Empty the cart</button>' : ''}${why}
@@ -510,7 +516,7 @@ function cartHtml() {
 function clearInput() { $('#q').value = ''; fromText(''); }
 function openCart() { st.sheet = { open: true, mode: 'cart' }; renderSheet(); }
 function afterCart(opts = {}) {
-  pruneOneOffs(); persist(); renderCartPill(); renderResult(); if (st.sheet.open && st.sheet.mode === 'cart') renderSheet();
+  persist(); renderCartPill(); renderResult(); if (st.sheet.open && st.sheet.mode === 'cart') renderSheet();
   if (opts.focus) { const i = $('#cartIn'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 }
 function mergeShop(c, shop) {
@@ -535,7 +541,20 @@ function flyCoin(from, first) {
 }
 function cartRead() {
   const r = readSentence(st.cartText, ctx);
-  if (!r.items.length) { toast(r.bad.length ? `"${r.bad[0]}" is not in your lists.` : 'Type what to add, like "3 rope, 2 torches".'); return; }
+  if (r.removes.length) {
+    const c = cartOf(), snap = clone(c); let gone = 0, miss = [];
+    for (const rm of r.removes) {
+      const subj = parse(rm.text, ctx).query.subject, hits = subj ? c.lines.filter(l => l.q.subject === subj) : [];
+      if (!hits.length) { miss.push(rm.text); continue; }
+      const l = hits[hits.length - 1], have = l.q.qty && l.q.qty.lo === l.q.qty.hi ? l.q.qty.lo : 1;
+      if (!rm.n || rm.n >= have) { c.lines = c.lines.filter(x => x !== l); gone++; } else { const n = have - rm.n; l.q.qty = n === 1 ? null : { ...(l.q.qty || {}), lo: n, hi: n }; gone++; }
+    }
+    if (gone) { if (!r.items.length) { st.cartText = ''; st.cartRead = null; } afterCart({ focus: true }); toast('Took off ' + gone + ' line' + (gone === 1 ? '' : 's') + (miss.length ? '. Not in the cart: ' + miss.join(', ') : ''), () => { S.carts[world.id] = snap; afterCart(); }); }
+    else toast('Nothing in the cart matches "' + miss[0] + '".');
+    if (!r.items.length) return;
+  }
+  if (!r.items.length && r.bad.length) { st.cartRead = r; renderSheet(); return; }
+  if (!r.items.length) { toast('Type what to add, like "3 rope, 2 torches".'); return; }
   if (r.items.length === 1 && !r.bad.length) { addItems(r.items, r.shop); st.cartText = ''; st.cartRead = null; afterCart({ focus: true }); toast('Added to the cart'); return; }
   st.cartRead = r; renderSheet();
 }
@@ -667,7 +686,7 @@ function ensureGuess(phrase) {
     // only a real item that shares a word, or whose family the words name, is worth comparing with
     const cands = candidatesFor(phrase, ctx).filter(c => !String(c.id).startsWith('tier:') && c.score >= 2);
     const { tags, found } = inferTags(phrase);
-    st.guess = { phrase, cands, tags, found, touched: [], kindOpen: !found.includes('kind'), more: false, sel: 0, bu: tagCandidate(tags, found, phrase).bu, q: '', exact: false };
+    st.guess = { phrase, cands, tags, found, touched: [], kindOpen: !found.includes('kind'), more: false, sel: 0, bu: tagCandidate(tags, found, phrase, guessScale(ctx)).bu, q: '', exact: false };
   }
   return st.guess;
 }
@@ -864,6 +883,7 @@ function factGo() {
   if (!text) { st.fact.err = 'Type a sentence first.'; renderDrawer(); return; }
   const r = readFact(text, ctx);
   if (!r) st.fact.err = 'I could not read that. Try a price like "a healing potion costs 40 gp", or a word like "a shiv is a dagger".';
+  else if (r.kind === 'blocked') st.fact.err = `"${r.term}" already means something to the app (a ${({ action: 'buy or sell word', unit: 'unit of time or distance', money: 'coin', count: 'count', mod: 'circumstance', tier: 'class', rarity: 'rarity' })[r.why] || 'built-in word'}), so it cannot be redefined. Pick a different word.`;
   else if (r.kind === 'unknown') st.fact.err = `I do not know "${r.meansText}". Say what ${r.term} means with an item that is in your lists, such as "${r.term} is a dagger".`;
   else st.fact.res = r;
   renderDrawer();
@@ -1029,7 +1049,7 @@ function guessAll() {
   const g = st.guess;
   if (!g) return [];
   const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
-  const tc = tagCandidate(g.tags, g.found, g.phrase), seen = new Set(g.cands.map(c => c.id));
+  const tc = tagCandidate(g.tags, g.found, g.phrase, guessScale(ctx)), seen = new Set(g.cands.map(c => c.id));
   // words first, then real things of the kind the tags name, nearest in price
   const kindComps = g.q ? [] : comparablesFor(e => sameKind(g.tags.kind, e), tc.bu, ctx, seen).map(c => ({ ...c, why: 'Same kind, near this price' }));
   return [tc, ...g.cands, ...kindComps.filter(c => !seen.has(c.id)).slice(0, Math.max(0, 5 - g.cands.length)), ...found];
@@ -1113,6 +1133,7 @@ document.addEventListener('click', e => {
     case 'cart-chan': { const c = cartOf(); c.mods = c.mods.filter(id => id !== 'wholesale'); if (+d.v) c.mods.push('wholesale'); st.cartShopOpen = false; afterCart(); break; }
     case 'cart-open': openCart(); break;
     case 'cart-add': {
+      if (Date.now() - (st.lastAdd || 0) < 450) break; st.lastAdd = Date.now();
       const c = cartOf(), first = !c.lines.length, snap = clone(c), from = b.getBoundingClientRect();
       addToCart(c, stripShop(st.query, c.mods)); afterCart(); flyCoin(from, first);
       toast('Added to the cart', () => { S.carts[world.id] = snap; afterCart(); });
@@ -1136,7 +1157,7 @@ document.addEventListener('click', e => {
     case 'cart-read': cartRead(); break;
     case 'cart-read-add': if (st.cartRead) { addItems(st.cartRead.items, st.cartRead.shop); const n = st.cartRead.items.length; st.cartRead = null; st.cartText = ''; afterCart({ focus: true }); toast('Added ' + n + ' to the cart'); } break;
     case 'cart-read-no': st.cartRead = null; renderSheet(); break;
-    case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart'); } break;
+    case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart' + (r.bad.length ? '. ' + r.bad.length + ' skipped, not in your lists.' : '')); } break;
     case 'cart-offer-no': st.cartOfferDismissed = st.text; st.cartOffer = null; renderResult(); break;
     case 'cart-why': st.cartWhy = !st.cartWhy; renderSheet(); break;
     case 'cart-copy': { const c = cartOf(); copyText(cartText(c, ctx, n => money(n), (r, line) => r ? whatText(r.q, r.e.entry) : (line.q.subject || 'An item')), 'Cart copied'); break; }
@@ -1231,7 +1252,7 @@ document.addEventListener('click', e => {
     case 'w-add-voc': world.vocabulary.push({ term: '', means: '' }); renderDrawer(); break;
     case 'w-del-voc': world.vocabulary.splice(+d.i, 1); worldChanged(); break;
     case 'w-add-item': world.items.push({ id: newItemId(), name: 'New item', kind: 'good', bu: 100, unit: 'each', tags: [] }); worldChanged(); break;
-    case 'w-del-item': world.items.splice(+d.i, 1); worldChanged(); break;
+    case 'w-del-item': { const gone = world.items.splice(+d.i, 1)[0]; if (gone) { const n = world.vocabulary.length; world.vocabulary = world.vocabulary.filter(v => v.means !== gone.id); if (n !== world.vocabulary.length) toast('Removed ' + (n - world.vocabulary.length) + ' word' + (n - world.vocabulary.length === 1 ? '' : 's') + ' that pointed at it.'); } worldChanged(); break; }
     case 'w-copy': copyText(JSON.stringify(world, null, 1), 'World copied'); break;
     case 'w-save-file': { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(world, null, 1)], { type: 'application/json' })); a.download = slug(world.name) + '.foolsgold.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Saving. If nothing happens, use Copy world.'); } catch (e2) { toast('Saving is blocked here. Use Copy world instead.'); } break; }
     case 'w-import': {
@@ -1244,17 +1265,17 @@ document.addEventListener('click', e => {
       break;
     }
     case 'w-reset': {
-      if (b.dataset.armed) { try { localStorage.removeItem('foolsgold.v1'); } catch (e2) { /* ignore */ } S = { ...load(), history: [] }; S.worlds = [WORLD_PRESETS.srd(), WORLD_PRESETS.vcm(), WORLD_PRESETS.modern()]; S.activeId = 'srd'; useWorld('srd'); persist(); afterWorldSwitch(); toast('Reset'); }
+      if (b.dataset.armed) { try { localStorage.removeItem('foolsgold.v1'); } catch (e2) { /* ignore */ } S = { ...load(), history: [] }; S.worlds = [WORLD_PRESETS.srd(), WORLD_PRESETS.vcm(), WORLD_PRESETS.modern()]; S.activeId = 'srd'; S.carts = {}; useWorld('srd'); persist(); afterWorldSwitch(); toast('Reset'); }
       else { b.dataset.armed = '1'; b.textContent = 'Click again to erase all worlds'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Reset everything'; } }, 3500); }
       break;
     }
   }
 });
 function closeDrawerKeep() { renderDrawer(); if (st.text) fromText(st.text, { noHistory: true }); else renderAll(); }
-function afterWorldSwitch() { renderDrawer(); st.query = emptyQuery(); if (st.text) fromText(st.text, { noHistory: true }); else renderAll(); }
+function afterWorldSwitch() { persist(); renderDrawer(); st.query = emptyQuery(); if (st.text) fromText(st.text, { noHistory: true }); else renderAll(); }
 
 $('#q').addEventListener('input', e => fromText(e.target.value));
-$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); e.target.blur(); } });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); if (matchMedia('(pointer: coarse)').matches) e.target.blur(); } });
 $('#q').addEventListener('focus', () => { st.slot = null; st.numOpen = false; renderTray(); renderResult(); });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'cartTot') { e.preventDefault(); setCartTotal(e.target.value); return; } if (e.key === 'Enter' && e.target.id === 'hgIn') { e.preventDefault(); const p = parseHaggle(e.target.value); if (!p) toast('Try "15% off", or the price you agreed, like 40 gp.'); else setHaggle(p); return; } if (e.key === 'Enter' && e.target.id === 'cartHg') { e.preventDefault(); $('[data-act=cart-hg-in]').click(); return; } if (e.key === 'Enter' && e.target.id === 'cartIn') { e.preventDefault(); cartRead(); return; } if (e.key === 'Enter' && e.target.id === 'factIn') { e.preventDefault(); factGo(); return; } if (e.target.id === 'renameIn') { if (e.key === 'Enter') { e.preventDefault(); const i = $('#renameIn'); world.name = i.value.trim() || world.name; st.wrename = false; persist(); renderDrawer(); } else if (e.key === 'Escape') { st.wrename = false; renderDrawer(); } return; } if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
@@ -1400,6 +1421,26 @@ checkForUpdate();
 if (window.__FG_WORLD && WORLD_PRESETS[window.__FG_WORLD] && !S.worlds.some(w => w.id === window.__FG_WORLD)) S.worlds.push(WORLD_PRESETS[window.__FG_WORLD]());
 if (window.__FG_WORLD) S.activeId = window.__FG_WORLD;
 useWorld(S.activeId);
+pruneOneOffs();
 const first = S.last ?? sampleList()[0];
 $('#q').value = first;
 fromText(first, { noHistory: true });
+
+// dialogs: keep keyboard focus inside while a sheet or the settings drawer is open, and hand it back on close
+{
+  let opener = null;
+  const dlgs = [$('#sheet'), $('#drawer')].filter(Boolean), appEl = $('#app');
+  const sync = () => {
+    const open = dlgs.find(d => !d.hidden);
+    if (open) {
+      if (!opener) opener = document.activeElement;
+      if (appEl) appEl.inert = true;
+      if (!open.contains(document.activeElement)) { const f = open.querySelector('.sheet-x, button, [tabindex], input'); if (f) f.focus({ preventScroll: true }); }
+    } else {
+      if (appEl) appEl.inert = false;
+      if (opener && opener.isConnected && opener !== document.body) opener.focus({ preventScroll: true });
+      opener = null;
+    }
+  };
+  for (const d of dlgs) new MutationObserver(sync).observe(d, { attributes: true, attributeFilter: ['hidden'] });
+}
