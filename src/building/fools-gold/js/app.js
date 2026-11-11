@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=b492c0de';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=b492c0de';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=b492c0de';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=b492c0de';
-import { findOffer } from './lists.js?v=b492c0de';
-import { suggestPrompts } from './suggest.js?v=b492c0de';
-import { readFact } from './facts.js?v=b492c0de';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=b492c0de';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=b492c0de';
+import { compileWorld } from './world.js?v=e58f1bd6';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=e58f1bd6';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=e58f1bd6';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=e58f1bd6';
+import { findOffer } from './lists.js?v=e58f1bd6';
+import { suggestPrompts } from './suggest.js?v=e58f1bd6';
+import { readFact } from './facts.js?v=e58f1bd6';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=e58f1bd6';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=e58f1bd6';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=b492c0de';
-import { applicable } from './engine.js?v=b492c0de';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=b492c0de';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=b492c0de';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=b492c0de';
-import { complete } from './complete.js?v=b492c0de';
-import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=b492c0de';
+} from './data.js?v=e58f1bd6';
+import { applicable } from './engine.js?v=e58f1bd6';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=e58f1bd6';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=e58f1bd6';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=e58f1bd6';
+import { complete } from './complete.js?v=e58f1bd6';
+import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=e58f1bd6';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

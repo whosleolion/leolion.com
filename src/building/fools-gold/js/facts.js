@@ -1,6 +1,6 @@
 // Facts typed as a sentence in World settings > Changes: "a healing potion costs 40 gp", "a shiv is a dagger",
 // "sellers pay 40%". Read by plain patterns, shown back for confirmation, then saved as a price, a word or a dial.
-import { parseSetting } from './setting.js?v=b492c0de';
+import { parseSetting } from './setting.js?v=e58f1bd6';
 
 const clean = s => String(s || '').replace(/[.!]+$/g, '').replace(/\s+/g, ' ').trim();
 const ART = /^(?:an?|the|my|our)\s+/i;

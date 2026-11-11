@@ -1139,7 +1139,9 @@ html[data-big] .jump .q { white-space: nowrap; }
 .sheet.full .sheet-back { background: var(--bg); }
 .sheet.full .sheet-panel { max-width: 760px; height: 100dvh; max-height: 100dvh; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top, 0px); }
 .sheet.full #sheetBody { flex: 1; min-height: 0; padding-bottom: 1.25rem; }
-.sheet.full .catgrid { flex: 1; align-content: start; grid-auto-rows: minmax(5.5rem, auto); }
-.sheet.full .catbtn { min-height: 5.5rem; font-size: 1.1875rem; display: flex; align-items: center; }
-.sheet.full .startgrid { flex: 1; grid-auto-rows: minmax(7rem, 1fr); max-height: 28rem; }
+.sheet.full .catgrid { align-content: start; }
+.sheet.full .catbtn { min-height: 3.25rem; padding: .5rem .875rem; font-size: 1rem; display: flex; align-items: center; }
+.sheet.full #sheetBody > * { flex: none; }
+.sheet.full #sheetBody { overflow-y: auto; }
+.sheet.full .startbtn { min-height: 4rem; }
 @media (prefers-reduced-motion: no-preference) { .sheet.full .sheet-panel { animation: fade .18s ease-out; } }
