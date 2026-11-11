@@ -8,13 +8,14 @@ const browser = await chromium.launch();
 const errors = [];
 let failed = 0;
 const ok = (n, c, d) => { if (!c) { failed++; console.log('FAIL', n, d ?? ''); } else console.log('ok  ', n); };
-const SUB = { 'Your worlds': ['World', 'Worlds'], Money: ['World', 'Money'], Economy: ['World', 'Economy'], Dials: ['World', 'Dials'], 'Item list': ['Custom', 'Item lists'], 'Custom words': ['Custom', 'Custom words'], 'My items': ['Custom', 'My items'], Adjustments: ['Custom', 'Adjustments'] };
+const WP = { Money: 1, Economy: 1, Dials: 1, 'Item list': 'Item lists', 'Custom words': 'My changes', 'My items': 'My changes', Adjustments: 'My changes' };
 const goPage = async (page, p) => {
-  const m = SUB[p];
-  if (!m) { await page.click(`.nrow[data-p="${p}"]`); return; }
-  await page.click(`.nrow[data-p="${m[0]}"]`);
-  const open = await page.$eval(`details.sub[data-sub="${m[1]}"]`, d => d.open);
-  if (!open) await page.click(`details.sub[data-sub="${m[1]}"] > summary`);
+  if (p === 'Your worlds') { await page.click('.nrow[data-p="Worlds"]'); return; }
+  const k = WP[p];
+  if (!k) { await page.click(`.nrow[data-p="${p}"]`); return; }
+  if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]');
+  await page.click(`.jump [data-id="${k === 1 ? p : k}"]`);
+  await page.waitForTimeout(450);
 };
 const goBack = async page => { await page.click('.back'); };
 const price = page => page.textContent('.pricebtn .num');
@@ -116,7 +117,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' drawer opens', await page.isVisible('#drawer'));
   ok(name + ' settings root is five rows in three groups', (await page.$$('.nrow')).length === 5 && (await page.$$('.navgroup')).length === 3);
   await goPage(page, 'Item list');
-  ok(name + ' item lists are check boxes you can combine', (await page.$$('input[data-bind^="list."]')).length === 3);
+  ok(name + ' item lists are check boxes you can combine', (await page.$$('input[data-bind^="list."]')).length === 4);
   await page.click('input[data-bind="list.modern"]');
   await goBack(page); await page.click('[data-act=close-world]');
   await page.fill('#q', 'taxi ride');
@@ -149,7 +150,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' match device clears the override', (await page.evaluate(() => document.documentElement.dataset.theme)) === undefined);
   await goBack(page);
   await goPage(page, 'Your worlds');
-  await page.click('[data-act=w-select][data-id=modern]');
+  await page.click('[data-act=w-new-preset][data-v=modern]');
   await goBack(page);
   await page.click('[data-act=close-world]');
   await page.fill('#q', '6 months of rent in a city');
@@ -171,7 +172,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.fill('#q', "6 months of John's rent");
   ok(name + ' saved variable works in a longer question', (await price(page)).replace(/\s/g, '').startsWith('$4,800'), await price(page));
 
-  await page.click('#gear'); await goPage(page, 'Your worlds'); await page.click('[data-act=w-select][data-id=vcm]'); await goBack(page); await page.click('[data-act=close-world]');
+  await page.click('#gear'); await goPage(page, 'Your worlds'); await page.click('[data-act=w-new-preset][data-v=vcm]'); await goBack(page); await page.click('[data-act=close-world]');
   await page.fill('#q', 'a healing potion costs 40 gp here');
   await page.click('[data-act=s-set]');
   ok(name + ' override applies in the world', /^(3[6-9]|4[0-4])/.test(await price(page)), await price(page));

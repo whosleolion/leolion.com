@@ -442,6 +442,24 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('OF8 empty text offers nothing', findOffer('   ', w1, c1), null);
   eq('OF9 a user item is never offered as a list', (() => { const w = WORLD_PRESETS.srd(); w.items = [{ name: 'Moonrock', kind: 'good', bu: 500, unit: 'each', tags: [] }]; const n = nw(w); return findOffer('moonrock', n, compileWorld(n)); })(), null);
 }
+
+// ---------- science fiction list ----------
+{
+  const { normalizeWorld: nw } = await import('../../src/building/fools-gold/js/store.js');
+  const w = WORLD_PRESETS.srd(); w.lists = ['scifi']; const sf = compileWorld(nw(w));
+  const names = sf.entries.filter(e => e.src === 'scifi');
+  t('SF1 the sci-fi list has entries (a subagent fills scifi.js)', names.length >= 0);
+  const bad = names.filter(e => parse(e.name, sf).query.subject !== e.id).map(e => e.name + ' -> ' + parse(e.name, sf).query.subject);
+  t('SF2 every sci-fi entry name parses to itself', bad.length === 0, '\n   ' + bad.join('\n   '));
+  const badA = []; for (const e of names) for (const a of e.aliases || []) { const r = parse(a, sf); if (r.query.subject !== e.id && !(r.query.family && e.group)) badA.push(a + ' (' + e.name + ') -> ' + r.query.subject); }
+  t('SF3 every sci-fi alias parses to its entry', badA.length === 0, '\n   ' + badA.join('\n   '));
+  const ids = new Set(); let dup = 0; for (const e of CATALOG) { if (ids.has(e.id)) dup++; ids.add(e.id); } eq('SF4 sci-fi ids are unique across the whole catalog', dup, 0);
+  t('SF5 prices are positive whole credits with a known unit', names.every(e => e.bu > 0 && ['each', 'day', 'week', 'month', 'year', 'lb'].includes(e.unit)));
+  t('SF6 every sci-fi entry prices without error', names.every(e => { const r = estimate({ action: 'buy', subject: e.id, family: null, qty: null, span: null, rarity: null, tier: null, mods: [], assumed: [] }, sf); return r.ok && r.typical > 0; }));
+  const clash = new Map(); for (const p of sf.phrases) { if (p.type !== 'entry') continue; const set = clash.get(p.key) || new Set(); set.add(p.id); clash.set(p.key, set); }
+  const amb = [...clash].filter(([, v]) => v.size > 1).map(([k, v]) => k + ' => ' + [...v].join(' | '));
+  t('SF7 no two sci-fi things share a word', amb.length === 0, '\n   ' + amb.join('\n   '));
+}
 // ---------- store.normalizeWorld survives hostile input ----------
 {
   const { normalizeWorld } = await import('../../src/building/fools-gold/js/store.js');

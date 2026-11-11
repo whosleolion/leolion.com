@@ -619,3 +619,25 @@ details.sub .theme label { background: transparent; }
 details.sub > .sbody.page { padding: 0 14px 16px; gap: 10px; }
 details.sub > .sbody.page > p:first-child { margin-top: 0; }
 details.sub .tagrow { padding: 8px 0; }
+
+/* one World settings page: sections in order, a jump bar, a combined My changes list */
+.jump { position: sticky; top: calc(88px + env(safe-area-inset-top, 0px)); z-index: 2; display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * max(16px, env(safe-area-inset-right, 0px))) 6px 0; padding: 8px 16px 8px 0; background: linear-gradient(var(--bg) 82%, transparent); scrollbar-width: none; }
+.jump::-webkit-scrollbar { display: none; }
+.wsec { margin-top: 22px; scroll-margin-top: 120px; }
+.wh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 8px; font: 700 21px var(--font-display); }
+.wh .sv { font: 400 14px var(--font-body); color: var(--muted); max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsec > .sbody.page { background: var(--surface); border-radius: 14px; padding: 14px; gap: 12px; }
+.wsec .coin { background: var(--bg); }
+.wsec .listbox { background: var(--bg); }
+.kindtag { align-self: flex-start; font: 600 10px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 6px; margin-bottom: -2px; }
+.coin.slim { gap: 6px; }
+.pline { display: grid; grid-template-columns: minmax(0, 1fr) auto 36px; gap: 10px; align-items: center; }
+.pline span:first-child { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-row.preset { align-items: center; }
+.world-row .plus { margin-left: auto; font-size: 22px; color: var(--accent); }
+
+/* currency glyphs: serif letters with a fine strike, like a printed pound or dollar */
+.cg { font-family: var(--font-display, 'Fraunces'), 'Iowan Old Style', Georgia, 'Times New Roman', serif; font-weight: 600; font-variation-settings: 'opsz' 36, 'SOFT' 0; letter-spacing: 0; padding: 0 .05em; }
+.cg::after { top: -.2em; bottom: -.16em; width: .05em; min-width: 1px; opacity: .9; border-radius: 0; }
+.o span .cg::after, .slot .hint .cg::after, .ends .cg::after { top: -.12em; bottom: -.1em; }
+.gl { font-family: var(--font-display, 'Fraunces'), 'Iowan Old Style', Georgia, serif; font-size: 20px; font-weight: 600; position: relative; }

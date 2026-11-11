@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=11daf5c9';
-import { niceRound } from './money.js?v=11daf5c9';
+} from './data.js?v=52c8a9d7';
+import { niceRound } from './money.js?v=52c8a9d7';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.

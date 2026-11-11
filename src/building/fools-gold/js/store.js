@@ -1,12 +1,12 @@
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=11daf5c9';
-import { compileWorld } from './world.js?v=11daf5c9';
+import { WORLD_PRESETS } from './data.js?v=52c8a9d7';
+import { compileWorld } from './world.js?v=52c8a9d7';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
 
 function defaults() {
-  const worlds = [WORLD_PRESETS.srd(), WORLD_PRESETS.vcm(), WORLD_PRESETS.modern()];
+  const worlds = [WORLD_PRESETS.srd()];
   worlds.forEach(normalizeWorld);
   return { v: 2, worlds, activeId: 'srd', history: [], theme: null };
 }
@@ -60,7 +60,7 @@ export const newItemId = () => 'user.i' + Date.now().toString(36) + (seq++).toSt
 export function normalizeWorld(w) {
   if (!w || typeof w !== 'object' || Array.isArray(w)) throw new Error('not a world');
   const legacy = w.baseline === 'generic' ? ['fantasy'] : w.baseline === 'modern' ? ['modern'] : ['srd', 'fantasy'];
-  let lists = (Array.isArray(w.lists) ? w.lists : legacy).filter((x, i, a) => ['srd', 'fantasy', 'modern'].includes(x) && a.indexOf(x) === i);
+  let lists = (Array.isArray(w.lists) ? w.lists : legacy).filter((x, i, a) => ['srd', 'fantasy', 'modern', 'scifi'].includes(x) && a.indexOf(x) === i);
   if (!lists.length) lists = ['fantasy'];
   w.lists = lists;
   w.baseline = lists.includes('modern') && !lists.includes('fantasy') && !lists.includes('srd') ? 'modern' : lists.includes('srd') ? 'srd' : 'generic';

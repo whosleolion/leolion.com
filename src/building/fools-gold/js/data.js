@@ -1,3 +1,4 @@
+import { scifiEntries } from './scifi.js?v=52c8a9d7';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -264,7 +265,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {
@@ -476,6 +477,11 @@ export const WORLD_PRESETS = {
     baseline: 'modern', lists: ['modern'], currency: { denominations: [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }], belowSmallest: 'round', note: '1 base unit is one cent', symbol: '$', decimal: 100 },
     anchors: { wage: 12000 }, economyTags: [], dials: { ...baseDials, sellFraction: 0.5 }, defaults: { travel: 'travel.intercity-train', rent: 'lodging.m-apartment-rent-medium' }, vocabulary: [], items: [],
     samples: ['a month of rent in a major city, medium apartment', '6 months of rent in a city', 'dinner for 2 at a fancy restaurant', 'flight 1500 miles', 'hire a lawyer for 2 days', 'taxi ride in the capital', 'buy a laptop', 'sell a used car'],
+  }),
+  scifi: () => ({
+    id: 'scifi', name: 'Science fiction', blurb: 'Credits, blasters, cyberware and station rent.',
+    baseline: 'other', lists: ['scifi'], currency: { denominations: [{ id: 'cr', name: 'credit', plural: 'credits', bu: 1, glyph: 'C' }], belowSmallest: 'round', note: '1 base unit is one credit' },
+    anchors: { wage: 60 }, economyTags: [], dials: { ...baseDials }, defaults: { travel: 'travel.s-interstellar-passage', rent: 'lodging.s-station-apartment-rent' }, vocabulary: [], items: [],
   }),
 };
 export const SAMPLE_QUERIES = [
