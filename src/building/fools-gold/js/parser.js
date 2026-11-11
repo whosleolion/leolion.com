@@ -1,6 +1,7 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=fb67fb0a';
-import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=fb67fb0a';
+import { tokenize, stem } from './world.js?v=12a3fb10';
+import { parseMoney, formatFull } from './money.js?v=12a3fb10';
+import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=12a3fb10';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, dozen: 12 };
@@ -107,7 +108,13 @@ export function emptyQuery() {
 // A haggle written into the sentence: "longsword, 15% off" or "rope 20% extra". Blanked out in place so word positions hold.
 const HAGGLE_OFF = /(?:,\s*)?(?:\bhaggled\s+)?(?:\bdown\s+)?(\d+(?:\.\d+)?)\s*%\s*(?:off|discount|cheaper|less)\b/i;
 const HAGGLE_ON = /(?:,\s*)?(\d+(?:\.\d+)?)\s*%\s*(?:extra|markup|surcharge|higher|on top)\b/i;
-export function extractHaggle(text) {
+const AGREED = /(?:,\s*)?\bagreed(?:\s+(?:at|for|on))?\s+([^,;]+)/i;
+export function extractHaggle(text, ctx) {
+  const a = ctx && AGREED.exec(text);
+  if (a) {
+    const bu = parseMoney(a[1].trim(), ctx.world.currency);
+    if (bu > 0) return { pct: 0, price: bu, text: text.slice(0, a.index) + ' '.repeat(a[0].length) + text.slice(a.index + a[0].length) };
+  }
   let m = HAGGLE_OFF.exec(text), pct = 0;
   if (m) pct = -Math.min(90, +m[1]);
   else if ((m = HAGGLE_ON.exec(text))) pct = Math.min(300, +m[1]);
@@ -116,7 +123,7 @@ export function extractHaggle(text) {
 }
 
 export function parse(text, ctx) {
-  const hx = extractHaggle(text);
+  const hx = extractHaggle(text, ctx);
   text = hx.text;
   const toks = tokenize(text);
   const parts = [];
@@ -287,7 +294,8 @@ export function parse(text, ctx) {
   for (const n of unusedNums) unrecognized.push(String(n.lo));
   const suggestions = suggest(unk, ctx);
 
-  if (hx.pct) q.haggle = { pct: hx.pct };
+  if (hx.price) q.haggle = { price: hx.price };
+  else if (hx.pct) q.haggle = { pct: hx.pct };
   return { query: q, unrecognized, suggestions, notes, parts };
 }
 
@@ -313,7 +321,8 @@ export function queryToText(q, ctx) {
     if (!m) continue;
     tail.push(ROUTE_TEXT[id] || m.aliases[0] || m.label);
   }
-  if (q.haggle && q.haggle.pct) tail.push(q.haggle.pct < 0 ? Math.abs(q.haggle.pct) + '% off' : q.haggle.pct + '% extra');
+  if (q.haggle && q.haggle.price > 0) tail.push('agreed at ' + formatFull(q.haggle.price, ctx.world.currency));
+  else if (q.haggle && q.haggle.pct) tail.push(q.haggle.pct < 0 ? Math.abs(q.haggle.pct) + '% off' : q.haggle.pct + '% extra');
   return [s, ...tail].filter(Boolean).join(', ');
 }
 

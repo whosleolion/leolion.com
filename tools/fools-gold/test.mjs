@@ -542,8 +542,8 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('CT7 a line keeps its own place over the shop', withShop(own.lines[0].q, own.mods, c).mods, ['capital']);
   eq('CT8 saving from the screen leaves the shop with the cart', stripShop({ ...Q('longsword'), mods: ['village', 'rush'] }, ['village']).mods, ['rush']);
   // quote
-  cs.lines[0].quote = 1234; cs.mods = ['capital'];
-  eq('CT9 a quoted line ignores the shop', lineResult(cs.lines[0], cs, c).t, 1234);
+  cs.lines[0].q.haggle = { price: 1234 }; cs.mods = ['capital'];
+  eq('CT9 an agreed price ignores the shop', lineResult(cs.lines[0], cs, c).t, 1234);
   const gone = emptyCart(); gone.lines.push({ id: 1, q: { ...Q('longsword'), subject: 'good.nothing' }, quote: null });
   eq('CT10 an item that no longer exists is counted as missing', cartTotals(gone, c).missing, 1);
   // bands
@@ -592,8 +592,18 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const after = cartTotals(c2, c);
   t('HG14 a cart haggle lowers what you buy', after.spend < before.spend * 0.95 && after.spend > before.spend * 0.85);
   eq('HG15 a cart haggle leaves what you sell alone', Math.round(after.get), Math.round(before.get));
-  c2.lines[0].quote = 999; const q2 = lineResult(c2.lines[0], c2, c);
-  eq('HG16 a locked line ignores the cart haggle', q2.t, 999);
+  c2.lines[0].q.haggle = { price: 999 }; const q2 = lineResult(c2.lines[0], c2, c);
+  eq('HG16 an agreed price ignores the cart haggle', q2.t, 999);
+  // an agreed price
+  const ag = estimate(Q('buy a longsword, agreed at 42 gp 5 sp'), c);
+  eq('HG18 "agreed at" fixes the price exactly', [Q('buy a longsword, agreed at 42 gp 5 sp').haggle, ag.typical, ag.lo, ag.hi], [{ price: 4250 }, 4250, 4250, 4250]);
+  eq('HG19 an agreed price says so', [ag.haggle.fixed, ag.haggle.price, ag.factors[ag.factors.length - 1].label], [true, 4250, 'Agreed price']);
+  eq('HG20 an agreed price stays when the quantity changes', estimate({ ...Q('buy 3 longswords'), haggle: { price: 4250 } }, c).typical, 4250);
+  eq('HG21 an agreed price round trips through the sentence', Q(queryToText(Q('buy a longsword, agreed at 42 gp 5 sp'), c)).haggle, { price: 4250 });
+  const ac = emptyCart(); addToCart(ac, { ...Q('longsword'), haggle: { price: 4250 } }); addToCart(ac, { ...Q('longsword'), haggle: { price: 4250 } });
+  eq('HG22 agreed lines never merge', ac.lines.length, 2);
+  const old = normalizeCart({ lines: [{ id: 1, q: { subject: 'good.rope' }, quote: 77 }] });
+  eq('HG23 an old locked line becomes an agreed price', old.lines[0].q.haggle, { price: 77 });
   const hostile = normalizeCart({ haggle: { pct: 'x' }, lines: [{ id: 1, q: { subject: 'good.rope', haggle: { pct: 9999 } } }] });
   eq('HG17 a hostile saved haggle loads clean', [hostile.haggle, hostile.lines[0].q.haggle.pct], [null, 300]);
 }

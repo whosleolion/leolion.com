@@ -996,3 +996,45 @@ html[data-big] .cartpill .amt { display: none; }
 
 .hgchips { padding: 0; }
 .sheet.cart .hgpanel { margin: .75rem 0; }
+
+/* ---- cart, second pass: the shop is a field, the total carries the haggle, the edit bar fits ---- */
+.editbar { display: grid; gap: .625rem; padding: .75rem; }
+.editbar .et { font-size: 1rem; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
+.editbar .eb { display: flex; gap: .5rem; }
+.editbar .eb button { flex: 1 1 0; min-width: 0; min-height: 2.75rem; padding: 0 .5rem; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: .9375rem; }
+.editbar .eb button.go { flex: 1.4 1 0; background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.editbar .eb button.rm { color: var(--up); border-color: color-mix(in srgb, var(--up) 45%, var(--line)); background: transparent; }
+.cfield { border-bottom: 1px solid var(--line); }
+.crow { display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 3.25rem; padding: 0 .125rem; border: 0; background: none; color: var(--fg); text-align: left; }
+.crow .k { width: 5.25rem; flex: none; color: var(--muted); font-size: .875rem; }
+.crow .v { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.crow .chev { color: var(--muted); }
+.shopopts { padding: 0 0 .875rem; display: grid; gap: .5rem; }
+.shopopts .lab { font: 600 .75rem var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
+.opts.wrap { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; }
+.cline .l2 { align-items: center; }
+.cline .csub { flex: 1; }
+.cline .crg { margin-left: auto; }
+.cx { flex: none; width: 2.5rem; height: 2.5rem; margin: -.25rem -.5rem -.25rem 0; border: 0; background: none; color: var(--muted); font-size: 1.375rem; border-radius: 50%; }
+.cx:active { background: var(--surface2); }
+.cempty { justify-self: start; padding: .75rem .125rem; font-size: .875rem; color: var(--muted); }
+.ctot .t1 { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.5rem; }
+.cbig { margin-top: -.25rem; }
+.cbig b { font: 700 2.25rem/1.1 var(--font-display); font-variant-numeric: lining-nums tabular-nums; }
+.ctot.hg.good .cbig b { color: var(--down); }
+.ctot.hg.bad .cbig b { color: var(--up); }
+.ctot.hg.good .span .tick { background: var(--down); }
+.ctot.hg.bad .span .tick { background: var(--up); }
+.ctot.hg.good .hgnote { color: var(--down); }
+.ctot.hg.bad .hgnote { color: var(--up); }
+.cacts { display: flex; gap: .5rem; }
+.cacts .btn { flex: 1; }
+.editbar .eb button { flex: 1 1 auto; }
+.ctot .t1 > span:first-child { font: 600 .75rem var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ctot .t1 .haggle span { font: 700 .9375rem var(--font-body); letter-spacing: 0; text-transform: none; color: inherit; }
+html[data-big] .cfoot { position: static; margin-top: 1rem; }
+.editbar .eb button, .editbar .eb button.go { flex: 1 1 auto; white-space: nowrap; padding: 0 .875rem; }
+.editbar .eb button.go { flex-grow: 1.5; }
+.editbar { grid-template-columns: minmax(0, 1fr); justify-content: stretch; align-items: stretch; }
+.editbar .eb { flex-wrap: wrap; }
+.editbar .eb button, .editbar .eb button.go { min-width: max-content; }

@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=fb67fb0a';
-import { niceRound } from './money.js?v=fb67fb0a';
+} from './data.js?v=12a3fb10';
+import { niceRound } from './money.js?v=12a3fb10';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -212,8 +212,14 @@ export function estimate(q, ctx) {
   }
 
   // ---- haggle: a negotiated change to this price, applied after every circumstance ----
-  const hg = q.haggle && Number.isFinite(+q.haggle.pct) ? Math.max(-90, Math.min(300, +q.haggle.pct)) : 0;
-  if (hg) {
+  const hq = q.haggle || null;
+  const hgPrice = hq && Number.isFinite(+hq.price) && +hq.price > 0 ? +hq.price : 0;
+  const hg = !hgPrice && hq && Number.isFinite(+hq.pct) ? Math.max(-90, Math.min(300, +hq.pct)) : 0;
+  if (hgPrice) {
+    // an agreed price replaces the whole range with one amount, and stays put when other things change
+    factors.push({ kind: 'haggle', key: 'haggle', label: 'Agreed price', lo: hgPrice / lo, hi: hgPrice / hi, fixed: true, why: 'A price you agreed by hand. It stays put when other things change.' });
+    recompute();
+  } else if (hg) {
     const f = 1 + hg / 100;
     factors.push({ kind: 'haggle', key: 'haggle', label: 'Haggled', lo: f, hi: f, pct: hg, why: hg < 0 ? 'You talked the price down by hand.' : 'The price was pushed up by hand.' });
     recompute();
@@ -223,14 +229,15 @@ export function estimate(q, ctx) {
   const typ0 = mid(lo, hi);
   const e = Math.min(2, Math.max(0, dials.volatility * 2));
   const lo2 = typ0 * Math.pow(lo / typ0, e), hi2 = typ0 * Math.pow(hi / typ0, e);
-  const typical = niceRound(typ0), low = Math.min(niceRound(lo2), typical), high = Math.max(niceRound(hi2), typical);
+  const typical = hgPrice || niceRound(typ0), low = hgPrice || Math.min(niceRound(lo2), typical), high = hgPrice || Math.max(niceRound(hi2), typical);
 
   // per-unit and sense check
   const out = { ok: true, entry, side, typical, raw: typ0, lo: low, hi: high, factors, notes, assumptions, qty };
-  if (hg) {
+  if (hgPrice || hg) {
     const pre = estimate({ ...q, haggle: null }, ctx);
     if (pre.ok) out.pre = { typical: pre.typical, lo: pre.lo, hi: pre.hi, raw: pre.raw };
-    out.haggle = { pct: hg, good: q.action === 'sell' ? hg > 0 : hg < 0 };
+    const pct = hgPrice ? (pre.ok ? Math.round((hgPrice / pre.raw - 1) * 1000) / 10 : 0) : hg;
+    out.haggle = { pct, price: hgPrice || null, fixed: !!hgPrice, good: q.action === 'sell' ? pct > 0 : pct < 0 };
   }
   const qMid = mid(qty.lo, qty.hi);
   if (!timeUnit(entry) && qMid > 1 && !entry.perDay) { out.each = niceRound(typ0 / qMid); out.eachLabel = entry.unit === 'lb' ? 'per lb' : 'each'; }

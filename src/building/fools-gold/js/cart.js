@@ -1,16 +1,18 @@
 // The cart: a list of saved questions (queries), not saved prices. Each line is priced live by the engine,
 // so every factor stays editable by loading the line back into the price screen.
-import { parse } from './parser.js?v=fb67fb0a';
-import { estimate } from './engine.js?v=fb67fb0a';
+// A haggle belongs to the question: { pct } moves with the other fields, { price } is an agreed amount that stays put.
+import { parse } from './parser.js?v=12a3fb10';
+import { estimate } from './engine.js?v=12a3fb10';
 
 export const emptyCart = () => ({ lines: [], mods: [], next: 1, haggle: null });
 
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const clone = o => JSON.parse(JSON.stringify(o));
+const fixedOf = q => !!(q.haggle && q.haggle.price > 0);
 
 // two queries are the same line when only the quantity differs
 export function lineKey(q) {
-  return JSON.stringify([q.action, q.subject, q.family, q.span, q.rarity, q.tier, [...(q.mods || [])].sort(), q.haggle ? q.haggle.pct : 0]);
+  const h = q.haggle ? (q.haggle.price > 0 ? 'p' + q.haggle.price : q.haggle.pct || 0) : 0;
+  return JSON.stringify([q.action, q.subject, q.family, q.span, q.rarity, q.tier, [...(q.mods || [])].sort(), h]);
 }
 
 // the shop (place and the like) applies to every line, unless the line already picked something in that group
@@ -33,18 +35,17 @@ export function stripShop(q, shopMods) {
 
 const qtyOf = q => (q.qty ? (q.qty.lo === q.qty.hi ? q.qty.lo : null) : 1);
 
-export function addToCart(cart, q, qty) {
+export function addToCart(cart, q) {
   const base = clone(q); delete base.overrides;
-  const hit = cart.lines.find(l => l.quote == null && lineKey(l.q) === lineKey(base));
+  const hit = cart.lines.find(l => !fixedOf(l.q) && lineKey(l.q) === lineKey(base));
   if (hit) {
     const a = qtyOf(hit.q), b = qtyOf(base);
     if (a != null && b != null) {
-      const n = a + b; hit.q.qty = n === 1 ? null : { ...(hit.q.qty || { unit: undefined }), lo: n, hi: n };
-      if (hit.q.qty && hit.q.qty.unit === undefined) delete hit.q.qty.unit;
+      const n = a + b; hit.q.qty = n === 1 ? null : { ...(hit.q.qty || {}), lo: n, hi: n };
       return hit;
     }
   }
-  const line = { id: cart.next++, q: base, quote: null };
+  const line = { id: cart.next++, q: base };
   cart.lines.push(line);
   return line;
 }
@@ -57,21 +58,19 @@ export function unitsInCart(cart, q) {
 export function lineResult(line, cart, ctx) {
   const q = withShop(line.q, cart.mods, ctx);
   if (!q.subject || !ctx.byId.has(q.subject)) return { ok: false, reason: 'missing' };
-  // a cart haggle is a change to what you buy, on top of any haggle on the line itself
-  const hgLine = (line.q.haggle && line.q.haggle.pct) || 0, hgCart = q.action !== 'sell' && line.quote == null && cart.haggle && cart.haggle.pct ? cart.haggle.pct : 0;
+  // a cart haggle is a change to what you buy, on top of any percent haggle on the line; an agreed price is left alone
+  const hgLine = (!fixedOf(line.q) && line.q.haggle && line.q.haggle.pct) || 0;
+  const hgCart = q.action !== 'sell' && !fixedOf(line.q) && cart.haggle && cart.haggle.pct ? cart.haggle.pct : 0;
   if (hgCart) q.haggle = { pct: Math.round(((1 + hgLine / 100) * (1 + hgCart / 100) - 1) * 1000) / 10 };
   const e = estimate(q, ctx);
   if (!e.ok) return { ok: false, reason: e.error || 'bad' };
   const sell = q.action === 'sell';
-  const t = line.quote != null ? line.quote : e.typical;
-  return { ok: true, e, q, sell, hgLine, hgCart, was: e.pre ? e.pre.typical : null, quoted: line.quote != null, t, lo: line.quote != null ? t : e.lo, hi: line.quote != null ? t : e.hi };
+  return { ok: true, e, q, sell, hgLine, hgCart, fixed: fixedOf(line.q), was: e.pre ? e.pre.typical : null, t: e.typical, lo: e.lo, hi: e.hi };
 }
 
-// totals: what you pay, what you receive, and a likely band that treats lines as varying independently
-export function cartTotals(cart, ctx) {
-  let spend = 0, get = 0;
+function totalsOf(cart, ctx) {
+  let spend = 0, get = 0, missing = 0, n = 0;
   const v = { spendLo: 0, spendHi: 0, getLo: 0, getHi: 0 };
-  let missing = 0, n = 0;
   const ext = { spendLo: 0, spendHi: 0, getLo: 0, getHi: 0 };
   for (const line of cart.lines) {
     const r = lineResult(line, cart, ctx);
@@ -90,6 +89,13 @@ export function cartTotals(cart, ctx) {
     netBand: [net - dLo, net + dHi],
     mixed: get > 0 && spend > 0,
   };
+}
+// totals: what you pay, what you receive, and a likely band that treats lines as varying independently.
+// With a cart haggle on, `pre` holds the same totals without it, which is the scale the haggle is made against.
+export function cartTotals(cart, ctx) {
+  const t = totalsOf(cart, ctx);
+  t.pre = cart.haggle ? totalsOf({ ...cart, haggle: null }, ctx) : null;
+  return t;
 }
 
 // "3 rope, 2 torches, sell 2 longswords in a village": several items in one sentence
@@ -123,26 +129,34 @@ export function cartText(cart, ctx, fmt, labelOf) {
   const rows = [], t = cartTotals(cart, ctx);
   for (const line of cart.lines) {
     const r = lineResult(line, cart, ctx);
-    rows.push(r.ok ? `${labelOf(r)}${r.sell ? ' (sell)' : ''}${r.quoted ? ' (agreed)' : r.e.haggle ? ' (haggled)' : ''}: ${fmt(r.t)}` : `${labelOf(null, line)}: not in your lists`);
+    rows.push(r.ok ? `${labelOf(r)}${r.sell ? ' (sell)' : ''}${r.fixed ? ' (agreed)' : r.e.haggle ? ' (haggled)' : ''}: ${fmt(r.t)}` : `${labelOf(null, line)}: not in your lists`);
   }
   const shop = cart.mods.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ');
   const total = t.get > 0 && t.spend > 0 ? `Net: you ${t.net < 0 ? 'pay' : 'receive'} ${fmt(Math.abs(t.net))}` : t.get > 0 ? `You receive ${fmt(t.get)}` : `Total: ${fmt(t.spend)}`;
   return [shop ? `Cart, ${shop}` : 'Cart', ...rows, total].join('\n');
 }
 
-// store helper: keep what we load sane
+const cleanHaggle = h => {
+  if (!h || typeof h !== 'object') return null;
+  if (Number.isFinite(+h.price) && +h.price > 0) return { price: +h.price };
+  if (Number.isFinite(+h.pct) && +h.pct) return { pct: Math.max(-90, Math.min(300, +h.pct)) };
+  return null;
+};
+
+// store helper: keep what we load sane. Older carts had a "quote" on a line; that is now an agreed price.
 export function normalizeCart(c) {
   const out = emptyCart();
   if (!c || typeof c !== 'object') return out;
   out.mods = Array.isArray(c.mods) ? c.mods.filter(x => typeof x === 'string').slice(0, 4) : [];
-  out.haggle = c.haggle && Number.isFinite(+c.haggle.pct) && +c.haggle.pct ? { pct: Math.max(-90, Math.min(300, +c.haggle.pct)) } : null;
+  const ch = cleanHaggle(c.haggle); out.haggle = ch && ch.pct ? ch : null;
   for (const l of Array.isArray(c.lines) ? c.lines.slice(0, 200) : []) {
     if (!l || typeof l !== 'object' || !l.q || typeof l.q !== 'object') continue;
     const q = l.q;
     if (typeof q.subject !== 'string' && typeof q.family !== 'string') continue;
-    out.lines.push({ id: Number.isFinite(+l.id) ? +l.id : out.next, q: { action: ['buy', 'sell', 'value'].includes(q.action) ? q.action : 'buy', subject: typeof q.subject === 'string' ? q.subject : null, family: typeof q.family === 'string' ? q.family : null, qty: q.qty && Number.isFinite(+q.qty.lo) ? q.qty : null, span: q.span && Number.isFinite(+q.span.lo) ? q.span : null, rarity: typeof q.rarity === 'string' ? q.rarity : null, tier: typeof q.tier === 'string' ? q.tier : null, mods: Array.isArray(q.mods) ? q.mods.filter(x => typeof x === 'string') : [], haggle: q.haggle && Number.isFinite(+q.haggle.pct) && +q.haggle.pct ? { pct: Math.max(-90, Math.min(300, +q.haggle.pct)) } : null, assumed: Array.isArray(q.assumed) ? q.assumed.filter(x => typeof x === 'string') : [] }, quote: l.quote != null && Number.isFinite(+l.quote) ? +l.quote : null });
+    let haggle = cleanHaggle(q.haggle);
+    if (!haggle && l.quote != null && Number.isFinite(+l.quote) && +l.quote > 0) haggle = { price: +l.quote };
+    out.lines.push({ id: Number.isFinite(+l.id) ? +l.id : out.next, q: { action: ['buy', 'sell', 'value'].includes(q.action) ? q.action : 'buy', subject: typeof q.subject === 'string' ? q.subject : null, family: typeof q.family === 'string' ? q.family : null, qty: q.qty && Number.isFinite(+q.qty.lo) ? q.qty : null, span: q.span && Number.isFinite(+q.span.lo) ? q.span : null, rarity: typeof q.rarity === 'string' ? q.rarity : null, tier: typeof q.tier === 'string' ? q.tier : null, mods: Array.isArray(q.mods) ? q.mods.filter(x => typeof x === 'string') : [], haggle, assumed: Array.isArray(q.assumed) ? q.assumed.filter(x => typeof x === 'string') : [] } });
   }
   out.next = Math.max(1, ...out.lines.map(l => l.id + 1), +c.next || 1);
   return out;
 }
-export { same as _same };
