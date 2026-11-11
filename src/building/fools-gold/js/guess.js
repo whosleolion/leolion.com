@@ -1,8 +1,8 @@
 // Guessing for words the app does not know. No AI: a hand-made word-to-category list plus word overlap
 // with the catalog. It only ever proposes. The DM picks, nudges the price and confirms.
-import { stem } from './world.js?v=efcf198a';
-import { estimate, timeUnit } from './engine.js?v=efcf198a';
-import { niceRound } from './money.js?v=efcf198a';
+import { stem } from './world.js?v=6dd15706';
+import { estimate, timeUnit } from './engine.js?v=6dd15706';
+import { niceRound } from './money.js?v=6dd15706';
 
 // Word families. Each lists catalog ids to try, in order. Ids missing from the current world are skipped.
 const FAMILIES = [
@@ -59,7 +59,7 @@ export function candidatesFor(phrase, ctx) {
   for (const [sc, e] of scored.slice(0, 3)) add(e, 'Shares words with ' + e.name.toLowerCase(), sc);
   out.sort((a, b) => b.score - a.score);
   const real = out.slice(0, 4);
-  const tiers = (ctx.world.baseline === 'modern' ? TIERS.modern : TIERS.standard).map((bu, i) => ({ id: 'tier:' + i, label: TIER_LABELS[i][0], why: TIER_LABELS[i][1], unit: 'each', bu, tier: true }));
+  const tiers = (ctx.entries.some(e => e.src === 'modern') && !ctx.entries.some(e => e.src === 'srd' || e.src === 'core') ? TIERS.modern : TIERS.standard).map((bu, i) => ({ id: 'tier:' + i, label: TIER_LABELS[i][0], why: TIER_LABELS[i][1], unit: 'each', bu, tier: true }));
   return [...real, ...tiers.slice(0, real.length ? 2 : 4)];
 }
 

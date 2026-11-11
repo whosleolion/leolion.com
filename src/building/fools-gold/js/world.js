@@ -1,7 +1,7 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
 import {
   CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
-} from './data.js?v=efcf198a';
+} from './data.js?v=6dd15706';
 
 export function stem(w) {
   w = w.toLowerCase();
@@ -47,9 +47,17 @@ const norm = s => tokenize(s).filter(t => t.type !== 'dash').map(t => t.stem);
 
 export function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+// Item lists can be combined: SRD named items, the fantasy basics (travel, hired help, spells, property, magic, generic categories) and the modern day pack.
+export function worldLists(world) {
+  const ok = (world.lists || []).filter(x => ['srd', 'fantasy', 'modern'].includes(x));
+  if (ok.length) return ok;
+  return world.baseline === 'modern' ? ['modern'] : world.baseline === 'generic' ? ['fantasy'] : ['srd', 'fantasy'];
+}
+
 export function compileWorld(world) {
-  const base = world.baseline === 'generic' ? 'generic' : world.baseline === 'modern' ? 'modern' : 'srd';
-  const entries = CATALOG.filter(e => base === 'modern' ? e.src === 'modern' : e.src !== 'modern' && (base === 'srd' || e.src !== 'srd' || e.generic)).map(e => ({ ...e }));
+  const lists = worldLists(world);
+  const base = lists.includes('modern') && !lists.includes('fantasy') && !lists.includes('srd') ? 'modern' : 'other';
+  const entries = CATALOG.filter(e => e.src === 'modern' ? lists.includes('modern') : (e.src === 'srd' && !e.generic) ? lists.includes('srd') : lists.includes('fantasy')).map(e => ({ ...e }));
   const byId = new Map(entries.map(e => [e.id, e]));
   // user items
   for (const it of world.items || []) {

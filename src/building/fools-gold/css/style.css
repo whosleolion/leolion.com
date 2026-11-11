@@ -593,3 +593,29 @@ body { background: var(--bg); color: var(--fg); font: 16px/1.35 var(--font-body)
 .nav .btn { grid-column: 2; }
 .cg::after { top: -.1em; bottom: -.1em; width: .07em; }
 .o span .cg::after, .slot .hint .cg::after, .ends .cg::after { top: -.06em; bottom: -.06em; }
+
+/* sub-sections inside the merged World and Items pages */
+details.sub { background: var(--surface); border-radius: 14px; margin-top: 10px; overflow: hidden; }
+details.sub > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; }
+details.sub > summary::-webkit-details-marker { display: none; }
+details.sub > summary h3 { margin: 0; font: 600 16px var(--font-body); flex: 1; }
+details.sub > summary .sv { color: var(--muted); font-size: 14px; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+details.sub > summary::after { content: "\25BE"; color: var(--muted); font-size: 11px; }
+details.sub[open] > summary::after { content: "\25B4"; }
+details.sub > .sbody { padding: 4px 14px 16px; }
+details.sub .coin, details.sub .theme, details.sub .world-row { background: var(--bg); }
+details.sub .theme label { background: transparent; }
+.theme label b { font-weight: 600; }
+.theme label .mini { color: var(--muted); font-size: 12px; font-weight: 400; }
+
+/* item list rows and tidier sub-sections */
+.listbox { display: flex; flex-direction: column; background: var(--bg); border-radius: 12px; overflow: hidden; }
+.listrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border-top: 1px solid var(--line); }
+.listrow:first-child { border-top: 0; }
+.listrow .lt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.listrow .lt b { font-size: 16px; font-weight: 600; }
+.listrow .lt .mini { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.listrow input { flex: none; width: 24px; height: 24px; accent-color: var(--accent); margin: 0; }
+details.sub > .sbody.page { padding: 0 14px 16px; gap: 10px; }
+details.sub > .sbody.page > p:first-child { margin-top: 0; }
+details.sub .tagrow { padding: 8px 0; }

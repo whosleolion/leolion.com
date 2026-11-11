@@ -1,6 +1,6 @@
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=efcf198a';
-import { compileWorld } from './world.js?v=efcf198a';
+import { WORLD_PRESETS } from './data.js?v=6dd15706';
+import { compileWorld } from './world.js?v=6dd15706';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
@@ -59,7 +59,11 @@ export const newItemId = () => 'user.i' + Date.now().toString(36) + (seq++).toSt
 // Clean any world object, from storage or an import, into one the engine can always compile.
 export function normalizeWorld(w) {
   if (!w || typeof w !== 'object' || Array.isArray(w)) throw new Error('not a world');
-  w.baseline = w.baseline === 'generic' ? 'generic' : w.baseline === 'modern' ? 'modern' : 'srd';
+  const legacy = w.baseline === 'generic' ? ['fantasy'] : w.baseline === 'modern' ? ['modern'] : ['srd', 'fantasy'];
+  let lists = (Array.isArray(w.lists) ? w.lists : legacy).filter((x, i, a) => ['srd', 'fantasy', 'modern'].includes(x) && a.indexOf(x) === i);
+  if (!lists.length) lists = ['fantasy'];
+  w.lists = lists;
+  w.baseline = lists.includes('modern') && !lists.includes('fantasy') && !lists.includes('srd') ? 'modern' : lists.includes('srd') ? 'srd' : 'generic';
   const cur = w.currency && typeof w.currency === 'object' ? w.currency : {};
   let dens = (Array.isArray(cur.denominations) ? cur.denominations : []).filter(d => d && typeof d === 'object')
     .map(d => ({ id: str(d.id).trim() || 'coin', name: str(d.name).trim() || str(d.id).trim() || 'coin', plural: str(d.plural).trim(), bu: num(d.bu, NaN), glyph: /^[A-Z]$/.test(str(d.glyph)) ? str(d.glyph) : '' }))

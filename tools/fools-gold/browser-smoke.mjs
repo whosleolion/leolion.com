@@ -8,7 +8,14 @@ const browser = await chromium.launch();
 const errors = [];
 let failed = 0;
 const ok = (n, c, d) => { if (!c) { failed++; console.log('FAIL', n, d ?? ''); } else console.log('ok  ', n); };
-const goPage = async (page, p) => { await page.click(`.nrow[data-p="${p}"]`); };
+const SUB = { 'Your worlds': ['World', 'Worlds'], Money: ['World', 'Money'], Economy: ['World', 'Economy'], Dials: ['World', 'Dials'], 'Item list': ['Custom', 'Item lists'], 'Custom words': ['Custom', 'Custom words'], 'My items': ['Custom', 'My items'], Adjustments: ['Custom', 'Adjustments'] };
+const goPage = async (page, p) => {
+  const m = SUB[p];
+  if (!m) { await page.click(`.nrow[data-p="${p}"]`); return; }
+  await page.click(`.nrow[data-p="${m[0]}"]`);
+  const open = await page.$eval(`details.sub[data-sub="${m[1]}"]`, d => d.open);
+  if (!open) await page.click(`details.sub[data-sub="${m[1]}"] > summary`);
+};
 const goBack = async page => { await page.click('.back'); };
 const price = page => page.textContent('.pricebtn .num');
 for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'dark'], ['desktop-light', { width: 1100, height: 900 }, 'light']]) {
@@ -107,7 +114,15 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   // settings as pushed pages, worlds, modern
   await page.click('#gear');
   ok(name + ' drawer opens', await page.isVisible('#drawer'));
-  ok(name + ' settings root is a short grouped list', (await page.$$('.nrow')).length >= 10 && (await page.$$('.navgroup')).length === 3);
+  ok(name + ' settings root is five rows in three groups', (await page.$$('.nrow')).length === 5 && (await page.$$('.navgroup')).length === 3);
+  await goPage(page, 'Item list');
+  ok(name + ' item lists are check boxes you can combine', (await page.$$('input[data-bind^="list."]')).length === 3);
+  await page.click('input[data-bind="list.modern"]');
+  await goBack(page); await page.click('[data-act=close-world]');
+  await page.fill('#q', 'taxi ride');
+  ok(name + ' a second item list adds its prices', (await page.$('.pricebtn')) !== null && /Taxi/i.test(await page.textContent('.price .what')));
+  await page.click('#gear'); await goPage(page, 'Item list'); await page.click('input[data-bind="list.modern"]');
+  await goBack(page);
   await goPage(page, 'About');
   ok(name + ' the attribution lives in About', /Creative Commons/.test(await page.textContent('.sbody.page')));
   await goBack(page);

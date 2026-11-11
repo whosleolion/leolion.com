@@ -1,16 +1,16 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=efcf198a';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=efcf198a';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=efcf198a';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=efcf198a';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=efcf198a';
+import { compileWorld } from './world.js?v=6dd15706';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=6dd15706';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=6dd15706';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=6dd15706';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=6dd15706';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=efcf198a';
-import { applicable } from './engine.js?v=efcf198a';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=efcf198a';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=efcf198a';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=efcf198a';
+} from './data.js?v=6dd15706';
+import { applicable } from './engine.js?v=6dd15706';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=6dd15706';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=6dd15706';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=6dd15706';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,7 +19,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, guess: null, slot: null, numOpen: false, more: false, text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, subOpen: {}, guess: null, slot: null, numOpen: false, more: false, text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -440,21 +440,33 @@ function resolveMeans(text) {
   return m ? 'mod:' + m.id : null;
 }
 
+const PAGES = {
+  World: { title: 'World', subs: ['Worlds', 'Money', 'Economy', 'Dials'], open: 'Worlds' },
+  Custom: { title: 'Items and words', subs: ['Item lists', 'Custom words', 'My items', 'Adjustments'], open: 'Item lists' },
+};
 function renderDrawer() {
   const panel = $('#drawerPanel'), top = panel.scrollTop;
   const doc = new DOMParser().parseFromString('<div>' + buildSettingsHtml() + '</div>', 'text/html');
   const secs = [...doc.querySelectorAll('details.sect')].map(d => ({ id: d.dataset.sec, sv: d.querySelector('.sv')?.textContent || '', title: d.querySelector('summary h3')?.textContent || d.dataset.sec, body: d.querySelector('.sbody').innerHTML }));
-  const page = st.dpage && secs.find(x => x.id === st.dpage);
-  if (page) {
-    panel.innerHTML = `<div class="nav"><button class="back" data-act="dpage" data-p="">‹ Settings</button><h2>${esc(page.title)}</h2><button class="btn primary" data-act="close-world">Done</button></div><div class="sbody page">${page.body}</div>`;
+  const byId = id => secs.find(x => x.id === id);
+  const page = st.dpage && (PAGES[st.dpage] || byId(st.dpage));
+  const nav = (title, back) => `<div class="nav">${back ? '<button class="back" data-act="dpage" data-p="">&lsaquo; Settings</button>' : ''}<h2>${esc(title)}</h2><button class="btn primary" data-act="close-world">Done</button></div>`;
+  if (page && PAGES[st.dpage]) {
+    const P = PAGES[st.dpage];
+    panel.innerHTML = nav(P.title, true) + P.subs.map(id => byId(id)).filter(Boolean).map(x => `<details class="sub" data-sub="${esc(x.id)}"${(x.id in st.subOpen ? st.subOpen[x.id] : x.id === P.open) ? ' open' : ''}><summary><h3>${esc(x.title)}</h3><span class="sv">${esc(x.sv)}</span></summary><div class="sbody page">${x.body}</div></details>`).join('');
+  } else if (page) {
+    panel.innerHTML = nav(page.title, true) + `<div class="sbody page">${page.body}</div>`;
   } else {
     st.dpage = null;
-    const grp = (label, ids) => { const rows = ids.map(id => secs.find(x => x.id === id)).filter(Boolean); return rows.length ? `<div class="navgroup">${label}</div><div class="group">${rows.map(x => `<button class="nrow" data-act="dpage" data-p="${esc(x.id)}"><span class="nl">${esc(x.title)}</span><span class="sv">${esc(x.sv)}</span><span class="chev">›</span></button>`).join('')}</div>` : ''; };
-    panel.innerHTML = `<div class="nav"><h2>Settings</h2><button class="btn primary" data-act="close-world">Done</button></div>` +
-      grp('App', ['Appearance', 'About']) + grp('World: ' + esc(world.name), ['Your worlds', 'Item list', 'Money', 'Economy', 'Dials', 'Custom words', 'My items', 'Adjustments']) + grp('Data', ['Back up and share']);
+    const row = (id, title, sv) => `<button class="nrow" data-act="dpage" data-p="${esc(id)}"><span class="nl">${esc(title)}</span><span class="sv">${esc(sv)}</span><span class="chev">&rsaquo;</span></button>`;
+    const nCustom = world.vocabulary.length + world.items.length + Object.keys(world.overrides).length + Object.keys(world.baseOverrides).length;
+    panel.innerHTML = nav('Settings', false) +
+      `<div class="navgroup">App</div><div class="group">${row('Appearance', 'Appearance', byId('Appearance').sv)}${row('About', 'About', '')}</div>` +
+      `<div class="navgroup">This world</div><div class="group">${row('World', 'World', world.name)}${row('Custom', 'Items and words', (byId('Item lists').sv) + (nCustom ? ' + ' + nCustom : ''))}</div>` +
+      `<div class="navgroup">Data</div><div class="group">${row('Back up and share', 'Back up and share', '')}</div>`;
   }
   panel.querySelectorAll('.glyphs').forEach(g => { const on = g.querySelector('.gl.on'); if (on) g.scrollLeft = Math.max(0, on.offsetLeft - 24); });
-  panel.scrollTop = page === undefined ? top : (st.dpageChanged ? 0 : top);
+  panel.scrollTop = st.dpageChanged ? 0 : top;
   st.dpageChanged = false;
 }
 function overrideLabel(k) {
@@ -477,17 +489,19 @@ function buildSettingsHtml() {
 
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
-  <details class="sect" data-sec="Your worlds"${op('Your worlds')}><summary><h3>Your worlds</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
+  <details class="sect" data-sec="Worlds"${op('Worlds')}><summary><h3>Worlds</h3><span class="sv">${esc(w.name)}</span></summary><div class="sbody">
     ${S.worlds.map(x => `<button class="world-row${x.id === w.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}"><span><span class="wn">${esc(x.name)}</span><span class="wb">${esc(x.blurb || (x.economyTags || []).join(', ') || 'Custom world')}</span></span></button>`).join('')}
     <div class="row"><select id="newPreset" class="field" aria-label="Preset to copy"><option value="srd">Standard Fantasy</option><option value="vcm">Industrial Fantasy</option><option value="modern">Modern day, real world</option></select><button class="btn" data-act="w-new">New world from preset</button><button class="btn" data-act="w-dup">Duplicate this one</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete this one</button>` : ''}</div>
     <label class="lab">Name<input class="field" data-bind="name" value="${esc(w.name)}"></label>
   </div></div></details>
 
-  <details class="sect" data-sec="Item list"${op('Item list')}><summary><h3>Item list</h3><span class="sv">${esc({ srd: 'Fantasy, 5e SRD', generic: 'Fantasy, generic', modern: 'Modern day' }[w.baseline])}</span></summary><div class="sbody">
-    <p>Where prices start. Your own items and settings always override it.</p>
-    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="srd"${w.baseline === 'srd' ? ' checked' : ''}><span><b>Fantasy, 5e SRD items</b>Named items like longsword and chain mail, plus travel, hired help, spells, property and magic.</span></label>
-    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="generic"${w.baseline === 'generic' ? ' checked' : ''}><span><b>Fantasy, generic</b>Categories only, such as weapon, armor and potion. No SRD names.</span></label>
-    <label class="tagrow"><input type="radio" name="baseline" data-bind="baseline" value="modern"${w.baseline === 'modern' ? ' checked' : ''}><span><b>Modern day, real world</b>Current US prices for rent, groceries, flights, doctors and cars. Pair it with US dollars under Money.</span></label>
+  <details class="sect" data-sec="Item lists"${op('Item lists')}><summary><h3>Item lists</h3><span class="sv">${esc([['srd', '5e SRD'], ['fantasy', 'Fantasy'], ['modern', 'Modern']].filter(([k]) => w.lists.includes(k)).map(x => x[1]).join(' + '))}</span></summary><div class="sbody">
+    <p>Turn on every list this world draws prices from. Your own items and settings always override them.</p>
+    <div class="listbox">
+      <label class="listrow"><span class="lt"><b>5e SRD items</b><span class="mini">Named items like longsword and chain mail.</span></span><input type="checkbox" data-bind="list.srd"${w.lists.includes('srd') ? ' checked' : ''}></label>
+      <label class="listrow"><span class="lt"><b>Fantasy basics</b><span class="mini">Travel, hired help, spells, property, magic and generic kinds like weapon and potion.</span></span><input type="checkbox" data-bind="list.fantasy"${w.lists.includes('fantasy') ? ' checked' : ''}></label>
+      <label class="listrow"><span class="lt"><b>Modern day</b><span class="mini">Rent, groceries, flights, doctors and cars at current US prices. Pair it with US dollars under Money.</span></span><input type="checkbox" data-bind="list.modern"${w.lists.includes('modern') ? ' checked' : ''}></label>
+    </div>
   </div></div></details>
 
   <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">
@@ -742,7 +756,7 @@ $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') clos
 // drawer and flow inputs
 document.addEventListener('toggle', e => {
   const t = e.target;
-  if (t.dataset && t.dataset.sec) st.drawerOpen[t.dataset.sec] = t.open;
+  if (t.dataset && t.dataset.sub) st.subOpen[t.dataset.sub] = t.open;
 }, true);
 document.addEventListener('input', e => {
   if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderSheet(); const i = $('#flowSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
@@ -760,7 +774,13 @@ document.addEventListener('change', e => {
   const w = world, p = bind.split('.');
   if (bind === 'theme') { S.theme = t.value === 'system' ? null : t.value; applyTheme(); persist(); renderDrawer(); return; }
   if (bind === 'name') w.name = t.value.trim() || 'My world';
-  else if (bind === 'baseline') w.baseline = t.value;
+  else if (p[0] === 'list') {
+    const on = new Set(w.lists);
+    t.checked ? on.add(p[1]) : on.delete(p[1]);
+    if (!on.size) { on.add('fantasy'); toast('At least one item list stays on.'); }
+    w.lists = ['srd', 'fantasy', 'modern'].filter(x => on.has(x));
+    worldChanged(); return;
+  }
   else if (p[0] === 'den') { const d = w.currency.denominations[+p[1]]; if (p[2] === 'bu') d.bu = Math.max(0.01, +t.value || 1); else { d[p[2]] = t.value.trim() || d[p[2]]; if (p[2] === 'name') d.plural = d.name.endsWith('s') ? d.name : d.name + 's'; } }
   else if (bind === 'belowSmallest') w.currency.belowSmallest = t.value;
   else if (bind === 'note') w.currency.note = t.value;

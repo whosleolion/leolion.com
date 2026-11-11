@@ -16,7 +16,7 @@ const eq = (name, a, b) => t(name, JSON.stringify(a) === JSON.stringify(b), '\n 
 
 const vcm = compileWorld(WORLD_PRESETS.vcm());
 const srd = compileWorld(WORLD_PRESETS.srd());
-const tw = WORLD_PRESETS.srd(); tw.baseline = 'generic'; tw.economyTags = ['scarce-wilderland'];
+const tw = WORLD_PRESETS.srd(); tw.baseline = 'generic'; tw.lists = ['fantasy']; tw.economyTags = ['scarce-wilderland'];
 tw.currency = { denominations: [{ id: 'ti', name: 'titanium coin', plural: 'titanium coins', bu: 250 }], belowSmallest: 'decimals', note: '' };
 const ti = compileWorld(tw);
 const modern = compileWorld(WORLD_PRESETS.modern());
@@ -408,6 +408,22 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('FL14 sentence tokens are colored by role', roles, ['act', 'len', 'class', 'item', 'who', 'speed']);
   t('FL15 unknown words are flagged', tokenRoles(P('10 monster parts').parts, vcm).some(x => x.role === 'bad'));
   t('FL16 no fields without an estimate', buildFields(P('asdf').r?.query ?? P('asdf').query, null, vcm).slots.length === 0);
+}
+
+// ---------- item lists can be combined ----------
+{
+  const { normalizeWorld: nw } = await import('../../src/building/fools-gold/js/store.js');
+  const mk = lists => { const w = WORLD_PRESETS.srd(); w.lists = lists; return compileWorld(nw(w)); };
+  const only = mk(['srd']), fant = mk(['fantasy']), mod = mk(['modern']), both = mk(['fantasy', 'modern']), all3 = mk(['srd', 'fantasy', 'modern']);
+  t('IL1 SRD list alone has named items and no travel or hired help', only.byId.has('good.longsword') && !only.byId.has('travel.rail') && !only.byId.has('good.cat-potion'));
+  t('IL2 fantasy basics have categories and travel, no SRD names', fant.byId.has('good.cat-potion') && fant.byId.has('travel.rail') && !fant.byId.has('good.longsword'));
+  t('IL3 modern alone has only modern things', mod.byId.has('travel.commercial-flight') && !mod.byId.has('travel.rail'));
+  t('IL4 lists combine', both.byId.has('travel.rail') && both.byId.has('travel.commercial-flight') && !both.byId.has('good.longsword'));
+  t('IL5 all three together is the union', all3.byId.has('good.longsword') && all3.byId.has('good.cat-potion') && all3.byId.has('good.m-laptop'));
+  eq('IL6 normalize keeps at least one list', nw({ lists: [] }).lists, ['fantasy']);
+  eq('IL7 old worlds with a baseline still load', [nw({ baseline: 'generic' }).lists, nw({ baseline: 'modern' }).lists, nw({ baseline: 'srd' }).lists], [['fantasy'], ['modern'], ['srd', 'fantasy']]);
+  eq('IL8 modern place labels only when modern is the only list', [mod.mods.get('capital').label, both.mods.get('capital').label.includes('capital')], ['major city', true]);
+  eq('IL9 a combined world still prices from both', [parse('taxi ride', both).query.subject, parse('sell a rapier', all3).query.subject], ['service.m-taxi-ride', 'good.rapier']);
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

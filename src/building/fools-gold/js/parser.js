@@ -1,6 +1,6 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=efcf198a';
-import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=efcf198a';
+import { tokenize, stem } from './world.js?v=6dd15706';
+import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=6dd15706';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, dozen: 12 };
@@ -168,7 +168,7 @@ export function parse(text, ctx) {
     else {
       const fam = FAMILIES.find(f => f.id === s.id);
       const want = ctx.world.defaults?.[fam.defaultKey] || fam.fallback;
-      subjectEntry = ctx.byId.get(want) || ctx.byId.get(fam.fallback) || null;
+      subjectEntry = ctx.byId.get(want) || ctx.byId.get(fam.fallback) || ctx.entries.find(e => e.group === fam.id) || null;
       if (subjectEntry) { q.family = fam.id; q.assumed.push('mode'); }
     }
     if (!subjectEntry) { subs.forEach(p => { p.used = false; }); }
