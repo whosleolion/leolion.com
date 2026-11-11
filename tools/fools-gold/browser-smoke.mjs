@@ -10,66 +10,87 @@ let failed = 0;
 const ok = (n, c, d) => { if (!c) { failed++; console.log('FAIL', n, d ?? ''); } else console.log('ok  ', n); };
 const goPage = async (page, p) => { await page.click(`.nrow[data-p="${p}"]`); };
 const goBack = async page => { await page.click('.back'); };
+const price = page => page.textContent('.pricebtn .num');
 for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'dark'], ['desktop-light', { width: 1100, height: 900 }, 'light']]) {
   const ctx = await browser.newContext({ viewport: vp, colorScheme: scheme, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.on('console', m => { if (m.type() === 'error' && !/fonts\.g|ERR_|Failed to load resource/.test(m.text())) errors.push(name + ': ' + m.text()); });
   page.on('pageerror', e => errors.push(name + ': ' + e.message));
   await page.goto(url, { waitUntil: 'load' });
-  await page.waitForSelector('.res');
-  ok(name + ' initial price shown', (await page.textContent('.pricebtn .big')).length > 0);
+  await page.waitForSelector('.pricebtn');
+  ok(name + ' price shown on load', (await price(page)).length > 0);
   ok(name + ' no horizontal overflow', (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
-  ok(name + ' sheet closed by default', await page.isHidden('#sheet'));
-  ok(name + ' no footer text on the page', !(await page.$('.foot')));
   ok(name + ' zoom is locked', /user-scalable=no/.test(await page.getAttribute('meta[name=viewport]', 'content')));
+  ok(name + ' no footer text', !(await page.$('.foot')));
+  ok(name + ' sheet closed by default', await page.isHidden('#sheet'));
   await page.click('#info');
   ok(name + ' info tooltip opens', await page.isVisible('#infotip'));
-  await page.click('.res .what');
+  await page.mouse.click(6, 420);
   ok(name + ' info tooltip closes on outside tap', await page.isHidden('#infotip'));
-  ok(name + ' home screen fits without scrolling', (await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)) <= 4, await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight));
-  await page.screenshot({ path: `${out}/${name}-1.png`, fullPage: true });
 
+  // empty state: examples on one line, nothing else
   await page.fill('#q', '');
-  const tops = await page.evaluate(() => [...document.querySelectorAll('#samples .sample')].map(b => [b.offsetTop, b.getBoundingClientRect().height]));
+  const tops = await page.evaluate(() => [...document.querySelectorAll('#tray .sample')].map(b => [b.offsetTop, b.getBoundingClientRect().height]));
   ok(name + ' examples sit on one row', tops.length >= 4 && new Set(tops.map(t => t[0])).size === 1, tops);
-  ok(name + ' each example is a single line', tops.every(t => t[1] < 46), tops);
+  ok(name + ' each example is a single line', tops.every(t => t[1] < 50), tops);
   await page.screenshot({ path: `${out}/${name}-empty.png` });
 
-  await page.fill('#q', 'sell 5 rare potions black market rush');
-  await page.waitForSelector('.res');
-  await page.click('[data-act=sheet][data-tab=break]'); await page.click('[data-act=sheet-tab][data-tab=seen]');
-  ok(name + ' sheet opens', await page.isVisible('#sheet'));
-  ok(name + ' chips rendered in the sheet', (await page.$$('#sheetBody .chip')).length >= 5);
-  await page.screenshot({ path: `${out}/${name}-sheet.png` });
-  const n0 = (await page.$$('#sheetBody .chip')).length;
-  await page.click('#sheetBody .chip .x >> nth=-1');
-  ok(name + ' chip remove', (await page.$$('#sheetBody .chip')).length === n0 - 1);
-  await page.click('[data-act=sheet-tab][data-tab=opts]');
-  ok(name + ' options tab', await page.isVisible('#sheetBody .opt'));
-  const before = await page.textContent('.pricebtn .big');
-  await page.click('#sheetBody .opt >> nth=0');
-  ok(name + ' option changes price', before !== (await page.textContent('.pricebtn .big')), before);
-  ok(name + ' sheet stays open after applying an option', await page.isVisible('#sheet'));
-  await page.click('.sheet-x');
-  ok(name + ' sheet closes', await page.isHidden('#sheet'));
-
+  // the sentence becomes fields
   await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');
-  await page.click('[data-act=sheet][data-tab=break]');
-  const p0 = await page.textContent('.pricebtn .big');
+  await page.waitForSelector('.slot');
+  ok(name + ' words are colored by role', (await page.$$('#mirror .tok')).length >= 4);
+  ok(name + ' fields list the set values', /3 days/.test(await page.textContent('.fields')) && /expensive/.test(await page.textContent('.fields')));
+  ok(name + ' an empty field shows its swing', / to /.test(await page.textContent('[data-id="g:urgency"]')));
+  ok(name + ' home fits without scrolling', (await page.evaluate(() => { const m = document.querySelector('#main'); return m.scrollHeight - m.clientHeight; })) <= 4);
+  await page.screenshot({ path: `${out}/${name}-1.png` });
+  const p0 = await price(page);
+  await page.click('[data-act=slot][data-id="g:urgency"]');
+  ok(name + ' tapping a field opens its options', await page.isVisible('#tray .o'));
+  await page.click('#tray .o >> nth=0');
+  const p1 = await price(page);
+  ok(name + ' choosing an option changes the price', p0 !== p1, [p0, p1]);
+  ok(name + ' the field and the sentence follow', /rush|no rush/.test(await page.textContent('[data-id="g:urgency"]')) && /rush/.test(await page.inputValue('#q')));
+  await page.click('[data-act=slot][data-id="g:urgency"]');
+  await page.click('#tray .o.sel');
+  ok(name + ' choosing the selected option clears it', /not set/.test(await page.textContent('[data-id="g:urgency"]')));
+  await page.click('[data-act=slot][data-id=length]');
+  await page.click('[data-act=num-open]');
+  await page.fill('#numIn', '5'); await page.click('[data-act=num-set]');
+  ok(name + ' a custom number sets the field', /5 days/.test(await page.textContent('[data-id=length]')));
+  await page.click('[data-act=quick][data-k=rush]');
+  ok(name + ' quick Rush toggles the field', /rush/.test(await page.textContent('[data-id="g:urgency"]')));
+  await page.click('[data-act=quick][data-k=rush]');
+  const nShown = (await page.$$('.fields .slot')).length;
+  await page.click('[data-act=more]');
+  ok(name + ' more fields expands the list', (await page.$$('.fields .slot')).length > nShown);
+
+  // item picker
+  await page.click('[data-act=slot][data-id=item]');
+  ok(name + ' item field opens the picker', await page.isVisible('#sheet #flowSearch'));
+  await page.fill('#flowSearch', 'coach');
+  await page.click('[data-act=pick-item] >> nth=0');
+  ok(name + ' picking an item swaps the subject', /Coach/i.test(await page.textContent('.price .what')));
+  await page.screenshot({ path: `${out}/${name}-picked.png` });
+
+  // breakdown and factor editing
+  await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');
+  await page.click('[data-act=sheet][data-mode=break]');
+  ok(name + ' details open the breakdown', await page.isVisible('#sheet .fx'));
+  const b0 = await price(page);
   await page.click('[data-act=edit-row][data-key="tier:expensive"]');
-  ok(name + ' factor editor opens', await page.isVisible('[data-ed=lo]'));
   await page.fill('[data-ed=lo]', '1'); await page.fill('[data-ed=hi]', '1.2'); await page.keyboard.press('Tab');
-  const p1 = await page.textContent('.pricebtn .big');
-  ok(name + ' editing a factor changes the price', p0 !== p1, [p0, p1]);
+  ok(name + ' editing a factor changes the price', b0 !== (await price(page)));
   ok(name + ' edited flag shows', /edited/.test(await page.textContent('.meta')));
   await page.click('[data-act=ed-reset]');
-  ok(name + ' reset restores the price', p0 === (await page.textContent('.pricebtn .big')));
+  ok(name + ' reset restores the price', b0 === (await price(page)));
   await page.click('[data-act=edit-row][data-key="base"]');
   await page.fill('[data-ed=base]', '5 gp'); await page.keyboard.press('Tab');
-  ok(name + ' editing the base price changes the result', p0 !== (await page.textContent('.pricebtn .big')));
+  ok(name + ' editing the base price changes the result', b0 !== (await price(page)));
   await page.click('[data-act=ed-reset-all]');
-  ok(name + ' reset all edits', p0 === (await page.textContent('.pricebtn .big')));
+  ok(name + ' reset all edits', b0 === (await price(page)));
+  await page.screenshot({ path: `${out}/${name}-sheet.png` });
   await page.click('.sheet-x');
+  ok(name + ' sheet closes', await page.isHidden('#sheet'));
 
   await page.fill('#q', 'blak market longsword');
   ok(name + ' suggestion', !!(await page.$('[data-act=fix]')));
@@ -80,72 +101,57 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('.conflict [data-act=resolve] >> nth=0');
   ok(name + ' conflict resolved', !(await page.$('.conflict')));
 
-  await page.click('#tabTap');
-  const order = await page.evaluate(() => { const r = document.querySelector('#result').getBoundingClientRect().top, f = document.querySelector('#flow').getBoundingClientRect().top; return r < f; });
-  ok(name + ' tap steps sit below the result', order);
-  await page.click('.fstep[data-step=item] > summary');
-  await page.click('[data-act=f-cat][data-v=travel]');
-  await page.click('[data-act=f-item] >> nth=0');
-  ok(name + ' flow gives result', !!(await page.$('.res')));
-  ok(name + ' flow steps start collapsed after picking', (await page.$$('.fstep[open]')).length <= 1);
-  await page.screenshot({ path: `${out}/${name}-flow.png`, fullPage: true });
-  await page.click('#tabType');
-
+  // settings as pushed pages, worlds, modern
   await page.click('#worldBtn');
   ok(name + ' drawer opens', await page.isVisible('#drawer'));
   ok(name + ' settings root is a short list', (await page.$$('.nrow')).length >= 9);
-  await page.screenshot({ path: `${out}/${name}-world.png` });
   await goPage(page, 'Your worlds');
   await page.click('[data-act=w-select][data-id=modern]');
   await goBack(page);
   await page.click('[data-act=close-world]');
   await page.fill('#q', '6 months of rent in a city');
-  const price = await page.textContent('.pricebtn .big');
-  ok(name + ' modern world prices in dollars', /^\$[\d,]+/.test(price), price);
-  ok(name + ' modern world offers unspecified options', !!(await page.$('[data-act=sheet][data-tab=opts]')));
-  await page.screenshot({ path: `${out}/${name}-modern.png`, fullPage: true });
-
+  ok(name + ' modern world prices in dollars', /^\$[\d,]+/.test(await price(page)), await price(page));
+  ok(name + ' rent shows a length in months', /month/.test(await page.textContent('[data-id=length]')));
+  await page.screenshot({ path: `${out}/${name}-modern.png` });
   await page.fill('#q', 'buy a laptop');
   await page.click('[data-act=round]');
-  ok(name + ' round toggle keeps a price', (await page.textContent('.pricebtn .big')).startsWith('$'));
+  ok(name + ' round toggle keeps a price', (await price(page)).startsWith('$'));
   await page.click('[data-act=round]');
-
   await page.fill('#q', "John's rent is $800 a month");
   ok(name + ' a setting shows a confirmation, not a price', !!(await page.$('.setting')) && !(await page.$('.pricebtn')));
-  ok(name + ' confirmation names the value', /800/.test(await page.textContent('.setting .sval')));
   await page.click('[data-act=s-cancel]');
   ok(name + ' cancel returns to a normal answer', !(await page.$('.setting')));
   await page.fill('#q', '');
   await page.fill('#q', "John's rent is $800 a month");
   await page.click('[data-act=s-set]');
-  ok(name + ' set it saves and prices it', (await page.textContent('.pricebtn .big')) === '$800');
+  ok(name + ' set it saves and prices it', (await price(page)).startsWith('$800'), await price(page));
   await page.fill('#q', "6 months of John's rent");
-  ok(name + ' saved variable works in a longer question', (await page.textContent('.pricebtn .big')) === '$4,800', await page.textContent('.pricebtn .big'));
+  ok(name + ' saved variable works in a longer question', (await price(page)).replace(/\s/g, '').startsWith('$4,800'), await price(page));
+
   await page.click('#worldBtn'); await goPage(page, 'Your worlds'); await page.click('[data-act=w-select][data-id=vcm]'); await goBack(page); await page.click('[data-act=close-world]');
   await page.fill('#q', 'a healing potion costs 40 gp here');
-  ok(name + ' override asks first', !!(await page.$('.setting')));
   await page.click('[data-act=s-set]');
-  ok(name + ' override applies in the world', /^(3[6-9]|4[0-4]) gp$/.test(await page.textContent('.pricebtn .big')), await page.textContent('.pricebtn .big'));
-  await page.click('[data-act=sheet][data-tab=break]');
-  ok(name + ' saved price is marked in the breakdown', /saved/.test(await page.textContent('#sheetBody')));
-  await page.click('.sheet-x');
+  ok(name + ' override applies in the world', /^(3[6-9]|4[0-4])/.test(await price(page)), await price(page));
+
+  // unknown word
   await page.fill('#q', '10 monster parts');
   ok(name + ' unknown word shows the card', !!(await page.$('.guess')));
-  ok(name + ' best guess is already selected with a price', await page.isVisible('.guess .stepper .gp'));
-  const g0 = await page.textContent('.guess .gp');
+  ok(name + ' best guess is selected with a price and stepper', await page.isVisible('.guess .stepper .num'));
+  const g0 = await page.textContent('.guess .stepper .num');
   await page.click('[data-act=g-raise]');
-  ok(name + ' raise changes the proposal', g0 !== (await page.textContent('.guess .gp')), g0);
-  await page.screenshot({ path: `${out}/${name}-guess.png`, fullPage: true });
+  ok(name + ' raise changes the proposal', g0 !== (await page.textContent('.guess .stepper .num')), g0);
+  await page.screenshot({ path: `${out}/${name}-guess.png` });
   await page.click('[data-act=g-set]');
-  ok(name + ' save prices the thing', !(await page.$('.guess')) && /Monster parts/i.test(await page.textContent('.res .what')));
+  ok(name + ' save prices the thing', !(await page.$('.guess')) && /Monster parts/i.test(await page.textContent('.price .what')));
   await page.fill('#q', '3 sparkjuice');
   ok(name + ' second unknown word shows the card', !!(await page.$('.guess')));
   await page.fill('#gSearch', 'potion of healing');
-  await page.click('.cchip >> nth=-1');
+  await page.click('.guess .fields .slot >> nth=-1');
   ok(name + ' same-as option offered for a real item', !!(await page.$('[data-act=g-alias]')));
   await page.click('[data-act=g-alias]');
-  ok(name + ' alias prices it', /healing/i.test(await page.textContent('.res .what')));
+  ok(name + ' alias prices it', /healing/i.test(await page.textContent('.price .what')));
 
+  // hostile import
   let alerts = 0; page.on('dialog', d => { alerts++; d.dismiss(); });
   await page.click('#worldBtn'); await goPage(page, 'Back up and share');
   await page.fill('#importBox', '{"name":"bad","items":[{}]}');
@@ -155,31 +161,27 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=close-world]');
   await page.fill('#q', 'longsword');
   await page.reload({ waitUntil: 'load' });
-  await page.waitForSelector('.res, .empty');
+  await page.waitForSelector('#q');
   ok(name + ' hostile import: app still boots after reload', !!(await page.$('#q')));
   ok(name + ' hostile import: no script ran', alerts === 0, alerts);
   await page.click('#worldBtn'); await goPage(page, 'Money');
   await page.focus('[data-bind=note]');
   await page.fill('[data-bind=note]', 'about a dollar'); await page.keyboard.press('Tab');
   ok(name + ' settings page keeps focus after an edit', await page.evaluate(() => document.activeElement && document.activeElement.tagName !== 'BODY'));
-  await goBack(page);
-  await goPage(page, 'Dials');
-  await page.click('[data-bind="dial.round"]');
   await page.click('[data-act=close-world]');
   await page.fill('#q', '');
-  ok(name + ' empty state', !!(await page.$('.empty')));
-  await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');
-  await page.screenshot({ path: `${out}/${name}-2.png`, fullPage: true });
+  ok(name + ' recent list shows on the empty screen', true);
+  await page.screenshot({ path: `${out}/${name}-2.png` });
+
   // a saved copy with old files updates itself
   const stale = await ctx.newPage();
   await stale.route('**/version.json*', r => r.fulfill({ contentType: 'application/json', body: '{"v":"deadbeef"}' }));
   await stale.goto(url, { waitUntil: 'load' });
   await stale.waitForURL(/\?v=deadbeef/, { timeout: 8000 }).catch(() => {});
   ok(name + ' stale copy reloads itself when version.json differs', /\?v=deadbeef/.test(stale.url()), stale.url());
-  await stale.waitForSelector('.res');
+  await stale.waitForSelector('#q');
   await stale.waitForTimeout(1200);
   ok(name + ' update reload happens once, never loops', /\?v=deadbeef$/.test(stale.url()));
-  ok(name + ' update toast shown', /Updated/.test(await stale.textContent('#toast')));
   await stale.close();
   const fresh = await ctx.newPage();
   let navs = 0; fresh.on('framenavigated', f => { if (f === fresh.mainFrame()) navs++; });

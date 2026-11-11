@@ -18,7 +18,7 @@ execFileSync(esbuild, [join(tmp, 'src/app.js'), '--bundle', '--minify', '--forma
 const html = readFileSync(join(root, 'index.html'), 'utf8');
 const css = readFileSync(join(root, 'css/style.css'), 'utf8');
 const body = html.split('<!--FG-BODY-START-->')[1].split('<!--FG-BODY-END-->')[0];
-const fonts = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&display=swap">';
+const fonts = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">';
 const page = `<title>Fool's Gold</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 ${fonts}

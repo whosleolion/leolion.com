@@ -1,16 +1,16 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=230c05ca';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=230c05ca';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=230c05ca';
-import { analyze } from './unstated.js?v=230c05ca';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=230c05ca';
+import { compileWorld } from './world.js?v=b1bfe512';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=b1bfe512';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=b1bfe512';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=b1bfe512';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=b1bfe512';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=230c05ca';
-import { applicable } from './engine.js?v=230c05ca';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=230c05ca';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=230c05ca';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=230c05ca';
+} from './data.js?v=b1bfe512';
+import { applicable } from './engine.js?v=b1bfe512';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=b1bfe512';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=b1bfe512';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=b1bfe512';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,7 +19,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', ui: { hist: false }, sheet: { open: false, tab: 'break' }, editRow: null, dpage: null, flowOpen: {}, guess: null, mode: 'type', text: '', parsed: null, query: emptyQuery(), est: null, an: null, flow: { cat: null, search: '' }, histTimer: null, dirty: false };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, guess: null, slot: null, numOpen: false, more: false, text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -48,30 +48,44 @@ function fromQuery(q) {
   st.query = q;
   st.text = queryToText(q, ctx);
   $('#q').value = st.text;
-  st.parsed = { query: q, unrecognized: [], suggestions: [], notes: [], parts: [] };
+  st.parsed = { query: q, unrecognized: [], suggestions: [], notes: [], parts: parse(st.text, ctx).parts };
   run();
 }
 function run(opts = {}) {
   const q = st.query;
   st.est = q.subject ? estimate(q, ctx) : null;
-  st.an = st.est && st.est.ok ? analyze(q, st.est, ctx) : null;
+  if (q.subject) st.guess = null; // a priced thing ends any unknown-word card
+  st.fields = st.est && st.est.ok ? buildFields(q, st.est, ctx) : null;
+  if (st.slot && !(st.fields && st.fields.slots.some(x => x.id === st.slot))) { st.slot = null; st.numOpen = false; }
   S.last = st.text; persist();
   renderAll();
   if (st.est && st.est.ok && st.text && !opts.noHistory && !st.setting) scheduleHistory();
 }
 function renderAll() {
   $('#clearBtn').hidden = !st.text;
-  renderUnderstanding(); renderSamples(); renderResult(); renderSheet(); renderHistory(); renderFlow();
+  renderUnderstanding(); renderResult(); renderTray(); renderInput(); renderSheet(); renderHistory();
 }
 
-// ---------- hints, chips, result ----------
-function chipsHtml() {
-  const chips = st.query.subject || st.query.mods.length || st.query.qty || st.query.span || st.query.rarity || st.query.tier ? chipsFor(st.query, ctx) : [];
-  return chips.map(c =>
-    `<span class="chip r-${c.role}${c.assumed ? ' assumed' : ''}" title="${esc(c.assumed ? 'Assumed' : c.role)}"><span class="role">${esc(c.role === 'mod' ? c.group : c.role)}</span>${esc(c.label)}${c.assumed ? '<span class="role">assumed</span>' : ''}<button class="x" data-act="chip-x" data-key="${esc(c.key)}" aria-label="Remove ${esc(c.label)}">×</button></span>`
-  ).join('');
+// ---------- the sentence, colored by what each word did ----------
+function renderInput() {
+  const text = st.text, mirror = $('#mirror');
+  const roles = st.setting ? [] : tokenRoles(st.parsed && st.parsed.parts, ctx);
+  let out = '', at = 0;
+  for (const t of roles) {
+    if (t.start < at) continue;
+    out += esc(text.slice(at, t.start)) + `<span class="tok ${t.role === 'bad' ? 'bad' : 'r-' + t.role}">${esc(text.slice(t.start, t.end))}</span>`;
+    at = t.end;
+  }
+  out += esc(text.slice(at));
+  mirror.innerHTML = out + '​';
+  const q = $('#q');
+  q.style.height = 'auto';
+  const h = Math.min(q.scrollHeight, 96);
+  q.parentElement.style.height = Math.max(h, 22) + 'px';
+  q.style.height = '100%';
 }
-// Only things the DM must act on stay visible: typo suggestions and ignored words.
+
+// ---------- hints: only what needs an answer ----------
 function renderUnderstanding() {
   const p = st.parsed, out = [];
   if (p && !st.setting) {
@@ -82,14 +96,7 @@ function renderUnderstanding() {
   }
   $('#understanding').innerHTML = out.length ? `<div class="hints">${out.join('')}</div>` : '';
 }
-function renderSamples() {
-  const el = $('#samples');
-  if (st.text) { el.innerHTML = ''; return; }
-  el.innerHTML = sampleList().map((s, i) => `<button class="sample" data-act="sample" data-i="${i}">${esc(s)}</button>`).join('');
-}
 const sampleList = () => [...(world.samples && world.samples.length ? world.samples : SAMPLE_QUERIES)].sort((a, b) => a.length - b.length);
-
-const ACTION_WORD = { buy: 'buying', sell: 'selling', value: 'appraising' };
 const hasEdits = q => !!(q.overrides && ((q.overrides.f && Object.keys(q.overrides.f).length) || q.overrides.base));
 function factsList(e) {
   const facts = [];
@@ -98,38 +105,80 @@ function factsList(e) {
   for (const n of [...e.notes, ...(st.parsed ? st.parsed.notes : [])]) facts.push(esc(n));
   return facts;
 }
+const np = str => { const m = /^(\S+)\s*(.*)$/.exec(str); return m ? { n: m[1], u: m[2] } : { n: str, u: '' }; };
+const ACTION_WORD = { buy: 'buying', sell: 'selling', value: 'appraising' };
+
+function slotRow(s) {
+  const open = st.slot === s.id;
+  let v;
+  if (s.filled) v = `<span class="dot r-${s.role}"></span>${esc(s.value)}`;
+  else if (s.assumed) v = `${esc(s.assumed)} <i>${s.id === 'item' ? 'assumed' : 'auto'}</i>`;
+  else v = 'not set';
+  const hint = !s.filled && s.options.length ? `<span class="hint">${esc(money(s.swing[0]))} to ${esc(money(s.swing[1]))}</span>` : (s.id === 'item' ? '' : '');
+  return `<button class="slot r-${s.role}${s.filled ? '' : (s.assumed ? ' assumed unset' : ' unset')}${open ? ' open' : ''}" data-act="slot" data-id="${esc(s.id)}"><span class="k">${esc(s.label)}</span><span class="v">${v}</span>${hint}<span class="chev">${open ? '&#9662;' : '&#8250;'}</span></button>`;
+}
 function renderResult() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
-  if (!st.text) { el.innerHTML = `<div class="empty">Describe what you want priced. Quantity, length, buying or selling, place, speed and quality all sharpen the estimate.</div>`; return; }
+  if (!st.text) { el.innerHTML = `<p class="empty">Describe what you want priced. Say how many or how long, buying or selling, where, how fast and how good. Whatever you leave out shows up as a field, with how far it could move the price.</p>`; return; }
   if (!q.subject) {
     const g = guessCard();
-    el.innerHTML = g || `<div class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or switch to <b>Tap it</b> to browse.</div>`; return;
+    el.innerHTML = g || `<p class="empty">No item found. ${st.parsed && st.parsed.suggestions.length ? 'Check the suggestion above, or name' : 'Name'} an item, service or trip, or search the list with the item field once something is priced.</p>`; return;
   }
   if (!e.ok && e.error === 'conflict') {
     el.innerHTML = e.conflicts.map(c => `<div class="conflict"><p><b>${esc(GROUPS[c.group].ask)}:</b> pick one.</p><div class="row">${c.ids.map((id, i) => `<button class="pill" data-act="resolve" data-id="${esc(id)}">${esc(c.labels[i])}</button>`).join('')}</div></div>`).join('');
     return;
   }
-  const ent = e.entry;
+  const ent = e.entry, pr = np(money(e.typical));
+  const pos = e.hi > e.lo ? Math.min(100, Math.max(0, (Math.log(e.typical) - Math.log(e.lo)) / (Math.log(e.hi) - Math.log(e.lo)) * 100)) : 50;
   const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
   const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
   const what = qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
-  const meta = [range(e.lo, e.hi), e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : '', ACTION_WORD[q.action] + (q.assumed.includes('action') ? ' (assumed)' : ''), hasEdits(q) ? 'edited' : ''].filter(Boolean);
-  const nOpts = st.an ? st.an.dimensions.length : 0;
-  const nFacts = factsList(e).length;
-  el.innerHTML = `<article class="res">
+  const meta = [e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : '', hasEdits(q) ? 'edited' : ''].filter(Boolean);
+  const f = st.fields || { shown: [], more: [] };
+  const rows = [...f.shown, ...(st.more ? f.more : [])].map(slotRow).join('');
+  const moreRow = f.more.length ? `<button class="slot more" data-act="more"><span>${st.more ? 'Fewer fields' : 'More fields'}</span><span class="hint">${f.more.length}</span></button>` : '';
+  el.innerHTML = `<section class="price">
     <div class="what">${esc(what)}</div>
-    <button class="pricebtn" data-act="copy" aria-label="Copy price"><span class="big">${esc(money(e.typical))}</span></button>
-    <div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>
-    <div class="acts">
-      <button class="tgl" data-act="sheet" data-tab="break">Details${nFacts ? ` <b class="dot">${nFacts}</b>` : ''}</button>
-      ${nOpts ? `<button class="tgl" data-act="sheet" data-tab="opts">Not specified <b class="dot">${nOpts}</b></button>` : ''}
-      <button class="tgl${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}" title="Round to whole coins">Round</button>
-    </div>
-  </article>`;
+    <button class="pricebtn" data-act="copy" aria-label="Copy price"><span class="num">${esc(pr.n)}${pr.u ? `<small>${esc(pr.u)}</small>` : ''}</span></button>
+    <div class="span" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="rule"></div><div class="band"></div><div class="tick" style="left:${pos.toFixed(1)}%"></div></div>
+    <div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div>
+    ${meta.length ? `<div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>` : ''}
+  </section>
+  <div class="sep"><span>Fields from your sentence</span></div>
+  <div class="fields">${rows}${moreRow}</div>`;
 }
 
-// ---------- bottom sheet: breakdown, unspecified options, what was understood ----------
+// ---------- docked tray: the options for the open field, or quick modifiers ----------
+function slotById(id) { const f = st.fields; return f ? f.slots.find(x => x.id === id) : null; }
+function renderTray() {
+  const t = $('#tray'), e = st.est;
+  if (st.setting || st.guess) { t.innerHTML = ''; return; }
+  if (!st.text) { t.innerHTML = `<div class="quick">${sampleList().map((x, i) => `<button class="q sample" data-act="sample" data-i="${i}">${esc(x)}</button>`).join('')}</div>`; return; }
+  if (!(e && e.ok && st.query.subject)) { t.innerHTML = ''; return; }
+  const slot = st.slot ? slotById(st.slot) : null;
+  if (slot && slot.id !== 'item') {
+    let h = `<div class="opts">${slot.options.map(o => {
+      const pct = Math.round(o.delta * 100), d = Math.abs(pct) < 1 ? 'same' : (pct > 0 ? '+' : '') + pct + '%';
+      return `<button class="o${o.sel ? ' sel' : ''}" data-act="slot-opt" data-key="${esc(o.key)}"><b>${esc(o.label)}</b><span>${esc(money(o.typical))}</span><em class="${pct > 0 ? 'up' : pct < 0 ? 'down' : ''}">${o.sel ? 'selected' : d}</em></button>`;
+    }).join('')}${slot.kind === 'number' ? `<button class="o custom" data-act="num-open"><b>Other</b></button>` : ''}</div>`;
+    if (slot.kind === 'number' && st.numOpen) {
+      h = `<div class="numedit"><input id="numIn" type="number" inputmode="decimal" min="1" step="1" placeholder="Number" aria-label="Number">${slot.units ? `<select id="numUnit" aria-label="Unit">${slot.units.map(([u, l]) => `<option value="${u}">${l}</option>`).join('')}</select>` : ''}<button class="q on" data-act="num-set">Set</button><button class="q" data-act="num-open" data-off="1">Back</button></div>`;
+    }
+    t.innerHTML = h; return;
+  }
+  const ent = e.entry, side = e.side, q = st.query;
+  const ok = id => { const m = ctx.mods.get(id); return !!(m && applicable(m, ent, side)); };
+  const chips = [];
+  if (ent.kind === 'good' || ent.kind === 'property') chips.push(`<button class="q" data-act="quick" data-k="deal">${q.action === 'sell' ? 'Buy' : 'Sell'}</button>`);
+  chips.push(`<button class="q${q.mods.includes('rush') ? ' on' : ''}${ok('rush') ? '' : ' off'}" data-act="quick" data-k="rush">Rush</button>`);
+  chips.push(`<button class="q${q.mods.includes('black-market') ? ' on' : ''}${ok('black-market') ? '' : ' off'}" data-act="quick" data-k="black-market">Black market</button>`);
+  chips.push(`<button class="q${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}">Round</button>`);
+  chips.push(`<button class="q" data-act="sheet" data-mode="break">Details${factsList(e).length ? ` · ${factsList(e).length}` : ''}</button>`);
+  t.innerHTML = `<div class="quick">${chips.join('')}</div>`;
+}
+
+// ---------- bottom sheet: the breakdown, or the item picker ----------
 function breakdownHtml(e) {
   const q = st.query;
   const pos = e.hi > e.lo ? Math.min(100, Math.max(0, (Math.log(e.typical) - Math.log(e.lo)) / (Math.log(e.hi) - Math.log(e.lo)) * 100)) : 50;
@@ -171,26 +220,38 @@ function editorHtml(f, key) {
   }
   return h + `</div>`;
 }
-function seenHtml(e) {
-  const facts = factsList(e);
-  return `<div class="chips">${chipsHtml()}</div>` + (facts.length ? `<div class="facts">${facts.map(f => `<div>${f}</div>`).join('')}</div>` : '') +
-    `<div class="row" style="margin-top:12px"><button class="btn" data-act="mode" data-mode="tap">Adjust with buttons</button></div>`;
+function pickerHtml() {
+  const cats = [...FLOW_CATS.map(c => [c[0], c[1]]), ['mine', 'My items']].filter(([id]) => ctx.entries.some(e => catOf(e) === id));
+  const sel = st.flow.cat;
+  const unitBU = e => e.perMile ? e.perMile * e.mpd : (e.bu ?? 0);
+  const search = st.flow.search.trim().toLowerCase();
+  const items = ctx.entries.filter(e => search ? (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(search) : (sel ? catOf(e) === sel : false));
+  items.sort((a, b) => (b.isCategory ? 1 : 0) - (a.isCategory ? 1 : 0) || unitBU(a) - unitBU(b) || a.name.localeCompare(b.name));
+  const cur0 = st.query.subject;
+  return `<input class="field" id="flowSearch" type="search" placeholder="Search all items" value="${esc(st.flow.search)}" aria-label="Search all items" style="width:100%">
+    <div class="quick" style="margin:0">${cats.map(([id, l]) => `<button class="q${sel === id && !search ? ' on' : ''}" data-act="f-cat" data-v="${id}">${esc(l)}</button>`).join('')}</div>
+    ${items.length ? `<div class="fields">${items.slice(0, 80).map(e => {
+      const per = e.curve ? 'by rarity' : money(unitBU(e)) + (timeUnit(e) ? ' / ' + timeUnit(e).word : e.unit === 'lb' ? ' / lb' : '');
+      return `<button class="slot${cur0 === e.id ? ' open' : ''}" data-act="pick-item" data-v="${esc(e.id)}"><span class="v">${esc(e.name)}${e.isCategory ? ' <i>any</i>' : ''}</span><span class="hint">${esc(per)}</span></button>`;
+    }).join('')}</div>` : `<p class="mini" style="color:var(--muted)">${sel || search ? 'Nothing matches.' : 'Pick a kind above or search.'}</p>`}`;
 }
 function renderSheet() {
   const sh = $('#sheet'), s = st.sheet, e = st.est;
-  const ok = e && e.ok && st.query.subject && !st.setting;
-  if (!s.open || !ok) { sh.hidden = true; return; }
-  const nOpts = st.an ? st.an.dimensions.length : 0;
-  if (s.tab === 'opts' && !nOpts) s.tab = 'break';
-  const tabs = [['break', 'Breakdown'], ['opts', 'Not specified'], ['seen', 'Understood']].filter(([id]) => id !== 'opts' || nOpts);
-  $('#sheetTabs').innerHTML = tabs.map(([id, l]) => `<button role="tab" data-act="sheet-tab" data-tab="${id}" aria-selected="${s.tab === id}">${esc(l)}</button>`).join('');
+  if (!s.open) { sh.hidden = true; return; }
   const body = $('#sheetBody'), top = body.scrollTop;
-  body.innerHTML = s.tab === 'break' ? breakdownHtml(e) : s.tab === 'opts' ? `<div class="optsbody">${unstatedHtml()}</div>` : seenHtml(e);
+  if (s.mode === 'item') {
+    $('#sheetTitle').textContent = 'Choose item';
+    body.innerHTML = pickerHtml();
+  } else {
+    if (!(e && e.ok && st.query.subject && !st.setting)) { sh.hidden = true; return; }
+    $('#sheetTitle').textContent = 'Breakdown';
+    const facts = factsList(e);
+    body.innerHTML = breakdownHtml(e) + (facts.length ? `<div class="facts">${facts.map(f => `<p>${f}</p>`).join('')}</div>` : '');
+  }
   sh.hidden = false;
   body.scrollTop = top;
 }
 
-// ---------- hints, chips ----------
 // ---------- unknown words: pick the closest thing, set the price, save ----------
 function unknownPhrase() {
   const p = st.parsed;
@@ -218,17 +279,19 @@ function guessCard() {
   const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
   const all = [...g.cands, ...found];
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
-  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list. Pick the closest match.</div>
-    <div class="cscroll">${all.map((c, i) => `<button class="cchip${g.sel === i ? ' sel' : ''}" data-act="g-pick" data-i="${i}"><span class="cl">${esc(c.label)}</span><span class="cp">${esc(money(c.bu))}${c.unit && c.unit !== 'each' ? ' / ' + esc(c.unit) : ''}</span></button>`).join('')}</div>
-    <input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
+  let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list.${all[g.sel] ? ' Closest match: <b>' + esc(all[g.sel].label) + '</b>.' : ''}</div>`;
   if (g.sel != null && all[g.sel]) {
     const c = all[g.sel], pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
-    const one = pv.one.ok ? pv.one.typical : g.bu;
-    h += `<div class="gwhy">${esc(c.why || '')}</div>
-      <div class="stepper"><button class="step-btn" data-act="g-lower" aria-label="Lower the price">−</button><div class="gval"><span class="gp">${esc(money(one))}</span><span class="mini">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}</span></div><button class="step-btn" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
-    if (qtxt && pv.full.ok) h += `<div class="gtotal">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
-    h += g.exact ? `<input class="field" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" data-act="g-exact">Type an exact price</button>`;
-    h += `<div class="row gact"><button class="btn primary" data-act="g-set">Save and price it</button>${c.entry && !c.tier ? `<button class="btn" data-act="g-alias">Same as this</button>` : ''}</div>`;
+    const one = pv.one.ok ? pv.one.typical : g.bu, pr = np(money(one));
+    h += `<div class="stepper"><button class="sb" data-act="g-lower" aria-label="Lower the price">&minus;</button><div class="gval"><div class="num">${esc(pr.n)}<small>${esc(pr.u)}</small></div><div class="gtot">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}</div></div><button class="sb" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
+    if (qtxt && pv.full.ok) h += `<div class="gtot">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
+  }
+  h += `<div class="sep"><span>Closest matches</span></div><div class="fields">${all.map((c, i) => `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(c.label)}</span><span class="hint">${esc(money(c.bu))}${c.unit && c.unit !== 'each' ? ' / ' + esc(c.unit) : ''}</span></button>`).join('')}</div>
+    <input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
+  if (g.sel != null && all[g.sel]) {
+    const c = all[g.sel];
+    h += g.exact ? `<input class="field gsearch" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" style="margin-top:8px" data-act="g-exact">Type an exact price</button>`;
+    h += `<button class="cta" data-act="g-set">Save and price it</button>${c.entry && !c.tier ? `<button class="cta2" data-act="g-alias">Same as ${esc(c.label.toLowerCase())}</button>` : ''}`;
   }
   return h + `</section>`;
 }
@@ -280,23 +343,6 @@ function summaryLine(e) {
   return `${ACTION_WORD[q.action]}: ${bits.join(', ')}: about ${money(e.typical)} (${range(e.lo, e.hi)}).` + (unk.length ? ' ' + unk.join(' ') : '');
 }
 
-// ---------- unspecified factors ----------
-function unstatedHtml() {
-  const an = st.an;
-  if (!an || !an.dimensions.length) return '';
-  const dims = an.dimensions;
-  const leadDims = dims.filter(d => d.id !== 'span');
-  const top = [...(leadDims.length ? leadDims : dims)].sort((x, y) => y.ratio - x.ratio)[0];
-  const lo = top.options[0], hi = top.options[top.options.length - 1];
-  return `<p class="lead">Priced as an average case. <b>${esc(top.ask)}</b> moves it most: ${esc(lo.label)} about ${esc(money(lo.typical))}, ${esc(hi.label)} about ${esc(money(hi.typical))}.</p>` + dims.map((d, di) => `
-    <div class="dim"><div class="dq"><span>${esc(d.ask)}</span></div>
-    <div class="opts">${d.options.map((o, oi) => {
-      const pct = Math.round(o.delta * 100);
-      const dtxt = Math.abs(pct) < 1 ? 'same' : (pct > 0 ? '+' : '') + pct + '%';
-      return `<button class="opt${o.sel ? ' sel' : ''}" data-act="opt" data-d="${di}" data-o="${oi}"><span class="ol">${esc(o.label)}${o.sel ? ' · assumed' : ''}</span><span class="op">${esc(money(o.typical))}</span><span class="od ${pct > 0 ? 'up' : pct < 0 ? 'down' : ''}">${dtxt}</span></button>`;
-    }).join('')}</div></div>`).join('');
-}
-
 // ---------- history ----------
 function recordHistory() {
   clearTimeout(st.histTimer);
@@ -313,15 +359,15 @@ function scheduleHistory() { clearTimeout(st.histTimer); st.histTimer = setTimeo
 function renderHistory() {
   const h = S.history.filter(x => x.world === world.id);
   const el = $('#history');
-  if (!h.length) { el.innerHTML = ''; return; }
-  const sorted = [...h.filter(x => x.pin), ...h.filter(x => !x.pin)];
-  el.innerHTML = `<button class="linkbtn" data-act="tgl" data-k="hist" aria-expanded="${st.ui.hist}">Recent (${h.length})</button>` + (st.ui.hist ? sorted.map(x => {
+  if (st.text || !h.length) { el.innerHTML = ''; return; }
+  const sorted = [...h.filter(x => x.pin), ...h.filter(x => !x.pin)].slice(0, 8);
+  el.innerHTML = `<h3>Recent</h3><div class="list">` + sorted.map(x => {
     const i = S.history.indexOf(x);
     return `<div class="hrow"><button class="h" data-act="hist" data-i="${i}"><span>${esc(x.text)}</span><span class="hp">${esc(x.price)}</span></button><button class="star${x.pin ? ' on' : ''}" data-act="star" data-i="${i}" aria-label="${x.pin ? 'Unstar' : 'Star'}" aria-pressed="${!!x.pin}">${x.pin ? '★' : '☆'}</button></div>`;
-  }).join('') : '');
+  }).join('') + `</div>`;
 }
 
-// ---------- quick flow ----------
+// ---------- item kinds (for the picker) ----------
 const FLOW_CATS = [
   ['weapons', 'Weapons', e => e.kind === 'good' && has(e, 'weapon') && !has(e, 'magic')],
   ['armor', 'Armor', e => e.kind === 'good' && has(e, 'armor') && !has(e, 'magic')],
@@ -343,52 +389,6 @@ const FLOW_CATS = [
 const has = (e, t) => (e.tags || []).includes(t);
 function catOf(e) { if (e.src === 'user') return 'mine'; return (FLOW_CATS.find(c => c[2](e)) || [])[0] || 'gear'; }
 
-function renderFlow() {
-  const el = $('#flow');
-  el.hidden = st.mode !== 'tap';
-  if (st.mode !== 'tap') return;
-  const q = st.query, ent = q.subject ? ctx.byId.get(q.subject) : null;
-  const open = id => (id in st.flowOpen ? st.flowOpen[id] : (id === 'item' && !ent));
-  const step = (id, title, value, body) => `<details class="fstep" data-step="${id}"${open(id) ? ' open' : ''}><summary><span class="ft">${title}</span><span class="fv">${esc(value || '')}</span></summary><div class="fbody">${body}</div></details>`;
-  const pill = (act, v, label, on) => `<button class="bigbtn${on ? ' sel' : ''}" data-act="${act}" data-v="${esc(v)}">${esc(label)}</button>`;
-  const actName = q.assumed.includes('action') ? '' : { buy: 'Buy or hire', sell: 'Sell', value: 'Appraise' }[q.action];
-  let h = step('action', 'Action', actName || 'Buy (assumed)', `<div class="row">${pill('f-action', 'buy', 'Buy or hire', q.action === 'buy' && !q.assumed.includes('action'))}${pill('f-action', 'sell', 'Sell', q.action === 'sell')}${pill('f-action', 'value', 'Appraise', q.action === 'value')}</div>`);
-  const cats = [...FLOW_CATS.map(c => [c[0], c[1]]), ['mine', 'My items']].filter(([id]) => ctx.entries.some(e => catOf(e) === id));
-  const sel = st.flow.cat || (ent ? catOf(ent) : null);
-  let body = `<div class="row">${cats.map(([id, l]) => pill('f-cat', id, l, sel === id)).join('')}</div>`;
-  if (sel) {
-    const items = ctx.entries.filter(e => catOf(e) === sel).filter(e => !st.flow.search || (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(st.flow.search.toLowerCase()));
-    const unitBU = e => e.perMile ? e.perMile * e.mpd : (e.bu ?? 0);
-    items.sort((a, b) => (b.isCategory ? 1 : 0) - (a.isCategory ? 1 : 0) || unitBU(a) - unitBU(b) || a.name.localeCompare(b.name));
-    body += `<div style="margin-top:8px"><input class="field" id="flowSearch" type="search" placeholder="Search this list" value="${esc(st.flow.search)}" style="width:100%;margin-bottom:6px"><div class="itemlist">${items.map(e => {
-      const per = e.curve ? 'by rarity' : money(unitBU(e)) + (timeUnit(e) ? ' / ' + timeUnit(e).word : e.unit === 'lb' ? ' / lb' : '');
-      return `<button class="${q.subject === e.id ? 'sel' : ''}" data-act="f-item" data-v="${esc(e.id)}"><span>${esc(e.name)}${e.isCategory ? ' <span class="mini">(any)</span>' : ''}</span><span class="ip">${esc(per)}</span></button>`;
-    }).join('') || '<div class="mini" style="padding:10px">Nothing matches.</div>'}</div></div>`;
-  }
-  h += step('item', 'Item', ent ? ent.name : '', body);
-  if (ent) {
-    const tu = timeUnit(ent);
-    const num = n => (n.lo === n.hi ? n.lo : n.lo + ' to ' + n.hi);
-    if (tu) {
-      const opts = { day: [[1, 'day', '1 ' + tu.word], [3, 'day', '3 ' + tu.word + 's'], [1, 'week', '1 week'], [2, 'week', '2 weeks'], [1, 'month', '1 month']], week: [[1, 'week', '1 week'], [2, 'week', '2 weeks'], [4, 'week', '4 weeks'], [3, 'month', '3 months']], month: [[1, 'month', '1 month'], [3, 'month', '3 months'], [6, 'month', '6 months'], [12, 'month', '12 months']], year: [[1, 'year', '1 year'], [2, 'year', '2 years'], [4, 'year', '4 years']] }[tu.unit];
-      h += step('span', 'Length', q.span ? num(q.span) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '1 ' + tu.word, `<div class="row">${opts.map(([n, u, l]) => pill('f-span', n + '|' + u, l, q.span && q.span.lo === n && q.span.hi === n && (q.span.unit === u || (n === 1 && u === 'day' && q.span.unit === 'night')))).join('')}
-        <input class="field" id="flowSpan" type="number" min="1" step="1" placeholder="${tu.word}s" style="width:90px" aria-label="Custom number of ${tu.word}s"> ${ent.mpd ? `<input class="field" id="flowMiles" type="number" min="1" step="1" placeholder="or miles" style="width:100px" aria-label="Distance in miles">` : ''}</div>`);
-      h += step('qty', ent.kind === 'labor' ? 'Workers' : 'People', q.qty ? num(q.qty) : '1', `<div class="row">${[1, 2, 3, 5, 10].map(n => pill('f-qty', n, String(n), (q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1))).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom count"></div>`);
-    } else {
-      h += step('qty', ent.unit === 'lb' ? 'Pounds' : 'Quantity', q.qty ? num(q.qty) : '1', `<div class="row">${[1, 2, 5, 10, 20, 50, 100].map(n => pill('f-qty', n, String(n), q.qty ? q.qty.lo === n && q.qty.hi === n : n === 1)).join('')}<input class="field" id="flowQty" type="number" min="1" step="1" placeholder="other" style="width:90px" aria-label="Custom amount"></div>`);
-    }
-    if (ent.curve) h += step('rarity', 'Rarity', q.rarity || 'common (assumed)', `<div class="row">${RARITIES.map(r => pill('f-rarity', r, r, q.rarity === r)).join('')}</div>`);
-    if (['travel', 'lodging', 'service', 'labor', 'spell'].includes(ent.kind) && !ent.noTier) h += step('tier', 'Class', q.tier || 'standard (assumed)', `<div class="row">${TIER_NAMES.map(t => pill('f-tier', t, t, q.tier === t)).join('')}</div>`);
-    const side = q.action === 'sell' && (ent.kind === 'good' || ent.kind === 'property') ? 'sell' : 'buy';
-    const groups = Object.keys(GROUPS).map(g => [g, ctx.modList.filter(m => m.group === g && applicable(m, ent, side))]).filter(([, l]) => l.length);
-    const chosen = q.mods.map(id => ctx.mods.get(id)?.label).filter(Boolean).join(', ');
-    h += step('circ', 'Circumstances', chosen || 'none', groups.map(([g, list]) => `<div class="grp"><div class="gl">${esc(GROUPS[g].label)}</div><div class="row">${list.map(m => pill('f-mod', m.id, m.label, q.mods.includes(m.id))).join('')}</div></div>`).join(''));
-  }
-  h += `<div class="row"><button class="btn" data-act="clear">Start over</button></div>`;
-  const keep = document.activeElement && document.activeElement.id;
-  el.innerHTML = h;
-  if (keep === 'flowSearch') { const i = $('#flowSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
-}
 function flowEdit(fn) { const q = clone(st.query); fn(q); fromQuery(q); }
 
 // ---------- world drawer ----------
@@ -588,27 +588,29 @@ document.addEventListener('click', e => {
   const a = b.dataset.act, d = b.dataset;
   const q = st.query;
   switch (a) {
-    case 'mode': st.sheet.open = false; renderSheet(); st.mode = d.mode; $('#tabType').setAttribute('aria-selected', st.mode === 'type'); $('#tabTap').setAttribute('aria-selected', st.mode === 'tap'); renderFlow(); if (st.mode === 'type') $('#q').focus(); break;
-    case 'clear': $('#q').value = ''; st.flow = { cat: null, search: '' }; fromText('', { noHistory: true }); break;
+    case 'clear': $('#q').value = ''; st.slot = null; st.guess = null; fromText('', { noHistory: true }); break;
+    case 'go': recordHistory(); $('#q').blur(); break;
     case 'sample': { const t = sampleList()[+d.i]; $('#q').value = t; fromText(t); break; }
     case 'fix': { const s = st.parsed.suggestions[+d.i]; const t = st.text.slice(0, s.start) + s.to + st.text.slice(s.end); $('#q').value = t; fromText(t); break; }
-    case 'chip-x': flowEdit(x => {
-      const k = d.key;
-      if (k === 'action') { x.assumed = [...new Set([...x.assumed, 'action'])]; x.action = 'buy'; }
-      else if (k === 'qty') x.qty = null; else if (k === 'span') x.span = null; else if (k === 'rarity') x.rarity = null; else if (k === 'tier') x.tier = null;
-      else if (k === 'subject') { x.subject = null; x.family = null; x.overrides = undefined; x.assumed = x.assumed.filter(z => z !== 'mode'); }
-      else if (k.startsWith('mod:')) x.mods = x.mods.filter(m => m !== k.slice(4));
+    case 'slot':
+      if (d.id === 'item') { st.sheet = { open: true, mode: 'item' }; st.flow = { cat: null, search: '' }; st.slot = null; renderSheet(); }
+      else { st.slot = st.slot === d.id ? null : d.id; st.numOpen = false; renderResult(); renderTray(); }
+      break;
+    case 'slot-opt': { const slot = st.slot && slotById(st.slot); const o = slot && slot.options.find(x => x.key === d.key); if (o) { st.slot = null; st.numOpen = false; flowEdit(x => o.apply(x)); } break; }
+    case 'num-open': st.numOpen = !d.off; renderTray(); if (st.numOpen) { const i = $('#numIn'); if (i) i.focus(); } break;
+    case 'num-set': { const slot = st.slot && slotById(st.slot); const n = parseFloat(($('#numIn') || {}).value); if (slot && n > 0) { const u = ($('#numUnit') || {}).value; st.slot = null; st.numOpen = false; fromQuery(applyNumber(st.query, slot.id, n, u, st.est.entry)); } break; }
+    case 'more': st.more = !st.more; renderResult(); break;
+    case 'quick': flowEdit(x => {
+      if (d.k === 'deal') { x.action = x.action === 'sell' ? 'buy' : 'sell'; x.assumed = x.assumed.filter(z => z !== 'action'); }
+      else { const m = ctx.mods.get(d.k); if (!m) return; if (x.mods.includes(d.k)) x.mods = x.mods.filter(z => z !== d.k); else { if (GROUPS[m.group].exclusive) x.mods = x.mods.filter(z => ctx.mods.get(z)?.group !== m.group); x.mods.push(d.k); } }
     }); break;
-    case 'opt': { const o = st.an.dimensions[+d.d].options[+d.o]; flowEdit(x => o.apply(x)); break; }
+    case 'pick-item': st.sheet.open = false; flowEdit(x => { delete x.overrides; x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
+    case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderSheet(); break;
     case 'resolve': flowEdit(x => { const g = ctx.mods.get(d.id).group; x.mods = x.mods.filter(m => ctx.mods.get(m)?.group !== g || m === d.id); }); break;
-    case 'rm-mod': flowEdit(x => { x.mods = x.mods.filter(m => m !== d.id); }); break;
-    case 'rm-tier': flowEdit(x => { x.tier = null; }); break;
     case 'copy': copyText(summaryLine(st.est), 'Copied'); break;
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
     case 'star': { const h = S.history[+d.i]; h.pin = !h.pin; persist(); renderHistory(); break; }
-    case 'tgl': st.ui[d.k] = !st.ui[d.k]; renderHistory(); break;
-    case 'sheet': st.sheet = { open: true, tab: d.tab }; st.editRow = null; renderSheet(); break;
-    case 'sheet-tab': st.sheet.tab = d.tab; renderSheet(); break;
+    case 'sheet': st.sheet = { open: true, mode: d.mode || 'break' }; st.editRow = null; renderSheet(); break;
     case 'sheet-close': st.sheet.open = false; st.editRow = null; renderSheet(); break;
     case 'edit-row': st.editRow = st.editRow === d.key ? null : d.key; renderSheet(); break;
     case 'ed-reset': flowEdit(x => { if (x.overrides) { if (d.key === 'base') delete x.overrides.base; else if (x.overrides.f) delete x.overrides.f[d.key]; } }); if (d.key === 'base' && st.est && world.baseOverrides[st.est.entry.id]) { delete world.baseOverrides[st.est.entry.id]; worldChanged({ lite: true }); } else if (world.overrides[d.key]) { delete world.overrides[d.key]; worldChanged({ lite: true }); } break;
@@ -633,19 +635,6 @@ document.addEventListener('click', e => {
       const c = guessAll()[st.guess.sel], term = st.guess.phrase;
       if (c && c.entry) { world.vocabulary.push({ term, means: c.entry.id }); st.guess = null; worldChanged(); toast('"' + term + '" now means ' + c.entry.name.toLowerCase() + '. Edit it under World, Custom words.'); }
     } break;
-    // flow
-    case 'f-action': flowEdit(x => { x.action = d.v; x.assumed = x.assumed.filter(z => z !== 'action'); }); break;
-    case 'f-cat': st.flow.cat = d.v; st.flow.search = ''; renderFlow(); break;
-    case 'f-item': st.flowOpen = { item: false }; flowEdit(x => { delete x.overrides; x.subject = d.v; x.family = null; x.assumed = x.assumed.filter(z => z !== 'mode'); x.rarity = null; x.span = null; x.qty = null; const en = ctx.byId.get(d.v); if (!['travel', 'lodging', 'service', 'labor', 'spell'].includes(en.kind)) x.tier = null; x.mods = x.mods.filter(m => { const mm = ctx.mods.get(m); return mm && applicable(mm, en); }); }); break;
-    case 'f-qty': flowEdit(x => { const n = +d.v; x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); break;
-    case 'f-span': flowEdit(x => { const [n, u] = d.v.split('|'); x.span = { lo: +n, hi: +n, unit: u }; }); break;
-    case 'f-rarity': flowEdit(x => { x.rarity = x.rarity === d.v ? null : d.v; }); break;
-    case 'f-tier': flowEdit(x => { x.tier = x.tier === d.v ? null : d.v; }); break;
-    case 'f-mod': flowEdit(x => {
-      const m = ctx.mods.get(d.v);
-      if (x.mods.includes(d.v)) x.mods = x.mods.filter(z => z !== d.v);
-      else { if (GROUPS[m.group].exclusive) x.mods = x.mods.filter(z => ctx.mods.get(z)?.group !== m.group); x.mods.push(d.v); }
-    }); break;
     // drawer
     case 'info': { const t = $('#infotip'); t.hidden = !t.hidden; $('#info').setAttribute('aria-expanded', String(!t.hidden)); break; }
     case 'open-world': $('#infotip').hidden = true; openDrawer(d.scroll); break;
@@ -694,17 +683,17 @@ function afterWorldSwitch() { renderDrawer(); st.query = emptyQuery(); if (st.te
 
 $('#q').addEventListener('input', e => fromText(e.target.value));
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); recordHistory(); e.target.blur(); } });
-document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
+$('#q').addEventListener('focus', () => { st.slot = null; st.numOpen = false; renderTray(); renderResult(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (st.slot) { st.slot = null; renderTray(); renderResult(); return; } if (!$('#drawer').hidden) { if (st.dpage) { st.dpage = null; renderDrawer(); } else closeDrawer(); } else if (st.sheet.open) { st.sheet.open = false; renderSheet(); } });
 $('#drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
 
 // drawer and flow inputs
 document.addEventListener('toggle', e => {
   const t = e.target;
-  if (t.dataset && t.dataset.step) st.flowOpen[t.dataset.step] = t.open;
   if (t.dataset && t.dataset.sec) st.drawerOpen[t.dataset.sec] = t.open;
 }, true);
 document.addEventListener('input', e => {
-  if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderFlow(); }
+  if (e.target.id === 'flowSearch') { st.flow.search = e.target.value; renderSheet(); const i = $('#flowSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   if (e.target.id === 'gSearch' && st.guess) { st.guess.q = e.target.value; renderResult(); const i = $('#gSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 });
 document.addEventListener('change', e => {

@@ -7,6 +7,7 @@ import { analyze } from '../../src/building/fools-gold/js/unstated.js';
 import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from '../../src/building/fools-gold/js/money.js';
 import { candidatesFor, previewWith, storedPrice, newItemFrom } from '../../src/building/fools-gold/js/guess.js';
 import { parseSetting, baseFor, storedFor } from '../../src/building/fools-gold/js/setting.js';
+import { buildFields, applyNumber, tokenRoles } from '../../src/building/fools-gold/js/fields.js';
 import { WORLD_PRESETS, CATALOG, MODIFIERS } from '../../src/building/fools-gold/js/data.js';
 
 let pass = 0, fail = 0;
@@ -376,6 +377,37 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const sx = Q('3 months of rent', modern); const wm = WORLD_PRESETS.modern(); wm.baseOverrides = { 'lodging.m-apartment-rent-medium': 100000 }; const cm = compileWorld((await import('../../src/building/fools-gold/js/store.js')).normalizeWorld(wm));
   t('T13 rent override feeds a multi-month question', Math.abs(estimate(Q('3 months of rent', cm), cm).typical / 300000 - 1) < 0.2, estimate(Q('3 months of rent', cm), cm).typical);
   const bo = (await import('../../src/building/fools-gold/js/store.js')).normalizeWorld({ baseOverrides: { a: 5, b: -1, c: 'x', d: 0 } }); eq('T14 base overrides are validated', bo.baseOverrides, { a: 5 });
+}
+
+// ---------- the sentence as fields ----------
+{
+  const F = (x, c = vcm) => { const r = P(x, c); const e = estimate(r.query, c); return { r, e, f: buildFields(r.query, e, c) }; };
+  const train = F('price for train ride between two major capital cities, 3 days travel expensive');
+  const ids = train.f.shown.map(s => s.id);
+  eq('FL1 train fields', ids.slice(0, 4), ['item', 'length', 'people', 'tier']);
+  const sl = id => train.f.slots.find(s => s.id === id);
+  eq('FL2 filled fields carry their values', [sl('length').value, sl('tier').value, sl('g:route').value], ['3 days', 'expensive', 'major route']);
+  eq('FL2b people is assumed 1', [sl('people').filled, sl('people').assumed], [false, '1']);
+  t('FL3 an empty field knows its swing', (() => { const u = sl('g:urgency'); return !u.filled && u.swing[0] < train.e.typical && u.swing[1] > train.e.typical; })());
+  t('FL4 options are priced and the right one is marked selected', sl('tier').options.some(o => o.sel && o.label === 'expensive') && sl('tier').options.every(o => o.typical > 0));
+  t('FL5 applying an option changes the estimate', (() => { const q = JSON.parse(JSON.stringify(train.r.query)); sl('tier').options.find(o => o.label === 'luxury').apply(q); return estimate(q, vcm).typical > train.e.typical * 1.5; })());
+  const sword = F('a longsword');
+  t('FL6 goods show a deal field even when assumed', sword.f.shown.some(s => s.id === 'deal' && !s.filled && s.assumed));
+  const emptyShown = sword.f.shown.filter(s => !s.filled && !s.always);
+  t('FL7 at most three empty circumstance fields show, the rest sit under more', emptyShown.length <= 3 && sword.f.more.length >= 1, [emptyShown.length, sword.f.more.length]);
+  t('FL8 low-priority groups (events, provenance) never crowd the list', !sword.f.shown.some(s => s.low && !s.filled));
+  const set = F('sell 5 rare potions black market rush');
+  eq('FL9 set circumstances are shown filled', set.f.shown.filter(s => s.filled).map(s => s.id).sort(), ['deal', 'g:channel', 'g:urgency', 'item', 'qty', 'rarity'].sort());
+  t('FL10 toggling a set exclusive option clears it', (() => { const s = set.f.slots.find(x => x.id === 'g:channel'); const q = JSON.parse(JSON.stringify(set.r.query)); s.options.find(o => o.sel).apply(q); return !q.mods.includes('black-market'); })());
+  t('FL11 an exclusive group replaces its value', (() => { const s = F('longsword in the capital'); const g = s.f.slots.find(x => x.id === 'g:place'); const q = JSON.parse(JSON.stringify(s.r.query)); g.options.find(o => o.label === 'village').apply(q); return q.mods.length === 1 && q.mods[0] === 'village'; })());
+  const rent = F('rent', modern);
+  t('FL12 rent has a month length and no class field', rent.f.slots.some(s => s.id === 'length' && s.assumed === '1 month') && !rent.f.slots.some(s => s.id === 'tier'));
+  eq('FL13 custom number', applyNumber(train.r.query, 'length', 5, 'day', train.e.entry).span.lo, 5);
+  eq('FL13b custom quantity', applyNumber(sword.r.query, 'qty', 12, undefined, sword.e.entry).qty.lo, 12);
+  const roles = tokenRoles(P('sell 5 rare potions black market rush').parts, vcm).map(x => x.role);
+  eq('FL14 sentence tokens are colored by role', roles, ['act', 'len', 'class', 'item', 'who', 'speed']);
+  t('FL15 unknown words are flagged', tokenRoles(P('10 monster parts').parts, vcm).some(x => x.role === 'bad'));
+  t('FL16 no fields without an estimate', buildFields(P('asdf').r?.query ?? P('asdf').query, null, vcm).slots.length === 0);
 }
 // ---------- store.normalizeWorld survives hostile input ----------
 {

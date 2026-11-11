@@ -3,62 +3,54 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="fg-build" content="230c05ca">
+<meta name="fg-build" content="b1bfe512">
 <meta name="robots" content="noindex">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Fool's Gold</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=230c05ca">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">
+<link rel="stylesheet" href="css/style.css?v=b1bfe512">
 </head>
 <body>
 <!--FG-BODY-START-->
 <div class="app" id="app">
   <header class="top">
-    <div class="brand">
-      <svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 9v14L16 30 4 23V9z" fill="var(--accent)"/><path d="M16 2 28 9 16 16 4 9z" fill="var(--accent-hi)"/><path d="M16 16v14L4 23V9z" fill="var(--accent-lo)"/></svg>
-      <h1>Fool's Gold</h1>
+    <h1>Fool's Gold</h1>
+    <div class="topr">
+      <button id="info" class="info" data-act="info" aria-label="About Fool's Gold" aria-expanded="false">i</button>
+      <button class="worldbtn" id="worldBtn" data-act="open-world" aria-haspopup="dialog"><span id="worldName"></span><span class="chev" aria-hidden="true">&#9662;</span></button>
     </div>
-    <button class="worldbtn" id="worldBtn" data-act="open-world" aria-haspopup="dialog"><span id="worldName"></span><span class="chev" aria-hidden="true">▾</span></button>
   </header>
-
-  <main>
-    <section class="ask" aria-label="Ask a price">
-      <div class="seg" role="tablist" aria-label="Input style">
-        <button role="tab" id="tabType" data-act="mode" data-mode="type" aria-selected="true">Type it</button>
-        <button role="tab" id="tabTap" data-act="mode" data-mode="tap" aria-selected="false">Tap it</button>
-      </div>
-      <div class="inputrow">
-        <input id="q" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go" placeholder="sell 5 rare potions, black market, rush" aria-label="Describe what you want priced">
-        <button class="clear" id="clearBtn" data-act="clear" aria-label="Clear" hidden>×</button>
-      </div>
-      <div id="understanding"></div>
-      <div id="samples" class="samples"></div>
-    </section>
-
+  <main class="main" id="main">
+    <div id="understanding"></div>
     <div id="result" aria-live="polite"></div>
-    <div id="flow" class="flow" hidden></div>
-    <section id="history" class="history"></section>
+    <div id="history" class="history"></div>
   </main>
-
+  <div class="dock">
+    <div id="tray"></div>
+    <div class="input">
+      <div class="fieldwrap"><div class="mirror" id="mirror" aria-hidden="true"></div><textarea id="q" rows="1" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" placeholder="Describe what to price" aria-label="Describe what you want priced"></textarea></div>
+      <button class="clear" id="clearBtn" data-act="clear" aria-label="Clear" hidden>&times;</button>
+      <button class="go" data-act="go" aria-label="Done">&uarr;</button>
+    </div>
+  </div>
 </div>
 
+<div id="infotip" class="infotip" role="tooltip" hidden>Estimates only. Rules and word lists, no AI. <button class="linkbtn" data-act="open-world" data-scroll="about">About</button></div>
 <div id="drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-label="World settings">
   <div class="drawer-panel" id="drawerPanel"></div>
 </div>
-<button id="info" class="info" data-act="info" aria-label="About Fool's Gold" aria-expanded="false">i</button>
-<div id="infotip" class="infotip" role="tooltip" hidden>Estimates only. Rules and word lists, no AI. <button class="linkbtn" data-act="open-world" data-scroll="about">About</button></div>
 <div id="sheet" class="sheet" hidden>
   <div class="sheet-back" data-act="sheet-close"></div>
   <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Details">
-    <button class="grab" data-act="sheet-close" aria-label="Close details"></button>
-    <div class="sheet-head"><div class="seg" id="sheetTabs" role="tablist"></div><button class="sheet-x" data-act="sheet-close" aria-label="Close">×</button></div>
+    <button class="grab" data-act="sheet-close" aria-label="Close"></button>
+    <div class="sheet-head"><h2 id="sheetTitle">Breakdown</h2><button class="sheet-x" data-act="sheet-close" aria-label="Close">&times;</button></div>
     <div id="sheetBody"></div>
   </div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <!--FG-BODY-END-->
-<script type="module" src="js/app.js?v=230c05ca"></script>
+<script type="module" src="js/app.js?v=b1bfe512"></script>
 </body>
 </html>
