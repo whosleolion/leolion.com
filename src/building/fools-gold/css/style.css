@@ -1190,3 +1190,20 @@ html[data-big] .jump .q { white-space: nowrap; }
 .foldrow span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .guess .sep { margin: .25rem 0 -.25rem; }
 .guess .fields .slot { min-height: 3.25rem; }
+
+/* ---- quick price: one primary tap, "remember it" kept quiet ---- */
+.gval { display: grid; justify-items: center; border: 0; background: none; color: inherit; font: inherit; padding: 0 .5rem; min-height: 2.75rem; }
+.gsave2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1.25rem; }
+.gsave2 .linkbtn { min-height: 2.75rem; color: var(--muted); }
+.actseg { margin-bottom: .5rem; }
+.actseg button { min-height: 2.75rem; }
+/* ---- a stepper on each cart line ---- */
+.cqty { margin-left: auto; display: inline-flex; align-items: center; gap: .125rem; }
+.cqty button { width: 2.75rem; height: 2.75rem; border: 0; background: none; color: var(--accent); font: 600 1.25rem var(--font-body); }
+.cqty button:disabled { color: var(--line); }
+.cqty b { min-width: 1.5rem; text-align: center; font-variant-numeric: tabular-nums; }
+.cline .l2 { display: flex; align-items: center; gap: .5rem; }
+/* ---- touch targets ---- */
+.q, .haggle, .linkbtn, [data-act=cart-add] { min-height: 2.75rem; }
+.clear { width: 2.5rem; height: 2.5rem; }
+.guess .foldrow { margin-top: -.25rem; }

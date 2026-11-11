@@ -1,7 +1,7 @@
-import { normalizeCart } from './cart.js?v=df97fefd';
+import { normalizeCart } from './cart.js?v=173f4468';
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=df97fefd';
-import { compileWorld } from './world.js?v=df97fefd';
+import { WORLD_PRESETS } from './data.js?v=173f4468';
+import { compileWorld } from './world.js?v=173f4468';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
@@ -98,7 +98,7 @@ export function normalizeWorld(w) {
     id: str(it.id) || newItemId(), name: str(it.name).trim() || 'New item', kind: KINDS.includes(it.kind) ? it.kind : 'good', unit: ['each', 'day', 'lb', 'week', 'month', 'year'].includes(it.unit) ? it.unit : 'each',
     bu: num(it.bu, NaN), tags: (Array.isArray(it.tags) ? it.tags : []).filter(t => typeof t === 'string'),
     aliases: (Array.isArray(it.aliases) ? it.aliases : []).filter(t => typeof t === 'string').slice(0, 10), spread: num(it.spread, 0.15, 0, 3),
-    fixed: !!it.fixed, noTier: !!it.noTier, placeScale: num(it.placeScale, 0, 0, 5), group: typeof it.group === 'string' ? it.group.slice(0, 30) : undefined,
+    fixed: !!it.fixed, oneoff: !!it.oneoff, noTier: !!it.noTier, placeScale: num(it.placeScale, 0, 0, 5), group: typeof it.group === 'string' ? it.group.slice(0, 30) : undefined,
   })).filter(it => it.bu > 0).slice(0, 500);
   w.name = str(w.name).trim().slice(0, 80) || 'My world';
   w.blurb = typeof w.blurb === 'string' ? w.blurb.slice(0, 200) : undefined;

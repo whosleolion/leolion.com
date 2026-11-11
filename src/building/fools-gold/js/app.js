@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=df97fefd';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=df97fefd';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=df97fefd';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=df97fefd';
-import { findOffer } from './lists.js?v=df97fefd';
-import { suggestPrompts } from './suggest.js?v=df97fefd';
-import { readFact } from './facts.js?v=df97fefd';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=df97fefd';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=df97fefd';
+import { compileWorld } from './world.js?v=173f4468';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=173f4468';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=173f4468';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=173f4468';
+import { findOffer } from './lists.js?v=173f4468';
+import { suggestPrompts } from './suggest.js?v=173f4468';
+import { readFact } from './facts.js?v=173f4468';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=173f4468';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=173f4468';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=df97fefd';
-import { applicable } from './engine.js?v=df97fefd';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=df97fefd';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=df97fefd';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=df97fefd';
-import { complete } from './complete.js?v=df97fefd';
-import { sameKind, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=df97fefd';
+} from './data.js?v=173f4468';
+import { applicable } from './engine.js?v=173f4468';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=173f4468';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=173f4468';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=173f4468';
+import { complete } from './complete.js?v=173f4468';
+import { sameKind, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=173f4468';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -63,7 +63,7 @@ function run(opts = {}) {
   if (q.subject) st.guess = null; // a priced thing ends any unknown-word card
   st.offer = !q.subject && st.text && !st.setting && st.offerDismissed !== st.text ? findOffer(st.text, world, ctx) : null;
   st.cartOffer = null;
-  if (st.text && st.text.length > 6 && st.text !== st.cartOfferDismissed && !st.setting && !st.cartEdit) { const r = readSentence(st.text, ctx); if (r.items.length >= 2) st.cartOffer = r; }
+  if (st.text && st.text.length > 6 && st.text !== st.cartOfferDismissed && !st.setting && !st.cartEdit) { const r = readSentence(st.text, ctx); if (r.items.length >= 2 || (r.items.length >= 1 && r.bad.some(b => { const pq = parse(b, ctx); return pq.query.qty && !pq.query.span && pq.unrecognized.length; }))) st.cartOffer = r; }
   st.fields = st.est && st.est.ok ? buildFields(q, st.est, ctx) : null;
   if (st.slot && !(st.fields && st.fields.slots.some(x => x.id === st.slot))) { st.slot = null; st.numOpen = false; }
   S.last = st.text; persist();
@@ -316,7 +316,9 @@ function setCartTotal(v) {
   const bu = parseMoney(String(v || '').trim().toLowerCase(), cur()), c = cartOf(), ref = (cartTotals(c, ctx).pre || cartTotals(c, ctx)).spend;
   st.cartTotalEdit = false;
   if (!(bu > 0) || !(ref > 0)) { toast('Try a total like "40 gp".'); renderSheet(); return; }
-  setCartHaggle((bu / ref - 1) * 100);
+  const pct = (bu / ref - 1) * 100;
+  if (pct > 50) toast('That is ' + Math.round(pct) + '% above the list price. Set anyway.');
+  setCartHaggle(pct);
 }
 function setCartHaggle(pct) {
   pct = Math.max(-90, Math.min(300, Math.round(pct * 10) / 10));
@@ -391,6 +393,19 @@ function editBarHtml() {
   const line = cartOf().lines.find(l => l.id === st.cartEdit.id), ent = line && ctx.byId.get(line.q.subject);
   return `<div class="editbar"><div class="et">Editing <b>${esc(ent ? ent.name : 'a line')}</b> in the cart</div><div class="eb"><button class="rm" data-act="cart-remove-edit">Remove</button><button data-act="cart-cancel">Cancel</button><button class="go" data-act="cart-update">Update</button></div></div>`;
 }
+// a one-time price: a real item in the world, flagged so it goes away once nothing in the cart or on screen uses it
+function makeOneOff(phrase, cand, bu) {
+  const name = capital(phrase), item = newItemFrom(name, phrase, cand, storedPrice(ctx, name, cand, bu));
+  item.id = newItemId(); item.oneoff = true;
+  world.items = world.items.filter(x => !(x.oneoff && x.name.toLowerCase() === name.toLowerCase()));
+  world.items.push(item); return item;
+}
+function pruneOneOffs() {
+  if (!world.items.some(x => x.oneoff)) return;
+  const used = new Set([...(cartOf().lines.map(l => l.q.subject)), st.query && st.query.subject]);
+  const keep = world.items.filter(x => !x.oneoff || used.has(x.id));
+  if (keep.length !== world.items.length) { world.items = keep; worldChanged({ lite: true }); }
+}
 // an item in a typed list the app does not know: close matches, or a guess, one tap each
 function badInfo(seg) {
   const phrase = unknownRunOf(parse(seg, ctx)) || seg.toLowerCase();
@@ -399,19 +414,20 @@ function badInfo(seg) {
   return { seg, phrase, cands, tc };
 }
 function badRows(bad, where) {
-  return bad.map((b, i) => { const x = badInfo(b); return `<li class="ferr unk"><div>&ldquo;${esc(x.phrase)}&rdquo; is not in your lists.</div><div class="unkopts">${x.cands.map((c, k) => `<button class="q" data-act="rs-alias" data-w="${where}" data-i="${i}" data-k="${k}">Same as ${esc(c.label.toLowerCase())}</button>`).join('')}<button class="q" data-act="rs-guess" data-w="${where}" data-i="${i}">Guess ${esc(money(x.tc.bu))}</button></div></li>`; }).join('');
+  return bad.map((b, i) => { const x = badInfo(b), q = parse(b, ctx).query.qty, n = q && q.lo === q.hi ? q.lo : null; return `<li class="ferr unk"><div>${n ? n + ' &times; ' : ''}&ldquo;${esc(x.phrase)}&rdquo; is not in your lists.</div><div class="unkopts"><button class="q on" data-act="rs-quick" data-w="${where}" data-i="${i}">Use ${esc(money(x.tc.bu))}</button>${x.cands.map((c, k) => `<button class="q" data-act="rs-alias" data-w="${where}" data-i="${i}" data-k="${k}">Same as ${esc(c.label.toLowerCase())}</button>`).join('')}<button class="q" data-act="rs-guess" data-w="${where}" data-i="${i}">Remember it</button></div></li>`; }).join('');
 }
 function resolveBad(a, where, i, k) {
   const src = where === 'read' ? st.cartRead : st.cartOffer; if (!src) return;
   const x = badInfo(src.bad[i]);
   if (a === 'rs-alias') { const c = x.cands[k]; if (!c) return; world.vocabulary.push({ term: x.phrase, means: c.entry.id }); toast('"' + x.phrase + '" now means ' + c.entry.name.toLowerCase() + '.'); }
+  else if (a === 'rs-quick') { makeOneOff(x.phrase, x.tc, x.tc.bu); toast('Priced "' + capital(x.phrase) + '" once at ' + money(x.tc.bu) + '. Not saved to your lists.'); }
   else { const name = capital(x.phrase), item = newItemFrom(name, x.phrase, x.tc, storedPrice(ctx, name, x.tc, x.tc.bu)); item.id = newItemId(); world.items.push(item); toast('Saved "' + name + '" at a guess. Edit it under World, My items.'); }
   worldChanged();
   if (where === 'read') { st.cartRead = readSentence(st.cartText, ctx); renderSheet(); }
 }
 function offerHtml() {
   const r = st.cartOffer, shop = r.shop.map(id => ctx.mods.get(id)?.label).filter(Boolean);
-  return `<section class="guess cartoffer"><div class="gh">That reads as <b>${r.items.length} items</b>${shop.length ? ' (' + esc(shop.join(', ')) + ')' : ''}. Price them together in a cart?</div><ul class="slines">${r.items.map(q => { const e = ctx.byId.get(q.subject); return `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(e ? whatText(q, e) : '')}</li>`; }).join('')}${badRows(r.bad, 'offer')}</ul><button class="cta" data-act="cart-offer-add">Add ${r.items.length} to cart</button><button class="cta2" data-act="cart-offer-no">Not now</button></section>`;
+  return `<section class="guess cartoffer"><div class="gh">That reads as <b>${r.items.length} item${r.items.length === 1 ? '' : 's'}</b>${shop.length ? ' (' + esc(shop.join(', ')) + ')' : ''}. Price them together in a cart?</div><ul class="slines">${r.items.map(q => { const e = ctx.byId.get(q.subject); return `<li>${q.action === 'sell' ? 'Sell ' : ''}${esc(e ? whatText(q, e) : '')}</li>`; }).join('')}${badRows(r.bad, 'offer')}</ul><button class="cta" data-act="cart-offer-add">Add ${r.items.length} to cart</button><button class="cta2" data-act="cart-offer-no">Not now</button></section>`;
 }
 const amtOf = t => (t.spend || t.get);
 function renderCartPill() {
@@ -438,6 +454,12 @@ function shopOptions(c, t) {
   return `<div class="shopopts"><div class="lab">Where</div><div class="opts wrap">${where}</div><div class="lab">Prices</div><div class="opts wrap">${prices}</div></div>`;
 }
 const MINUS = '\u2212';
+// one tap to change how many, right on the line; ranges and agreed prices keep the full editor
+function qtyStep(line, r) {
+  const q = line.q.qty; if (r.fixed || (q && q.lo !== q.hi)) return '';
+  const n = q ? q.lo : 1;
+  return `<span class="cqty"><button data-act="cart-qty" data-id="${line.id}" data-d="-1" aria-label="One fewer"${n <= 1 ? ' disabled' : ''}>&minus;</button><b>${n}</b><button data-act="cart-qty" data-id="${line.id}" data-d="1" aria-label="One more">+</button></span>`;
+}
 function cartHtml() {
   const c = cartOf(), t = cartTotals(c, ctx), ref = t.pre || t, hg = c.haggle;
   const sellOnly = !t.spend && t.get > 0;
@@ -455,7 +477,7 @@ function cartHtml() {
     const own = !!(r.fixed || r.hgLine);   // a cart-wide haggle shows on the total, not on every line
     const hgc = hl && own ? (hl.good ? ' hg-good' : ' hg-bad') : '';
     const was = hl && own && !r.hgCart ? `<span class="crg">was ${esc(money(r.was))}</span>` : '';
-    return `<div class="cwrap"><button class="cdel" data-act="cart-del" data-id="${line.id}" aria-label="Remove">Remove</button><div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot${hgc}">${sign(r)}${esc(money(r.t))}</span></div>${bits.length || was ? `<div class="l2"><span class="csub">${bits.join(' ')}</span>${was}</div>` : ''}</div></div>`;
+    return `<div class="cwrap"><button class="cdel" data-act="cart-del" data-id="${line.id}" aria-label="Remove">Remove</button><div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot${hgc}">${sign(r)}${esc(money(r.t))}</span></div><div class="l2"><span class="csub">${bits.join(' ')}</span>${was}${qtyStep(line, r)}</div></div></div>`;
   }).join('');
 
   // the summary: what you pay, the haggle against it, and (if you sell too) what comes back
@@ -482,13 +504,13 @@ function cartHtml() {
   const body = c.lines.length ? rows : `<p class="empty">Nothing in the cart yet. Tap Add beside a price, or type a few items below.</p>`;
   const shopRow = `<div class="cfield"><button class="crow" data-act="cart-shop-toggle" aria-expanded="${st.cartShopOpen}"><span class="k">Shop</span><span class="v">${esc(shopLabel(c))}</span><span class="chev">${st.cartShopOpen ? '&#9662;' : '&rsaquo;'}</span></button>${st.cartShopOpen ? shopOptions(c, t) : ''}</div>`;
   return `${shopRow}<div class="clines">${body}</div>${c.lines.length ? '<button class="linkbtn cempty" data-act="cart-clear">Empty the cart</button>' : ''}${why}
-    <div class="cfoot"><div class="csum ctot${hg ? ' hg ' + (hg.pct < 0 ? 'good' : 'bad') : ''}"><div class="t1">${labelBtn}${hgPill}</div><div class="cmain">${mode ? (st.cartTotalEdit ? `<div class="cbig tedit"><input class="field" id="cartTot" inputmode="decimal" placeholder="Agreed total, like 40 gp" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Type the total you agreed"><button class="btn primary" data-act="cart-total-set">Set</button></div>` : `<button class="cbig tapt" data-act="cart-total-edit" aria-label="Type the total you agreed"><b>${esc(money(amt))}</b><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>`) : `<div class="cbig"><b>${esc(money(amt))}</b></div>`}${tally}</div>${bar}${note}${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out.</p>` : ''}</div>
+    <div class="cfoot"><div class="csum ctot${hg ? ' hg ' + (hg.pct < 0 ? 'good' : 'bad') : ''}"><div class="t1">${labelBtn}${hgPill}</div><div class="cmain">${mode ? (st.cartTotalEdit ? `<div class="cbig tedit"><input class="field" id="cartTot" inputmode="decimal" placeholder="Agreed total, like 40 gp" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Type the total you agreed"><button class="btn primary" data-act="cart-total-set">Set</button></div>` : `<button class="cbig tapt" data-act="cart-total-edit" aria-label="Type the total you agreed"><b>${esc(money(amt))}</b><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>`) : (canHaggle ? `<button class="cbig tapt" data-act="cart-total-open" aria-label="Type the total you agreed"><b>${esc(money(amt))}</b><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>` : `<div class="cbig"><b>${esc(money(amt))}</b></div>`)}${tally}</div>${bar}${note}${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out.</p>` : ''}</div>
     <div class="cdock">${read}<div class="cin"><input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="Add more: 3 rope, 2 torches" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div></div></div>`;
 }
 function clearInput() { $('#q').value = ''; fromText(''); }
 function openCart() { st.sheet = { open: true, mode: 'cart' }; renderSheet(); }
 function afterCart(opts = {}) {
-  persist(); renderCartPill(); renderResult(); if (st.sheet.open && st.sheet.mode === 'cart') renderSheet();
+  pruneOneOffs(); persist(); renderCartPill(); renderResult(); if (st.sheet.open && st.sheet.mode === 'cart') renderSheet();
   if (opts.focus) { const i = $('#cartIn'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 }
 function mergeShop(c, shop) {
@@ -579,8 +601,8 @@ function startPick(id) {
 }
 const START_ACTIONS = [['buy', 'Buy', 'Something I would pay for'], ['sell', 'Sell', 'Something I would be paid for'], ['value', 'Appraise', 'What something is worth']];
 function startHtml() {
-  const a = st.start && st.start.action;
-  if (!a) return `<p class="mini" style="color:var(--muted);margin:0 0 .75rem">What are you doing?</p><div class="startgrid">${START_ACTIONS.map(([id, l, s]) => `<button class="startbtn" data-act="start-action" data-v="${id}"><b>${l}</b><span>${s}</span></button>`).join('')}</div>`;
+  const a = (st.start && st.start.action) || 'buy';
+  if (false) return `<p class="mini" style="color:var(--muted);margin:0 0 .75rem">What are you doing?</p><div class="startgrid">${START_ACTIONS.map(([id, l, s]) => `<button class="startbtn" data-act="start-action" data-v="${id}"><b>${l}</b><span>${s}</span></button>`).join('')}</div>`;
   const label = START_ACTIONS.find(x => x[0] === a)[1];
   const labelOf = id => (id === 'mine' ? 'My items' : (FLOW_CATS.find(c => c[0] === id) || [])[1] || id);
   const have = id => ctx.entries.some(e => catOf(e) === id);
@@ -597,7 +619,8 @@ function startHtml() {
     back = !searching && grp && grp[2].length > 1 ? 'f-up' : 'f-group'; where = searching ? 'Search' : labelOf(fl.cat);
     body = '';
   }
-  const crumb = `<div class="startcrumb">${back ? `<button class="linkbtn" data-act="${back === 'f-up' ? 'f-group' : back}" data-v="${back === 'f-up' ? (grp ? grp[0] : '') : ''}">&larr; ${back === 'f-up' ? esc(grp[1]) : 'All kinds'}</button>` : `<button class="linkbtn" data-act="start-back">&larr; ${esc(label)}</button>`}<span>${where === label ? esc(label) : esc(label) + ' &rsaquo; ' + esc(where)}</span></div>`;
+  const actSeg = `<div class="gseg actseg" role="group" aria-label="What are you doing">${START_ACTIONS.map(([id, l]) => `<button class="${a === id ? 'on' : ''}" data-act="start-action" data-v="${id}" aria-pressed="${a === id}"><b>${l}</b></button>`).join('')}</div>`;
+  const crumb = actSeg + `<div class="startcrumb">${back ? `<button class="linkbtn" data-act="${back === 'f-up' ? 'f-group' : back}" data-v="${back === 'f-up' ? (grp ? grp[0] : '') : ''}">&larr; ${back === 'f-up' ? esc(grp[1]) : 'All kinds'}</button>` : ''}<span>${where === label ? esc(label) : esc(label) + ' &rsaquo; ' + esc(where)}</span></div>`;
   const list = body ? '' : pickerHtml('start-pick', true);
   return crumb + `<input class="field" id="flowSearch" type="search" placeholder="Search all items" value="${esc(fl.search)}" aria-label="Search all items" style="width:100%">` + body + list.replace(/<input class="field" id="flowSearch"[^>]*>/, '');
 }
@@ -659,10 +682,12 @@ function guessCard() {
   const qtxt = st.query.qty ? (st.query.qty.lo === st.query.qty.hi ? st.query.qty.lo : st.query.qty.lo + ' to ' + st.query.qty.hi) : null;
   const tagged = c && c.tagged;
   let h = `<section class="guess"><div class="gh"><b>${esc(phrase)}</b> is not in the price list yet.${tagged ? `<span class="gwhy">A guess from its tags: ${esc(c.why)}</span>` : `<span class="gwhy">Using ${esc(c.label.toLowerCase())} as the guide</span>`}</div>`;
+  let priceLine = money(g.bu);
   if (c) {
-    const pv = previewWith(ctx, name, c, g.bu, { ...st.query, subject: 'tmp.guess' });
-    const one = pv.one.ok ? pv.one.typical : g.bu, pr = np(money(one));
-    h += `<div class="stepper"><button class="sb" data-act="g-lower" aria-label="Lower the price">&minus;</button><div class="gval"><div class="num">${esc(pr.n)}<small>${esc(pr.u)}</small></div><div class="gtot">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'}</div></div><button class="sb" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
+    const stored = storedPrice(ctx, name, c, g.bu), pv = previewWith(ctx, name, c, stored, { ...st.query, subject: 'tmp.guess' });
+    const one = pv.one.ok ? pv.one.typical : g.bu, pr = np(money(one)); priceLine = money(one);
+    h += `<div class="stepper"><button class="sb" data-act="g-lower" aria-label="Lower the price">&minus;</button><button class="gval" data-act="g-exact" aria-label="Type an exact price"><div class="num">${esc(pr.n)}<small>${esc(pr.u)}</small></div><div class="gtot">${c.unit && c.unit !== 'each' ? 'per ' + esc(c.unit) : 'each'} &middot; tap to type</div></button><button class="sb" data-act="g-raise" aria-label="Raise the price">+</button></div>`;
+    if (g.exact) h += `<input class="field gsearch" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">`;
     if (qtxt && pv.full.ok) h += `<div class="gtot">For ${esc(String(qtxt))}: about <b>${esc(money(pv.full.typical))}</b> (${esc(range(pv.full.lo, pv.full.hi))})</div>`;
   }
   const kindName = (KINDS.find(k => k.id === g.tags.kind) || KINDS[0]).label;
@@ -675,12 +700,14 @@ function guessCard() {
     ? `<div class="kindgrid" role="group" aria-label="Kind">${KINDS.map(k => `<button class="${g.tags.kind === k.id ? 'on' : ''}" data-act="g-tag" data-r="kind" data-v="${k.id}" aria-pressed="${g.tags.kind === k.id}">${esc(k.label)}</button>`).join('')}</div>`
     : `<button class="kindrow" data-act="g-kind-open"><span>Kind</span><b>${esc(kindName)}</b><i>Change</i></button>`}${openRows.map(seg).join('')}${foldRows.length ? `<button class="foldrow" data-act="g-more"><span>${esc(foldText)}</span><i>Adjust</i></button>` : ''}</div>`;
   const near = all.slice(1);
-  if (near.length) h += `<div class="sep"><span>Is it more like&hellip;</span></div><div class="fields">${near.map((x, k) => { const i = k + 1; return `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(x.label)}</span><span class="hint">${esc(money(x.bu))}${x.unit && x.unit !== 'each' ? ' / ' + esc(x.unit) : ''}</span></button>`; }).join('')}</div>`;
-  h += `<input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
+  if (!g.cmp) h += `<button class="foldrow" data-act="g-cmp"><span>Not quite? Compare with real items</span><i>Compare</i></button>`;
+  else {
+    if (near.length) h += `<div class="sep"><span>Is it more like&hellip;</span></div><div class="fields">${near.map((x, k) => { const i = k + 1; return `<button class="slot${g.sel === i ? ' open' : ''}" data-act="g-pick" data-i="${i}"><span class="v">${g.sel === i ? '<span class="dot r-item"></span>' : ''}${esc(x.label)}</span><span class="hint">${esc(money(x.bu))}${x.unit && x.unit !== 'each' ? ' / ' + esc(x.unit) : ''}</span></button>`; }).join('')}</div>`;
+    h += `<input class="field gsearch" id="gSearch" type="search" placeholder="Search all items" value="${esc(g.q)}" aria-label="Search all items">`;
+  }
   if (c) {
-    h += g.exact ? `<input class="field gsearch" id="gPrice" placeholder="Type a price, like 25 gp" aria-label="Type a price" inputmode="decimal">` : `<button class="linkbtn" style="margin-top:8px" data-act="g-exact">Type an exact price</button>`;
-    const unitWord = c.unit && c.unit !== 'each' ? 'per ' + c.unit : 'each';
-    h += `${c.entry && !c.tier ? `<button class="cta2" data-act="g-alias">Same as ${esc(c.label.toLowerCase())}</button>` : ''}<div class="gsave"><button class="cta" data-act="g-set">Save at ${esc(money(g.bu))} ${esc(unitWord)}</button></div>`;
+    const addable = st.query.action !== 'value', unitWord = c.unit && c.unit !== 'each' ? ' ' + c.unit : '';
+    h += `<div class="gsave"><button class="cta" data-act="g-quick">${addable ? 'Add to cart' : 'Use this price'} &middot; ${esc(priceLine)}${unitWord ? ' per' + esc(unitWord) : ''}</button><div class="gsave2"><button class="linkbtn" data-act="g-set">Remember it as &ldquo;${esc(name)}&rdquo;</button>${c.entry && !c.tier ? `<button class="linkbtn" data-act="g-alias">Same as ${esc(c.label.toLowerCase())}</button>` : ''}</div></div>`;
   }
   return h + `</section>`;
 }
@@ -1091,6 +1118,8 @@ document.addEventListener('click', e => {
       toast('Added to the cart', () => { S.carts[world.id] = snap; afterCart(); });
       break;
     }
+    case 'cart-qty': { const c = cartOf(), l = c.lines.find(x => x.id === +d.id); if (!l) break; const cur0 = l.q.qty && l.q.qty.lo === l.q.qty.hi ? l.q.qty.lo : 1, n = cur0 + (+d.d); if (n < 1 || n > 999) break; l.q.qty = n === 1 ? null : { ...(l.q.qty || {}), lo: n, hi: n }; afterCart(); break; }
+    case 'cart-total-open': st.cartHaggling = true; st.cartTotalEdit = true; renderSheet(); { const i = $('#cartTot'); if (i) i.focus(); } break;
     case 'cart-del': { const c = cartOf(), snap = clone(c); c.lines = c.lines.filter(x => x.id !== +d.id); afterCart(); toast('Removed', () => { S.carts[world.id] = snap; afterCart(); }); break; }
     case 'cart-edit': { if (b.dataset.swiped) break; if (b.parentElement && b.parentElement.classList.contains('open')) { closeSwipes(null); break; } const c = cartOf(), l = c.lines.find(x => x.id === +d.id); if (!l || !ctx.byId.has(l.q.subject)) break; st.cartEdit = { id: l.id }; st.haggleOpen = false; st.sheet.open = false; renderSheet(); fromQuery(withShop(l.q, c.mods, ctx)); window.scrollTo(0, 0); break; }
     case 'cart-update': {
@@ -1103,7 +1132,7 @@ document.addEventListener('click', e => {
       c.lines = c.lines.filter(x => x.id !== id); st.cartEdit = null; st.haggleOpen = false; persist(); clearInput(); openCart(); toast('Removed', () => { S.carts[world.id] = snap; afterCart(); }); break;
     }
     case 'cart-cancel': st.cartEdit = null; st.haggleOpen = false; clearInput(); openCart(); break;
-    case 'rs-alias': case 'rs-guess': resolveBad(a, d.w, +d.i, +d.k); break;
+    case 'rs-alias': case 'rs-guess': case 'rs-quick': resolveBad(a, d.w, +d.i, +d.k); break;
     case 'cart-read': cartRead(); break;
     case 'cart-read-add': if (st.cartRead) { addItems(st.cartRead.items, st.cartRead.shop); const n = st.cartRead.items.length; st.cartRead = null; st.cartText = ''; afterCart({ focus: true }); toast('Added ' + n + ' to the cart'); } break;
     case 'cart-read-no': st.cartRead = null; renderSheet(); break;
@@ -1126,7 +1155,7 @@ document.addEventListener('click', e => {
     case 'fact-cancel': st.fact.res = null; renderDrawer(); break;
     case 's-cancel': st.settingDismissed = st.text; st.setting = null; fromText(st.text, { noHistory: true }); break;
     case 'g-pick': if (st.guess) { const all = guessAll(); const c = all[+d.i]; if (c) { st.guess.sel = +d.i; st.guess.bu = c.bu; st.guess.exact = false; renderResult(); } } break;
-    case 'start': st.start = { action: null }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: null, group: null, search: '' }; st.slot = null; renderSheet(); break;
+    case 'start': st.start = { action: 'buy' }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: null, group: null, search: '' }; st.slot = null; renderSheet(); break;
     case 'ac': { const r = (st.ac || [])[+d.i]; if (!r) break;
       if (r.type === 'item') { st.start = { action: r.verb }; st.sheet = { open: false, mode: 'start' }; startPick(r.id); }
       else { st.start = { action: r.verb }; st.sheet = { open: true, mode: 'start' }; st.flow = { cat: r.type === 'cat' ? r.cat : null, group: r.type === 'cat' ? (FLOW_GROUPS.find(g => g[2].includes(r.cat)) || [])[0] || null : null, search: '' }; st.slot = null; renderSheet(); }
@@ -1141,6 +1170,14 @@ document.addEventListener('click', e => {
       else { g.tags[d.r] = d.v; if (!g.touched.includes(d.r)) g.touched.push(d.r); }
       st.guess.sel = 0; st.guess.exact = false;
       st.guess.bu = guessAll()[0].bu; renderResult();
+    } break;
+    case 'g-cmp': if (st.guess) { st.guess.cmp = true; renderResult(); } break;
+    case 'g-quick': if (st.guess && st.guess.sel != null) {
+      const g = st.guess, c = guessAll()[g.sel], addable = st.query.action !== 'value';
+      const it = makeOneOff(g.phrase, c, g.bu); st.guess = null; worldChanged();
+      if (st.query.subject !== it.id) { const q = clone(st.query); q.subject = it.id; q.family = null; fromQuery(q); }
+      if (addable && st.query.subject === it.id) { const cc = cartOf(), first = !cc.lines.length, snap = clone(cc); addToCart(cc, stripShop(st.query, cc.mods)); afterCart(); flyCoin(b.getBoundingClientRect(), first); toast('Added to the cart as a one-off', () => { S.carts[world.id] = snap; afterCart(); }); }
+      else toast('Priced once. Not saved to your lists.');
     } break;
     case 'g-kind-open': if (st.guess) { st.guess.kindOpen = true; renderResult(); } break;
     case 'g-more': if (st.guess) { st.guess.more = true; renderResult(); } break;

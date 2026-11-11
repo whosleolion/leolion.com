@@ -203,12 +203,20 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' save prices the thing', !(await page.$('.guess')) && /Monster parts/i.test(await page.textContent('.price .what')));
   await page.fill('#q', '3 sparkjuice');
   ok(name + ' second unknown word shows the card', !!(await page.$('.guess')));
+  await page.click('[data-act=g-cmp]');
   await page.fill('#gSearch', 'potion of healing');
   await page.click('.guess .fields .slot >> nth=-1');
   ok(name + ' same-as option offered for a real item', !!(await page.$('[data-act=g-alias]')));
   await page.click('[data-act=g-alias]');
   ok(name + ' alias prices it', /healing/i.test(await page.textContent('.price .what')));
 
+  await page.fill('#q', 'buy a big stoat');
+  ok(name + ' an unknown item offers a one-tap quick add', /Add to cart/.test(await page.textContent('[data-act=g-quick]')));
+  await page.click('[data-act=g-quick]');
+  ok(name + ' quick add puts it in the cart without a library save', /Cart/.test(await page.textContent('#cartPill')));
+  await page.fill('#q', '2 blorp widget, 1 rope');
+  ok(name + ' a mixed list with an unknown item offers to resolve it', !!(await page.$('[data-act=rs-quick]')));
+  await page.fill('#q', '');
   // haggle
   await page.fill('#q', 'buy a longsword');
   const hp0 = await price(page);
@@ -241,7 +249,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' a discount on a sale shows as against you', await page.isVisible('.price.hg.bad'));
   await page.fill('#q', 'buy a longsword, 15% off'); await page.click('[data-act=cart-add]');
   await page.click('#cartPill');
-  ok(name + ' a haggled line carries its mark into the cart', /haggled/.test(await page.textContent('.cline')) && /was/.test(await page.textContent('.cline')));
+  ok(name + ' a haggled line carries its mark into the cart', /haggled/.test(await page.textContent('.cline >> nth=-1')) && /was/.test(await page.textContent('.cline >> nth=-1')));
   const ct0 = await page.textContent('.ctot .cbig b');
   await page.click('[data-act=cart-haggle]');
   ok(name + ' the cart haggle is a small mode with a slider', !!(await page.$('.ctot .dragbar')));

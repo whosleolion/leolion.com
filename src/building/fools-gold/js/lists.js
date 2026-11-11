@@ -1,6 +1,6 @@
 // When a word belongs to an item list that is switched off, the app offers to switch it on.
-import { compileWorld, worldLists } from './world.js?v=df97fefd';
-import { parse } from './parser.js?v=df97fefd';
+import { compileWorld, worldLists } from './world.js?v=173f4468';
+import { parse } from './parser.js?v=173f4468';
 
 export const LIST_LABEL = { srd: '5e SRD items', fantasy: 'Fantasy basics', modern: 'Modern day', scifi: 'Science fiction' };
 export const listOf = e => (e.src === 'scifi' ? 'scifi' : e.src === 'modern' ? 'modern' : e.src === 'srd' && !e.generic ? 'srd' : 'fantasy');
