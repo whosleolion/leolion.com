@@ -243,9 +243,11 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('#cartPill');
   ok(name + ' a haggled line carries its mark into the cart', /haggled/.test(await page.textContent('.cline')) && /was/.test(await page.textContent('.cline')));
   const ct0 = await page.textContent('.ctot .cbig b');
-  await page.click('[data-act=cart-haggle]'); await page.click('[data-act=cart-hg-set][data-v="-10"]');
-  ok(name + ' a cart haggle lowers the total and shows on the total', ct0 !== (await page.textContent('.ctot .cbig b')) && /Haggled/.test(await page.textContent('.ctot .haggle.on')) && !!(await page.$('.ctot.hg.good')));
-  await page.click('.ctot [data-act=cart-hg-off]'); await page.click('[data-act=cart-haggle]');
+  await page.click('[data-act=cart-haggle]');
+  ok(name + ' the cart haggle is a small mode with a slider', !!(await page.$('.ctot .dragbar')));
+  await page.click('[data-act=cart-total-edit]'); await page.fill('#cartTot', '5 gp'); await page.press('#cartTot', 'Enter');
+  ok(name + ' a typed total lowers the cart total and shows on the total', ct0 !== (await page.textContent('.ctot .cbig b')) && !!(await page.$('.ctot.hg.good')));
+  await page.click('.ctot [data-act=cart-hg-off]'); if (await page.$('.ctot .dragbar')) await page.click('[data-act=cart-haggle]');
   ok(name + ' the cart haggle can be turned off', (await page.textContent('.ctot .cbig b')) === ct0);
   await page.click('button[data-act=sheet-close]');
   await page.click('#cartPill'); await page.click('[data-act=cart-clear]'); await page.click('[data-act=cart-clear]');
