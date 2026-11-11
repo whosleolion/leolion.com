@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=edacbfa1';
-import { libraryEntries, modernLibrary } from './library.js?v=edacbfa1';
+import { scifiEntries } from './scifi.js?v=2747a2cb';
+import { libraryEntries, modernLibrary, modernWorld } from './library.js?v=2747a2cb';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -245,7 +245,7 @@ const modernEntries = [
     'Book;20;;book;paperback, hardcover', 'Newspaper;3;;newspaper;paper', 'Pack of cigarettes;9.50;;;cigarettes, smokes', 'Bicycle;520;;vehicle;bike', 'Motorcycle;9500;;vehicle;motorbike', 'Car;38000;;vehicle;automobile, new car, sedan, suv',
     'Sofa;900;;;couch', 'Mattress;1000;;;bed frame', 'Refrigerator;1300;;;fridge', 'Over the counter medicine;12;;medicine;medicine, painkillers, cold medicine', 'Prescription medication;60;;medicine;prescription, meds',
   ]),
-  ...modern('good', ['manufactured', 'weapon', 'metal'], ['Handgun;600;;;pistol, gun, firearm, revolver', 'Hunting rifle;900;;;rifle, shotgun', 'Pocketknife;45;;;knife', 'Bulletproof vest;650;;armor;body armor, kevlar vest']),
+  ...modern('good', ['manufactured', 'weapon', 'metal'], ['Handgun;600;;;pistol, gun, firearm', 'Hunting rifle;900;;;rifle', 'Pocketknife;45;;;knife', 'Bulletproof vest;650;;armor;body armor, kevlar vest']),
   ...modern('property', ['property'], ['House;420000;;;home, family home, house purchase', 'Condo;360000;;;condominium', 'Acre of land;6000;;;acre, land'], { placeScale: 3 }),
 ].map(e => ({ spread: 0.15, ...e }));
 const modernCats = [
@@ -254,7 +254,7 @@ const modernCats = [
   ['furniture', 'Furniture', 600, ['manufactured'], 'furnishings, table, chair, desk'],
   ['appliance', 'Appliance', 700, ['manufactured'], 'appliances, oven, washer, dryer'],
   ['vehicle', 'Vehicle', 22000, ['manufactured', 'vehicle'], 'vehicles, truck, van'],
-  ['tool', 'Tool', 60, ['manufactured', 'tool'], 'tools, equipment, drill, hammer'],
+  ['tool', 'Tool', 60, ['manufactured', 'tool'], 'tools, equipment'],
 ].map(([id, name, price, tags, aliases]) => ({ id: 'good.cat-m-' + id, name, kind: 'good', src: 'modern', bu: usd(price), unit: 'each', spread: 0.6, tags, aliases: aliases.split(',').map(x => x.trim()), isCategory: true, basis: 'Generic price for when no specific item is named.' }));
 
 // A harvested-materials category, the usual landing spot for "monster parts" style words.
@@ -266,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {

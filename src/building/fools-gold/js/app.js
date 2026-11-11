@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=edacbfa1';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=edacbfa1';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=edacbfa1';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=edacbfa1';
-import { findOffer } from './lists.js?v=edacbfa1';
-import { suggestPrompts } from './suggest.js?v=edacbfa1';
-import { readFact } from './facts.js?v=edacbfa1';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=edacbfa1';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=edacbfa1';
+import { compileWorld } from './world.js?v=2747a2cb';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=2747a2cb';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=2747a2cb';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=2747a2cb';
+import { findOffer } from './lists.js?v=2747a2cb';
+import { suggestPrompts } from './suggest.js?v=2747a2cb';
+import { readFact } from './facts.js?v=2747a2cb';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=2747a2cb';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=2747a2cb';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=edacbfa1';
-import { applicable } from './engine.js?v=edacbfa1';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=edacbfa1';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=edacbfa1';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=edacbfa1';
-import { complete } from './complete.js?v=edacbfa1';
-import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=edacbfa1';
+} from './data.js?v=2747a2cb';
+import { applicable } from './engine.js?v=2747a2cb';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=2747a2cb';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=2747a2cb';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=2747a2cb';
+import { complete } from './complete.js?v=2747a2cb';
+import { inferTags, tagCandidate, rowsFor, optionsOf, rowLabel, KINDS } from './appraise.js?v=2747a2cb';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -752,6 +752,9 @@ function renderHistory() {
 // ---------- item kinds (for the picker) ----------
 const FLOW_CATS = [
   ['explosives', 'Explosives', e => e.library === 'explosives'],
+  ['knives', 'Knives and blades', e => e.library === 'knives'],
+  ['tech', 'Electronics', e => e.library === 'electronics' || has(e, 'gadget')],
+  ['home', 'Household and camping', e => e.library === 'household'],
   ['fees', 'Fees and tolls', e => e.library === 'fees'],
   ['crowns', 'Crowns and jewelry', e => e.library === 'headwear' || has(e, 'jewelry')],
   ['clothes', 'Clothes', e => e.kind === 'good' && has(e, 'clothing')],
@@ -776,8 +779,8 @@ const FLOW_CATS = [
 ];
 // the buy / sell flow reads in two steps: a group, then a kind inside it. Order is by how often a table reaches for them.
 const FLOW_GROUPS = [
-  ['gear', 'Gear and tools', ['gear']],
-  ['arms', 'Weapons and armor', ['weapons', 'armor', 'explosives']],
+  ['gear', 'Gear and tools', ['gear', 'home', 'tech']],
+  ['arms', 'Weapons and armor', ['weapons', 'knives', 'armor', 'explosives']],
   ['clothes', 'Clothes and jewelry', ['clothes', 'crowns']],
   ['food', 'Food and drink', ['food']],
   ['animals', 'Animals, mounts and vehicles', ['animals', 'mounts']],

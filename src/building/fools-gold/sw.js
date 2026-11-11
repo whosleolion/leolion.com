@@ -1,7 +1,7 @@
 // Offline support for Fool's Gold. The numbers all come from files, so once these are cached the app runs with no network.
 // BUILD and FILES are written by tools/fools-gold/stamp.mjs.
-const BUILD = 'edacbfa1';
-const FILES = ['./', 'index.html', 'manifest.json', 'favicon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'css/style.css?v=edacbfa1', 'js/app.js?v=edacbfa1', 'js/appraise.js?v=edacbfa1', 'js/cart.js?v=edacbfa1', 'js/complete.js?v=edacbfa1', 'js/data.js?v=edacbfa1', 'js/engine.js?v=edacbfa1', 'js/facts.js?v=edacbfa1', 'js/fields.js?v=edacbfa1', 'js/guess.js?v=edacbfa1', 'js/library.js?v=edacbfa1', 'js/lists.js?v=edacbfa1', 'js/money.js?v=edacbfa1', 'js/parser.js?v=edacbfa1', 'js/scifi.js?v=edacbfa1', 'js/setting.js?v=edacbfa1', 'js/store.js?v=edacbfa1', 'js/suggest.js?v=edacbfa1', 'js/unstated.js?v=edacbfa1', 'js/world.js?v=edacbfa1'];
+const BUILD = '2747a2cb';
+const FILES = ['./', 'index.html', 'manifest.json', 'favicon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'css/style.css?v=2747a2cb', 'js/app.js?v=2747a2cb', 'js/appraise.js?v=2747a2cb', 'js/cart.js?v=2747a2cb', 'js/complete.js?v=2747a2cb', 'js/data.js?v=2747a2cb', 'js/engine.js?v=2747a2cb', 'js/facts.js?v=2747a2cb', 'js/fields.js?v=2747a2cb', 'js/guess.js?v=2747a2cb', 'js/library.js?v=2747a2cb', 'js/lists.js?v=2747a2cb', 'js/money.js?v=2747a2cb', 'js/parser.js?v=2747a2cb', 'js/scifi.js?v=2747a2cb', 'js/setting.js?v=2747a2cb', 'js/store.js?v=2747a2cb', 'js/suggest.js?v=2747a2cb', 'js/unstated.js?v=2747a2cb', 'js/world.js?v=2747a2cb'];
 const CACHE = 'fg-' + BUILD;
 
 self.addEventListener('install', e => {
