@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=90a3a8e3';
-import { niceRound } from './money.js?v=90a3a8e3';
+} from './data.js?v=9bd4859a';
+import { niceRound } from './money.js?v=9bd4859a';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -224,7 +224,7 @@ export function estimate(q, ctx) {
   const wage = w.anchors?.wage;
   if (wage > 0) {
     const days = typ0 / wage;
-    if (days >= 0.5) out.sense = 'About ' + (days < 10 ? +days.toFixed(1) : Math.round(days)) + ' day' + (days < 1.05 ? '' : 's') + ' of unskilled wages.';
+    if (days >= 0.5) out.sense = 'About ' + (days < 10 ? +days.toFixed(1) : Math.round(days).toLocaleString('en-US')) + ' day' + (days < 1.05 ? '' : 's') + ' of unskilled wages.';
   }
   return out;
 }

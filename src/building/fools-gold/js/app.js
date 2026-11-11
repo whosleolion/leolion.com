@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=90a3a8e3';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=90a3a8e3';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=90a3a8e3';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=90a3a8e3';
-import { findOffer } from './lists.js?v=90a3a8e3';
-import { suggestPrompts } from './suggest.js?v=90a3a8e3';
-import { readFact } from './facts.js?v=90a3a8e3';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=90a3a8e3';
+import { compileWorld } from './world.js?v=9bd4859a';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=9bd4859a';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=9bd4859a';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=9bd4859a';
+import { findOffer } from './lists.js?v=9bd4859a';
+import { suggestPrompts } from './suggest.js?v=9bd4859a';
+import { readFact } from './facts.js?v=9bd4859a';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=9bd4859a';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=90a3a8e3';
-import { applicable } from './engine.js?v=90a3a8e3';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=90a3a8e3';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=90a3a8e3';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=90a3a8e3';
+} from './data.js?v=9bd4859a';
+import { applicable } from './engine.js?v=9bd4859a';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=9bd4859a';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=9bd4859a';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=9bd4859a';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -224,24 +224,26 @@ function breakdownHtml(e) {
   const bar = `<div class="rangebar" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>`;
   const rows = e.factors.map((f, i) => {
     const key = f.key || 'row:' + i;
-    let eff;
+    let eff, dir = '';
     if (f.kind === 'base') eff = esc(range(f.lo, f.hi));
-    else if (f.kind === 'qty') eff = esc(f.label);
+    else if (f.kind === 'qty') eff = esc(f.label.replace(/^[^×]*/, '').trim() || f.label);
     else {
       const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi;
       eff = '× ' + (Math.abs(a - b) < 0.005 ? fx(a) : fx(a) + ' to ' + fx(b));
-      const dir = (a * b) ** 0.5;
-      eff = `<span class="${dir > 1.005 ? 'up' : dir < 0.995 ? 'down' : ''}">${eff}</span>`;
+      const d = (a * b) ** 0.5;
+      dir = d > 1.005 ? 'up' : d < 0.995 ? 'down' : '';
     }
-    const label = f.kind === 'qty' || f.kind === 'base' ? f.label.replace(/^× /, '') : f.label;
+    const label = f.kind === 'qty' ? 'Quantity' : f.kind === 'base' ? f.label.replace(/^× /, '') : f.label;
     const tappable = !!(f.key || f.why);
     const open = st.editRow === key;
-    let h = `<tr${tappable ? ` class="rowwhy${open ? ' open' : ''}" data-act="edit-row" data-key="${esc(key)}" tabindex="0"` : ''}><td><span class="lbl">${esc(label)}${f.edited ? ` <span class="edited">${f.saved ? 'saved' : 'edited'}</span>` : ''}</span></td><td class="num">${eff}${f.weight !== undefined && f.weight < 0.99 ? `<br><span class="mini">counts ${Math.round(f.weight * 100)}%</span>` : ''}</td><td class="num">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</td><td class="chev">${tappable ? (open ? '▴' : '▾') : ''}</td></tr>`;
-    if (open) h += `<tr class="edrow"><td colspan="4">${editorHtml(f, key)}</td></tr>`;
+    const sub = f.weight !== undefined && f.weight < 0.99 ? ` <span class="lsub">counts ${Math.round(f.weight * 100)}%</span>` : '';
+    const tag = f.edited ? `<span class="edited">${f.saved ? 'saved' : 'edited'}</span>` : '';
+    let h = `<div class="lrow ${f.kind || 'mult'}${tappable ? ' tap' : ''}${open ? ' open' : ''}"${tappable ? ` role="button" aria-expanded="${open}" data-act="edit-row" data-key="${esc(key)}" tabindex="0"` : ''}><div class="l1"><span class="lbl">${esc(label)}${tag}</span><span class="ltot">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</span></div><div class="l2"><span class="lfx ${dir}">${eff}${sub}</span>${tappable ? `<span class="lchev" aria-hidden="true">${open ? '&#9652;' : '&#9662;'}</span>` : ''}</div></div>`;
+    if (open) h += `<div class="led">${editorHtml(f, key)}</div>`;
     return h;
   }).join('');
-  return bar + `<table class="fx"><thead><tr><th>Step</th><th>Factor</th><th>Total</th><th></th></tr></thead><tbody>${rows}</tbody></table>` +
-    (hasEdits(q) ? `<div class="row" style="margin-top:10px"><button class="btn" data-act="ed-reset-all">Reset edits to this question</button></div>` : '');
+  return bar + `<div class="fx ledger">${rows}<div class="lsum"><span>Typical price</span><b>${esc(money(e.typical))}</b></div></div>` +
+    (hasEdits(q) ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="ed-reset-all">Reset edits to this question</button></div>` : '');
 }
 function editorHtml(f, key) {
   const ent = st.est.entry;
@@ -250,12 +252,10 @@ function editorHtml(f, key) {
   if (f.key === 'base') {
     const canKeep = !ent.curve;
     h += `<label class="lab">Price ${esc(f.label.replace(/^.*\(/, '(').replace(/^\((.*)\)$/, '$1'))}<input class="field" data-ed="base" inputmode="decimal" value="${esc(formatFull(f.mid, cur()))}"></label>`;
-    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${canKeep ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div>`;
-    h += `<p class="mini">${f.edited ? (canKeep ? 'Applies to this question until you keep it.' : 'Applies to this question. This item is priced by rarity, so it cannot be kept as one price.') : 'Type a new price to see the estimate change.'}</p>`;
+    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${canKeep ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div><p class="mini">${canKeep ? 'Applies to this question until you keep it.' : 'Applies to this question. Rarity sets this price, so it cannot be kept.'}</p>`;
   } else if (f.key) {
-    h += `<div class="grid2"><label class="lab">Low ×<input class="field" data-ed="lo" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.lo))}"></label><label class="lab">High ×<input class="field" data-ed="hi" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.hi))}"></label></div>`;
-    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${!f.saved ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div>`;
-    h += `<p class="mini">${f.saved ? 'Saved for this world. Manage it under World, Adjustments.' : f.edited ? 'Applies to this question until you keep it.' : 'Change the range to see the estimate change.'}</p>`;
+    h += `<div class="rng"><span>Range</span><label>&times;<input class="field" data-ed="lo" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.lo))}" aria-label="Low multiplier"></label><span>to</span><label>&times;<input class="field" data-ed="hi" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.hi))}" aria-label="High multiplier"></label></div>`;
+    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${!f.saved ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div><p class="mini">${f.saved ? 'Saved for this world. Remove it under World settings, Changes.' : 'Applies to this question until you keep it.'}</p>`;
   }
   return h + `</div>`;
 }
