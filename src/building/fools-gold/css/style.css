@@ -1207,3 +1207,10 @@ html[data-big] .jump .q { white-space: nowrap; }
 .q, .haggle, .linkbtn, [data-act=cart-add] { min-height: 2.75rem; }
 .clear { width: 2.5rem; height: 2.5rem; }
 .guess .foldrow { margin-top: -.25rem; }
+
+/* ---- never wider than the screen: grid and flex children may shrink below their text ---- */
+.guess, .guess > *, .gtags, .gtags > *, .grow, .kindgrid > * { min-width: 0; }
+.gtags { grid-template-columns: minmax(0, 1fr); }
+.kindgrid { grid-template-columns: repeat(auto-fill, minmax(min(6.5rem, 100%), 1fr)); }
+.foldrow, .kindrow { max-width: 100%; }
+.main { overflow-x: hidden; }

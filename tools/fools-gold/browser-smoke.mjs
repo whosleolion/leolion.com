@@ -210,6 +210,8 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=g-alias]');
   ok(name + ' alias prices it', /healing/i.test(await page.textContent('.price .what')));
 
+  await page.fill('#q', 'buy tuning fork');
+  ok(name + ' the guess card never scrolls sideways', (await page.evaluate(() => { const m = document.querySelector('#main'); return Math.max(m.scrollWidth - m.clientWidth, document.documentElement.scrollWidth - document.documentElement.clientWidth); })) <= 1);
   await page.fill('#q', 'buy a big stoat');
   ok(name + ' an unknown item offers a one-tap quick add', /Add to cart/.test(await page.textContent('[data-act=g-quick]')));
   await page.click('[data-act=g-quick]');
