@@ -498,6 +498,25 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('FT11 a question is not a fact', k('how much is a longsword?'), null);
   eq('FT12 empty is not a fact', k('  '), null);
 }
+
+// ---------- circumstance sentences ----------
+{
+  const w = WORLD_PRESETS.srd(); const c = compileWorld(w);
+  const r = x => readFact(x, c);
+  eq('MF1 takes N% reads as a circumstance', [r('black market takes 30%').kind, r('black market takes 30%').key], ['mod', 'mod:black-market']);
+  eq('MF2 takes 30% lands near 0.7', [r('black market takes 30%').lo, r('black market takes 30%').hi], [0.66, 0.74]);
+  eq('MF3 pays 40% lands near 0.4', [r('the black market pays 40%').lo, r('the black market pays 40%').hi], [0.38, 0.42]);
+  eq('MF4 N% more raises it', r('rush is 20% more expensive').lo > 1.1, true);
+  eq('MF5 N% less lowers it', r('village is 20% cheaper').hi < 1, true);
+  eq('MF6 a multiplier range is exact', [r('black market is x1.5 to 2').lo, r('black market is x1.5 to 2').hi], [1.5, 2]);
+  eq('MF7 shops pay stays a dial', r('shops pay 40%').kind, 'dial');
+  eq('MF8 an unknown circumstance is not a fact', r('purple haze takes 30%'), null);
+  // the saved override changes the estimate
+  const w2 = WORLD_PRESETS.srd(); w2.overrides = { 'mod:black-market': [0.2, 0.3] }; const c2 = compileWorld(w2);
+  const q = { action: 'sell', subject: 'good.longsword', family: null, qty: null, span: null, rarity: null, tier: null, mods: ['black-market'], assumed: [] };
+  const a = estimate(q, c), b = estimate(q, c2);
+  t('MF9 a saved circumstance changes the price', a.ok && b.ok && b.typical < a.typical * 0.7, a.typical + ' vs ' + b.typical);
+}
 // ---------- store.normalizeWorld survives hostile input ----------
 {
   const { normalizeWorld } = await import('../../src/building/fools-gold/js/store.js');

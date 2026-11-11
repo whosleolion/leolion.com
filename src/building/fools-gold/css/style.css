@@ -881,3 +881,11 @@ html[data-big] .slot .hint { flex-basis: 100%; }
 html[data-big] .slot .chev { margin-left: auto; }
 html[data-big] .slot { min-height: 0; row-gap: 0; padding-top: .5rem; padding-bottom: .5rem; }
 html[data-big] .slot .k { font-size: .8125rem; }
+
+/* the receipt: plain sentences, nothing to edit */
+.story { margin: 0 0 .75rem; font: 400 1.0625rem/1.45 var(--font-body); }
+.lwhy { margin: .125rem 0 0; color: var(--muted); font-size: .875rem; line-height: 1.4; }
+.lrow { cursor: default; }
+.lrow.tap:active { background: none; }
+.rfoot { display: grid; gap: .625rem; justify-items: start; padding: 1rem 0 .5rem; border-top: 1px solid var(--line); margin-top: .75rem; }
+.rfoot p { margin: 0; }

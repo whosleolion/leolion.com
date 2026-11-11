@@ -83,25 +83,19 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' picking an item swaps the subject', /Coach/i.test(await page.textContent('.price .what')));
   await page.screenshot({ path: `${out}/${name}-picked.png` });
 
-  // breakdown and factor editing
+  // the receipt: read only, with one way on to Changes
   await page.fill('#q', 'price for train ride between two major capital cities, 3 days travel expensive');
   await page.click('[data-act=sheet][data-mode=break]');
-  ok(name + ' details open the breakdown', await page.isVisible('#sheet .fx'));
-  const b0 = await price(page);
-  await page.click('[data-act=edit-row][data-key="tier:expensive"]');
-  await page.fill('[data-ed=lo]', '1'); await page.fill('[data-ed=hi]', '1.2'); await page.keyboard.press('Tab');
-  ok(name + ' editing a factor changes the price', b0 !== (await price(page)));
-  ok(name + ' edited flag shows', /edited/.test(await page.textContent('.meta')));
-  await page.click('[data-act=ed-reset]');
-  ok(name + ' reset restores the price', b0 === (await price(page)));
-  await page.click('[data-act=edit-row][data-key="base"]');
-  await page.fill('[data-ed=base]', '5 gp'); await page.keyboard.press('Tab');
-  ok(name + ' editing the base price changes the result', b0 !== (await price(page)));
-  await page.click('[data-act=ed-reset-all]');
-  ok(name + ' reset all edits', b0 === (await price(page)));
-  await page.screenshot({ path: `${out}/${name}-sheet.png` });
-  await page.click('.sheet-x');
-  ok(name + ' sheet closes', await page.isHidden('#sheet'));
+  ok(name + ' the receipt opens', await page.isVisible('#sheet .fx'));
+  ok(name + ' the receipt reads as sentences', /Typical price/.test(await page.textContent('#sheetBody')) && !!(await page.$('#sheetBody .story')));
+  ok(name + ' the receipt has nothing to edit', (await page.$$('#sheetBody input, #sheetBody select')).length === 0);
+  ok(name + ' the receipt can be copied', !!(await page.$('#sheetBody [data-act=copy-receipt]')));
+  await page.click('#sheetBody [data-act=open-changes]');
+  ok(name + ' Open Changes lands on the fact box', await page.isVisible('#factIn'));
+  await page.fill('#factIn', 'black market takes 30%'); await page.click('[data-act=fact-go]');
+  ok(name + ' a circumstance sentence is read back', /Change this circumstance/.test(await page.textContent('.setting')));
+  await page.click('[data-act=fact-cancel]'); await page.click('[data-act=close-world]');
+  ok(name + ' sheet closed when going to Changes', await page.isHidden('#sheet'));
 
   await page.fill('#q', 'blak market longsword');
   ok(name + ' suggestion', !!(await page.$('[data-act=fix]')));

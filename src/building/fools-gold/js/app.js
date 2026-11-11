@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=0787de98';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=0787de98';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=0787de98';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=0787de98';
-import { findOffer } from './lists.js?v=0787de98';
-import { suggestPrompts } from './suggest.js?v=0787de98';
-import { readFact } from './facts.js?v=0787de98';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=0787de98';
+import { compileWorld } from './world.js?v=7656d9e0';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=7656d9e0';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=7656d9e0';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=7656d9e0';
+import { findOffer } from './lists.js?v=7656d9e0';
+import { suggestPrompts } from './suggest.js?v=7656d9e0';
+import { readFact } from './facts.js?v=7656d9e0';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=7656d9e0';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=0787de98';
-import { applicable } from './engine.js?v=0787de98';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=0787de98';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=0787de98';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=0787de98';
+} from './data.js?v=7656d9e0';
+import { applicable } from './engine.js?v=7656d9e0';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=7656d9e0';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=7656d9e0';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=7656d9e0';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,7 +22,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, curOpen: false, curArm: '', fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, dpage: null, wmodal: false, curOpen: false, curArm: '', fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -129,7 +129,6 @@ function renderUnderstanding() {
   $('#understanding').innerHTML = out.length ? `<div class="hints">${out.join('')}</div>` : '';
 }
 const sampleList = () => suggestPrompts(world, ctx);
-const hasEdits = q => !!(q.overrides && ((q.overrides.f && Object.keys(q.overrides.f).length) || q.overrides.base));
 function factsList(e) {
   const facts = [];
   if (e.sense) facts.push(esc(e.sense));
@@ -171,7 +170,7 @@ function renderResult() {
   const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
   const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
   const what = qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
-  const meta = [e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : '', hasEdits(q) ? 'edited' : ''].filter(Boolean);
+  const meta = [e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : ''].filter(Boolean);
   const f = st.fields || { shown: [], more: [] };
   const rows = [...f.shown, ...(st.more ? f.more : [])].map(slotRow).join('');
   const moreRow = f.more.length ? `<button class="slot more" data-act="more"><span>${st.more ? 'Fewer fields' : 'More fields'}</span><span class="hint">${f.more.length}</span></button>` : '';
@@ -213,51 +212,48 @@ function renderTray() {
   chips.push(`<button class="q${q.mods.includes('rush') ? ' on' : ''}${ok('rush') ? '' : ' off'}" data-act="quick" data-k="rush">Rush</button>`);
   chips.push(`<button class="q${q.mods.includes('black-market') ? ' on' : ''}${ok('black-market') ? '' : ' off'}" data-act="quick" data-k="black-market">Black market</button>`);
   chips.push(`<button class="q${world.dials.round ? ' on' : ''}" data-act="round" aria-pressed="${!!world.dials.round}">Round</button>`);
-  chips.push(`<button class="q" data-act="sheet" data-mode="break">Details${factsList(e).length ? ` · ${factsList(e).length}` : ''}</button>`);
+  chips.push(`<button class="q" data-act="sheet" data-mode="break">Why this price?</button>`);
   t.innerHTML = `<div class="quick">${chips.join('')}</div>`;
 }
 
 // ---------- bottom sheet: the breakdown, or the item picker ----------
+function stepFacts(f) {
+  // one plain description of what a step does to the price
+  if (f.kind === 'base') return { fx: esc(range(f.lo, f.hi)), dir: '', say: f.kind === 'base' && st.est.entry.curve ? 'The rarity sets the starting price.' : 'The starting price from the list, with its usual spread.' };
+  if (f.kind === 'qty') return { fx: esc(f.label.replace(/^[^×]*/, '').trim() || f.label), dir: '', say: 'Multiplied by how many, or how long.' };
+  const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi, mid = (a * b) ** 0.5, pct = Math.round(Math.abs(mid - 1) * 100);
+  const dir = mid > 1.005 ? 'up' : mid < 0.995 ? 'down' : '';
+  const fxs = '× ' + (Math.abs(a - b) < 0.005 ? fx(a) : fx(a) + ' to ' + fx(b));
+  const lead = dir === 'up' ? `about ${pct}% more` : dir === 'down' ? `about ${pct}% less` : 'no real change';
+  let say = f.why || '';
+  if (f.weight !== undefined && f.weight < 0.99) say += (say ? ' ' : '') + `Stacked circumstances count less each time, so this one counts ${Math.round(f.weight * 100)}%.`;
+  if (f.saved) say += (say ? ' ' : '') + 'This is your change for this world.';
+  return { fx: `${lead} (${fxs})`, dir, say };
+}
+function receiptLines(e) {
+  return e.factors.map(f => {
+    const label = f.kind === 'qty' ? 'Quantity' : f.kind === 'base' ? f.label.replace(/^× /, '') : f.label;
+    return { f, label, total: money(Math.sqrt(f.runLo * f.runHi)), ...stepFacts(f) };
+  });
+}
+function receiptStory(e) {
+  const L = receiptLines(e), up = L.filter(x => x.dir === 'up').map(x => x.label.toLowerCase()), down = L.filter(x => x.dir === 'down').map(x => x.label.toLowerCase());
+  const base = L[0], qty = L.find(x => x.f.kind === 'qty');
+  const list = a => a.length < 3 ? a.join(' and ') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  let t = `It starts at ${base.total}${qty ? ', multiplied by ' + qty.f.label.replace(/^× /, '') : ''}. `;
+  if (up.length) t += `${capital(list(up))} ${up.length === 1 ? 'pushes' : 'push'} it up. `;
+  if (down.length) t += `${capital(list(down))} ${down.length === 1 ? 'brings' : 'bring'} it down. `;
+  return t + `That lands on about ${money(e.typical)}, anywhere from ${money(e.lo)} to ${money(e.hi)}.`;
+}
+function receiptText(e) {
+  const rows = receiptLines(e).map(x => `${x.label}: ${x.fx.replace(/<[^>]+>/g, '').replace(/&times;/g, '×')} → ${x.total}`);
+  return [summaryLine(e), ...rows, `Typical ${money(e.typical)} (${money(e.lo)} to ${money(e.hi)})`].join('\n');
+}
 function breakdownHtml(e) {
-  const q = st.query;
   const pos = e.hi > e.lo ? Math.min(100, Math.max(0, (Math.log(e.typical) - Math.log(e.lo)) / (Math.log(e.hi) - Math.log(e.lo)) * 100)) : 50;
   const bar = `<div class="rangebar" role="img" aria-label="Range ${esc(range(e.lo, e.hi))}"><div class="track"><div class="band"></div><div class="mark" style="left:${pos.toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(e.lo))}</span><span>${esc(money(e.hi))}</span></div></div>`;
-  const rows = e.factors.map((f, i) => {
-    const key = f.key || 'row:' + i;
-    let eff, dir = '';
-    if (f.kind === 'base') eff = esc(range(f.lo, f.hi));
-    else if (f.kind === 'qty') eff = esc(f.label.replace(/^[^×]*/, '').trim() || f.label);
-    else {
-      const a = f.effLo ?? f.lo, b = f.effHi ?? f.hi;
-      eff = '× ' + (Math.abs(a - b) < 0.005 ? fx(a) : fx(a) + ' to ' + fx(b));
-      const d = (a * b) ** 0.5;
-      dir = d > 1.005 ? 'up' : d < 0.995 ? 'down' : '';
-    }
-    const label = f.kind === 'qty' ? 'Quantity' : f.kind === 'base' ? f.label.replace(/^× /, '') : f.label;
-    const tappable = !!(f.key || f.why);
-    const open = st.editRow === key;
-    const sub = f.weight !== undefined && f.weight < 0.99 ? ` <span class="lsub">counts ${Math.round(f.weight * 100)}%</span>` : '';
-    const tag = f.edited ? `<span class="edited">${f.saved ? 'saved' : 'edited'}</span>` : '';
-    let h = `<div class="lrow ${f.kind || 'mult'}${tappable ? ' tap' : ''}${open ? ' open' : ''}"${tappable ? ` role="button" aria-expanded="${open}" data-act="edit-row" data-key="${esc(key)}" tabindex="0"` : ''}><div class="l1"><span class="lbl">${esc(label)}${tag}</span><span class="ltot">${esc(money(Math.sqrt(f.runLo * f.runHi)))}</span></div><div class="l2"><span class="lfx ${dir}">${eff}${sub}</span>${tappable ? `<span class="lchev" aria-hidden="true">${open ? '&#9652;' : '&#9662;'}</span>` : ''}</div></div>`;
-    if (open) h += `<div class="led">${editorHtml(f, key)}</div>`;
-    return h;
-  }).join('');
-  return bar + `<div class="fx ledger">${rows}<div class="lsum"><span>Typical price</span><b>${esc(money(e.typical))}</b></div></div>` +
-    (hasEdits(q) ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="ed-reset-all">Reset edits to this question</button></div>` : '');
-}
-function editorHtml(f, key) {
-  const ent = st.est.entry;
-  let h = `<div class="editor">`;
-  if (f.why) h += `<p class="why-t">${esc(f.why)}</p>`;
-  if (f.key === 'base') {
-    const canKeep = !ent.curve;
-    h += `<label class="lab">Price ${esc(f.label.replace(/^.*\(/, '(').replace(/^\((.*)\)$/, '$1'))}<input class="field" data-ed="base" inputmode="decimal" value="${esc(formatFull(f.mid, cur()))}"></label>`;
-    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${canKeep ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div><p class="mini">${canKeep ? 'Applies to this question until you keep it.' : 'Applies to this question. Rarity sets this price, so it cannot be kept.'}</p>`;
-  } else if (f.key) {
-    h += `<div class="rng"><span>Range</span><label>&times;<input class="field" data-ed="lo" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.lo))}" aria-label="Low multiplier"></label><span>to</span><label>&times;<input class="field" data-ed="hi" type="number" inputmode="decimal" step="0.05" min="0.05" max="100" value="${esc(fx(f.hi))}" aria-label="High multiplier"></label></div>`;
-    if (f.edited) h += `<div class="row"><button class="btn" data-act="ed-reset" data-key="${esc(key)}">Reset</button>${!f.saved ? `<button class="btn primary" data-act="ed-keep" data-key="${esc(key)}">Keep for this world</button>` : ''}</div><p class="mini">${f.saved ? 'Saved for this world. Remove it under World settings, Changes.' : 'Applies to this question until you keep it.'}</p>`;
-  }
-  return h + `</div>`;
+  const rows = receiptLines(e).map(x => `<div class="lrow ${x.f.kind || 'mult'}"><div class="l1"><span class="lbl">${esc(x.label)}</span><span class="ltot">${esc(x.total)}</span></div><div class="l2"><span class="lfx ${x.dir}">${x.fx}</span></div>${x.say ? `<p class="lwhy">${esc(x.say)}</p>` : ''}</div>`).join('');
+  return `<p class="story">${esc(receiptStory(e))}</p>` + bar + `<div class="fx ledger">${rows}<div class="lsum"><span>Typical price</span><b>${esc(money(e.typical))}</b></div></div>`;
 }
 function pickerHtml() {
   const cats = [...FLOW_CATS.map(c => [c[0], c[1]]), ['mine', 'My items']].filter(([id]) => ctx.entries.some(e => catOf(e) === id));
@@ -283,9 +279,9 @@ function renderSheet() {
     body.innerHTML = pickerHtml();
   } else {
     if (!(e && e.ok && st.query.subject && !st.setting)) { sh.hidden = true; return; }
-    $('#sheetTitle').textContent = 'Breakdown';
+    $('#sheetTitle').textContent = 'Why this price?';
     const facts = factsList(e);
-    body.innerHTML = breakdownHtml(e) + (facts.length ? `<div class="facts">${facts.map(f => `<p>${f}</p>`).join('')}</div>` : '');
+    body.innerHTML = breakdownHtml(e) + (facts.length ? `<div class="facts">${facts.map(f => `<p>${f}</p>`).join('')}</div>` : '') + `<div class="rfoot"><button class="btn primary" data-act="copy-receipt">Copy receipt</button><p class="mini">To change how a step works in your world, say it in Changes, like &ldquo;black market takes 30%&rdquo;.</p><button class="btn" data-act="open-changes">Open Changes</button></div>`;
   }
   sh.hidden = false;
   body.scrollTop = top;
@@ -451,6 +447,7 @@ function factPreview() {
   const r = st.fact.res; if (!r) return '';
   const acts = '<button class="btn primary" data-act="fact-save">Save</button><button class="btn" data-act="fact-cancel">Cancel</button>';
   if (r.kind === 'price') return settingCard(r.setting, acts, 'Save this price?');
+  if (r.kind === 'mod') return `<section class="setting"><div class="sh">Change this circumstance?</div><div class="sline"><b>${esc(r.line)}</b></div><ul class="slines"><li>${esc(r.note)}</li><li>It replaces the built in range for ${esc(r.label.toLowerCase())} in this world.</li></ul><div class="row gact">${acts}</div></section>`;
   const line = r.kind === 'word' ? `<b>${esc(r.term)}</b><span class="arrow">&rarr;</span><b class="sval">${esc(r.label)}</b>` : `<b>${esc(r.line)}</b>`;
   const note = r.kind === 'word' ? 'Whenever you write that word, it counts as this.' : r.note;
   return `<section class="setting"><div class="sh">${r.kind === 'word' ? 'Teach this word?' : 'Change this dial?'}</div><div class="sline">${line}</div><ul class="slines"><li>${esc(note)}</li></ul><div class="row gact">${acts}</div></section>`;
@@ -472,6 +469,7 @@ function factSave() {
     world.vocabulary = world.vocabulary.filter(v => v.term.toLowerCase() !== r.term);
     world.vocabulary.push({ term: r.term, means: r.means });
     worldChanged(); toast('Saved. ' + r.term + ' now means ' + r.label + '.');
+  } else if (r.kind === 'mod') { world.overrides[r.key] = [r.lo, r.hi]; worldChanged(); toast('Saved. ' + r.line + '.');
   } else if (r.kind === 'dial') { world.dials[r.key] = r.value; worldChanged(); toast('Saved. ' + r.line + '.'); }
   st.fact = { text: '', res: null, err: '' };
   renderDrawer();
@@ -627,39 +625,6 @@ function guessAll() {
   const found = g.q ? ctx.entries.filter(e => (e.name + ' ' + (e.aliases || []).join(' ')).toLowerCase().includes(g.q.toLowerCase()) && !g.cands.some(c => c.id === e.id)).slice(0, 6).map(e => candidateFromEntry(e, ctx, 'Found by search')).filter(Boolean) : [];
   return [...g.cands, ...found];
 }
-function keepEdit(key) {
-  const f = st.est && st.est.factors.find(x => x.key === key), ent = st.est && st.est.entry;
-  if (!f) return;
-  if (key === 'base') {
-    if (ent.curve || !(st.query.overrides && st.query.overrides.base > 0)) return;
-    world.baseOverrides[ent.id] = st.query.overrides.base;
-  } else {
-    world.overrides[key] = [f.lo, f.hi];
-  }
-  st.editRow = null;
-  worldChanged({ lite: true });
-  toast('Kept for this world. Manage it under World.');
-}
-function applyEdit(kind, value) {
-  const key = st.editRow, f = st.est && st.est.factors.find(x => x.key === key);
-  if (!f) return;
-  if (kind === 'base') {
-    const v = parseMoney(value, cur());
-    if (!v) { toast('Could not read that price. Try "25 gp".'); return; }
-    flowEdit(x => { x.overrides ||= {}; x.overrides.base = v; });
-    return;
-  }
-  flowEdit(x => {
-    x.overrides ||= {}; x.overrides.f ||= {};
-    const cur0 = x.overrides.f[key] || [f.lo, f.hi];
-    let lo = kind === 'lo' ? +value : cur0[0], hi = kind === 'hi' ? +value : cur0[1];
-    if (!(lo > 0) || !isFinite(lo)) lo = cur0[0];
-    if (!(hi > 0) || !isFinite(hi)) hi = cur0[1];
-    lo = Math.min(100, Math.max(0.05, lo)); hi = Math.min(100, Math.max(0.05, hi));
-    if (hi < lo) { if (kind === 'lo') hi = lo; else lo = hi; }
-    x.overrides.f[key] = [lo, hi];
-  });
-}
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
   clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200);
@@ -721,12 +686,10 @@ document.addEventListener('click', e => {
     case 'hist': { const h = S.history[+d.i]; $('#q').value = h.text; fromText(h.text, { noHistory: true }); window.scrollTo({ top: 0, behavior: 'smooth' }); break; }
     case 'hist-del': S.history.splice(+d.i, 1); persist(); renderHistory(); break;
     case 'hist-clear': S.history = S.history.filter(x => x.world !== world.id); persist(); renderHistory(); break;
-    case 'sheet': st.sheet = { open: true, mode: d.mode || 'break' }; st.editRow = null; renderSheet(); break;
-    case 'sheet-close': st.sheet.open = false; st.editRow = null; renderSheet(); break;
-    case 'edit-row': st.editRow = st.editRow === d.key ? null : d.key; renderSheet(); break;
-    case 'ed-reset': flowEdit(x => { if (x.overrides) { if (d.key === 'base') delete x.overrides.base; else if (x.overrides.f) delete x.overrides.f[d.key]; } }); if (d.key === 'base' && st.est && world.baseOverrides[st.est.entry.id]) { delete world.baseOverrides[st.est.entry.id]; worldChanged({ lite: true }); } else if (world.overrides[d.key]) { delete world.overrides[d.key]; worldChanged({ lite: true }); } break;
-    case 'ed-reset-all': flowEdit(x => { delete x.overrides; }); break;
-    case 'ed-keep': keepEdit(d.key); break;
+    case 'copy-receipt': if (st.est && st.est.ok) copyText(receiptText(st.est), 'Receipt copied'); break;
+    case 'open-changes': st.sheet.open = false; renderSheet(); st.dpage = 'World'; st.wtab = 'My changes'; st.dpageChanged = true; $('#drawer').hidden = false; document.body.style.overflow = 'hidden'; renderDrawer(); setTimeout(() => { const i = $('#factIn'); if (i) i.focus(); }, 50); break;
+    case 'sheet': st.sheet = { open: true, mode: d.mode || 'break' }; renderSheet(); break;
+    case 'sheet-close': st.sheet.open = false; renderSheet(); break;
     case 'w-del-ov': delete world.overrides[d.key]; worldChanged(); break;
     case 'w-del-bo': delete world.baseOverrides[d.key]; worldChanged(); break;
     case 'dpage': st.dpage = d.p || null; st.dpageChanged = true; renderDrawer(); break;
@@ -826,7 +789,6 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.dataset && t.dataset.ed) { applyEdit(t.dataset.ed, t.value); return; }
   if (t.id === 'gPrice') { const v = parseMoney(t.value, cur()); if (v && st.guess) { st.guess.bu = v; renderResult(); } else toast('Could not read that price. Try "25 gp".'); return; }
   if (t.id === 'flowQty') { const n = Math.max(1, Math.round(+t.value || 1)); flowEdit(x => { x.qty = n === 1 ? null : { lo: n, hi: n, unit: ctx.byId.get(x.subject)?.unit === 'lb' ? 'lb' : undefined }; }); return; }
   if (t.id === 'flowSpan') { const n = Math.max(1, +t.value || 1); flowEdit(x => { const tu = timeUnit(ctx.byId.get(x.subject) || {}); x.span = { lo: n, hi: n, unit: tu ? tu.unit : 'day' }; }); return; }
