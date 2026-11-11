@@ -1,4 +1,4 @@
-import { scifiEntries } from './scifi.js?v=ef593c24';
+import { scifiEntries } from './scifi.js?v=c198cc38';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -460,6 +460,15 @@ const GSC = [
   { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1, glyph: 'C' },
 ];
 const baseDials = { priceLevel: 1, volatility: 0.5, stacking: 'dampened', sellFraction: 0.5 };
+// Whole-currency starting points. Choosing one in Money replaces the coins; the world's own coins are what people edit day to day.
+export const CURRENCY_PRESETS = {
+  gsc: { title: 'Gold, silver, copper', example: '12 <span class="cg">G</span> 5 <span class="cg">S</span>', wage: 20, note: '', denominations: () => GSC.map(x => ({ ...x })) },
+  credit: { title: 'Galactic credits', example: '1,200 <span class="cg">C</span>', wage: 60, note: '1 base unit is one credit', denominations: () => [{ id: 'cr', name: 'credit', plural: 'credits', bu: 1, glyph: 'C' }] },
+  usd: { title: 'US dollars', example: '$12.50', wage: 12000, note: '1 base unit is one cent', symbol: '$', decimal: 100, denominations: () => [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }] },
+  one: { title: 'One coin', example: '12 coins', wage: 20, note: '', denominations: () => [{ id: 'coin', name: 'coin', plural: 'coins', bu: 100 }] },
+};
+export const currencyPresetOf = cur => (cur.symbol === '$' ? 'usd' : (Object.entries(CURRENCY_PRESETS).find(([k, p]) => !p.symbol && p.denominations().map(x => x.id).join() === cur.denominations.map(x => x.id).join()) || [''])[0]);
+
 export const WORLD_PRESETS = {
   vcm: () => ({
     id: 'vcm', name: 'Industrial Fantasy', blurb: 'Rail, factories and arcane streetlights.',
@@ -479,7 +488,7 @@ export const WORLD_PRESETS = {
   }),
   scifi: () => ({
     id: 'scifi', name: 'Science fiction', blurb: 'Credits, blasters, cyberware and station rent.',
-    baseline: 'other', lists: ['scifi'], currency: { denominations: [{ id: 'cr', name: 'credit', plural: 'credits', bu: 1, glyph: 'C' }], belowSmallest: 'round', note: '1 base unit is one credit' },
+    baseline: 'other', lists: ['scifi'], currency: { denominations: CURRENCY_PRESETS.credit.denominations(), belowSmallest: 'round', note: CURRENCY_PRESETS.credit.note },
     anchors: { wage: 60 }, economyTags: [], dials: { ...baseDials }, defaults: { travel: 'travel.s-interstellar-passage', rent: 'lodging.s-station-apartment-rent' }, vocabulary: [], items: [],
   }),
 };

@@ -1,19 +1,19 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=ef593c24';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=ef593c24';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=ef593c24';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=ef593c24';
-import { findOffer } from './lists.js?v=ef593c24';
-import { suggestPrompts } from './suggest.js?v=ef593c24';
-import { readFact } from './facts.js?v=ef593c24';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=ef593c24';
+import { compileWorld } from './world.js?v=c198cc38';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=c198cc38';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=c198cc38';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=c198cc38';
+import { findOffer } from './lists.js?v=c198cc38';
+import { suggestPrompts } from './suggest.js?v=c198cc38';
+import { readFact } from './facts.js?v=c198cc38';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=c198cc38';
 import {
-  ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, SRD_ATTRIBUTION, slug,
-} from './data.js?v=ef593c24';
-import { applicable } from './engine.js?v=ef593c24';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=ef593c24';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=ef593c24';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=ef593c24';
+  ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
+} from './data.js?v=c198cc38';
+import { applicable } from './engine.js?v=c198cc38';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=c198cc38';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=c198cc38';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=c198cc38';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,7 +22,7 @@ const fx = n => String(+(+n).toFixed(2));
 
 let S = load();
 let world = null, ctx = null;
-const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
+const st = { setting: null, settingDismissed: '', sheet: { open: false, mode: 'break' }, editRow: null, dpage: null, wmodal: false, curOpen: false, curArm: '', fact: { text: '', res: null, err: '' }, wtab: 'Item lists', wrename: false, wnew: false, guess: null, slot: null, numOpen: false, more: false, offer: null, offerDismissed: '', text: '', parsed: null, query: emptyQuery(), est: null, fields: null, flow: { cat: null, search: '' }, histTimer: null };
 
 function useWorld(id) {
   world = S.worlds.find(w => w.id === id) || S.worlds[0];
@@ -532,7 +532,7 @@ function buildSettingsHtml() {
   const json = JSON.stringify(w, null, 1);
   const styleNow = S.skin || S.theme || 'dark';
   const themeLabel = (STYLES.find(x => x[0] === styleNow) || STYLES[0])[1];
-  const curSet = w.currency.symbol ? 'usd' : dens.length === 1 ? 'one' : dens.map(d => d.id).join() === 'gp,sp,cp' ? 'gsc' : '';
+  const curSet = currencyPresetOf(w.currency);
   const html = `
   <details class="sect" data-sec="Appearance"${op('Appearance')}><summary><h3>Appearance</h3><span class="sv">${esc(themeLabel)}</span></summary><div class="sbody">
     <div class="theme skins">${STYLES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="style" data-bind="style" value="${v}"${styleNow === v ? ' checked' : ''}></label>`).join('')}</div>
@@ -551,15 +551,18 @@ function buildSettingsHtml() {
   </div></div></details>
 
   <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">
-    <p>Prices are stored as one number, the <b>base unit</b> (1 is a copper piece by default). Set what each coin is worth in base units. A one-coin world has one row.</p>
-    <div class="curpick" role="radiogroup" aria-label="Currency">${[['gsc', 'Gold, silver, copper', '12 <span class="cg">G</span> 5 <span class="cg">S</span>'], ['one', 'One coin', '12 coins'], ['usd', 'US dollars', '$12.50']].map(([v, t, ex]) => `<button class="curcard${curSet === v ? ' on' : ''}" role="radio" aria-checked="${curSet === v}" data-act="w-cur" data-v="${v}"><b>${t}</b><span class="cs">${ex}</span></button>`).join('')}</div>
     ${dens.map((d, i) => `<div class="coin"><div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">&times;</button>` : '<span></span>'}</div>
       <label class="lab">Worth in base units<input class="field" type="number" min="0.01" step="any" inputmode="decimal" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>
       <div class="lab">Symbol<div class="glyphs" role="group" aria-label="Symbol for ${esc(d.name)}"><button class="gl${d.glyph ? '' : ' on'}" data-act="glyph" data-i="${i}" data-v="" title="Plain letters">${esc(d.id.toUpperCase())}</button>${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => `<button class="gl${d.glyph === L ? ' on' : ''}" data-act="glyph" data-i="${i}" data-v="${L}" aria-label="Letter ${L}"><span class="cg">${L}</span></button>`).join('')}</div></div></div>`).join('')}
     <div class="row"><button class="btn" data-act="w-add-den">Add a coin</button></div>
+    <p class="mini">Prices are stored as one number, the base unit. Each coin above is worth that many of it.</p>
     <label class="lab">Amounts smaller than the smallest coin<select class="field" data-bind="belowSmallest"><option value="round"${w.currency.belowSmallest !== 'decimals' ? ' selected' : ''}>Round to one coin</option><option value="decimals"${w.currency.belowSmallest === 'decimals' ? ' selected' : ''}>Show decimals (0.4 coins)</option><option value="round"${w.currency.belowSmallest === 'round' ? ' selected' : ''}>Round up to one coin</option></select></label>
     <label class="lab">Your note on what one base unit is worth<input class="field" data-bind="note" value="${esc(w.currency.note || '')}" placeholder="for example: roughly a dollar"></label>
     <label class="lab">Daily pay for unskilled work (used for sense checks)<input class="field" data-bind="wage" value="${esc(formatFull(w.anchors.wage, w.currency))}"></label>
+    <div class="presetbox">
+      <button class="presethead" data-act="cur-toggle" aria-expanded="${st.curOpen}"><span><b>Start over with a preset</b><span class="mini">Replaces the coins above. You will rarely need it.</span></span><span class="chev">${st.curOpen ? '&#9662;' : '&#9656;'}</span></button>
+      ${st.curOpen ? `<div class="curpick" role="radiogroup" aria-label="Currency preset">${Object.entries(CURRENCY_PRESETS).map(([v, p]) => `<button class="curcard${curSet === v ? ' on' : ''}${st.curArm === v ? ' arm' : ''}" role="radio" aria-checked="${curSet === v}" data-act="w-cur" data-v="${v}"><b>${esc(p.title)}</b><span class="cs">${st.curArm === v ? 'Tap again to replace' : p.example}</span></button>`).join('')}</div>` : ''}
+    </div>
     <p id="curPrev">Shown as: ${esc(curPrev)} for 1, 12, 130, 1,500, 25,000 and 800,000 base units.</p>
   </div></div></details>
 
@@ -764,13 +767,17 @@ document.addEventListener('click', e => {
         if (b.dataset.armed) { const gone = world.id; S.worlds = S.worlds.filter(w => w.id !== gone); S.history = S.history.filter(h => h.world !== gone); useWorld(S.worlds[0].id); persist(); afterWorldSwitch(); }
         else { b.dataset.armed = '1'; b.textContent = 'Click again to delete'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Delete this one'; } }, 3500); }
       } break;
-    case 'w-cur':
+    case 'cur-toggle': st.curOpen = !st.curOpen; st.curArm = ''; renderDrawer(); break;
+    case 'w-cur': {
+      const p = CURRENCY_PRESETS[d.v]; if (!p) break;
+      if (st.curArm !== d.v) { st.curArm = d.v; renderDrawer(); break; }
+      st.curArm = ''; st.curOpen = false;
       delete world.currency.symbol; delete world.currency.decimal;
-      if (d.v === 'usd') { world.currency.denominations = [{ id: 'usd', name: 'dollar', plural: 'dollars', bu: 100 }, { id: 'c', name: 'cent', plural: 'cents', bu: 1 }]; world.currency.symbol = '$'; world.currency.decimal = 100; world.anchors.wage = 12000; }
-      else world.currency.denominations = d.v === 'one'
-        ? [{ id: 'coin', name: 'coin', plural: 'coins', bu: 100 }]
-        : [{ id: 'gp', name: 'gold piece', plural: 'gold pieces', bu: 100, glyph: 'G' }, { id: 'sp', name: 'silver piece', plural: 'silver pieces', bu: 10, glyph: 'S' }, { id: 'cp', name: 'copper piece', plural: 'copper pieces', bu: 1, glyph: 'C' }];
-      worldChanged(); break;
+      world.currency.denominations = p.denominations();
+      if (p.symbol) { world.currency.symbol = p.symbol; world.currency.decimal = p.decimal; }
+      world.currency.note = p.note; world.anchors.wage = p.wage;
+      worldChanged(); toast('Currency is now ' + p.title.toLowerCase() + '.'); break;
+    }
     case 'glyph': world.currency.denominations[+d.i].glyph = d.v; worldChanged(); break;
     case 'w-add-den': world.currency.denominations.push({ id: 'new', name: 'new coin', plural: 'new coins', bu: 1 }); worldChanged(); break;
     case 'w-del-den': world.currency.denominations.splice(+d.i, 1); worldChanged(); break;
