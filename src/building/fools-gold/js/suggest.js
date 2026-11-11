@@ -1,7 +1,7 @@
 // Suggested prompts for the empty screen: a ladder from one plain item up to several stacked circumstances,
 // drawn from each item list that is switched on. Every suggestion is checked against the world before it is shown.
-import { parse } from './parser.js?v=0062a8ef';
-import { estimate } from './engine.js?v=0062a8ef';
+import { parse } from './parser.js?v=82a76fa1';
+import { estimate } from './engine.js?v=82a76fa1';
 
 // level 1 a plain item, 2 a quantity, 3 a service for a time, 4 one circumstance,
 // 5 two circumstances, 6 three stacked, 7 an event or a long trip

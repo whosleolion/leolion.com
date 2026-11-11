@@ -270,7 +270,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' the shop options show what each would do to the total', /%|same/.test(await page.textContent('.shopopts')) && (await page.$$('.shopopts .o')).length >= 8);
   await page.click('[data-act=cart-where][data-id=capital]');
   ok(name + ' changing the shop moves the total', t0 !== (await page.textContent('.ctot .cbig b')) && /Capital/.test(await page.textContent('.crow .v')));
-  ok(name + ' a line has no lock link, only a remove', !(await page.$('[data-act=cart-lock]')) && !!(await page.$('.cline .cx')));
+  ok(name + ' a line has no lock link, only a remove', !(await page.$('[data-act=cart-lock]')) && !!(await page.$('.cwrap .cdel')) && !(await page.$('.cline .cx')));
   await page.click('.cline >> nth=0 >> .lbl');
   const eb = await (await page.$('.editbar')).boundingBox(), vw = await page.evaluate(() => document.documentElement.clientWidth);
   const btns = await page.$$eval('.editbar .eb button', bs => bs.map(b => { const r = b.getBoundingClientRect(); return [r.left, r.right]; }));
@@ -292,7 +292,11 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' the cart sentence reads back before adding', !!(await page.$('.cread')));
   ok(name + ' no button in the read-back is squeezed or clipped', await page.$$eval('.cread button', bs => bs.length === 2 && bs.every(b => b.scrollWidth <= b.clientWidth + 1 && b.getBoundingClientRect().height < 60)));
   await page.click('[data-act=cart-read-no]');
-  await page.click('.cline >> nth=4 >> [data-act=cart-del]');
+  await (await page.$('.cline >> nth=0')).scrollIntoViewIfNeeded();
+  const sl = await (await page.$('.cline >> nth=0')).boundingBox();
+  await page.mouse.move(sl.x + sl.width - 20, sl.y + sl.height / 2); await page.mouse.down(); await page.mouse.move(sl.x + sl.width - 140, sl.y + sl.height / 2, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(300);
+  ok(name + ' swiping a line left reveals Remove', await page.isVisible('.cwrap.open .cdel'));
+  await page.click('.cwrap.open .cdel');
   ok(name + ' a line can be removed', (await page.$$('.cline')).length === 4);
   await page.reload({ waitUntil: 'load' }); await page.waitForSelector('#q');
   ok(name + ' the cart survives a reload', /Cart\s*4/.test(await page.textContent('#cartPill')));

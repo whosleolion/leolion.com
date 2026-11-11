@@ -1,20 +1,20 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=0062a8ef';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=0062a8ef';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=0062a8ef';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=0062a8ef';
-import { findOffer } from './lists.js?v=0062a8ef';
-import { suggestPrompts } from './suggest.js?v=0062a8ef';
-import { readFact } from './facts.js?v=0062a8ef';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=0062a8ef';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=0062a8ef';
+import { compileWorld } from './world.js?v=82a76fa1';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=82a76fa1';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=82a76fa1';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=82a76fa1';
+import { findOffer } from './lists.js?v=82a76fa1';
+import { suggestPrompts } from './suggest.js?v=82a76fa1';
+import { readFact } from './facts.js?v=82a76fa1';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=82a76fa1';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=82a76fa1';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=0062a8ef';
-import { applicable } from './engine.js?v=0062a8ef';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=0062a8ef';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=0062a8ef';
-import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=0062a8ef';
+} from './data.js?v=82a76fa1';
+import { applicable } from './engine.js?v=82a76fa1';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=82a76fa1';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=82a76fa1';
+import { candidatesFor, candidateFromEntry, previewWith, storedPrice, newItemFrom } from './guess.js?v=82a76fa1';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -319,6 +319,38 @@ document.addEventListener('keydown', ev => {
   const nb = document.querySelector('.price .span.dragbar'); if (nb) nb.focus();
 });
 
+// swiping a cart line left reveals Remove (the edit bar has one too, and Delete works on a focused line)
+let swipe = null;
+const closeSwipes = except => document.querySelectorAll('.cwrap.open').forEach(w => { if (w !== except) { w.classList.remove('open'); w.querySelector('.cline').style.transform = ''; } });
+document.addEventListener('pointerdown', ev => {
+  const line = ev.target.closest && ev.target.closest('.cline');
+  if (!line || ev.target.closest('button')) { if (!ev.target.closest || !ev.target.closest('.cwrap')) closeSwipes(null); return; }
+  const wrap = line.parentElement; closeSwipes(wrap);
+  const w = wrap.querySelector('.cdel') ? wrap.querySelector('.cdel').offsetWidth : 88;
+  swipe = { line, wrap, w, x: ev.clientX, y: ev.clientY, base: wrap.classList.contains('open') ? -w : 0, dx: 0, on: false, id: ev.pointerId };
+});
+document.addEventListener('pointermove', ev => {
+  const s = swipe; if (!s || ev.pointerId !== s.id) return;
+  const dx = ev.clientX - s.x, dy = ev.clientY - s.y;
+  if (!s.on) { if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) { s.on = true; try { s.line.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ } s.line.classList.add('swiping'); } else if (Math.abs(dy) > 12) { swipe = null; return; } else return; }
+  s.dx = Math.max(-s.w, Math.min(0, s.base + dx));
+  s.line.style.transform = `translateX(${s.dx}px)`;
+});
+const swipeEnd = ev => {
+  const s = swipe; if (!s || ev.pointerId !== s.id) return;
+  swipe = null; s.line.classList.remove('swiping');
+  if (!s.on) return;
+  const open = s.dx < -s.w / 2;
+  s.wrap.classList.toggle('open', open); s.line.style.transform = open ? `translateX(-${s.w}px)` : '';
+  s.line.dataset.swiped = '1'; setTimeout(() => { delete s.line.dataset.swiped; }, 350);
+};
+document.addEventListener('pointerup', swipeEnd);
+document.addEventListener('pointercancel', swipeEnd);
+document.addEventListener('keydown', ev => {
+  const line = ev.target.closest && ev.target.closest('.cline');
+  if (line && (ev.key === 'Delete' || ev.key === 'Backspace') && line.dataset.id) { ev.preventDefault(); const b = line.parentElement.querySelector('.cdel'); if (b) b.click(); }
+});
+
 // ---------- the cart ----------
 const CART_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2 11h10l2-8H7"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>';
 const cartOf = () => (S.carts[world.id] ||= emptyCart());
@@ -378,16 +410,17 @@ function cartHtml() {
   const sign = r => (r.sell ? '+ ' : t.mixed ? MINUS + ' ' : '');
   const rows = c.lines.map(line => {
     const r = lineResult(line, c, ctx);
-    if (!r.ok) return `<div class="cline miss"><div class="l1"><span class="lbl">${esc(line.q.subject || 'An item')}</span><span class="ltot">&mdash;</span></div><div class="l2"><span class="csub">Not in your lists</span><button class="cx" data-act="cart-del" data-id="${line.id}" aria-label="Remove">&times;</button></div></div>`;
+    if (!r.ok) return `<div class="cwrap"><button class="cdel" data-act="cart-del" data-id="${line.id}" aria-label="Remove">Remove</button><div class="cline miss" tabindex="0" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(line.q.subject || 'An item')}</span><span class="ltot">&mdash;</span></div><div class="l2"><span class="csub">Not in your lists</span></div></div></div>`;
     const bits = [];
     if (r.sell) bits.push('<span class="ctag is-sell">sell</span>');
     for (const id of r.q.mods) { const m = ctx.mods.get(id); if (m && !c.mods.includes(id)) bits.push(esc((m.aliases[0] || m.label))); }
     const hl = r.e.haggle;
     if (r.fixed && hl) bits.push(`<span class="ctag ${hl.good ? 'is-good' : 'is-bad'}">agreed</span>`);
     else if (r.hgLine) bits.push(`<span class="ctag ${favour(r.hgLine, r.q.action) ? 'is-good' : 'is-bad'}">haggled ${pctText(r.hgLine)}</span>`);
-    const hgc = hl ? (hl.good ? ' hg-good' : ' hg-bad') : '';
-    const rng = hl ? `was ${esc(money(r.was))}` : money(r.lo) === money(r.hi) ? '' : `${esc(money(r.lo))} to ${esc(money(r.hi))}`;
-    return `<div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot${hgc}">${sign(r)}${esc(money(r.t))}</span></div><div class="l2"><span class="csub">${bits.join(' ')}<span class="crg">${rng}</span></span><button class="cx" data-act="cart-del" data-id="${line.id}" aria-label="Remove">&times;</button></div></div>`;
+    const own = !!(r.fixed || r.hgLine);   // a cart-wide haggle shows on the total, not on every line
+    const hgc = hl && own ? (hl.good ? ' hg-good' : ' hg-bad') : '';
+    const was = hl && own && !r.hgCart ? `<span class="crg">was ${esc(money(r.was))}</span>` : '';
+    return `<div class="cwrap"><button class="cdel" data-act="cart-del" data-id="${line.id}" aria-label="Remove">Remove</button><div class="cline" role="button" tabindex="0" data-act="cart-edit" data-id="${line.id}"><div class="l1"><span class="lbl">${esc(whatText(r.q, r.e.entry))}</span><span class="ltot${hgc}">${sign(r)}${esc(money(r.t))}</span></div>${bits.length || was ? `<div class="l2"><span class="csub">${bits.join(' ')}</span>${was}</div>` : ''}</div></div>`;
   }).join('');
 
   // the summary: what you pay, the haggle against it, and (if you sell too) what comes back
@@ -398,9 +431,10 @@ function cartHtml() {
   const hgPill = !canHaggle ? '' : hg
     ? `<span class="hgwrap ${hg.pct < 0 ? 'good' : 'bad'}"><button class="haggle on" data-act="cart-haggle" aria-expanded="${st.cartHaggleOpen}">${HAG_I}<span>Haggled ${pctText(hg.pct)}</span></button><button class="hgx" data-act="cart-hg-off" aria-label="Turn haggle off">&times;</button></span>`
     : `<button class="haggle" data-act="cart-haggle" aria-expanded="${st.cartHaggleOpen}">${HAG_I}<span>Haggle</span></button>`;
-  const bar = !canHaggle ? '' : `<div class="span dragbar" data-scope="cart" role="slider" tabindex="0" aria-label="Haggle what you pay along its range" aria-valuenow="${Math.round(t.spend)}" data-lo="${bandLo}" data-hi="${bandHi}" data-typ="${ref.spend}"><div class="rule"></div><div class="band"></div>${hg ? `<div class="notch" style="left:${posOf(ref.spend).toFixed(1)}%"></div>` : ''}<div class="tick" style="left:${posOf(t.spend).toFixed(1)}%"></div></div><div class="ends"><span>${esc(money(bandLo))}</span><span>${esc(money(bandHi))}</span></div>`;
+  const bar = !canHaggle ? '' : `<div class="cbarrow"><span>${esc(money(bandLo))}</span><div class="span dragbar" data-scope="cart" role="slider" tabindex="0" aria-label="Haggle what you pay along its range" aria-valuenow="${Math.round(t.spend)}" data-lo="${bandLo}" data-hi="${bandHi}" data-typ="${ref.spend}"><div class="rule"></div><div class="band"></div>${hg ? `<div class="notch" style="left:${posOf(ref.spend).toFixed(1)}%"></div>` : ''}<div class="tick" style="left:${posOf(t.spend).toFixed(1)}%"></div></div><span>${esc(money(bandHi))}</span></div>`;
   const note = hg ? `<div class="hgnote">Haggled ${Math.abs(hg.pct)}% ${hg.pct < 0 ? 'off' : 'on top of'} what you buy. Was ${esc(money(ref.spend))}.</div>` : '';
   const tally = t.mixed ? `<div class="ctally"><span>Selling +${esc(money(t.get))}</span><span>Net ${t.net < 0 ? MINUS : '+'}${esc(money(Math.abs(t.net)))}</span></div>` : '';
+  const labelBtn = `<button class="clabel" data-act="cart-why" aria-expanded="${st.cartWhy}">${head}<i aria-hidden="true">${st.cartWhy ? '&#9662;' : '&rsaquo;'}</i></button>`;
 
   // the math: a tally you can read down, with the range explained once
   const side = (n, text) => `<div class="sum"><span>${text}</span><b>${n}</b></div>`;
@@ -410,7 +444,7 @@ function cartHtml() {
   const body = c.lines.length ? rows : `<p class="empty">Nothing in the cart yet. Tap Add beside a price, or type a few items below.</p>`;
   const shopRow = `<div class="cfield"><button class="crow" data-act="cart-shop-toggle" aria-expanded="${st.cartShopOpen}"><span class="k">Shop</span><span class="v">${esc(shopLabel(c))}</span><span class="chev">${st.cartShopOpen ? '&#9662;' : '&rsaquo;'}</span></button>${st.cartShopOpen ? shopOptions(c, t) : ''}</div>`;
   return `${shopRow}${st.cartHaggleOpen ? cartHaggleHtml() : ''}<div class="clines">${body}</div>${c.lines.length ? '<button class="linkbtn cempty" data-act="cart-clear">Empty the cart</button>' : ''}${why}
-    <div class="cfoot"><div class="csum ctot${hg ? ' hg ' + (hg.pct < 0 ? 'good' : 'bad') : ''}"><div class="t1"><span>${head}</span>${hgPill}</div><div class="cbig"><b>${esc(money(amt))}</b></div>${bar}${note}${tally}${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out.</p>` : ''}<button class="linkbtn cmath" data-act="cart-why" aria-expanded="${st.cartWhy}">${st.cartWhy ? 'Hide the math' : 'Show the math'}</button></div>
+    <div class="cfoot"><div class="csum ctot${hg ? ' hg ' + (hg.pct < 0 ? 'good' : 'bad') : ''}"><div class="t1">${labelBtn}${hgPill}</div><div class="cmain"><div class="cbig"><b>${esc(money(amt))}</b></div>${tally}</div>${bar}${note}${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out.</p>` : ''}</div>
     <div class="cdock">${read}<div class="cin"><input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="Add more: 3 rope, 2 torches" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div></div></div>`;
 }
 function clearInput() { $('#q').value = ''; fromText(''); }
@@ -944,7 +978,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'cart-del': { const c = cartOf(), snap = clone(c); c.lines = c.lines.filter(x => x.id !== +d.id); afterCart(); toast('Removed', () => { S.carts[world.id] = snap; afterCart(); }); break; }
-    case 'cart-edit': { const c = cartOf(), l = c.lines.find(x => x.id === +d.id); if (!l || !ctx.byId.has(l.q.subject)) break; st.cartEdit = { id: l.id }; st.haggleOpen = false; st.sheet.open = false; renderSheet(); fromQuery(withShop(l.q, c.mods, ctx)); window.scrollTo(0, 0); break; }
+    case 'cart-edit': { if (b.dataset.swiped) break; if (b.parentElement && b.parentElement.classList.contains('open')) { closeSwipes(null); break; } const c = cartOf(), l = c.lines.find(x => x.id === +d.id); if (!l || !ctx.byId.has(l.q.subject)) break; st.cartEdit = { id: l.id }; st.haggleOpen = false; st.sheet.open = false; renderSheet(); fromQuery(withShop(l.q, c.mods, ctx)); window.scrollTo(0, 0); break; }
     case 'cart-update': {
       const c = cartOf(), l = c.lines.find(x => x.id === (st.cartEdit && st.cartEdit.id));
       if (l && st.query.subject) { const q = stripShop(st.query, c.mods); delete q.overrides; l.q = q; }

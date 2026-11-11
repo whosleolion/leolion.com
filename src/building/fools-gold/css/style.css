@@ -1061,3 +1061,26 @@ html[data-big] .cfoot { position: static; margin-top: 1rem; }
 html[data-big] .jump { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 html[data-big] .jump .q { white-space: nowrap; }
 @media (max-width: 350px) { .jump { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ---- cart, calmer: one line per item, swipe to remove, a lighter summary ---- */
+.cwrap { position: relative; overflow: hidden; border-top: 1px solid var(--line); }
+.cwrap:first-child { border-top: 0; }
+.cdel { position: absolute; top: 0; right: 0; bottom: 0; width: 5.5rem; padding: 0; border: 0; background: color-mix(in srgb, var(--up) 62%, #000); color: #fff; font: 700 .9375rem var(--font-body); }
+.cwrap .cline { position: relative; z-index: 1; background: var(--bg); border-top: 0; touch-action: pan-y; transition: transform .18s ease; padding: .625rem .125rem; gap: .125rem; min-height: 3.25rem; align-content: center; }
+.cwrap .cline.swiping { transition: none; }
+.cwrap .cline .csub { flex: 1; gap: .125rem .5rem; }
+.cwrap .cline .crg { margin-left: auto; color: var(--muted); font-size: .8125rem; }
+.sheet.cart .cwrap .cline:active { background: color-mix(in srgb, var(--fg) 4%, var(--bg)); }
+.cempty { padding: .5rem .125rem; }
+.cfoot { gap: .5rem; }
+.csum { padding: .5rem .875rem .625rem; gap: .125rem; }
+.csum .t1 { min-height: 2.5rem; }
+.clabel { display: inline-flex; align-items: center; gap: .375rem; min-height: 2.5rem; padding: 0; border: 0; background: none; color: var(--muted); font: 600 .75rem var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.clabel i { font-style: normal; font-size: 1rem; letter-spacing: 0; }
+.cmain { display: flex; align-items: flex-end; justify-content: space-between; gap: .75rem; }
+.cmain .cbig { margin-top: 0; }
+.cmain .ctally { display: grid; gap: 0; justify-items: end; text-align: right; padding-bottom: .25rem; }
+.cbarrow { display: flex; align-items: center; gap: .625rem; color: var(--muted); font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.cbarrow > span { flex: none; }
+.cbarrow .span.dragbar { flex: 1; min-width: 0; margin: 0; }
+.cdock .cin .field, .cdock .cin .btn { min-height: 2.75rem; }
