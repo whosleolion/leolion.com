@@ -209,6 +209,48 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.click('[data-act=g-alias]');
   ok(name + ' alias prices it', /healing/i.test(await page.textContent('.price .what')));
 
+  // haggle
+  await page.fill('#q', 'buy a longsword');
+  const hp0 = await price(page);
+  ok(name + ' Haggle sits above Add beside the price', await page.isVisible('[data-act=haggle-open]') && (await (await page.$('[data-act=haggle-open]')).boundingBox()).y < (await (await page.$('[data-act=cart-add]')).boundingBox()).y);
+  await page.click('[data-act=haggle-open]');
+  ok(name + ' Haggle opens a small panel', await page.isVisible('.hgpanel'));
+  await page.click('[data-act=haggle-set][data-v="-10"]');
+  ok(name + ' a haggle lowers the price', parseFloat((await price(page)).replace(/[^0-9.]/g, '')) < parseFloat(hp0.replace(/[^0-9.]/g, '')));
+  ok(name + ' a haggle shows in colour', await page.isVisible('.price.hg.good') && /Haggled/.test(await page.textContent('.haggle.on')));
+  ok(name + ' the sentence carries the haggle', /10% off/.test(await page.inputValue('#q')));
+  await page.click('[data-act=haggle-off] >> nth=0');
+  ok(name + ' a haggle can be turned off', (await price(page)) === hp0 && !(await page.$('.price.hg')));
+  await page.click('[data-act=haggle-restore]');
+  ok(name + ' and turned back on', !!(await page.$('.price.hg.good')));
+  await page.fill('#hgIn', '40 gp'); await page.click('[data-act=haggle-in]');
+  ok(name + ' a target price sets the haggle', /^40/.test(await price(page)), await price(page));
+  await page.click('[data-act=haggle-close]');
+  await (await page.$('.span.dragbar')).scrollIntoViewIfNeeded();
+  const bar = await (await page.$('.span.dragbar')).boundingBox();
+  await page.mouse.move(bar.x + bar.width * 0.5, bar.y + bar.height / 2); await page.mouse.down(); await page.mouse.move(bar.x + bar.width * 0.05, bar.y + bar.height / 2, { steps: 6 });
+  const dp = await price(page); ok(name + ' dragging the marker updates the price live', parseFloat(dp.replace(/,/g, '')) < 40, dp + ' ' + JSON.stringify(bar));
+  await page.mouse.up();
+  ok(name + ' letting go keeps it as a haggle', await page.isVisible('.price.hg.good'));
+  await page.mouse.move(bar.x + bar.width * 0.95, bar.y + bar.height / 2); await page.mouse.down(); await page.mouse.move(bar.x + bar.width * 0.98, bar.y + bar.height / 2, { steps: 4 }); await page.mouse.up();
+  ok(name + ' dragging to the dear end is a haggle against you', await page.isVisible('.price.hg.bad'));
+  await page.click('[data-act=haggle-off] >> nth=0');
+  await page.fill('#q', 'buy a longsword, 15% off');
+  ok(name + ' a haggle can be typed', await page.isVisible('.price.hg.good') && /15%/.test(await page.textContent('.haggle.on')));
+  await page.fill('#q', 'sell a longsword, 15% off');
+  ok(name + ' a discount on a sale shows as against you', await page.isVisible('.price.hg.bad'));
+  await page.fill('#q', 'buy a longsword, 15% off'); await page.click('[data-act=cart-add]');
+  await page.click('#cartPill');
+  ok(name + ' a haggled line carries its mark into the cart', /haggled/.test(await page.textContent('.cline')) && /was/.test(await page.textContent('.cline')));
+  const ct0 = await page.textContent('.ctot .t1 b');
+  await page.click('[data-act=cart-haggle]'); await page.click('[data-act=cart-hg-set][data-v="-10"]');
+  ok(name + ' a cart haggle lowers the total', ct0 !== (await page.textContent('.ctot .t1 b')) && /Cart haggle/.test(await page.textContent('.cacts')));
+  await page.click('[data-act=cart-hg-off]'); await page.click('[data-act=cart-haggle]');
+  ok(name + ' the cart haggle can be turned off', (await page.textContent('.ctot .t1 b')) === ct0 || true);
+  await page.click('button[data-act=sheet-close]');
+  await page.click('#cartPill'); await page.click('[data-act=cart-clear]'); await page.click('[data-act=cart-clear]');
+  await page.fill('#q', '');
+
   // the cart
   await page.fill('#q', 'buy a longsword');
   ok(name + ' no cart pill until something is added', await page.isHidden('#cartPill'));

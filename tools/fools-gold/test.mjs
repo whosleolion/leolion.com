@@ -565,6 +565,38 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const txt = cartText(c2, c, n => String(Math.round(n)), (r, line) => r ? r.e.entry.name : 'x');
   t('CT19 the cart copies as plain text', /^Cart/.test(txt) && /Net:/.test(txt) && txt.split('\n').length >= 4);
 }
+
+// ---------- haggle ----------
+{
+  const w = WORLD_PRESETS.srd(); const c = compileWorld(w);
+  const Q = x => parse(x, c).query;
+  const base = estimate(Q('buy a longsword'), c), off = estimate(Q('buy a longsword, 20% off'), c), extra = estimate(Q('buy a longsword 25% extra'), c);
+  eq('HG1 "20% off" is read from the sentence', Q('buy a longsword, 20% off').haggle, { pct: -20 });
+  eq('HG2 the percent is not mistaken for a quantity', Q('buy a longsword, 20% off').qty, null);
+  t('HG3 20% off lowers the price by about a fifth', off.ok && Math.abs(off.typical / base.typical - 0.8) < 0.03, off.typical + ' vs ' + base.typical);
+  t('HG4 25% extra raises it', extra.ok && extra.typical > base.typical * 1.2);
+  eq('HG5 a haggle is its own step in the receipt', off.factors[off.factors.length - 1].kind, 'haggle');
+  t('HG6 the estimate remembers the price before the haggle', off.pre && off.pre.typical === base.typical && off.haggle.pct === -20);
+  eq('HG7 a discount favours the buyer', off.haggle.good, true);
+  eq('HG8 the same discount does not favour the seller', estimate(Q('sell a longsword, 20% off'), c).haggle.good, false);
+  eq('HG9 the sentence round trips', queryToText(Q('buy a longsword, 20% off'), c).includes('20% off'), true);
+  eq('HG10 no haggle leaves no trace', [base.pre, base.haggle], [undefined, undefined]);
+  eq('HG11 absurd percentages are clamped', estimate({ ...Q('longsword'), haggle: { pct: -500 } }, c).haggle.pct, -90);
+  // in the cart
+  const cart = emptyCart(); addToCart(cart, Q('longsword')); addToCart(cart, Q('longsword, 20% off'));
+  eq('HG12 a haggled line is its own line', cart.lines.length, 2);
+  const lr = lineResult(cart.lines[1], cart, c);
+  t('HG13 the line knows its haggle and its original price', lr.ok && lr.hgLine === -20 && lr.was === base.typical);
+  const c2 = emptyCart(); addToCart(c2, Q('longsword')); addToCart(c2, Q('sell 2 rope')); addToCart(c2, Q('rope'));
+  const before = cartTotals(c2, c); c2.haggle = { pct: -10 };
+  const after = cartTotals(c2, c);
+  t('HG14 a cart haggle lowers what you buy', after.spend < before.spend * 0.95 && after.spend > before.spend * 0.85);
+  eq('HG15 a cart haggle leaves what you sell alone', Math.round(after.get), Math.round(before.get));
+  c2.lines[0].quote = 999; const q2 = lineResult(c2.lines[0], c2, c);
+  eq('HG16 a locked line ignores the cart haggle', q2.t, 999);
+  const hostile = normalizeCart({ haggle: { pct: 'x' }, lines: [{ id: 1, q: { subject: 'good.rope', haggle: { pct: 9999 } } }] });
+  eq('HG17 a hostile saved haggle loads clean', [hostile.haggle, hostile.lines[0].q.haggle.pct], [null, 300]);
+}
 // ---------- store.normalizeWorld survives hostile input ----------
 {
   const { normalizeWorld } = await import('../../src/building/fools-gold/js/store.js');

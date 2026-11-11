@@ -1,6 +1,6 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=8d53b51a';
-import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=8d53b51a';
+import { tokenize, stem } from './world.js?v=fb67fb0a';
+import { NUMBER_WORDS, FILLERS, ROUTE_TEXT, FAMILIES } from './data.js?v=fb67fb0a';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, dozen: 12 };
@@ -101,10 +101,23 @@ function suggest(unks, ctx) {
 }
 
 export function emptyQuery() {
-  return { action: 'buy', subject: null, family: null, qty: null, span: null, rarity: null, tier: null, mods: [], assumed: ['action'] };
+  return { action: 'buy', subject: null, family: null, qty: null, span: null, rarity: null, tier: null, mods: [], haggle: null, assumed: ['action'] };
+}
+
+// A haggle written into the sentence: "longsword, 15% off" or "rope 20% extra". Blanked out in place so word positions hold.
+const HAGGLE_OFF = /(?:,\s*)?(?:\bhaggled\s+)?(?:\bdown\s+)?(\d+(?:\.\d+)?)\s*%\s*(?:off|discount|cheaper|less)\b/i;
+const HAGGLE_ON = /(?:,\s*)?(\d+(?:\.\d+)?)\s*%\s*(?:extra|markup|surcharge|higher|on top)\b/i;
+export function extractHaggle(text) {
+  let m = HAGGLE_OFF.exec(text), pct = 0;
+  if (m) pct = -Math.min(90, +m[1]);
+  else if ((m = HAGGLE_ON.exec(text))) pct = Math.min(300, +m[1]);
+  if (!m || !pct) return { pct: 0, text };
+  return { pct, text: text.slice(0, m.index) + ' '.repeat(m[0].length) + text.slice(m.index + m[0].length) };
 }
 
 export function parse(text, ctx) {
+  const hx = extractHaggle(text);
+  text = hx.text;
   const toks = tokenize(text);
   const parts = [];
   const notes = [];
@@ -274,6 +287,7 @@ export function parse(text, ctx) {
   for (const n of unusedNums) unrecognized.push(String(n.lo));
   const suggestions = suggest(unk, ctx);
 
+  if (hx.pct) q.haggle = { pct: hx.pct };
   return { query: q, unrecognized, suggestions, notes, parts };
 }
 
@@ -299,6 +313,7 @@ export function queryToText(q, ctx) {
     if (!m) continue;
     tail.push(ROUTE_TEXT[id] || m.aliases[0] || m.label);
   }
+  if (q.haggle && q.haggle.pct) tail.push(q.haggle.pct < 0 ? Math.abs(q.haggle.pct) + '% off' : q.haggle.pct + '% extra');
   return [s, ...tail].filter(Boolean).join(', ');
 }
 

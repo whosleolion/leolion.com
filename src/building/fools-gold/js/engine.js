@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=8d53b51a';
-import { niceRound } from './money.js?v=8d53b51a';
+} from './data.js?v=fb67fb0a';
+import { niceRound } from './money.js?v=fb67fb0a';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -211,6 +211,14 @@ export function estimate(q, ctx) {
     lo = L; hi = H;
   }
 
+  // ---- haggle: a negotiated change to this price, applied after every circumstance ----
+  const hg = q.haggle && Number.isFinite(+q.haggle.pct) ? Math.max(-90, Math.min(300, +q.haggle.pct)) : 0;
+  if (hg) {
+    const f = 1 + hg / 100;
+    factors.push({ kind: 'haggle', key: 'haggle', label: 'Haggled', lo: f, hi: f, pct: hg, why: hg < 0 ? 'You talked the price down by hand.' : 'The price was pushed up by hand.' });
+    recompute();
+  }
+
   // ---- volatility ----
   const typ0 = mid(lo, hi);
   const e = Math.min(2, Math.max(0, dials.volatility * 2));
@@ -218,7 +226,12 @@ export function estimate(q, ctx) {
   const typical = niceRound(typ0), low = Math.min(niceRound(lo2), typical), high = Math.max(niceRound(hi2), typical);
 
   // per-unit and sense check
-  const out = { ok: true, entry, side, typical, lo: low, hi: high, factors, notes, assumptions, qty };
+  const out = { ok: true, entry, side, typical, raw: typ0, lo: low, hi: high, factors, notes, assumptions, qty };
+  if (hg) {
+    const pre = estimate({ ...q, haggle: null }, ctx);
+    if (pre.ok) out.pre = { typical: pre.typical, lo: pre.lo, hi: pre.hi, raw: pre.raw };
+    out.haggle = { pct: hg, good: q.action === 'sell' ? hg > 0 : hg < 0 };
+  }
   const qMid = mid(qty.lo, qty.hi);
   if (!timeUnit(entry) && qMid > 1 && !entry.perDay) { out.each = niceRound(typ0 / qMid); out.eachLabel = entry.unit === 'lb' ? 'per lb' : 'each'; }
   const wage = w.anchors?.wage;
