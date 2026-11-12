@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=842e564c';
-import { libraryEntries, modernLibrary, modernWorld, modernEveryday } from './library.js?v=842e564c';
+import { scifiEntries } from './scifi.js?v=a1905c41';
+import { libraryEntries, modernLibrary, modernWorld, modernEveryday } from './library.js?v=a1905c41';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -426,6 +426,10 @@ export const ACTION_TERMS = {
 };
 export const RARITY_TERMS = {
   common: ['common', 'ordinary'], uncommon: ['uncommon'], rare: ['rare'], 'very rare': ['very rare', 'veryrare'], legendary: ['legendary item', 'legendary', 'mythic', 'artifact rarity'],
+};
+// words that say a thing carries magic. They add an enchantment premium to an ordinary item, scaled by its rarity.
+export const AURA_TERMS = {
+  magic: ['magic', 'magical', 'enchanted', 'enchant', 'arcane', 'runed', 'imbued', 'spelled', 'charmed', 'warded', 'mystic', 'mystical', 'blessed', 'consecrated', 'sorcerous', 'glowing', 'humming'],
 };
 export const TIER_TERMS = {
   budget: ['cheap', 'budget', 'crappy', 'rough', 'economy', 'third class', '3rd class', 'steerage', 'basic', 'bargain', 'low end', 'low-end', 'frugal', 'lowest'],

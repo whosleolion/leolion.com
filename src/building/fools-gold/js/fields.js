@@ -1,8 +1,8 @@
 // The typed sentence as editable fields. Pure logic: given a Query, the Estimate and the world, list the fields
 // (item, deal, amount, rarity, class, and the circumstance groups that apply), say which are set, and price
 // every option so an empty field can show how far it would move the answer.
-import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js?v=842e564c';
-import { estimate, applicable, timeUnit } from './engine.js?v=842e564c';
+import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js?v=a1905c41';
+import { estimate, applicable, timeUnit } from './engine.js?v=a1905c41';
 
 const clone = q => JSON.parse(JSON.stringify(q));
 const ORDER = {
@@ -70,6 +70,13 @@ export function buildFields(q, est, ctx) {
   // rarity and class
   if (entry.curve) {
     finish({ id: 'rarity', label: 'Rarity', role: 'class', kind: 'choice', filled: !!q.rarity, value: q.rarity, assumed: q.rarity ? null : 'common', always: true,
+      options: RARITIES.map(r => opt(r, r, x => { x.rarity = r; }, q.rarity === r || (!q.rarity && r === 'common'))) });
+  }
+  // magic on an ordinary item: one field to say it, and the rarity field appears once it is set
+  if (!entry.curve && kind === 'good' && !(entry.tags || []).includes('magic')) {
+    finish({ id: 'aura', label: 'Magic', role: 'class', kind: 'choice', filled: !!q.aura, value: q.aura ? 'enchanted' : null, assumed: q.aura ? null : 'mundane', always: true,
+      options: [opt('mundane', 'mundane', x => { x.aura = null; x.rarity = null; }, !q.aura), opt('magic', 'enchanted', x => { x.aura = 'magic'; }, !!q.aura)] });
+    if (q.aura) finish({ id: 'rarity', label: 'Rarity', role: 'class', kind: 'choice', filled: !!q.rarity, value: q.rarity, assumed: q.rarity ? null : 'common', always: true,
       options: RARITIES.map(r => opt(r, r, x => { x.rarity = r; }, q.rarity === r || (!q.rarity && r === 'common'))) });
   }
   if (!entry.noTier && ['travel', 'lodging', 'service', 'labor', 'spell'].includes(kind)) {

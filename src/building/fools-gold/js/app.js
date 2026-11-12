@@ -1,22 +1,22 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=842e564c';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=842e564c';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=842e564c';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=842e564c';
-import { findOffer } from './lists.js?v=842e564c';
-import { suggestPrompts } from './suggest.js?v=842e564c';
-import { readFact } from './facts.js?v=842e564c';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=842e564c';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=842e564c';
+import { compileWorld } from './world.js?v=a1905c41';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=a1905c41';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=a1905c41';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=a1905c41';
+import { findOffer } from './lists.js?v=a1905c41';
+import { suggestPrompts } from './suggest.js?v=a1905c41';
+import { readFact } from './facts.js?v=a1905c41';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=a1905c41';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=a1905c41';
 import {
   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=842e564c';
-import { applicable } from './engine.js?v=842e564c';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=842e564c';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=842e564c';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=842e564c';
-import { complete } from './complete.js?v=842e564c';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=842e564c';
+} from './data.js?v=a1905c41';
+import { applicable } from './engine.js?v=a1905c41';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=a1905c41';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=a1905c41';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=a1905c41';
+import { complete } from './complete.js?v=a1905c41';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=a1905c41';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -187,7 +187,7 @@ function renderResultCore() {
   const pos = posOf(e.typical), hg = e.haggle;
   const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
   const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
-  const what = qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
+  const what = qtyTxt + auraName(q, ent) + (q.rarity && (ent.curve || (q.aura && !(ent.tags || []).includes('magic'))) ? ', ' + q.rarity : '') + spanTxt;
   const meta = [e.each ? money(e.each) + ' ' + (e.eachLabel || 'each') : ''].filter(Boolean);
   const f = st.fields || { shown: [], more: [] };
   const rows = [...f.shown, ...(st.more ? f.more : [])].map(slotRow).join('');
@@ -386,10 +386,11 @@ document.addEventListener('keydown', ev => {
 // ---------- the cart ----------
 const CART_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2 11h10l2-8H7"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>';
 const cartOf = () => (S.carts[world.id] ||= emptyCart());
+const auraName = (q, ent) => (q.aura && !ent.curve && !(ent.tags || []).includes('magic') ? 'Enchanted ' + ent.name.toLowerCase() : ent.name);
 function whatText(q, ent) {
   const qtyTxt = q.qty && !timeUnit(ent) ? (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb of ' : ' × ') : '';
   const spanTxt = q.span && timeUnit(ent) ? ', ' + (q.span.lo === q.span.hi ? q.span.lo : q.span.lo + ' to ' + q.span.hi) + ' ' + q.span.unit + (q.span.hi === 1 ? '' : 's') : '';
-  return qtyTxt + ent.name + (q.rarity && ent.curve ? ', ' + q.rarity : '') + spanTxt;
+  return qtyTxt + auraName(q, ent) + (q.rarity && (ent.curve || (q.aura && !(ent.tags || []).includes('magic'))) ? ', ' + q.rarity : '') + spanTxt;
 }
 function addCartBtn(q) {
   if (st.cartEdit || q.action === 'value') return '';
@@ -682,7 +683,13 @@ function unknownRunOf(p) {
     else { if (part.k === 'u') run = [part]; else run = []; }
     if (run.length > best.length) best = [...run];
   }
-  return best.map(x => x.raw.toLowerCase()).join(' ');
+  // words that qualify the unknown thing ("cursed", "enchanted", "rare") belong to its name, so the guess can weigh them
+  const lead = [];
+  if (best.length) {
+    const ix = p.parts.indexOf(best[0]);
+    for (let k = ix - 1; k >= 0; k--) { const q = p.parts[k]; if (q.k === 'c' && (q.type === 'aura' || q.type === 'rarity' || (q.type === 'mod' && q.id === 'cursed'))) lead.unshift(String(q.p.display).toLowerCase()); else break; }
+  }
+  return [...lead, ...best.map(x => x.raw.toLowerCase())].join(' ');
 }
 function ensureGuess(phrase) {
   if (!st.guess || st.guess.phrase !== phrase) {

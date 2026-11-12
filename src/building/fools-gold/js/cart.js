@@ -1,8 +1,8 @@
 // The cart: a list of saved questions (queries), not saved prices. Each line is priced live by the engine,
 // so every factor stays editable by loading the line back into the price screen.
 // A haggle belongs to the question: { pct } moves with the other fields, { price } is an agreed amount that stays put.
-import { parse } from './parser.js?v=842e564c';
-import { estimate } from './engine.js?v=842e564c';
+import { parse } from './parser.js?v=a1905c41';
+import { estimate } from './engine.js?v=a1905c41';
 
 export const emptyCart = () => ({ lines: [], mods: [], next: 1, haggle: null });
 
@@ -12,7 +12,7 @@ const fixedOf = q => !!(q.haggle && q.haggle.price > 0);
 // two queries are the same line when only the quantity differs
 export function lineKey(q) {
   const h = q.haggle ? (q.haggle.price > 0 ? 'p' + q.haggle.price : q.haggle.pct || 0) : 0;
-  return JSON.stringify([q.action, q.subject, q.family, q.span, q.rarity, q.tier, [...(q.mods || [])].sort(), h]);
+  return JSON.stringify([q.action, q.subject, q.family, q.span, q.rarity, q.tier, q.aura, [...(q.mods || [])].sort(), h]);
 }
 
 // the shop (place and the like) applies to every line, unless the line already picked something in that group
@@ -165,7 +165,7 @@ export function normalizeCart(c) {
     if (typeof q.subject !== 'string' && typeof q.family !== 'string') continue;
     let haggle = cleanHaggle(q.haggle);
     if (!haggle && l.quote != null && Number.isFinite(+l.quote) && +l.quote > 0) haggle = { price: +l.quote };
-    out.lines.push({ id: Number.isFinite(+l.id) ? +l.id : out.next, q: { action: ['buy', 'sell', 'value'].includes(q.action) ? q.action : 'buy', subject: typeof q.subject === 'string' ? q.subject : null, family: typeof q.family === 'string' ? q.family : null, qty: q.qty && Number.isFinite(+q.qty.lo) ? q.qty : null, span: q.span && Number.isFinite(+q.span.lo) ? q.span : null, rarity: typeof q.rarity === 'string' ? q.rarity : null, tier: typeof q.tier === 'string' ? q.tier : null, mods: Array.isArray(q.mods) ? q.mods.filter(x => typeof x === 'string') : [], haggle, assumed: Array.isArray(q.assumed) ? q.assumed.filter(x => typeof x === 'string') : [] } });
+    out.lines.push({ id: Number.isFinite(+l.id) ? +l.id : out.next, q: { action: ['buy', 'sell', 'value'].includes(q.action) ? q.action : 'buy', subject: typeof q.subject === 'string' ? q.subject : null, family: typeof q.family === 'string' ? q.family : null, qty: q.qty && Number.isFinite(+q.qty.lo) ? q.qty : null, span: q.span && Number.isFinite(+q.span.lo) ? q.span : null, rarity: typeof q.rarity === 'string' ? q.rarity : null, tier: typeof q.tier === 'string' ? q.tier : null, aura: q.aura ? 'magic' : null, mods: Array.isArray(q.mods) ? q.mods.filter(x => typeof x === 'string') : [], haggle, assumed: Array.isArray(q.assumed) ? q.assumed.filter(x => typeof x === 'string') : [] } });
   }
   out.next = Math.max(1, ...out.lines.map(l => l.id + 1), +c.next || 1);
   return out;

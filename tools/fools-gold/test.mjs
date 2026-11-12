@@ -225,7 +225,7 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   const h = Q('a 3-day coach trip for 5 people'); eq('A5 hyphen duration', [h.span && h.span.lo, h.span && h.span.unit, h.qty && h.qty.lo], [3, 'day', 5]);
   eq('A5b 24-miles', Q('coach 24-miles').span.unit, 'mile');
   eq('A5c 3-night stay', (() => { const q = Q('a 3-night stay at an inn'); return [q.span.lo, q.span.unit, q.qty]; })(), [3, 'night', null]);
-  const en = P('+2 longsword', srd); eq('A6 enchantment not a quantity', [en.query.qty, en.query.subject], [null, 'good.longsword']); t('A6 note', en.notes.some(n => /enchantment/.test(n)));
+  const en = P('+2 longsword', srd); eq('A6 enchantment not a quantity', [en.query.qty, en.query.subject], [null, 'good.longsword']); t('A6 +2 means rare magic, priced well above the plain item', en.query.aura === 'magic' && en.query.rarity === 'rare' && estimate(en.query, srd).typical > 20 * estimate(P('longsword', srd).query, srd).typical);
   eq('A7 2 dozen', Q('2 dozen torches').qty.lo, 24); eq('A7b 3 dozen', Q('3 dozen arrows').qty.lo, 36);
   eq('A7c one hundred and fifty', Q('one hundred and fifty arrows').qty.lo, 150);
   eq('A7d between n and m', (() => { const q = Q('between 10 and 20 daggers'); return [q.qty.lo, q.qty.hi]; })(), [10, 20]);
@@ -643,6 +643,23 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   t('AU7 a cart that only sells can be haggled up', a1.ok && a1.hgCart === 10 && a1.t > typ(gpc, 'sell 2 longswords'), [a1.hgCart, a1.t]);
   t('AU8 a million is a number', parse('a million swords', gpc).query.qty && parse('a million swords', gpc).query.qty.lo === 1000000);
   eq('AU9 absurd quantities are capped', parse('999999999999999999999 swords', gpc).query.qty.lo, 1000000);
+}
+
+// ---- magic tags carry weight ----
+{
+  const { appraise: ap, inferTags: inf } = await import('../../src/building/fools-gold/js/appraise.js');
+  const price = (c, s) => estimate(parse(s, c).query, c).typical;
+  const plain = price(srd, 'dagger');
+  t('MG1 enchanted adds a real premium to an ordinary item', price(srd, 'enchanted dagger') > 20 * plain, [plain, price(srd, 'enchanted dagger')]);
+  t('MG2 rarity scales the premium', price(srd, 'rare enchanted dagger') > 10 * price(srd, 'enchanted dagger') && price(srd, 'very rare enchanted dagger') > 3 * price(srd, 'rare enchanted dagger'));
+  t('MG3 blessed and magical words count too', price(srd, 'blessed dagger') > 20 * plain && price(srd, 'magical lantern') > 20 * price(srd, 'lantern'));
+  t('MG4 a curse implies magic but sells low', price(srd, 'cursed dagger') > 5 * plain && price(srd, 'cursed dagger') < price(srd, 'enchanted dagger'), [price(srd, 'cursed dagger'), price(srd, 'enchanted dagger')]);
+  eq('MG5 mundane changes nothing', price(srd, 'mundane dagger'), plain);
+  t('MG6 +1 is uncommon, +3 is very rare', P('+1 dagger', srd).query.rarity === 'uncommon' && P('+3 dagger', srd).query.rarity === 'very rare');
+  const base = { kind: 'thing', size: 'medium', made: 'plain', craft: 'some', aura: 'none', rarity: 'common', demand: 'usual' };
+  t('MG7 the tag guess weighs magic and its rarity', ap({ ...base, aura: 'magic' }).bu > 100 * ap(base).bu && ap({ ...base, aura: 'magic', rarity: 'rare' }).bu > 10 * ap({ ...base, aura: 'magic' }).bu);
+  t('MG8 a cursed guess is cheaper than an enchanted one', ap({ ...base, aura: 'cursed' }).bu < ap({ ...base, aura: 'magic' }).bu);
+  eq('MG9 the words set the tag', inf('cursed tuning fork').tags.aura, 'cursed');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

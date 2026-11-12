@@ -1,8 +1,8 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
-import { listOf } from './lists.js?v=842e564c';
+import { listOf } from './lists.js?v=a1905c41';
 import {
-  CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
-} from './data.js?v=842e564c';
+  CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, AURA_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
+} from './data.js?v=a1905c41';
 
 export function stem(w) {
   w = w.toLowerCase();
@@ -117,6 +117,7 @@ export function compileWorld(world) {
   for (const m of MODIFIERS) { for (const a of m.aliases) add(a, 'mod', m.id, 4); }
   for (const [id, ts] of Object.entries(RARITY_TERMS)) ts.forEach(t => add(t, 'rarity', id, 5));
   for (const [id, ts] of Object.entries(TIER_TERMS)) ts.forEach(t => add(t, 'tier', id, 5));
+  for (const [id, ts] of Object.entries(AURA_TERMS)) ts.forEach(t => add(t, 'aura', id, 5));
   for (const [id, ts] of Object.entries(ACTION_TERMS)) ts.forEach(t => add(t, 'action', id, 6));
   for (const [id, ts] of Object.entries(UNIT_TERMS)) ts.forEach(t => add(t, 'unit', id, 7));
   COUNT_TERMS.forEach(t => add(t, 'count', t, 7));

@@ -1,7 +1,7 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=842e564c';
-import { parseMoney, formatFull } from './money.js?v=842e564c';
-import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=842e564c';
+import { tokenize, stem } from './world.js?v=a1905c41';
+import { parseMoney, formatFull } from './money.js?v=a1905c41';
+import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=a1905c41';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, million: 1000000, dozen: 12 };
@@ -103,7 +103,7 @@ function suggest(unks, ctx) {
 }
 
 export function emptyQuery() {
-  return { action: 'buy', subject: null, family: null, qty: null, span: null, rarity: null, tier: null, mods: [], haggle: null, assumed: ['action'] };
+  return { action: 'buy', subject: null, family: null, qty: null, span: null, rarity: null, tier: null, aura: null, mods: [], haggle: null, assumed: ['action'] };
 }
 
 // A haggle written into the sentence: "longsword, 15% off" or "rope 20% extra". Blanked out in place so word positions hold.
@@ -176,6 +176,10 @@ export function parse(text, ctx) {
   const pushed = c => { const k = parts.indexOf(c); return k > 0 && parts[k - 1].k === 'f' && INTENSIFIERS.has(parts[k - 1].raw); };
   if (tiers.length && pushed(tiers[0]) && q.tier !== 'standard') { const o = TIER_NAMES.indexOf(q.tier), n = o + (o < 2 ? -1 : 1); if (o >= 0 && n >= 0 && n < TIER_NAMES.length) q.tier = TIER_NAMES[n]; notes.push('"' + parts[parts.indexOf(tiers[0]) - 1].raw + '" pushes the class one step further.'); }
   if (rars.length && pushed(rars[0]) && RARITIES.indexOf(q.rarity) >= 0 && RARITIES.indexOf(q.rarity) < RARITIES.length - 1 && q.rarity !== 'very rare') q.rarity = RARITIES[RARITIES.indexOf(q.rarity) + 1];
+  // "enchanted", "magical", "blessed": the thing carries magic. "+1", "+2", "+3" say how much (uncommon, rare, very rare)
+  const auras = concept('aura'); if (auras.length) q.aura = 'magic';
+  for (const p of auras) p.used = true;
+  for (const p of parts) if (p.k === 'ench') { const n = Math.min(3, Math.max(1, parseInt(String(p.raw).replace(/[^0-9]/g, ''), 10) || 1)); q.aura = 'magic'; if (!q.rarity) q.rarity = ['uncommon', 'rare', 'very rare'][n - 1]; p.used = true; }
   for (const p of rars.slice(0)) p.used = true;
   for (const p of tiers) p.used = true;
   for (const p of acts) p.used = true;
@@ -292,7 +296,6 @@ export function parse(text, ctx) {
     else if (v && Math.max(v.lo, v.hi) > 1e6) { notes.push('That is more than a million. Using 1,000,000.'); v.lo = Math.min(v.lo, 1e6); v.hi = Math.min(v.hi, 1e6); }
   }
   if (subjectEntry && (subjectEntry.tags || []).includes('trade') && q.qty && !q.qty.unit && ctx.world.currency?.denominations?.some(d => String(d.name).toLowerCase().split(' ')[0] === subjectEntry.name.toLowerCase().split(' ')[0])) notes.push('Priced as ' + q.qty.lo + ' lb of ' + subjectEntry.name.toLowerCase() + '. Coins count as money, not an item.');
-  for (const p of parts) if (p.k === 'ench') notes.push('"' + p.raw + '" is an enchantment bonus and is not priced directly. Use a rarity instead, such as "rare magic weapon".');
   // unrecognized
   const unk = parts.filter(p => p.k === 'u');
   const unrecognized = unk.map(u => u.raw);
@@ -311,6 +314,7 @@ export function queryToText(q, ctx) {
   const e = q.subject ? ctx.byId.get(q.subject) : null;
   if (!q.assumed.includes('action')) out.push(q.action === 'value' ? 'appraise' : q.action);
   if (q.qty) out.push(fmtN(q.qty) + (q.qty.unit === 'lb' ? ' lb of' : ''));
+  if (q.aura) out.push('enchanted');
   if (q.rarity) out.push(q.rarity);
   if (q.tier && q.tier !== 'standard') out.push(q.tier);
   else if (q.tier === 'standard') out.push('standard');
@@ -337,6 +341,7 @@ export function chipsFor(q, ctx) {
   const e = q.subject ? ctx.byId.get(q.subject) : null;
   chips.push({ role: 'action', label: q.action === 'value' ? 'appraise' : q.action, assumed: as('action'), key: 'action' });
   if (q.qty) chips.push({ role: 'qty', label: (q.qty.lo === q.qty.hi ? q.qty.lo : q.qty.lo + ' to ' + q.qty.hi) + (q.qty.unit === 'lb' ? ' lb' : ' ×'), key: 'qty' });
+  if (q.aura) chips.push({ role: 'aura', label: 'enchanted', key: 'aura' });
   if (q.rarity) chips.push({ role: 'rarity', label: q.rarity, key: 'rarity' });
   if (q.tier) chips.push({ role: 'tier', label: q.tier, key: 'tier' });
   if (e) chips.push({ role: 'subject', label: e.name.toLowerCase(), assumed: as('mode'), key: 'subject', hint: as('mode') ? 'assumed travel mode' : null });

@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=842e564c';
-import { niceRound } from './money.js?v=842e564c';
+} from './data.js?v=a1905c41';
+import { niceRound } from './money.js?v=a1905c41';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -77,7 +77,7 @@ export function estimate(q, ctx) {
   };
 
   // ---- base ----
-  let baseLo, baseHi, baseLabel, unitWord = '', baseMid = 0;
+  let baseLo, baseHi, baseLabel, unitWord = '', baseMid = 0, auraWhy = '';
   if (entry.curve) {
     const r = q.rarity || 'common';
     if (!q.rarity) assumptions.push({ id: 'rarity', text: 'common rarity' });
@@ -92,12 +92,24 @@ export function estimate(q, ctx) {
     const sp = entry.spread ?? (entry.src === 'user' ? 0.15 : 0.1);
     baseLo = per * (1 - sp); baseHi = per * (1 + sp);
     baseLabel = entry.name;
-    if (q.rarity) notes.push(entry.name + ' has a fixed price; rarity ignored.');
+    // magic on an ordinary thing: the item's own price plus an enchantment premium, set by rarity. A curse implies magic.
+    const cursed = selected.some(m => m.id === 'cursed');
+    const auraOn = (q.aura || cursed) && kind === 'good' && !(entry.tags || []).includes('magic');
+    if (auraOn) {
+      const r = q.rarity || 'common';
+      if (!q.rarity) assumptions.push({ id: 'rarity', text: 'common rarity' });
+      const cur = w.currency || {}, scale = cur.symbol === '$' && cur.decimal === 100 ? 100 : 1;
+      const prem = RARITY_CURVES.permanent.mid[r] * 0.6 * scale, band = RARITY_CURVES.permanent.band;
+      baseLo += prem * band[0]; baseHi += prem * band[1]; baseMid = per + prem;
+      baseLabel = (cursed && !q.aura ? 'Cursed ' : 'Enchanted ') + entry.name.toLowerCase() + ', ' + r;
+      auraWhy = 'Magic adds an enchantment premium on top of the item. How much depends on its rarity.';
+    } else if (q.rarity) notes.push(entry.name + ' has a fixed price; rarity ignored.');
   }
   lo = baseLo; hi = baseHi;
   if (!(baseLo > 0) || !isFinite(baseHi)) return { ok: false, error: 'bad-price' };
   const perUnit = tu0(entry) ? 'per ' + tu0(entry).word :  entry.unit === 'lb' ? 'per lb' : entry.unit === 'each' && !entry.isCategory ? 'each' : 'each';
   factors.push({ kind: 'base', label: baseLabel + ' (' + perUnit + ')', lo: baseLo, hi: baseHi, runLo: lo, runHi: hi, abs: true, key: 'base', mid: baseMid, edited: ov.base > 0 || (wbase > 0 && !entry.curve), saved: !(ov.base > 0) && wbase > 0 && !entry.curve, why: entry.basis || (entry.src === 'srd' ? 'SRD price.' : entry.src === 'user' ? 'Your price.' : 'Fool\'s Gold price.') });
+  if (auraWhy) { const bf = factors[factors.length - 1]; bf.why = auraWhy + ' ' + (bf.why || ''); }
 
   // ---- quantity / length ----
   const qty = q.qty ? { lo: q.qty.lo, hi: q.qty.hi ?? q.qty.lo } : { lo: 1, hi: 1 };
