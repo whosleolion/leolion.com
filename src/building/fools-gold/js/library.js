@@ -131,3 +131,23 @@ export const modernEveryday = [
   ...M('good', 'foods', ['food'], ['Taco;3;;;tacos', 'Salad;9', 'Fries;4;;;french fries, chips', 'Sushi roll;10;;;sushi', 'Noodles;12;;;ramen, pad thai', 'Kebab;8;;;doner, gyro', 'Apple;1;;;apples', 'Energy drink;3;;;red bull, monster energy', 'Gum;2;;;chewing gum', 'Shot of whiskey;9;;;shot, a drink, drink', 'Takeout;18;;;take-out, takeaway, delivery food', 'Big Mac;6;;;mcdonalds, burger combo']),
   ...M('service', 'crime', ['service', 'dangerous'], ['Hacker;800;day;;hack, hackers, black hat', 'Forger;500;;;document forger', 'Hitman;15000;;;assassin, hit man, contract killer', 'Getaway driver;600;day;;wheelman, driver for hire', 'Fixer;400;day;;fence', 'Cop bribe;300;;;bribe cop, pay off a cop, bribe', 'Official bribe;5000;;;bribe official, bribe a judge', 'Burglar;400;day;;thief, safecracker']),
 ];
+
+// ---- adventuring gear and the contents of the standard packs (SRD prices) ----
+function G(tags, list) {
+  return list.map(line => {
+    const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim());
+    return { id: 'good.' + slug(name), name, kind: 'good', src: 'srd', bu: parseP(price), unit: unit || 'each', tags: [...tags, ...(more ? more.split(/\s+/) : [])], aliases: aliases ? aliases.split(',').map(x => x.trim()).filter(Boolean) : [], spread: 0.1, library: 'packs' };
+  });
+}
+export const srdGearExtra = [
+  ...G(['manufactured', 'crafted', 'adventuring'], [
+    'Ball bearings;1gp;;;bag of ball bearings, ball bearing, bearings, bag of 1000 ball bearings', 'Abacus;2gp', 'Acid vial;25gp;;;acid, vial of acid', "Alchemist's fire;50gp;;;alchemist fire, flask of alchemists fire", 'Antitoxin;50gp;;medicine;vial of antitoxin', 'Barrel;2gp', 'Basket;4sp', 'Block and tackle;1gp;;;pulley',
+    'Glass bottle;2gp;;;bottle', 'Bucket;5cp;;;pail', 'Map or scroll case;1gp;;;scroll case, map case, case', 'Chalk;1cp;;;piece of chalk', 'Chest;5gp;;;trunk, strongbox', 'Tankard;2cp;;;flask, mug', 'Holy water;25gp;;;flask of holy water',
+    'Hunting trap;5gp;;;trap, bear trap', 'Jug;2cp;;;pitcher', 'Piton;5cp;;;pitons', 'Ten-foot pole;5cp;;;pole, 10 foot pole', 'Iron pot;2gp;;;pot, cooking pot', 'Quiver;1gp', "Merchant's scale;5gp;;;scale, balance", 'Sealing wax;5sp;;;wax, stick of wax',
+    'Signet ring;5gp;;;seal ring', 'Iron spikes;1gp;;;spike, spikes, iron spike', 'String;1sp;;;ten feet of string, twine', 'Dice set;1sp;;;dice, a set of dice', 'Playing cards;5sp;;;deck of cards, card deck, cards', 'Marbles;1cp;;;bag of marbles, marble', 'Sledgehammer;2gp;;;sledge', 'Bag of sand;1cp;;;little bag of sand, sand'
+  ]),
+  ...G(['manufactured', 'crafted', 'instrument'], ['Flute;2gp', 'Drum;6gp']),
+  ...G(['manufactured', 'pack', 'adventuring'], [
+    "Burglar's pack;16gp;;;burglar pack, burglars kit", "Diplomat's pack;39gp;;;diplomat pack", "Dungeoneer's pack;12gp;;;dungeoneer pack, dungeon pack", "Entertainer's pack;40gp;;;entertainer pack", "Explorer's pack;10gp;;;explorer pack, adventurers pack, adventurer pack", "Priest's pack;19gp;;;priest pack", "Scholar's pack;40gp;;;scholar pack",
+  ]),
+];

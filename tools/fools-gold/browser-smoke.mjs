@@ -219,6 +219,8 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.fill('#q', '2 blorp widget, 1 rope');
   ok(name + ' a mixed list with an unknown item offers to resolve it', !!(await page.$('[data-act=rs-quick]')));
   await page.fill('#q', '');
+  await page.fill('#q', 'ball bearings');
+  ok(name + ' ball bearings are in the list', /Ball bearings/.test(await page.textContent('.price .what')));
   // haggle
   await page.fill('#q', 'buy a longsword');
   const hp0 = await price(page);
