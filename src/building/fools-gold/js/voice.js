@@ -1,7 +1,7 @@
 // Dictation: say what the party wants to buy. On the phone this uses the system speech recognizer through Capacitor's
 // speech-recognition plugin; in a browser it uses the Web Speech API where there is one. Nothing is recorded or kept by the app,
 // the microphone is on only while the button is lit, and the keyboard's own dictation key keeps working either way.
-import { isNative, nativePlugin } from './native.js?v=d34275a2';
+import { isNative, nativePlugin } from './native.js?v=2e0310b0';
 
 const webCtor = () => (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) || null;
 export function voiceSupport() {

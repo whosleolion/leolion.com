@@ -1,25 +1,25 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=d34275a2';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=d34275a2';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=d34275a2';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=d34275a2';
-import { findOffer } from './lists.js?v=d34275a2';
-import { suggestPrompts } from './suggest.js?v=d34275a2';
-import { readFact } from './facts.js?v=d34275a2';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=d34275a2';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=d34275a2';
+import { compileWorld } from './world.js?v=2e0310b0';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=2e0310b0';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=2e0310b0';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=2e0310b0';
+import { findOffer } from './lists.js?v=2e0310b0';
+import { suggestPrompts } from './suggest.js?v=2e0310b0';
+import { readFact } from './facts.js?v=2e0310b0';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=2e0310b0';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=2e0310b0';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=d34275a2';
-import { applicable } from './engine.js?v=d34275a2';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=d34275a2';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=d34275a2';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=d34275a2';
-import { complete } from './complete.js?v=d34275a2';
-import { haptic, shareText, canShare, setHaptics } from './native.js?v=d34275a2';
-import { voiceSupport, startListening } from './voice.js?v=d34275a2';
-import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=d34275a2';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=d34275a2';
+} from './data.js?v=2e0310b0';
+import { applicable } from './engine.js?v=2e0310b0';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=2e0310b0';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=2e0310b0';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=2e0310b0';
+import { complete } from './complete.js?v=2e0310b0';
+import { haptic, shareText, canShare, setHaptics } from './native.js?v=2e0310b0';
+import { voiceSupport, startListening } from './voice.js?v=2e0310b0';
+import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=2e0310b0';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=2e0310b0';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -171,6 +171,7 @@ function announce() {
   }, 600);
 }
 function renderResult() {
+  if (!S.onboarded && st.est && st.est.ok && st.text) { S.onboarded = true; persist(); }
   announce();
   renderResultCore();
   let pre = '';
@@ -183,7 +184,7 @@ function renderResultCore() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
   if (!st.text) { st.glintKey = ''; const legend = (world.currency.denominations || []).filter(d => d.glyph).map(d => `${esc(d.glyph)} ${esc(d.name)}`).join(' &middot; ');
-    el.innerHTML = `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>${legend ? `<p class="legend">${legend}</p>` : ''}`; return; }
+    el.innerHTML = S.onboarded ? `<p class="empty">Describe what to price: how many, buying or selling, where, how fast.</p>${legend ? `<p class="legend">${legend}</p>` : ''}` : introHtml(legend); return; }
   if (!q.subject && st.offer) {
     const o = st.offer;
     el.innerHTML = `<section class="guess offer"><div class="gh"><b>${esc(o.item)}</b> is in the <b>${esc(o.label)}</b> list, which is off for this world.</div><button class="cta" data-act="offer-on">Turn on ${esc(o.label)}</button><button class="cta2" data-act="offer-no">Not now</button></section>`;
@@ -826,6 +827,7 @@ function noteUnknown(phrase) {
 function recordHistory() {
   clearTimeout(st.histTimer);
   if (st.guess && st.guess.phrase && !st.sheet.open) noteUnknown(st.guess.phrase);
+  if (!S.onboarded && st.est && st.est.ok && st.text) { S.onboarded = true; persist(); }
   if (!st.est || !st.est.ok || !st.text) return;
   const item = { text: st.text, price: money(st.est.typical), ts: Date.now(), world: world.id, pin: false };
   const old = S.history.find(h => h.text === item.text && h.world === item.world);
@@ -1196,6 +1198,22 @@ function worldChanged(opts = {}) {
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
 
 // ---------- events ----------
+// ---------- the first minute ----------
+// A new DM sees what the app does by doing it: three sentences to tap, and the other ways in. It goes away after the first price.
+const TRY_TEXTS = ['5 healing potions in a village', 'sell 3 longswords', '3 rope, 2 torches, a lantern'];
+function introHtml(legend) {
+  const mic = voiceSupport() ? '<li><b>Mic</b> Say it out loud.</li>' : '';
+  return `<section class="intro"><h2>Price anything your players ask for</h2>
+    <p>Type what they want in plain words. You get a price, a range, and the reason.</p>
+    <div class="tryrow">${TRY_TEXTS.map((x, i) => `<button class="try" data-act="try" data-i="${i}">${esc(x)}</button>`).join('')}</div>
+    <ul class="how"><li><b>+</b> Browse by kind instead of typing.</li>${mic}<li><b>Add</b> Build a cart for the whole shopping trip.</li><li><b>Haggle</b> Drag the marker, or type the price you agreed.</li></ul>
+    ${legend ? `<p class="legend">${legend}</p>` : ''}
+    <button class="linkbtn" data-act="intro-done">Got it</button></section>`;
+}
+// the box teaches its own grammar while it is empty
+const PLACEHOLDERS = ['Describe what to price', '5 healing potions in a village', 'a night at an inn, no questions asked', 'sell 3 longswords', '3 rope, 2 torches and a lantern', 'hire a skilled blacksmith for a week'];
+let phIdx = 0;
+setInterval(() => { const q = $('#q'); if (!q || q.value || document.activeElement === q || matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden) return; phIdx = (phIdx + 1) % PLACEHOLDERS.length; q.placeholder = PLACEHOLDERS[phIdx]; }, 3600);
 // ---------- dictation ----------
 let stopVoice = null;
 function micState() {
@@ -1295,6 +1313,8 @@ document.addEventListener('click', e => {
     case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart' + (r.bad.length ? '. ' + r.bad.length + ' skipped, not in your lists.' : '')); } break;
     case 'cart-offer-no': st.cartOfferDismissed = st.text; st.cartOffer = null; renderResult(); break;
     case 'cart-why': st.cartWhy = !st.cartWhy; renderSheet(); break;
+    case 'try': { const x = TRY_TEXTS[+d.i]; if (x) { $('#q').value = x; fromText(x); } break; }
+    case 'intro-done': S.onboarded = true; persist(); renderResult(); break;
     case 'mic': dictate('q'); break;
     case 'mic-cart': dictate('cart'); break;
     case 'cart-share': { const c = cartOf(); shareOrCopy('Fool\'s Gold cart', cartText(c, ctx, n => money(n), (r, line) => r ? whatText(r.q, r.e.entry) : (line.q.subject || 'An item')), 'Cart copied'); break; }
@@ -1598,7 +1618,10 @@ try { if (navigator.storage && navigator.storage.persist) navigator.storage.pers
 pruneOneOffs();
 // a new content patch: say so once, and point at what changed
 if (S.contentSeen !== CONTENT.id) { const had = S.contentSeen; S.contentSeen = CONTENT.id; persist(); if (had) setTimeout(() => toast('Prices updated: ' + contentLabel() + '. See Settings, About.'), 4200); }
-const first = S.last ?? sampleList()[0];
+// a first-time DM starts at an empty box and the intro, not at somebody else's sample price
+const noIntro = window.__FG_NOINTRO || /[?&]intro=0/.test(location.search);
+if (noIntro && !S.onboarded) S.onboarded = true;
+const first = S.last ?? (S.onboarded ? sampleList()[0] : '');
 $('#q').value = first;
 fromText(first, { noHistory: true });
 

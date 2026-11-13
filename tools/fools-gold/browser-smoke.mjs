@@ -21,6 +21,7 @@ const goBack = async page => { await page.click('.back'); };
 const price = page => page.textContent('.pricebtn .num');
 for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'dark'], ['desktop-light', { width: 1100, height: 900 }, 'light']]) {
   const ctx = await browser.newContext({ viewport: vp, colorScheme: scheme, deviceScaleFactor: 1 });
+  await ctx.addInitScript(() => { window.__FG_NOINTRO = true; });
   const page = await ctx.newPage();
   const external = new Set(); page.on('request', r => { const h = new URL(r.url()); if (/^https?:$/.test(h.protocol) && h.host !== new URL(url).host) external.add(h.host); });
   page.on('console', m => { if (m.type() === 'error' && !/fonts\.g|ERR_|Failed to load resource/.test(m.text())) errors.push(name + ': ' + m.text()); });
@@ -355,6 +356,16 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   if (await page.$('[data-act=hist-clear]')) await page.click('[data-act=hist-clear]');
   ok(name + ' recent searches can be cleared', !(await page.$('#history .hrow')));
   await page.screenshot({ path: `${out}/${name}-2.png` });
+
+  // the first minute: an empty box and an intro, gone after the first price
+  const introCtx = await browser.newContext({ serviceWorkers: 'block', viewport: vp, colorScheme: scheme });
+  const fp = await introCtx.newPage(); await fp.goto(url); await fp.waitForSelector('#q'); await fp.waitForTimeout(500);
+  ok(name + ' a first visit shows the intro, not a price', !!(await fp.$('.intro')) && !(await fp.$('.pricebtn')));
+  await fp.click('[data-act=try][data-i="0"]'); await fp.waitForTimeout(400);
+  ok(name + ' tapping a sample prices it', !!(await fp.$('.pricebtn')));
+  await fp.fill('#q', ''); await fp.waitForTimeout(300);
+  ok(name + ' the intro does not come back after the first price', !(await fp.$('.intro')));
+  await introCtx.close();
 
   // a saved copy with old files updates itself
   const plain = await browser.newContext({ serviceWorkers: 'block', viewport: vp, colorScheme: scheme });

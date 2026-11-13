@@ -1,7 +1,7 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=d34275a2';
-import { parseMoney, formatFull } from './money.js?v=d34275a2';
-import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=d34275a2';
+import { tokenize, stem } from './world.js?v=2e0310b0';
+import { parseMoney, formatFull } from './money.js?v=2e0310b0';
+import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=2e0310b0';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, million: 1000000, dozen: 12 };
@@ -69,7 +69,9 @@ export function editDistance(a, b, max = 3) {
   return d[a.length][b.length];
 }
 
-function suggest(unks, ctx) {
+// a same-length swap of one letter in a short word (fork, fort) is as likely a different word as a typo; swaps of neighbours, and missing or extra letters, are typos
+const isSubstitution = (a, b) => { if (a.length !== b.length) return false; let diff = []; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) diff.push(i); if (diff.length === 2 && diff[1] === diff[0] + 1 && a[diff[0]] === b[diff[1]] && a[diff[1]] === b[diff[0]]) return false; return true; };
+function suggest(unks, ctx, toks = []) {
   const out = [];
   for (let a = 0; a < unks.length; a++) {
     for (let size = Math.min(3, unks.length - a); size >= 1; size--) {
@@ -89,6 +91,7 @@ function suggest(unks, ctx) {
         if (p.key === str) continue;
         const d = editDistance(str, p.key, maxd);
         if (d > maxd) continue;
+        if (str.length <= 5 && isSubstitution(str, p.key)) continue;
         if (!best || d < best.d || (d === best.d && p.prio < best.prio)) best = { d, prio: p.prio, p };
       }
       if (best) {
@@ -98,6 +101,23 @@ function suggest(unks, ctx) {
         break;
       }
     }
+  }
+  // "heling potion": the typo sits beside a word that is already understood, and the phrase is two words
+  if (!out.length) for (const u of unks) {
+    const i = u.tokIdx;
+    for (const [lo, hi] of [[i - 1, i], [i, i + 1]]) {
+      const A = toks[lo], B = toks[hi]; if (!A || !B || A.type !== 'word' || B.type !== 'word') continue;
+      const str = A.stem + ' ' + B.stem, maxd = str.length >= 9 ? 2 : 1;
+      let best = null;
+      for (const p of ctx.phrases) {
+        if (p.type !== 'entry' || p.words.length !== 2) continue;
+        if (Math.abs(p.key.length - str.length) > maxd || p.key[0] !== str[0] || p.key === str) continue;
+        const d = editDistance(str, p.key, maxd); if (d > maxd) continue;
+        if (!best || d < best.d || (d === best.d && p.prio < best.prio)) best = { d, prio: p.prio, p };
+      }
+      if (best) { out.push({ start: A.start, end: B.end, from: A.raw + ' ' + B.raw, to: best.p.display.toLowerCase(), type: best.p.type, id: best.p.id }); break; }
+    }
+    if (out.length) break;
   }
   return out;
 }
@@ -306,7 +326,7 @@ export function parse(text, ctx) {
   const unk = parts.filter(p => p.k === 'u');
   const unrecognized = unk.map(u => u.raw);
   for (const n of unusedNums) unrecognized.push(String(n.lo));
-  const suggestions = suggest(unk, ctx);
+  const suggestions = suggest(unk, ctx, toks);
 
   if (hx.price) q.haggle = { price: hx.price };
   else if (hx.pct) q.haggle = { pct: hx.pct };

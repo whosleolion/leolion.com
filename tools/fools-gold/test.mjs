@@ -768,5 +768,17 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   for (const id of Object.keys(COV)) { const r = covRun(id); t(`CV ${id} coverage stays at 98% or better`, (r.total - r.miss.length) / r.total >= 0.98, r.miss.join('; ')); }
 }
 
+// ---- typos: fix the obvious ones, leave real words alone ----
+{
+  const { presetWorld: pw5, normalizeWorld: nw5 } = await import('../../src/building/fools-gold/js/store.js');
+  const w5 = pw5('srd'); nw5(w5); const c5 = compileWorld(w5);
+  const sg = s => parse(s, c5).suggestions.map(x => x.to.toLowerCase());
+  eq('FZ1 a typo beside a known word fixes the whole phrase', sg('heling potion'), ['healing potion']);
+  eq('FZ2 a transposed long word is fixed', sg('longswrod'), ['longsword']);
+  eq('FZ3 a short real word is not turned into another (fork is not fort)', sg('buy a tuning fork'), []);
+  eq('FZ4 a missing letter in a short word is fixed', sg('bedrol'), ['bedroll']);
+  eq('FZ5 a typo in the second word of a phrase is fixed', sg('plate armer'), ['plate armor']);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
