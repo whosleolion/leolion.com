@@ -1,13 +1,21 @@
-import { normalizeCart } from './cart.js?v=45512745';
+import { normalizeCart } from './cart.js?v=55606634';
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=45512745';
-import { compileWorld } from './world.js?v=45512745';
+import { WORLD_PRESETS } from './data.js?v=55606634';
+import { CONTENT } from './content.js?v=55606634';
+import { compileWorld } from './world.js?v=55606634';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
 
+// a calibrated world: shipped, tested, and re-priced by content patches. Its lists and money are fixed; a custom world starts as a copy of one.
+export function presetWorld(id) {
+  const mk = WORLD_PRESETS[id]; if (!mk) return null;
+  const w = mk(); w.preset = id; w.custom = false; w.content = CONTENT.id; return w;
+}
+export const CALIBRATED = ['srd', 'vcm', 'modern', 'scifi'];
+export const isCalibrated = w => !!(w && w.preset && !w.custom);
 function defaults() {
-  const worlds = [WORLD_PRESETS.srd()];
+  const worlds = [presetWorld('srd')];
   worlds.forEach(normalizeWorld);
   return { v: 3, worlds, activeId: 'srd', history: [], theme: null, carts: {} };
 }
@@ -38,6 +46,16 @@ export function load() {
         if (!(s.v >= 3)) {
           s.v = 3;
           if (s.worlds.some(w => w.id === 'srd')) { s.worlds = s.worlds.filter(w => w.id === 'srd'); s.activeId = 'srd'; }
+        }
+        // v4: calibrated worlds are the front door. A preset world that still matches its preset stays calibrated; anything changed is yours
+        if (!(s.v >= 4)) {
+          s.v = 4;
+          const sig = w => JSON.stringify([[...(w.lists || [])].sort(), ((w.currency && w.currency.denominations) || []).map(d => [d.id, d.bu]), (w.currency && w.currency.symbol) || '']);
+          for (const w of s.worlds) {
+            const mk = WORLD_PRESETS[w.id];
+            if (mk && sig(w) === sig(mk())) { w.preset = w.id; w.custom = false; w.content = CONTENT.id; }
+            else { w.custom = true; w.based = WORLD_PRESETS[w.id] ? w.id : (w.baseline === 'modern' ? 'modern' : w.baseline === 'other' ? 'scifi' : 'srd'); delete w.preset; }
+          }
         }
         // the old Titanium Frontier sample world was replaced by the modern world
         s.worlds = s.worlds.map(w => (w.id === 'titanium' && w.name === 'Titanium Frontier' ? WORLD_PRESETS.modern() : w));
@@ -101,6 +119,10 @@ export function normalizeWorld(w) {
     fixed: !!it.fixed, oneoff: !!it.oneoff, noTier: !!it.noTier, placeScale: num(it.placeScale, 0, 0, 5), group: typeof it.group === 'string' ? it.group.slice(0, 30) : undefined,
   })).filter(it => it.bu > 0).slice(0, 500);
   w.name = str(w.name).trim().slice(0, 80) || 'My world';
+  w.preset = typeof w.preset === 'string' && WORLD_PRESETS[w.preset] ? w.preset : undefined;
+  w.custom = !!w.custom || !w.preset;
+  w.based = typeof w.based === 'string' && WORLD_PRESETS[w.based] ? w.based : undefined;
+  w.content = typeof w.content === 'string' ? w.content.slice(0, 40) : undefined;
   w.blurb = typeof w.blurb === 'string' ? w.blurb.slice(0, 200) : undefined;
   w.id = str(w.id).replace(/[^\w-]/g, '').slice(0, 40) || 'w' + Date.now().toString(36);
   return w;

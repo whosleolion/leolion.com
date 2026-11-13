@@ -1,23 +1,23 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=45512745';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=45512745';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=45512745';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=45512745';
-import { findOffer } from './lists.js?v=45512745';
-import { suggestPrompts } from './suggest.js?v=45512745';
-import { readFact } from './facts.js?v=45512745';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=45512745';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=45512745';
+import { compileWorld } from './world.js?v=55606634';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=55606634';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=55606634';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=55606634';
+import { findOffer } from './lists.js?v=55606634';
+import { suggestPrompts } from './suggest.js?v=55606634';
+import { readFact } from './facts.js?v=55606634';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=55606634';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=55606634';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=45512745';
-import { applicable } from './engine.js?v=45512745';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=45512745';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=45512745';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=45512745';
-import { complete } from './complete.js?v=45512745';
-import { CONTENT, contentLabel, contentCounts } from './content.js?v=45512745';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=45512745';
+} from './data.js?v=55606634';
+import { applicable } from './engine.js?v=55606634';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=55606634';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=55606634';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=55606634';
+import { complete } from './complete.js?v=55606634';
+import { CONTENT, contentLabel, contentCounts } from './content.js?v=55606634';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=55606634';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -921,19 +921,25 @@ function resolveMeans(text) {
   return m ? 'mod:' + m.id : null;
 }
 
+const calNote = () => (isCalibrated(world) ? `<div class="calnote"><b>${esc(world.name)}</b> is a calibrated world (${esc(contentLabel())}). Its lists and money stay fixed so prices stay trustworthy. Your own items, words and facts still apply.<button class="btn" data-act="w-copy">Make my own copy to change them</button></div>` : '');
 const PAGES = {
   World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Changes']] },
 };
 function worldPicker() {
+  const cal = isCalibrated(world);
   const sq = `<button class="wsq" data-act="w-modal" aria-haspopup="dialog"><span class="wl">World</span><span class="wv">${esc(world.name)}</span><span class="wc">&#9662;</span></button>`;
   if (!st.wmodal) return `<div class="wpick">${sq}</div>`;
-  const rows = S.worlds.map(x => x.id === world.id && st.wrename ? `<div class="world-row sel edit"><input class="renin" id="renameIn" value="${esc(x.name)}" aria-label="World name" maxlength="40" autocapitalize="words" enterkeyhint="done"><button class="btn primary" data-act="w-rename">Save</button></div>` : `<button class="world-row${x.id === world.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}"><span><span class="wn">${esc(x.name)}</span>${x.id === world.id ? '<span class="wb">In use</span>' : ''}</span></button>`).join('');
-  const presets = Object.entries(WORLD_PRESETS).map(([id, mk]) => { const p = mk(); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span><span class="plus">+</span></button>`; }).join('');
+  const tile = id => { const p = WORLD_PRESETS[id](), on = world.preset === id && !world.custom; return `<button class="world-row${on ? ' sel' : ''}" data-act="w-open-preset" data-v="${esc(id)}" aria-pressed="${on}"><span><span class="wn">${esc(p.name)}</span><span class="wb">${esc(p.blurb || '')}</span></span>${on ? '<span class="chk">In use</span>' : ''}</button>`; };
+  const mine = S.worlds.filter(x => x.custom);
+  const myRows = mine.map(x => x.id === world.id && st.wrename ? `<div class="world-row sel edit"><input class="renin" id="renameIn" value="${esc(x.name)}" aria-label="World name" maxlength="40" autocapitalize="words" enterkeyhint="done"><button class="btn primary" data-act="w-rename">Save</button></div>` : `<button class="world-row${x.id === world.id ? ' sel' : ''}" data-act="w-select" data-id="${esc(x.id)}" aria-pressed="${x.id === world.id}"><span><span class="wn">${esc(x.name)}</span><span class="wb">Custom, from ${esc((WORLD_PRESETS[x.based] ? WORLD_PRESETS[x.based]().name : 'scratch'))}</span></span>${x.id === world.id ? '<span class="chk">In use</span>' : ''}</button>`).join('');
+  const startRows = CALIBRATED.map(id => { const p = WORLD_PRESETS[id](); return `<button class="world-row preset" data-act="w-new-preset" data-v="${esc(id)}"><span><span class="wn">${esc(p.name)}</span><span class="wb">Start from this one</span></span><span class="plus">+</span></button>`; }).join('');
   return `<div class="wpick">${sq}</div><div class="wmodal" role="dialog" aria-label="Worlds"><div class="wback" data-act="w-modal-close"></div><div class="wcard">
     <div class="wch"><h3>Worlds</h3><button class="btn" data-act="w-modal-close">Close</button></div>
-    <div class="wlist">${rows}</div>
-    ${st.wrename ? '' : `<div class="row"><button class="btn" data-act="w-rename">Rename</button><button class="btn" data-act="w-dup">Duplicate</button>${S.worlds.length > 1 ? `<button class="btn danger" data-act="w-del">Delete</button>` : ''}</div>`}
-    ${st.wnew ? `<div class="lab">Start from a preset</div><div class="wlist">${presets}</div>` : `<button class="btn wide" data-act="w-newtoggle">+ New world</button>`}
+    <div class="lab">Calibrated worlds <span class="mini">${esc(contentLabel())}</span></div>
+    <div class="wlist">${CALIBRATED.map(tile).join('')}</div>
+    ${mine.length ? `<div class="lab">Your worlds</div><div class="wlist">${myRows}</div>` : ''}
+    ${!cal && !st.wrename ? `<div class="row"><button class="btn" data-act="w-rename">Rename</button><button class="btn" data-act="w-dup">Duplicate</button><button class="btn danger" data-act="w-del">Delete</button></div>` : ''}
+    ${st.wnew ? `<div class="lab">Start a custom world from&hellip;</div><div class="wlist">${startRows}</div>` : `<button class="btn wide quiet" data-act="w-newtoggle">Start a custom world&hellip;</button>`}
   </div></div>`;
 }
 function renderDrawer() {
@@ -987,7 +993,7 @@ function buildSettingsHtml() {
 
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
 
-  <details class="sect" data-sec="Item lists"${op('Item lists')}><summary><h3>Item lists</h3><span class="sv">${esc([['srd', '5e SRD'], ['fantasy', 'Fantasy'], ['scifi', 'Sci-fi'], ['modern', 'Modern']].filter(([k]) => w.lists.includes(k)).map(x => x[1]).join(' + '))}</span></summary><div class="sbody">
+  <details class="sect" data-sec="Item lists"${op('Item lists')}><summary><h3>Item lists</h3><span class="sv">${esc([['srd', '5e SRD'], ['fantasy', 'Fantasy'], ['scifi', 'Sci-fi'], ['modern', 'Modern']].filter(([k]) => w.lists.includes(k)).map(x => x[1]).join(' + '))}</span></summary><div class="sbody">${calNote()}<fieldset class="locked"${isCalibrated(w) ? ' disabled' : ''}>
     <p>Turn on every list this world draws prices from. Your own items and settings always override them.</p>
     <div class="listbox">
       <label class="listrow"><span class="lt"><b>5e SRD items</b><span class="mini">Named items like longsword and chain mail.</span></span><input type="checkbox" data-bind="list.srd"${w.lists.includes('srd') ? ' checked' : ''}></label>
@@ -995,9 +1001,9 @@ function buildSettingsHtml() {
       <label class="listrow"><span class="lt"><b>Science fiction</b><span class="mini">Blasters, cyberware, ships, station rent and hired crew, priced in credits.</span></span><input type="checkbox" data-bind="list.scifi"${w.lists.includes('scifi') ? ' checked' : ''}></label>
       <label class="listrow"><span class="lt"><b>Modern day</b><span class="mini">Rent, groceries, flights, doctors and cars at current US prices. Pair it with US dollars under Money.</span></span><input type="checkbox" data-bind="list.modern"${w.lists.includes('modern') ? ' checked' : ''}></label>
     </div>
-  </div></div></details>
+  </div></fieldset></div></details>
 
-  <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">
+  <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">${calNote()}<fieldset class="locked"${isCalibrated(w) ? ' disabled' : ''}>
     ${dens.map((d, i) => `<div class="coin"><div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">&times;</button>` : '<span></span>'}</div>
       <label class="lab">Worth in base units<input class="field" type="number" min="0.01" step="any" inputmode="decimal" data-bind="den.${i}.bu" value="${esc(d.bu)}"></label>
       <div class="lab">Symbol<div class="glyphs" role="group" aria-label="Symbol for ${esc(d.name)}"><button class="gl${d.glyph ? '' : ' on'}" data-act="glyph" data-i="${i}" data-v="" title="Plain letters">${esc(d.id.toUpperCase())}</button>${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => `<button class="gl${d.glyph === L ? ' on' : ''}" data-act="glyph" data-i="${i}" data-v="${L}" aria-label="Letter ${L}"><span class="cg">${L}</span></button>`).join('')}</div></div></div>`).join('')}
@@ -1010,7 +1016,7 @@ function buildSettingsHtml() {
       <button class="presethead" data-act="cur-toggle" aria-expanded="${st.curOpen}"><span><b>Start over with a preset</b><span class="mini">Replaces the coins above. You will rarely need it.</span></span><span class="chev">${st.curOpen ? '&#9662;' : '&#9656;'}</span></button>
       ${st.curOpen ? `<div class="curpick" role="radiogroup" aria-label="Currency preset">${Object.entries(CURRENCY_PRESETS).map(([v, p]) => `<button class="curcard${curSet === v ? ' on' : ''}${st.curArm === v ? ' arm' : ''}" role="radio" aria-checked="${curSet === v}" data-act="w-cur" data-v="${v}"><b>${esc(p.title)}</b><span class="cs">${st.curArm === v ? 'Tap again to replace' : p.example}</span></button>`).join('')}</div>` : ''}
     </div>
-  </div></div></details>
+  </div></fieldset></div></details>
 
   <details class="sect" data-sec="Economy"${op('Economy')}><summary><h3>Economy</h3><span class="sv">${w.economyTags.length ? w.economyTags.length + ' on' : 'none'}</span></summary><div class="sbody">
     <p>Tags that raise or lower whole categories of price. Pick any that fit the world.</p>
@@ -1240,10 +1246,12 @@ document.addEventListener('click', e => {
       break;
     }
     case 'w-newtoggle': st.wnew = true; renderDrawer(); break;
-    case 'w-new-preset': { st.wmodal = false; const mk = WORLD_PRESETS[d.v]; if (!mk) break; const w = mk(); w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.name === w.name || x.name.startsWith(w.name + ' ')).length; if (n) w.name = w.name + ' ' + (n + 1); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Created ' + w.name + '. It is the world in use.'); break; }
+    case 'w-open-preset': { st.wmodal = false; let w = S.worlds.find(x => x.preset === d.v && !x.custom); if (!w) { w = presetWorld(d.v); if (!w) break; w.id = uniqueWorldId(w.id); S.worlds.push(w); } useWorld(w.id); persist(); afterWorldSwitch(); break; }
+    case 'w-new-preset': { st.wmodal = false; st.wnew = false; const w = presetWorld(d.v); if (!w) break; const base = w.name; delete w.preset; w.custom = true; w.based = d.v; w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.custom && x.name.startsWith(base + ' custom')).length; w.name = base + ' custom' + (n ? ' ' + (n + 1) : ''); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Started ' + w.name + '. Its lists and money are yours to change.'); break; }
+    case 'w-copy': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name = w.name + ' custom'; S.worlds.push(w); S.carts[w.id] = clone(cartOf()); useWorld(w.id); persist(); afterWorldSwitch(); toast('Made ' + w.name + '. Lists and money are now yours to change.'); break; }
     case 'wtab': st.wtab = d.id; st.dpageChanged = true; renderDrawer(); break;
     case 'jump': { const el = document.getElementById('ws-' + d.id.replace(/\W+/g, '-')); const panel = $('#drawerPanel'); if (el) panel.scrollTo({ top: el.offsetTop - 118, behavior: 'smooth' }); break; }
-    case 'w-dup': { const w = clone(world); w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
+    case 'w-dup': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
     case 'w-del':
       if (S.worlds.length > 1) {
         if (b.dataset.armed) { const gone = world.id; S.worlds = S.worlds.filter(w => w.id !== gone); S.history = S.history.filter(h => h.world !== gone); delete S.carts[gone]; useWorld(S.worlds[0].id); persist(); afterWorldSwitch(); }
@@ -1287,7 +1295,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'w-reset': {
-      if (b.dataset.armed) { try { localStorage.removeItem('foolsgold.v1'); } catch (e2) { /* ignore */ } S = { ...load(), history: [] }; S.worlds = [WORLD_PRESETS.srd(), WORLD_PRESETS.vcm(), WORLD_PRESETS.modern()]; S.activeId = 'srd'; S.carts = {}; useWorld('srd'); persist(); afterWorldSwitch(); toast('Reset'); }
+      if (b.dataset.armed) { try { localStorage.removeItem('foolsgold.v1'); } catch (e2) { /* ignore */ } S = { ...load(), history: [] }; S.worlds = [presetWorld('srd')]; S.activeId = 'srd'; S.carts = {}; useWorld('srd'); persist(); afterWorldSwitch(); toast('Reset'); }
       else { b.dataset.armed = '1'; b.textContent = 'Click again to erase all worlds'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Reset everything'; } }, 3500); }
       break;
     }
@@ -1440,7 +1448,7 @@ try { if (sessionStorage.getItem('fg-updated')) { sessionStorage.removeItem('fg-
 checkForUpdate();
 
 // ---------- boot ----------
-if (window.__FG_WORLD && WORLD_PRESETS[window.__FG_WORLD] && !S.worlds.some(w => w.id === window.__FG_WORLD)) S.worlds.push(WORLD_PRESETS[window.__FG_WORLD]());
+if (window.__FG_WORLD && WORLD_PRESETS[window.__FG_WORLD] && !S.worlds.some(w => w.id === window.__FG_WORLD)) S.worlds.push(presetWorld(window.__FG_WORLD));
 if (window.__FG_WORLD) S.activeId = window.__FG_WORLD;
 useWorld(S.activeId);
 pruneOneOffs();

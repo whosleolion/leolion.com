@@ -673,5 +673,21 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   t('CP4 every patch line uses a known kind', PATCHES.every(p => p.lines.every(([k]) => ['Stock', 'Tune', 'Words', 'Rules', 'World', 'Fix'].includes(k))));
 }
 
+// ---- calibrated worlds: anchor prices read exactly, and the front door is set up ----
+{
+  const { presetWorld: pw, isCalibrated: ic, CALIBRATED: CAL } = await import('../../src/building/fools-gold/js/store.js');
+  const { normalizeWorld: nw2 } = await import('../../src/building/fools-gold/js/store.js');
+  const { formatMoney: fm } = await import('../../src/building/fools-gold/js/money.js');
+  const at = (id, s) => { const w = pw(id); nw2(w); const c = compileWorld(w); const q = parse(s, c).query; return q.subject ? fm(estimate(q, c).typical, w.currency) : 'unknown'; };
+  t('CW1 the four calibrated worlds exist and are calibrated', CAL.length === 4 && CAL.every(id => { const w = pw(id); return w && ic(w) && w.content; }));
+  eq('CW2 anchor: longsword in Standard Fantasy', at('srd', 'longsword'), '15 gp');
+  eq('CW3 anchor: rope in Standard Fantasy', at('srd', 'rope'), '1 gp');
+  eq('CW4 anchor: healing potion in Standard Fantasy', at('srd', 'healing potion'), '50 gp');
+  eq('CW5 anchor: coffee in Modern day', at('modern', 'coffee'), '$4.50');
+  eq('CW6 anchor: laptop in Modern day', at('modern', 'laptop'), '$1,200');
+  t('CW7 sci-fi prices in credits', /credits/.test(at('scifi', 'pulse pistol')));
+  t('CW8 a custom copy is not calibrated', (() => { const w = pw('srd'); w.custom = true; delete w.preset; nw2(w); return !ic(w); })());
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

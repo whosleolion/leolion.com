@@ -115,10 +115,15 @@ To ship a patch:
 4. If a patch changes a price a DM may already rely on, say so in a **Tune** line with the old and new numbers. Anchor prices above change only with a patch note.
 5. The app shows the content name and the patch lines in Settings, About, and tells a returning user once ("Prices updated: Pyrite 1.1").
 
-## Direction under consideration: calibrated worlds first, custom second
+## Calibrated worlds first, custom second (built in Pyrite 1.0, plan for the rest)
 
-The calibration is only trustworthy for worlds the app ships and tests. Proposal:
+Phase 1, shipped: the four calibrated worlds (Standard Fantasy, Industrial Fantasy, Modern day, Science fiction) are the front door in the world picker. Their **item lists and money are fixed** (a note and a disabled form explain why), while facts, dials, custom items and words still apply on top. A **custom world** is a copy that remembers its origin (`world.based`) and is marked `custom`. Saves from before this change migrate: a preset world that still matches its preset stays calibrated, anything the user changed becomes a custom world. Anchor prices for each calibrated world are tests (CW2 to CW6).
 
-- Ship a small set of **named, hardcoded worlds** as the front door (Standard Fantasy in gold, Industrial Fantasy, Modern US, Sci-fi credits), each with golden prices in the test suite and each updated by content patches.
-- Move **custom world** creation behind a deliberate step (Settings, Worlds, "Start a custom world from...") that always starts from a calibrated world and records which one (`world.baseline`), so a custom world can be re-based when a new patch lands, keeping the DM's own prices and words.
-- Keep typed facts and custom items on any world; they are overrides on top of a calibrated base, not a replacement for it.
+Phase 2, next:
+- Golden-price tables per calibrated world (about 40 each) in the test suite, so any calibration change is visible in a diff.
+- A patch report for custom worlds: when a patch changes or adds an entry that a custom item or word of the same name shadows, say so once ("Pyrite 1.1 added Rope; your Rope still wins").
+- Per-world "price check": list the 20 least-confident (`derived`) entries a DM has priced and let them confirm or correct in bulk.
+
+Phase 3, later:
+- Rebase: a custom world can adopt a newer calibrated base (lists, money) while keeping its own prices and words.
+- Calibrated Sci-fi gains labor and crime services; Modern gains hourly professional entries and rentals.

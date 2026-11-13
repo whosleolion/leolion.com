@@ -1252,3 +1252,11 @@ html[data-big] .jump .q { white-space: nowrap; }
 .whatsnew summary { cursor: pointer; color: var(--accent); min-height: 2.75rem; display: flex; align-items: center; }
 .whatsnew ul { margin: .25rem 0 0; padding-left: 1.1rem; display: grid; gap: .375rem; color: var(--muted); }
 .whatsnew li b { color: var(--fg); }
+
+/* ---- calibrated worlds: a note where things are fixed, a quiet way to start a custom one ---- */
+.calnote { display: grid; gap: .5rem; padding: .75rem .875rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: .9375rem; color: var(--muted); margin-bottom: .75rem; }
+.calnote b { color: var(--fg); }
+fieldset.locked { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: inherit; }
+fieldset.locked:disabled { opacity: .55; }
+.btn.quiet { background: none; color: var(--muted); }
+.world-row .chk { color: var(--accent); font-weight: 600; font-size: .875rem; }

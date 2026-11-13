@@ -112,6 +112,9 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' settings root is five rows in three groups', (await page.$$('.nrow')).length === 4 && (await page.$$('.navgroup')).length === 1);
   await goPage(page, 'Item list');
   ok(name + ' item lists are check boxes you can combine', (await page.$$('input[data-bind^="list."]')).length === 4);
+  ok(name + ' a calibrated world keeps its lists fixed', await page.evaluate(() => !!document.querySelector('fieldset.locked:disabled')) && !!(await page.$('[data-act=w-copy]')));
+  await page.click('[data-act=w-copy]');
+  ok(name + ' a custom copy opens its lists', await page.evaluate(() => !document.querySelector('fieldset.locked:disabled')));
   await page.click('input[data-bind="list.modern"]');
   await goBack(page); await page.click('[data-act=close-world]');
   await page.fill('#q', 'taxi ride');

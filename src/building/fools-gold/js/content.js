@@ -22,6 +22,7 @@ export const PATCHES = [
       ['Rules', 'Intensifiers push a class or rarity one step: very, extremely, super.'],
       ['Rules', 'Facts about takes/pays apply to the sell side only. Parser words (buy, sell, gp, day, rush...) cannot be redefined.'],
       ['Words', 'Unknown items get a tag guess: kind, size, material, craft, magic, rarity, demand, with real items shown for comparison.'],
+      ['World', 'Calibrated worlds are the front door: Standard Fantasy, Industrial Fantasy, Modern day and Science fiction. Their lists and money are fixed. A custom world starts as a copy of one, is marked custom, and remembers where it began.'],
       ['World', 'The world\'s own list wins shared words (modern in a dollar world); other lists remain available.'],
       ['Fix', 'Listed prices read exactly: a 1 gp rope is 1 gp, not 99 cp. The range is now symmetric on a log scale around the listed price.'],
       ['Fix', 'Quantities: zero and negative ignored, absurd amounts capped at a million, "a million" and "a dozen" understood; eggs and roses priced per piece so "a dozen" multiplies correctly.'],
