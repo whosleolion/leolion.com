@@ -10,6 +10,7 @@ Status as of Pyrite 1.1. Legend: DONE built and checked here; NEEDS YOU an accou
 | Unknown items get a guess, a quick price and a "remember it" path | DONE |
 | Magic, rarity, hours, currency scaling and list priority | DONE |
 | Haptics and the share sheet (plugins `@capacitor/haptics` and `@capacitor/share` listed in `ios/package.json`) | DONE in code and unit-tested with a fake bridge; device check NEEDED |
+| Dictation (mic button in the price box and the cart; `@capacitor-community/speech-recognition` natively, Web Speech in browsers; Info.plist strings listed in `ios/README.md`) | DONE in code, tested with fake bridges; device check NEEDED |
 | Accessibility basics: focus return, inert background, 44 px targets, pinch-zoom allowed | DONE (VoiceOver pass on a device still NEEDED) |
 | Layout checked at 320, 360, 390 px, largest text, no sideways scroll | DONE |
 | Safe areas, standalone display, theme colour, icons | DONE |

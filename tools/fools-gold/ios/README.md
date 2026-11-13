@@ -10,6 +10,7 @@ The web app in `src/building/fools-gold/` is the product. This folder wraps it f
    - **Status Bar Style**: Light Content; **Requires full screen** off is fine.
    - Replace the app icon with `tools/fools-gold/store/icon-1024.png` (run `node tools/fools-gold/store/icon.mjs`).
    - Add `ITSAppUsesNonExemptEncryption = NO` to Info.plist.
+   - Add the dictation permission strings to Info.plist: `NSMicrophoneUsageDescription` = "Fool's Gold listens only while you hold dictation on, to turn your voice into the price you ask for." and `NSSpeechRecognitionUsageDescription` = "Fool's Gold uses speech recognition to type what you say into the price box."
    - Set the launch screen background to `#0C0D0F`.
 4. Run on a real iPhone. Check: first launch offline (airplane mode), rotate, largest Dynamic Type, Night and Day, background and return, force quit and reopen (carts and worlds persist).
 5. Archive, upload to App Store Connect, add the listing from `tools/fools-gold/store/LISTING.md`, the screenshots from `tools/fools-gold/store/screenshots.mjs`, and submit to TestFlight first.

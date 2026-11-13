@@ -741,5 +741,26 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('PS3 an unknown content id follows nothing', ps('nonsense').length, 0);
 }
 
+// ---- dictation ----
+{
+  const { voiceSupport, startListening } = await import('../../src/building/fools-gold/js/voice.js');
+  const { readSentence: rs2 } = await import('../../src/building/fools-gold/js/cart.js');
+  const { presetWorld: pw4, normalizeWorld: nw4 } = await import('../../src/building/fools-gold/js/store.js');
+  const w4 = pw4('srd'); nw4(w4); const c4 = compileWorld(w4);
+  eq('VO1 no speech support in plain node', voiceSupport(), null);
+  const got = [];
+  globalThis.window = { Capacitor: { isNativePlatform: () => true, Plugins: { SpeechRecognition: { available: async () => ({ available: true }), requestPermissions: async () => ({ speechRecognition: 'granted' }), addListener: async (n, f) => { globalThis.__l = globalThis.__l || {}; globalThis.__l[n] = f; }, removeAllListeners: async () => {}, start: () => new Promise(r => { setTimeout(() => globalThis.__l.partialResults({ matches: ['five healing'] }), 5); setTimeout(() => r({ matches: ['five healing potions'] }), 20); }), stop: async () => {} } } } };
+  eq('VO2 native speech is detected', voiceSupport(), 'native');
+  await new Promise(res => startListening({ onText: (t2, f) => got.push([t2, f]), onEnd: res, onError: k => got.push(['err', k]) }));
+  eq('VO3 partial and final text arrive', got, [['five healing', false], ['five healing potions', true]]);
+  globalThis.window = { Capacitor: { isNativePlatform: () => true, Plugins: { SpeechRecognition: { available: async () => ({ available: true }), requestPermissions: async () => ({ speechRecognition: 'denied' }), addListener: async () => {}, start: async () => ({}), stop: async () => {} } } } };
+  const denied = []; await new Promise(res => startListening({ onText: () => {}, onEnd: res, onError: k => denied.push(k) }));
+  eq('VO4 a denied permission is reported once, not thrown', denied, ['denied']);
+  delete globalThis.window;
+  eq('VO5 a list dictated with no commas splits at each quantity', rs2('3 rope 2 torches a lantern', c4).items.length, 3);
+  eq('VO6 the verb carries across a comma-less list', rs2('sell a sword a shield', c4).items.map(q => q.action), ['sell', 'sell']);
+  eq('VO7 a day-rate phrase is not split', rs2('5 rations a day', c4).items.length, 1);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

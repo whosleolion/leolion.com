@@ -3,7 +3,7 @@
 // navigator.vibrate and navigator.share, and to nothing (or a copy) when neither exists. Nothing here may throw.
 const cap = () => (typeof window !== 'undefined' && window.Capacitor) || null;
 export const isNative = () => { try { const c = cap(); return !!(c && c.isNativePlatform && c.isNativePlatform()); } catch (e) { return false; } };
-const plugin = name => {
+export const nativePlugin = name => {
   try { const c = cap(); if (!c || !isNative()) return null; return (c.Plugins && c.Plugins[name]) || (c.registerPlugin ? c.registerPlugin(name) : null); } catch (e) { return null; }
 };
 let on = true;
@@ -13,7 +13,7 @@ export const setHaptics = v => { on = v !== false; };
 export function haptic(kind = 'tap') {
   if (!on) return;
   try {
-    const H = plugin('Haptics');
+    const H = nativePlugin('Haptics');
     if (H) {
       if (kind === 'success' || kind === 'warn') H.notification({ type: kind === 'success' ? 'SUCCESS' : 'WARNING' });
       else if (kind === 'select') H.selectionChanged();
@@ -24,11 +24,11 @@ export function haptic(kind = 'tap') {
   } catch (e) { /* a missing buzz is never an error */ }
 }
 
-export const canShare = () => !!(plugin('Share') || (typeof navigator !== 'undefined' && navigator.share));
+export const canShare = () => !!(nativePlugin('Share') || (typeof navigator !== 'undefined' && navigator.share));
 
 // returns 'shared', 'cancelled' or 'unsupported' (the caller can then copy instead)
 export async function shareText(title, text) {
-  const S = plugin('Share');
+  const S = nativePlugin('Share');
   try { if (S) { await S.share({ title, text, dialogTitle: title }); return 'shared'; } } catch (e) { if (/cancel/i.test(String((e && e.message) || e))) return 'cancelled'; }
   try { if (typeof navigator !== 'undefined' && navigator.share) { await navigator.share({ title, text }); return 'shared'; } } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
   return 'unsupported';

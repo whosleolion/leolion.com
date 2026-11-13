@@ -31,13 +31,14 @@ WHAT YOU GET
 - Teach it your table's economy: type "a healing potion costs 40 gp" or "black market takes 30%".
 
 BUILT FOR THE TABLE
+- Say it instead of typing: tap the microphone and dictate a price check or a whole shopping list.
 - Works fully offline. No account, no ads, no tracking, and no data leaves your device.
 - Large text, night and day themes, and a phone-first layout you can run with one hand.
 
 Prices are estimates meant to feel right at a game table. Equipment prices follow the published SRD 5.1. Everything else is original to Fool's Gold.
 
 ## Keywords (100 max, no trademarks)
-`game master,dm,rpg,tabletop,price,shop,loot,economy,merchant,haggle,fantasy,sci-fi,calculator,gm,cart`
+`game master,dm,rpg,tabletop,price,shop,loot,economy,merchant,haggle,fantasy,sci-fi,calculator,gm,voice`
 
 ## What's New (1.0)
 First release.
@@ -51,7 +52,7 @@ First release.
 - Expected rating: **12+**. (If "weapons as items" is counted more strictly, 12+ still holds.)
 
 ## App Privacy ("nutrition label")
-- **Data Not Collected.** No tracking, no analytics, no third-party SDKs, no network requests at runtime.
+- **Data Not Collected.** No tracking, no analytics, no third-party SDKs, no network requests of its own at runtime. Dictation (optional) uses Apple's speech recognition on the device's behalf; the app never receives audio. If App Store Connect asks about audio data, answer that it is not collected by the app.
 - Export compliance: uses no encryption beyond what the OS provides. Set `ITSAppUsesNonExemptEncryption` to `false`.
 
 ## App Review notes
@@ -59,6 +60,7 @@ First release.
 - Try: type `5 healing potions`, tap the + button for a guided flow, tap Add then the cart pill to see the cart and haggle.
 - The content is a price catalogue for tabletop role-playing games. The optional "Crime and underworld" list (forged papers, bribes, hired killers) is **off by default** and sits in Settings, World, Item lists.
 - Equipment prices use the SRD 5.1 under CC BY 4.0; attribution is in Settings, About. The app is not affiliated with Wizards of the Coast.
+- The microphone and speech recognition permissions are requested only when the user taps the dictation button, and every feature works without them.
 - No data is collected; there are no third-party services.
 
 ## Screenshots

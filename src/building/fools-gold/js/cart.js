@@ -1,8 +1,8 @@
 // The cart: a list of saved questions (queries), not saved prices. Each line is priced live by the engine,
 // so every factor stays editable by loading the line back into the price screen.
 // A haggle belongs to the question: { pct } moves with the other fields, { price } is an agreed amount that stays put.
-import { parse } from './parser.js?v=afa79b6a';
-import { estimate } from './engine.js?v=afa79b6a';
+import { parse } from './parser.js?v=37879f67';
+import { estimate } from './engine.js?v=37879f67';
 
 export const emptyCart = () => ({ lines: [], mods: [], next: 1, haggle: null });
 
@@ -101,7 +101,11 @@ export function cartTotals(cart, ctx) {
 
 // "3 rope, 2 torches, sell 2 longswords in a village": several items in one sentence
 export function readSentence(text, ctx) {
-  const segs = String(text || '').split(/\s*(?:,|;|\n|\band\b)\s*/i).map(s => s.trim()).filter(Boolean);
+  // dictation often leaves out the commas: "3 rope 2 torches a lantern". Split before a new quantity when every piece is a real item
+  const NUMW = '(?:\\d+|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|an?)';
+  const byQty = s => { let parts = s.split(new RegExp('\\s+(?=' + NUMW + '\\s+[a-z])', 'i')).map(x => x.trim()).filter(Boolean);
+    if (parts.length > 1 && /^(buy|sell|appraise|value|get)$/i.test(parts[0])) parts = [parts[0] + ' ' + parts[1], ...parts.slice(2)]; return parts.length > 1 && parts.every(x => parse(x, ctx).query.subject) ? parts : [s]; };
+  const segs = String(text || '').split(/\s*(?:,|;|\n|\band\b)\s*/i).map(s => s.trim()).filter(Boolean).flatMap(byQty);
   const items = [], shared = [], bad = [], removes = [];
   let lastAction = null;
   for (const seg of segs) {

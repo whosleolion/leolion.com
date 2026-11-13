@@ -13,6 +13,7 @@ export const PATCHES = [
     lines: [
       ['Stock', 'Things people rent, not buy: "rent a car for a week" is the $70 a day rental, not a $38,000 car. Moving truck, boat, event hall and tuxedo rentals.'],
       ['Stock', 'Sci-fi: shuttle charters, ship rentals, smugglers, bounty hunters and ship crews for hire; "repairs", "docking" and "medic" are understood.'],
+      ['Words', 'Lists dictated without commas ("3 rope 2 torches a lantern") split at each new quantity, and "buy 3 rope 2 torches" carries the verb across.'],
       ['World', 'A custom world now shows where it began, which patches have landed since it was last checked, your own prices that sit on top of list items, and prices for items that left the list. One button matches its lists and money to the calibrated world again, keeping your items, words and facts.'],
     ],
   },

@@ -1,24 +1,25 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=afa79b6a';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=afa79b6a';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=afa79b6a';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=afa79b6a';
-import { findOffer } from './lists.js?v=afa79b6a';
-import { suggestPrompts } from './suggest.js?v=afa79b6a';
-import { readFact } from './facts.js?v=afa79b6a';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=afa79b6a';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=afa79b6a';
+import { compileWorld } from './world.js?v=37879f67';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=37879f67';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=37879f67';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=37879f67';
+import { findOffer } from './lists.js?v=37879f67';
+import { suggestPrompts } from './suggest.js?v=37879f67';
+import { readFact } from './facts.js?v=37879f67';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=37879f67';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=37879f67';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=afa79b6a';
-import { applicable } from './engine.js?v=afa79b6a';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=afa79b6a';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=afa79b6a';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=afa79b6a';
-import { complete } from './complete.js?v=afa79b6a';
-import { haptic, shareText, canShare, setHaptics } from './native.js?v=afa79b6a';
-import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=afa79b6a';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=afa79b6a';
+} from './data.js?v=37879f67';
+import { applicable } from './engine.js?v=37879f67';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=37879f67';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=37879f67';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=37879f67';
+import { complete } from './complete.js?v=37879f67';
+import { haptic, shareText, canShare, setHaptics } from './native.js?v=37879f67';
+import { voiceSupport, startListening } from './voice.js?v=37879f67';
+import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=37879f67';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=37879f67';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -102,6 +103,7 @@ function glyphify(root) {
 }
 function renderAll() {
   $('#clearBtn').hidden = !st.text;
+  if (typeof micState === 'function') micState();
   renderUnderstanding(); renderResult(); renderTray(); renderInput(); renderSheet(); renderHistory(); renderCartPill();
 }
 
@@ -531,7 +533,7 @@ function cartHtml() {
   const shopRow = `<div class="cfield"><button class="crow" data-act="cart-shop-toggle" aria-expanded="${st.cartShopOpen}"><span class="k">Shop</span><span class="v">${esc(shopLabel(c))}</span><span class="chev">${st.cartShopOpen ? '&#9662;' : '&rsaquo;'}</span></button>${st.cartShopOpen ? shopOptions(c, t) : ''}</div>`;
   return `${shopRow}<div class="clines">${body}</div>${c.lines.length ? '<button class="linkbtn cempty" data-act="cart-clear">Empty the cart</button>' : ''}${why}
     <div class="cfoot"><div class="csum ctot${hg ? ' hg ' + ((sellOnly ? hg.pct > 0 : hg.pct < 0) ? 'good' : 'bad') : ''}"><div class="t1">${labelBtn}${hgPill}</div><div class="cmain">${mode ? (st.cartTotalEdit ? `<div class="cbig tedit"><input class="field" id="cartTot" inputmode="decimal" placeholder="Agreed total, like 40 gp" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Type the total you agreed"><button class="btn primary" data-act="cart-total-set">Set</button></div>` : `<button class="cbig tapt" data-act="cart-total-edit" aria-label="Type the total you agreed"><b>${esc(money(amt))}</b><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>`) : (canHaggle ? `<button class="cbig tapt" data-act="cart-total-open" aria-label="Type the total you agreed"><b>${esc(money(amt))}</b><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>` : `<div class="cbig"><b>${esc(money(amt))}</b></div>`)}${tally}</div>${bar}${note}${t.missing ? `<p class="ferr">${t.missing} line${t.missing === 1 ? ' is' : 's are'} not in your lists and left out.</p>` : ''}</div>
-    <div class="cdock">${read}<div class="cin"><input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="Add more: 3 rope, 2 torches" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div></div></div>`;
+    <div class="cdock">${read}<div class="cin">${voiceSupport() ? `<button class="mic${st.listening === 'cart' ? ' on' : ''}" id="cartMic" data-act="mic-cart" aria-pressed="${st.listening === 'cart'}" aria-label="Dictate the list"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>` : ''}<input class="field" id="cartIn" value="${esc(st.cartText)}" placeholder="Add more: 3 rope, 2 torches" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Add several items in one sentence"><button class="btn primary" data-act="cart-read">Add</button></div></div></div>`;
 }
 function clearInput() { $('#q').value = ''; fromText(''); }
 function openCart() { st.sheet = { open: true, mode: 'cart' }; renderSheet(); }
@@ -1145,6 +1147,28 @@ function worldChanged(opts = {}) {
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
 
 // ---------- events ----------
+// ---------- dictation ----------
+let stopVoice = null;
+function micState() {
+  const on = !!st.listening, can = !!voiceSupport();
+  const m = $('#micBtn'); if (m) { m.hidden = !can || (!!st.text && !on); m.classList.toggle('on', on); m.setAttribute('aria-pressed', String(on)); m.setAttribute('aria-label', on ? 'Stop dictating' : 'Dictate'); }
+  const c = $('#cartMic'); if (c) { c.classList.toggle('on', on && st.listening === 'cart'); c.setAttribute('aria-pressed', String(on && st.listening === 'cart')); }
+}
+async function dictate(target) {
+  if (st.listening) { if (stopVoice) stopVoice(); return; }
+  st.listening = target; micState(); haptic('tap');
+  const put = (text, final) => {
+    if (target === 'cart') { const i = $('#cartIn'); if (i) i.value = text; st.cartText = text; }
+    else { $('#q').value = text; fromText(text, { noHistory: !final }); }
+    if (final) haptic('success');
+  };
+  stopVoice = await startListening({
+    onText: put,
+    onEnd: () => { st.listening = null; stopVoice = null; micState(); if (target === 'q' && st.text) recordHistory(); },
+    onError: kind => { if (kind === 'denied') toast('Speech recognition is off for this app. Turn it on in your phone settings, or use the keyboard\'s microphone key.'); else if (kind === 'none') toast('Did not catch that. Try again, a bit closer.'); else toast('Dictation is not available right now. The keyboard\'s microphone key still works.'); haptic('warn'); },
+  });
+  micState();
+}
 const HAPTIC_ON = { 'cart-add': 'success', 'g-quick': 'success', 'cart-offer-add': 'success', 'cart-read-add': 'success', 'cart-total-set': 'success', 'haggle-set': 'select', 'cart-hg-off': 'tap', 'cart-del': 'tap', 'cart-qty': 'tap', 'pick-item': 'tap', 'start-pick': 'tap', 'ac': 'tap', 'start': 'tap', 'rs-quick': 'tap', 'rs-alias': 'tap', 'g-tag': 'select', 'start-action': 'select', 'w-open-preset': 'tap', 'cart-clear': 'warn' };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
@@ -1222,6 +1246,8 @@ document.addEventListener('click', e => {
     case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart' + (r.bad.length ? '. ' + r.bad.length + ' skipped, not in your lists.' : '')); } break;
     case 'cart-offer-no': st.cartOfferDismissed = st.text; st.cartOffer = null; renderResult(); break;
     case 'cart-why': st.cartWhy = !st.cartWhy; renderSheet(); break;
+    case 'mic': dictate('q'); break;
+    case 'mic-cart': dictate('cart'); break;
     case 'cart-share': { const c = cartOf(); shareOrCopy('Fool\'s Gold cart', cartText(c, ctx, n => money(n), (r, line) => r ? whatText(r.q, r.e.entry) : (line.q.subject || 'An item')), 'Cart copied'); break; }
     case 'share-receipt': if (st.est && st.est.ok) shareOrCopy('Fool\'s Gold receipt', receiptText(st.est), 'Receipt copied'); break;
     case 'w-share': S.lastBackup = Date.now(); persist(); shareOrCopy('Fool\'s Gold world: ' + world.name, JSON.stringify(world, null, 1), 'World copied'); renderDrawer(); break;
