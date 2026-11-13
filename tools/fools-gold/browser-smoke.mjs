@@ -233,6 +233,8 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   const c0 = await page.textContent('.chkcard h3'); await page.click('[data-act=chk-ok]');
   ok(name + ' confirming moves to the next estimate', (await page.textContent('.chkcard h3')) !== c0);
   await page.click('[data-act=chk-skip]'); await page.click('button[data-act=sheet-close]');
+  await page.fill('#q', "explorer's pack");
+  ok(name + ' a pack shows what is inside and can add the parts', !!(await page.$('.packbox')) && /Bought one by one/.test(await page.textContent('.packbox')));
   // haggle
   await page.fill('#q', 'buy a longsword');
   const hp0 = await price(page);

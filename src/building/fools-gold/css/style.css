@@ -1298,3 +1298,6 @@ html { touch-action: manipulation; }
 .how { margin: 0; padding: 0; list-style: none; display: grid; gap: .375rem; color: var(--muted); font-size: .9375rem; }
 .how b { color: var(--accent); font-weight: 700; margin-right: .375rem; }
 .intro .linkbtn { justify-self: start; }
+
+.packbox { display: grid; gap: .5rem; padding: .75rem .875rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.packbox p { margin: 0; }

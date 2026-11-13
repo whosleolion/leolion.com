@@ -1,25 +1,25 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=2e0310b0';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=2e0310b0';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=2e0310b0';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=2e0310b0';
-import { findOffer } from './lists.js?v=2e0310b0';
-import { suggestPrompts } from './suggest.js?v=2e0310b0';
-import { readFact } from './facts.js?v=2e0310b0';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=2e0310b0';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=2e0310b0';
+import { compileWorld } from './world.js?v=4f5e4f82';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=4f5e4f82';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=4f5e4f82';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=4f5e4f82';
+import { findOffer } from './lists.js?v=4f5e4f82';
+import { suggestPrompts } from './suggest.js?v=4f5e4f82';
+import { readFact } from './facts.js?v=4f5e4f82';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=4f5e4f82';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=4f5e4f82';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=2e0310b0';
-import { applicable } from './engine.js?v=2e0310b0';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=2e0310b0';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=2e0310b0';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=2e0310b0';
-import { complete } from './complete.js?v=2e0310b0';
-import { haptic, shareText, canShare, setHaptics } from './native.js?v=2e0310b0';
-import { voiceSupport, startListening } from './voice.js?v=2e0310b0';
-import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=2e0310b0';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=2e0310b0';
+} from './data.js?v=4f5e4f82';
+import { applicable } from './engine.js?v=4f5e4f82';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=4f5e4f82';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=4f5e4f82';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=4f5e4f82';
+import { complete } from './complete.js?v=4f5e4f82';
+import { haptic, shareText, canShare, setHaptics } from './native.js?v=4f5e4f82';
+import { voiceSupport, startListening } from './voice.js?v=4f5e4f82';
+import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=4f5e4f82';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=4f5e4f82';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -180,6 +180,14 @@ function renderResult() {
   if (st.cartOffer) { $('#result').innerHTML = pre; return; }
   if (pre) $('#result').insertAdjacentHTML('afterbegin', pre);
 }
+// a standard pack lists what is inside, and what the parts would cost if bought one by one
+function packBlock(ent) {
+  if (!ent || !ent.contents) return '';
+  const r = readSentence(ent.contents, ctx);
+  let parts = 0; for (const q of r.items) { const x = estimate({ ...q }, ctx); if (x && x.ok) parts += x.typical; }
+  const list = r.items.map(q => whatText(q, ctx.byId.get(q.subject))).join(', ');
+  return `<div class="sep"><span>Inside</span></div><div class="packbox"><p>${esc(list)}.</p><p class="mini">Bought one by one: ${esc(money(parts))}${st.est && st.est.ok ? '. The pack: ' + esc(money(st.est.each || st.est.typical)) : ''}.</p><button class="btn" data-act="pack-parts">Add the parts to the cart instead</button></div>`;
+}
 function renderResultCore() {
   const el = $('#result'), q = st.query, e = st.est;
   if (st.setting) { el.innerHTML = settingCard(); return; }
@@ -221,7 +229,7 @@ function renderResultCore() {
     ${meta.length ? `<div class="meta">${meta.map(esc).join(' <i>·</i> ')}</div>` : ''}
   </section>
   <div class="sep"><span>Fields from your sentence</span></div>
-  <div class="fields">${rows}${moreRow}</div>`;
+  <div class="fields">${rows}${moreRow}</div>${packBlock(ent)}`;
   if (glintNow) flash();
 }
 
@@ -961,7 +969,9 @@ const estTotal = () => ctx.entries.filter(isEst).length;
 const estDone = () => ctx.entries.filter(e => isEst(e) && world.checked[e.id]).length;
 function checkQueue() {
   const order = id => { const g = FLOW_GROUPS.findIndex(x => x[2].includes(catOf({ ...ctx.byId.get(id) }))); return g < 0 ? 99 : g; };
-  return ctx.entries.filter(e => isEst(e) && !world.checked[e.id] && !(st.checkSkip || []).includes(e.id)).sort((a, b) => order(a.id) - order(b.id) || a.name.localeCompare(b.name));
+  // the things this table has actually asked for come first
+  const used = new Set([...cartOf().lines.map(l => l.q.subject), ...S.history.filter(h => h.world === world.id).slice(0, 40).map(h => parse(h.text, ctx).query.subject)].filter(Boolean));
+  return ctx.entries.filter(e => isEst(e) && !world.checked[e.id] && !(st.checkSkip || []).includes(e.id)).sort((a, b) => (used.has(b.id) - used.has(a.id)) || order(a.id) - order(b.id) || a.name.localeCompare(b.name));
 }
 function checkHtml() {
   const q = checkQueue(), done = estDone(), total = estTotal();
@@ -1313,6 +1323,7 @@ document.addEventListener('click', e => {
     case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart' + (r.bad.length ? '. ' + r.bad.length + ' skipped, not in your lists.' : '')); } break;
     case 'cart-offer-no': st.cartOfferDismissed = st.text; st.cartOffer = null; renderResult(); break;
     case 'cart-why': st.cartWhy = !st.cartWhy; renderSheet(); break;
+    case 'pack-parts': { const ent = st.est && st.est.entry; if (!ent || !ent.contents) break; const r = readSentence(ent.contents, ctx), cc = cartOf(), snap = clone(cc); addItems(r.items, []); afterCart(); toast('Added ' + r.items.length + ' parts to the cart', () => { S.carts[world.id] = snap; afterCart(); }); break; }
     case 'try': { const x = TRY_TEXTS[+d.i]; if (x) { $('#q').value = x; fromText(x); } break; }
     case 'intro-done': S.onboarded = true; persist(); renderResult(); break;
     case 'mic': dictate('q'); break;

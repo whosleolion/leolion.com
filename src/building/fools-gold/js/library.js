@@ -144,6 +144,7 @@ export const srdGearExtra = [
     'Ball bearings;1gp;;;bag of ball bearings, ball bearing, bearings, bag of 1000 ball bearings', 'Abacus;2gp', 'Acid vial;25gp;;;acid, vial of acid', "Alchemist's fire;50gp;;;alchemist fire, flask of alchemists fire", 'Antitoxin;50gp;;medicine;vial of antitoxin', 'Barrel;2gp', 'Basket;4sp', 'Block and tackle;1gp;;;pulley',
     'Glass bottle;2gp;;;bottle', 'Bucket;5cp;;;pail', 'Map or scroll case;1gp;;;scroll case, map case, case', 'Chalk;1cp;;;piece of chalk', 'Chest;5gp;;;trunk, strongbox', 'Flask or tankard;2cp;;;flask, tankard, mug', 'Holy water;25gp;;;flask of holy water',
     'Hunting trap;5gp;;;trap, bear trap', 'Jug;2cp;;;pitcher', 'Piton;5cp;;;pitons', 'Ten-foot pole;5cp;;;pole, 10 foot pole', 'Iron pot;2gp;;;pot, cooking pot', 'Quiver;1gp', "Merchant's scale;5gp;;;scale, balance", 'Sealing wax;5sp;;;wax, stick of wax',
+    'Mess kit;2sp;;;cooking kit, camp kit', 'Alms box;1gp;;;donation box, offering box', 'Incense;1sp;;;block of incense, incense block', 'Censer;5gp;;;thurible, incense burner', 'Vestments;1gp;;;priest robes, religious vestments',
     'Signet ring;5gp;;;seal ring', 'Iron spikes;1gp;;;spike, spikes, iron spike', 'String;1sp;;;ten feet of string, twine', 'Dice set;1sp;;;dice, a set of dice', 'Playing cards;5sp;;;deck of cards, card deck, cards', 'Marbles;1cp;;;bag of marbles, marble', 'Sledgehammer;2gp;;;sledge', 'Bag of sand;1cp;;;little bag of sand, sand'
   ]),
   ...G(['manufactured', 'crafted', 'instrument'], ['Flute;2gp', 'Drum;6gp']),
@@ -209,3 +210,15 @@ export const pyrite13Modern = [
   ...M('service', 'services', ['service'], ['Manicure;40;;;nails, nail salon', 'Yoga class;25;;;fitness class, pilates class', 'Caterer;1800;;;catering', 'Florist arrangement;80;;;florist', 'Museum ticket;22;;;museum', 'Theme park ticket;130;;;amusement park, theme park', 'Bar tab;90;;;tab, a round of drinks', 'Bottle service;600;;;club table']),
   ...M('good', 'media', ['manufactured'], ['Magazine;7;;;mag', 'Guitar;350;;;acoustic guitar, electric guitar', 'Piano;3500;;;upright piano, keyboard piano']),
 ];
+
+// what is inside each standard pack, as a sentence the cart can read
+export const PACK_CONTENTS = {
+ "Burglar's pack": "1 backpack, 1 ball bearings, 1 string, 1 bell, 5 candles, 1 crowbar, 1 hammer, 10 pitons, 1 hooded lantern, 2 flasks of oil, 5 rations, 1 tinderbox, 1 waterskin, 1 hemp rope",
+ "Diplomat's pack": "1 chest, 2 map or scroll cases, 1 fine clothes, 1 ink, 1 ink pen, 1 lamp, 2 flasks of oil, 5 paper, 1 perfume, 1 sealing wax, 1 soap",
+ "Dungeoneer's pack": "1 backpack, 1 crowbar, 1 hammer, 10 pitons, 10 torches, 1 tinderbox, 10 rations, 1 waterskin, 1 hemp rope",
+ "Entertainer's pack": "1 backpack, 1 bedroll, 2 costumes, 5 candles, 5 rations, 1 waterskin, 1 disguise kit",
+ "Explorer's pack": "1 backpack, 1 bedroll, 1 mess kit, 1 tinderbox, 10 torches, 10 rations, 1 waterskin, 1 hemp rope",
+ "Priest's pack": "1 backpack, 1 blanket, 10 candles, 1 tinderbox, 1 alms box, 2 incense, 1 censer, 1 vestments, 2 rations, 1 waterskin",
+ "Scholar's pack": "1 backpack, 1 book, 1 ink, 1 ink pen, 10 parchment, 1 bag of sand, 1 dagger"
+};
+for (const e of srdGearExtra) if (PACK_CONTENTS[e.name]) e.contents = PACK_CONTENTS[e.name];

@@ -9,6 +9,14 @@ export const PATCH_KINDS = { Stock: 'Items added or removed', Tune: 'Prices or s
 
 export const PATCHES = [
   {
+    id: 'pyrite-1.4', name: 'Pyrite', patch: '1.4', date: '2026-11-17', title: 'Inside the packs',
+    lines: [
+      ['Stock', 'The seven standard packs list what is inside, show what the parts would cost bought one by one, and can add the parts to the cart instead. Mess kit, alms box, incense, censer and vestments added so every part has a price.'],
+      ['Words', 'Typos beside a known word are fixed as a whole phrase ("heling potion"), and short real words are no longer mistaken for others ("fork" is not "fort").'],
+      ['World', 'Check prices starts with the items this table has actually asked for.'],
+    ],
+  },
+  {
     id: 'pyrite-1.3', name: 'Pyrite', patch: '1.3', date: '2026-11-16', title: 'Gaps closed: gems, instruments, food, hired folk, crews and starships',
     lines: [
       ['Stock', 'Gems by name at SRD treasure prices (azurite to diamond, about 35 stones); instruments, tableware and furniture; stew, mead, whiskey and feasts; baths, laundry and stabling; priests, tutors, musicians, jesters, torchbearers and cobblers for hire; silk, linen, cotton, wool, timber and spices; farms, taverns and strongholds.'],

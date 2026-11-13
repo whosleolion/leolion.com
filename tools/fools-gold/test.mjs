@@ -780,5 +780,14 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('FZ5 a typo in the second word of a phrase is fixed', sg('plate armer'), ['plate armor']);
 }
 
+// ---- packs: every part has a price ----
+{
+  const { PACK_CONTENTS: PC } = await import('../../src/building/fools-gold/js/library.js');
+  const { readSentence: rs3 } = await import('../../src/building/fools-gold/js/cart.js');
+  const { presetWorld: pw6, normalizeWorld: nw6 } = await import('../../src/building/fools-gold/js/store.js');
+  const w6 = pw6('srd'); nw6(w6); const c6 = compileWorld(w6);
+  for (const [name, text] of Object.entries(PC)) { const r = rs3(text, c6); t(`PK ${name}: every part is known`, r.bad.length === 0 && r.items.length === text.split(',').length, JSON.stringify(r.bad)); }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
