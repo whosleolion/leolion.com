@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=7bd0fa18';
-import { libraryEntries, modernLibrary, modernWorld, modernEveryday, srdGearExtra, pyrite11, pyrite11Modern } from './library.js?v=7bd0fa18';
+import { scifiEntries } from './scifi.js?v=afa79b6a';
+import { libraryEntries, modernLibrary, modernWorld, modernEveryday, srdGearExtra, pyrite11, pyrite11Modern, pyrite12 } from './library.js?v=afa79b6a';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -219,7 +219,7 @@ const modernEntries = [
     'Taxi ride;26;;;taxi, cab, rideshare, ride share, car service, uber, lyft, uber ride, lyft ride, rideshare', 'Subway ride;3;;;subway, metro, bus fare, bus ride, light rail', 'Parking;22;;;parking spot, parking garage', 'Toll;6;;;road toll',
     'Gas tank;55;;;gas, fuel, petrol, fill up',
   ]),
-  ...modern('service', ['service', 'transport'], ['Rental car;70;day;;car rental, hire car']),
+  ...modern('service', ['service', 'transport'], ['Rental car;70;day;;car rental, hire car, rent a car, rent car, rental car']),
   { id: 'travel.intercity-train', name: 'Intercity train', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 28, mpd: 500, tags: ['transport', 'rail'], aliases: ['train', 'train ticket', 'train ride', 'railway', 'rail', 'amtrak style train'], basis: 'Fool\'s Gold estimate: about 28 cents a mile on a typical intercity line, 500 miles in a long day.' },
   { id: 'travel.intercity-bus', name: 'Intercity bus', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 11, mpd: 500, tags: ['transport', 'coach'], aliases: ['coach bus', 'long distance bus', 'intercity bus ticket'], basis: 'Fool\'s Gold estimate: about 11 cents a mile.' },
   { id: 'travel.commercial-flight', name: 'Commercial flight', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 14, mpd: 2400, tags: ['transport', 'air'], aliases: ['flight', 'plane', 'plane ticket', 'airplane', 'airline', 'air ticket', 'flight ticket'], basis: 'Fool\'s Gold estimate: about 14 cents a mile, 2,400 miles in a day of travel.' },
@@ -266,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday, ...srdGearExtra, ...pyrite11, ...pyrite11Modern];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday, ...srdGearExtra, ...pyrite11, ...pyrite11Modern, ...pyrite12];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {

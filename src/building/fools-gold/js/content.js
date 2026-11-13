@@ -9,6 +9,14 @@ export const PATCH_KINDS = { Stock: 'Items added or removed', Tune: 'Prices or s
 
 export const PATCHES = [
   {
+    id: 'pyrite-1.2', name: 'Pyrite', patch: '1.2', date: '2026-11-15', title: 'Rentals, crews and a way to follow patches',
+    lines: [
+      ['Stock', 'Things people rent, not buy: "rent a car for a week" is the $70 a day rental, not a $38,000 car. Moving truck, boat, event hall and tuxedo rentals.'],
+      ['Stock', 'Sci-fi: shuttle charters, ship rentals, smugglers, bounty hunters and ship crews for hire; "repairs", "docking" and "medic" are understood.'],
+      ['World', 'A custom world now shows where it began, which patches have landed since it was last checked, your own prices that sit on top of list items, and prices for items that left the list. One button matches its lists and money to the calibrated world again, keeping your items, words and facts.'],
+    ],
+  },
+  {
     id: 'pyrite-1.1', name: 'Pyrite', patch: '1.1', date: '2026-11-14', title: 'Game-likely gear, spells and strongholds',
     lines: [
       ['Stock', 'Potions of greater, superior and supreme healing; the iconic magic items players ask for (bag of holding, cloak of protection, boots of elvenkind, ring of protection and others); strongholds (tower, fort, estate, temple, abbey, palace) at DMG-scale prices.'],
@@ -53,4 +61,10 @@ export function contentCounts(catalog) {
     out[k]++;
   }
   return out;
+}
+
+// the patches a world has not seen: everything newer than the content id it was last settled against
+export function patchesSince(id) {
+  const i = PATCHES.findIndex(p => p.id === id);
+  return i < 0 ? [] : PATCHES.slice(0, i);
 }

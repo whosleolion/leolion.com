@@ -474,6 +474,24 @@
   "item": "Locksmith call"
  },
  {
+  "world": "modern",
+  "input": "rent a car for a week",
+  "price": "$490",
+  "item": "Rental car"
+ },
+ {
+  "world": "modern",
+  "input": "moving truck",
+  "price": "$120",
+  "item": "Rental truck"
+ },
+ {
+  "world": "modern",
+  "input": "rent a tux",
+  "price": "$120",
+  "item": "Tuxedo rental"
+ },
+ {
   "world": "scifi",
   "input": "pulse pistol",
   "price": "900 credits",
@@ -586,6 +604,30 @@
   "input": "hotel room",
   "price": "210 credits",
   "item": "Station hotel"
+ },
+ {
+  "world": "scifi",
+  "input": "charter a shuttle",
+  "price": "1,200 credits",
+  "item": "Shuttle charter"
+ },
+ {
+  "world": "scifi",
+  "input": "hire a medic",
+  "price": "320 credits",
+  "item": "Field medic"
+ },
+ {
+  "world": "scifi",
+  "input": "ship repairs",
+  "price": "8,500 credits",
+  "item": "Hull repair"
+ },
+ {
+  "world": "scifi",
+  "input": "rent a ship for a week",
+  "price": "25,000 credits",
+  "item": "Ship rental"
  },
  {
   "world": "vcm",

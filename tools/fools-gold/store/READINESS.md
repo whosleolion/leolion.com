@@ -9,6 +9,7 @@ Status as of Pyrite 1.1. Legend: DONE built and checked here; NEEDS YOU an accou
 | Calibrated prices with golden-price tests (110 phrases, 4 worlds) | DONE |
 | Unknown items get a guess, a quick price and a "remember it" path | DONE |
 | Magic, rarity, hours, currency scaling and list priority | DONE |
+| Haptics and the share sheet (plugins `@capacitor/haptics` and `@capacitor/share` listed in `ios/package.json`) | DONE in code and unit-tested with a fake bridge; device check NEEDED |
 | Accessibility basics: focus return, inert background, 44 px targets, pinch-zoom allowed | DONE (VoiceOver pass on a device still NEEDED) |
 | Layout checked at 320, 360, 390 px, largest text, no sideways scroll | DONE |
 | Safe areas, standalone display, theme colour, icons | DONE |
@@ -33,7 +34,7 @@ Status as of Pyrite 1.1. Legend: DONE built and checked here; NEEDS YOU an accou
 2. **A Mac with Xcode** to build the native shell (follow `ios/README.md`). I cannot compile iOS here.
 3. **Decisions**: the app name (check "Fool's Gold" is free in the App Store), bundle ID, price (free or paid), support email, whether iPad is wanted (iPhone only is simplest).
 4. **A real-device pass**: VoiceOver, Dynamic Type, offline first launch, background and return. TestFlight to a few DMs before submitting.
-5. **Optional polish before 1.0**: haptics through a Capacitor plugin, native share sheet for the receipt, mirroring saves to native storage.
+5. **Native polish already wired, needs a device check**: haptics (Capacitor Haptics, with a vibrate fallback and a Settings switch), the system share sheet for the cart, receipt and world backup (Capacitor Share), "last backed up" in Settings, a screen-reader line announcing each price. Still optional: mirroring saves to native storage.
 
 ## Review risks and how they are handled
 - **Minimum functionality (4.2)**: a web wrapper can be rejected when it is only a website. This app is a self-contained offline tool with bundled data, so it does real work; adding haptics and the native share sheet would make that clearer.

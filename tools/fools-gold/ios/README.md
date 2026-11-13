@@ -3,7 +3,7 @@
 The web app in `src/building/fools-gold/` is the product. This folder wraps it for the App Store. It cannot be built on Linux; follow these steps on a Mac with Xcode 15 or later and an Apple Developer account.
 
 1. `cd tools/fools-gold/ios && npm install`
-2. `npx cap add ios`, then `npx cap sync ios` (copies the web app into the native project; run again after every content patch).
+2. `npx cap add ios` (the Haptics and Share plugins install with it), then `npx cap sync ios` (copies the web app into the native project; run again after every content patch).
 3. `npx cap open ios`, then in Xcode:
    - Set the **Bundle Identifier** (default `nyc.firebird.foolsgold`), the **Team**, and the **Display Name** (`Fool's Gold`).
    - Under **Deployment Info**: iPhone only (Targeted Device Family 1), minimum iOS 15, portrait.

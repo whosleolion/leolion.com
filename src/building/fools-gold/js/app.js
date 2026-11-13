@@ -1,23 +1,24 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=7bd0fa18';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=7bd0fa18';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=7bd0fa18';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=7bd0fa18';
-import { findOffer } from './lists.js?v=7bd0fa18';
-import { suggestPrompts } from './suggest.js?v=7bd0fa18';
-import { readFact } from './facts.js?v=7bd0fa18';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=7bd0fa18';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=7bd0fa18';
+import { compileWorld } from './world.js?v=afa79b6a';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=afa79b6a';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=afa79b6a';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=afa79b6a';
+import { findOffer } from './lists.js?v=afa79b6a';
+import { suggestPrompts } from './suggest.js?v=afa79b6a';
+import { readFact } from './facts.js?v=afa79b6a';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=afa79b6a';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=afa79b6a';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=7bd0fa18';
-import { applicable } from './engine.js?v=7bd0fa18';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=7bd0fa18';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=7bd0fa18';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=7bd0fa18';
-import { complete } from './complete.js?v=7bd0fa18';
-import { CONTENT, contentLabel, contentCounts } from './content.js?v=7bd0fa18';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=7bd0fa18';
+} from './data.js?v=afa79b6a';
+import { applicable } from './engine.js?v=afa79b6a';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=afa79b6a';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=afa79b6a';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=afa79b6a';
+import { complete } from './complete.js?v=afa79b6a';
+import { haptic, shareText, canShare, setHaptics } from './native.js?v=afa79b6a';
+import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=afa79b6a';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=afa79b6a';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -155,7 +156,20 @@ function slotRow(s) {
   const hint = !s.filled && s.options.length ? `<span class="hint">${esc(money(s.swing[0]))} to ${esc(money(s.swing[1]))}</span>` : (s.id === 'item' ? '' : '');
   return `<button class="slot r-${s.role}${s.filled ? '' : (s.assumed ? ' assumed unset' : ' unset')}${open ? ' open' : ''}" data-act="slot" data-id="${esc(s.id)}"><span class="k">${esc(s.label)}</span><span class="v">${v}</span>${hint}<span class="chev">${open ? '&#9662;' : '&#8250;'}</span></button>`;
 }
+// VoiceOver and TalkBack hear the answer without hunting for it: one short line, after typing settles
+let srTimer = 0;
+function announce() {
+  clearTimeout(srTimer);
+  srTimer = setTimeout(() => {
+    const el = $('#sr'); if (!el) return;
+    const e = st.est;
+    el.textContent = e && e.ok && st.query.subject && ctx.byId.get(st.query.subject)
+      ? `${whatText(st.query, ctx.byId.get(st.query.subject))}: ${money(e.typical)}, range ${money(e.lo)} to ${money(e.hi)}${st.query.action === 'sell' ? ', selling' : ''}.`
+      : '';
+  }, 600);
+}
 function renderResult() {
+  announce();
   renderResultCore();
   let pre = '';
   if (st.cartEdit) pre += editBarHtml();
@@ -296,12 +310,13 @@ function dragMove(e) {
   let p = Math.exp(Math.log(d.lo) + pos * (Math.log(d.hi) - Math.log(d.lo)));
   if (Math.abs(p / d.typ - 1) < 0.03) p = d.typ;
   d.pct = Math.round((p / d.typ - 1) * 100);
+  const stepNow = Math.round(d.pct / 5); if (stepNow !== d.lastStep) { d.lastStep = stepNow; haptic('select'); }
   const tick = d.bar.querySelector('.tick'); if (tick) tick.style.left = (pos * 100).toFixed(1) + '%';
   const sec = d.bar.closest('.price, .ctot');
   const shown = d.typ * (1 + d.pct / 100), amt = shown;
   const num = sec && sec.querySelector('.pricebtn .num, .cbig b');
   if (num) { const pr = np(money(amt)); num.innerHTML = d.cart ? esc(money(amt)) : `${esc(pr.n)}${pr.u ? `<small>${esc(pr.u)}</small>` : ''}`; }
-  const good = d.cart ? d.pct < 0 : favour(d.pct, st.query.action);
+  const good = d.cart ? (d.sell ? d.pct > 0 : d.pct < 0) : favour(d.pct, st.query.action);
   if (sec) { sec.classList.toggle('hg', !!d.pct); sec.classList.toggle('good', !!d.pct && good); sec.classList.toggle('bad', !!d.pct && !good); }
 }
 document.addEventListener('pointerdown', ev => {
@@ -309,7 +324,7 @@ document.addEventListener('pointerdown', ev => {
   if (!bar || ev.button > 0) return;
   const cart = bar.dataset.scope === 'cart';
   if (!cart && !(st.est && st.est.ok)) return;
-  drag = { bar, cart, rect: bar.getBoundingClientRect(), lo: +bar.dataset.lo, hi: +bar.dataset.hi, typ: +bar.dataset.typ, get: +bar.dataset.get || 0, pct: 0, id: ev.pointerId };
+  drag = { bar, cart, rect: bar.getBoundingClientRect(), lo: +bar.dataset.lo, hi: +bar.dataset.hi, typ: +bar.dataset.typ, sell: bar.dataset.sell === '1', lastStep: 0, get: +bar.dataset.get || 0, pct: 0, id: ev.pointerId };
   try { bar.setPointerCapture(ev.pointerId); } catch (e2) { /* ignore */ }
   bar.classList.add('dragging'); dragMove(ev); ev.preventDefault();
 });
@@ -502,7 +517,7 @@ function cartHtml() {
     : hg
       ? `<span class="hgwrap ${(sellOnly ? hg.pct > 0 : hg.pct < 0) ? 'good' : 'bad'}"><button class="haggle on" data-act="cart-haggle" aria-pressed="false">${HAG_I}<span>Haggled ${pctText(hg.pct)}</span></button><button class="hgx" data-act="cart-hg-off" aria-label="Turn haggle off">&times;</button></span>`
       : `<button class="haggle" data-act="cart-haggle" aria-pressed="false">${HAG_I}<span>Haggle</span></button>`;
-  const bar = !mode ? '' : `<div class="cbarrow"><span>${esc(money(bandLo))}</span><div class="span dragbar" data-scope="cart" role="slider" tabindex="0" aria-label="Haggle ${sellOnly ? 'what you are paid' : 'what you pay'} along its range" aria-valuenow="${Math.round(amt)}" data-lo="${bandLo}" data-hi="${bandHi}" data-typ="${rAmt}"><div class="rule"></div><div class="band"></div>${hg ? `<div class="notch" style="left:${posOf(rAmt).toFixed(1)}%"></div>` : ''}<div class="tick" style="left:${posOf(amt).toFixed(1)}%"></div></div><span>${esc(money(bandHi))}</span></div>`;
+  const bar = !mode ? '' : `<div class="cbarrow"><span>${esc(money(bandLo))}</span><div class="span dragbar" data-scope="cart"${sellOnly ? ' data-sell="1"' : ''} role="slider" tabindex="0" aria-label="Haggle ${sellOnly ? 'what you are paid' : 'what you pay'} along its range" aria-valuenow="${Math.round(amt)}" data-lo="${bandLo}" data-hi="${bandHi}" data-typ="${rAmt}"><div class="rule"></div><div class="band"></div>${hg ? `<div class="notch" style="left:${posOf(rAmt).toFixed(1)}%"></div>` : ''}<div class="tick" style="left:${posOf(amt).toFixed(1)}%"></div></div><span>${esc(money(bandHi))}</span></div>`;
   const note = hg ? `<div class="hgnote">Haggled ${Math.abs(hg.pct)}% ${hg.pct < 0 ? 'off' : 'on top of'} what you ${sellOnly ? 'sell for' : 'buy'}. Was ${esc(money(rAmt))}.</div>` : '';
   const tally = t.mixed ? `<div class="ctally"><span>Selling +${esc(money(t.get))}</span><span>Net ${t.net < 0 ? MINUS : '+'}${esc(money(Math.abs(t.net)))}</span></div>` : '';
   const labelBtn = `<button class="clabel" data-act="cart-why" aria-expanded="${st.cartWhy}">${head}<i aria-hidden="true">${st.cartWhy ? '&#9662;' : '&rsaquo;'}</i></button>`;
@@ -654,7 +669,7 @@ function renderSheet() {
   const body = $('#sheetBody'), top = body.scrollTop;
   sh.classList.toggle('cart', s.mode === 'cart');
   sh.classList.toggle('full', s.mode === 'start' || s.mode === 'item');
-  const acts = $('#sheetActs'); if (acts) acts.innerHTML = s.mode === 'cart' ? `<button class="sheet-x" data-act="cart-copy" aria-label="Copy the cart as text"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>` : '';
+  const acts = $('#sheetActs'); if (acts) acts.innerHTML = s.mode === 'cart' ? `${canShare() ? '<button class="sheet-x" data-act="cart-share" aria-label="Share the cart"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></svg></button>' : ''}<button class="sheet-x" data-act="cart-copy" aria-label="Copy the cart as text"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>` : '';
   if (s.mode === 'cart') {
     $('#sheetTitle').textContent = 'Cart';
     body.innerHTML = cartHtml();
@@ -668,7 +683,7 @@ function renderSheet() {
     if (!(e && e.ok && st.query.subject && !st.setting)) { sh.hidden = true; return; }
     $('#sheetTitle').textContent = 'Why this price?';
     const facts = factsList(e);
-    body.innerHTML = breakdownHtml(e) + (facts.length ? `<div class="facts">${facts.map(f => `<p>${f}</p>`).join('')}</div>` : '') + `<div class="rfoot"><button class="btn primary" data-act="copy-receipt">Copy receipt</button><p class="mini">To change how a step works in your world, say it in Changes, like &ldquo;black market takes 30%&rdquo;.</p><button class="btn" data-act="open-changes">Open Changes</button></div>`;
+    body.innerHTML = breakdownHtml(e) + (facts.length ? `<div class="facts">${facts.map(f => `<p>${f}</p>`).join('')}</div>` : '') + `<div class="rfoot"><button class="btn primary" data-act="copy-receipt">Copy receipt</button>${canShare() ? '<button class="btn" data-act="share-receipt">Share receipt</button>' : ''}<p class="mini">To change how a step works in your world, say it in Changes, like &ldquo;black market takes 30%&rdquo;.</p><button class="btn" data-act="open-changes">Open Changes</button></div>`;
   }
   sh.hidden = false;
   body.scrollTop = top;
@@ -921,6 +936,23 @@ function resolveMeans(text) {
   return m ? 'mod:' + m.id : null;
 }
 
+// a custom world: where it began, what has changed since, and whose prices of yours now sit on top of list entries
+function baseBlock() {
+  const w = world; if (isCalibrated(w)) return '';
+  const base = WORLD_PRESETS[w.based] ? WORLD_PRESETS[w.based]() : null, seen = PATCHES.find(p => p.id === w.content), news = patchesSince(w.content);
+  const sl = x => slug(String(x));
+  const shadow = w.items.map((it, i) => [it, i]).filter(([it]) => CATALOG.some(e => sl(e.name) === sl(it.name) && ctx.entries.every(x => x.id !== e.id)));
+  const orphans = Object.keys(w.baseOverrides).filter(id => !ctx.byId.has(id));
+  const lines = news.flatMap(p => p.lines.map(([k, s]) => `<li><b>${esc(k)}</b> ${esc(s)}</li>`));
+  if (!news.length && !shadow.length && !orphans.length) return '';   // nothing to say: Changes stays just the input
+  return `<div class="basebox"><div class="lab">Started from ${esc(base ? base.name : 'scratch')}${seen ? ', priced against ' + esc(contentLabel(seen)) : ''}</div>
+    <p class="mini">${news.length ? `This build is ${esc(contentLabel())}. ${news.length === 1 ? 'One patch has' : news.length + ' patches have'} landed since your world was last checked.` : `Up to date with ${esc(contentLabel())}.`}</p>
+    ${lines.length ? `<details class="whatsnew"><summary>What changed since</summary><ul>${lines.join('')}</ul></details>` : ''}
+    ${shadow.length ? `<div class="lab">Your prices that cover list items</div>${shadow.map(([it, i]) => `<div class="chg"><span>Your ${esc(it.name)} replaces the list's ${esc(it.name)}</span><button class="x" data-act="w-del-item" data-i="${i}" aria-label="Remove your ${esc(it.name)} and use the list's">&times;</button></div>`).join('')}` : ''}
+    ${orphans.length ? `<div class="lab">Prices for items that left the list</div>${orphans.map(id => `<div class="chg"><span>${esc(id)}</span><button class="x" data-act="w-del-bo" data-key="${esc(id)}" aria-label="Remove">&times;</button></div>`).join('')}` : ''}
+    <div class="row">${base ? `<button class="btn" data-act="w-rebase" data-armed-text="Tap again to match ${esc(base.name)}">Match ${esc(base.name)}'s lists and money again</button>` : ''}${w.content !== CONTENT.id ? '<button class="btn" data-act="w-settle">Mark as checked</button>' : ''}</div>
+    <p class="mini">Matching keeps your items, words, facts and dials. It only resets the lists and money to the calibrated version.</p></div>`;
+}
 const calNote = () => (isCalibrated(world) ? `<div class="calnote"><b>${esc(world.name)}</b> is a calibrated world (${esc(contentLabel())}). Its lists and money stay fixed so prices stay trustworthy. Your own items, words and facts still apply.<button class="btn" data-act="w-customize">Make my own copy to change them</button></div>` : '');
 const PAGES = {
   World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Changes']] },
@@ -989,6 +1021,7 @@ function buildSettingsHtml() {
     <div class="sample-type" aria-hidden="true"><div class="st-a">5 &times; Potion, rare</div><div class="st-b">680 gp</div><div class="st-c">260 gp to 1,700 gp</div></div>
     <div class="lab">Style</div>
     <div class="theme skins">${STYLES.map(([v, l]) => `<label><span>${l}</span><input type="radio" name="style" data-bind="style" value="${v}"${styleNow === v ? ' checked' : ''}></label>`).join('')}</div>
+    <label class="listrow"><span class="lt"><b>Haptics</b><span class="mini">A light tap when you add, remove or haggle.</span></span><input type="checkbox" data-bind="haptics"${S.haptics === false ? '' : ' checked'}></label>
   </div></details>
 
   <div class="dp-head"><h2>World</h2><button class="btn primary" data-act="close-world">Done</button></div>
@@ -1038,7 +1071,7 @@ function buildSettingsHtml() {
     ${ctx.entries.some(e => e.group === 'rent') ? `<label class="dialrow"><span class="dt"><b>"Rent"</b><span class="mini">Which rental it prices.</span></span><select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
   </div></details>
 
-  <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || ''}</span></summary><div class="sbody">
+  <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || ''}</span></summary><div class="sbody">${baseBlock()}
     <div class="factbox"><div class="factrow"><input class="field" id="factIn" value="${esc(st.fact.text)}" placeholder="a healing potion costs 40 gp" aria-label="Tell it a fact" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"><button class="btn primary" data-act="fact-go">Add</button></div>
       ${st.fact.err ? `<p class="ferr">${esc(st.fact.err)}</p>` : ''}${factPreview()}</div>
     ${w.items.map((it, i) => chg(`${esc(it.name)} <span class="mini">${esc(formatFull(it.bu, w.currency))} ${it.unit === 'each' ? 'each' : 'per ' + esc(it.unit)}</span>`, `data-act="w-del-item" data-i="${i}"`)).join('')}
@@ -1049,7 +1082,8 @@ function buildSettingsHtml() {
   <details class="sect" data-sec="Back up and share"${op('Back up and share')}><summary><h3>Back up and share</h3><span class="sv"></span></summary><div class="sbody">
     <p>Copy this world to keep it or share it. Paste one below to load it.</p>
     <textarea class="mono" id="exportBox" readonly aria-label="World data">${esc(json)}</textarea>
-    <div class="row"><button class="btn" data-act="w-copy">Copy world</button><button class="btn" data-act="w-save-file">Save as file</button></div>
+    <p class="mini">${S.lastBackup ? 'Last backed up ' + ago(S.lastBackup) + '.' : 'Not backed up yet.'}</p>
+    <div class="row"><button class="btn" data-act="w-copy">Copy world</button>${canShare() ? '<button class="btn" data-act="w-share">Share world</button>' : ''}<button class="btn" data-act="w-save-file">Save as file</button></div>
     <textarea class="mono" id="importBox" placeholder="Paste a world here" aria-label="Paste a world"></textarea>
     <div class="row"><button class="btn" data-act="w-import">Load pasted world</button><button class="btn danger" id="resetBtn" data-act="w-reset">Reset everything</button></div>
   </div></div></details>
@@ -1081,6 +1115,12 @@ function toast(msg, undo) {
   if (undo) { const b = document.createElement('button'); b.className = 'tundo'; b.textContent = 'Undo'; b.onclick = () => { undo(); t.hidden = true; }; t.append(' ', b); }
   clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, undo ? 4200 : 2200);
 }
+const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 2 ? 'just now' : m < 90 ? m + ' minutes ago' : m < 2880 ? Math.round(m / 60) + ' hours ago' : Math.round(m / 1440) + ' days ago'; };
+// the system share sheet where there is one, a copy where there is not
+async function shareOrCopy(title, text, okMsg) {
+  const r = await shareText(title, text);
+  if (r === 'unsupported') copyText(text, okMsg);
+}
 async function copyText(text, okMsg) {
   try { await navigator.clipboard.writeText(text); toast(okMsg); }
   catch (e) {
@@ -1105,12 +1145,12 @@ function worldChanged(opts = {}) {
 function uniqueWorldId(base) { let id = base, n = 2; while (S.worlds.some(w => w.id === id)) id = base + '-' + n++; return id; }
 
 // ---------- events ----------
-// no pinch or double-tap zoom: this is an app, not a page
-for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+const HAPTIC_ON = { 'cart-add': 'success', 'g-quick': 'success', 'cart-offer-add': 'success', 'cart-read-add': 'success', 'cart-total-set': 'success', 'haggle-set': 'select', 'cart-hg-off': 'tap', 'cart-del': 'tap', 'cart-qty': 'tap', 'pick-item': 'tap', 'start-pick': 'tap', 'ac': 'tap', 'start': 'tap', 'rs-quick': 'tap', 'rs-alias': 'tap', 'g-tag': 'select', 'start-action': 'select', 'w-open-preset': 'tap', 'cart-clear': 'warn' };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
   if (!b) return;
   const a = b.dataset.act, d = b.dataset;
+  if (HAPTIC_ON[a]) haptic(HAPTIC_ON[a]);
   const q = st.query;
   switch (a) {
     case 'offer-on': if (st.offer) { const l = st.offer.list, label = st.offer.label; world.lists = ['srd', 'fantasy', 'modern', 'scifi'].filter(x => x === l || world.lists.includes(x)); st.offer = null; worldChanged(); toast('Turned on ' + label + '. Change it under Settings, Items and words.'); } break;
@@ -1182,6 +1222,9 @@ document.addEventListener('click', e => {
     case 'cart-offer-add': if (st.cartOffer) { const r = st.cartOffer; addItems(r.items, r.shop); st.cartOffer = null; st.cartOfferDismissed = ''; persist(); clearInput(); openCart(); toast('Added ' + r.items.length + ' to the cart' + (r.bad.length ? '. ' + r.bad.length + ' skipped, not in your lists.' : '')); } break;
     case 'cart-offer-no': st.cartOfferDismissed = st.text; st.cartOffer = null; renderResult(); break;
     case 'cart-why': st.cartWhy = !st.cartWhy; renderSheet(); break;
+    case 'cart-share': { const c = cartOf(); shareOrCopy('Fool\'s Gold cart', cartText(c, ctx, n => money(n), (r, line) => r ? whatText(r.q, r.e.entry) : (line.q.subject || 'An item')), 'Cart copied'); break; }
+    case 'share-receipt': if (st.est && st.est.ok) shareOrCopy('Fool\'s Gold receipt', receiptText(st.est), 'Receipt copied'); break;
+    case 'w-share': S.lastBackup = Date.now(); persist(); shareOrCopy('Fool\'s Gold world: ' + world.name, JSON.stringify(world, null, 1), 'World copied'); renderDrawer(); break;
     case 'cart-copy': { const c = cartOf(); copyText(cartText(c, ctx, n => money(n), (r, line) => r ? whatText(r.q, r.e.entry) : (line.q.subject || 'An item')), 'Cart copied'); break; }
     case 'cart-clear': { const c = cartOf(); if (b.dataset.armed) { const snap = clone(c); S.carts[world.id] = emptyCart(); st.sheet.open = false; afterCart(); renderSheet(); toast('Cart emptied', () => { S.carts[world.id] = snap; afterCart(); }); } else { b.dataset.armed = '1'; b.textContent = 'Tap again to empty'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Empty the cart'; } }, 3500); } break; }
     case 'copy-receipt': if (st.est && st.est.ok) copyText(receiptText(st.est), 'Receipt copied'); break;
@@ -1250,7 +1293,16 @@ document.addEventListener('click', e => {
     case 'w-newtoggle': st.wnew = true; renderDrawer(); break;
     case 'w-open-preset': { st.wmodal = false; let w = S.worlds.find(x => x.preset === d.v && !x.custom); if (!w) { w = presetWorld(d.v); if (!w) break; w.id = uniqueWorldId(w.id); S.worlds.push(w); } useWorld(w.id); persist(); afterWorldSwitch(); break; }
     case 'w-new-preset': { st.wmodal = false; st.wnew = false; const w = presetWorld(d.v); if (!w) break; const base = w.name; delete w.preset; w.custom = true; w.based = d.v; w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.custom && x.name.startsWith(base + ' custom')).length; w.name = base + ' custom' + (n ? ' ' + (n + 1) : ''); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Started ' + w.name + '. Its lists and money are yours to change.'); break; }
-    case 'w-customize': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name = w.name + ' custom'; S.worlds.push(w); S.carts[w.id] = clone(cartOf()); useWorld(w.id); persist(); afterWorldSwitch(); toast('Made ' + w.name + '. Lists and money are now yours to change.'); break; }
+    case 'w-settle': world.content = CONTENT.id; persist(); renderDrawer(); toast('Marked as checked against ' + contentLabel() + '.'); break;
+    case 'w-rebase': {
+      const base = WORLD_PRESETS[world.based] && WORLD_PRESETS[world.based](); if (!base) break;
+      if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = b.dataset.armedText; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; renderDrawer(); } }, 3500); break; }
+      const isD = c0 => c0.symbol === '$' && c0.decimal === 100, wasD = isD(world.currency);
+      world.lists = [...base.lists]; world.currency = clone(base.currency); world.anchors.wage = base.anchors.wage;
+      const f = isD(world.currency) && !wasD ? 100 : !isD(world.currency) && wasD ? 0.01 : 1;
+      if (f !== 1) { for (const k of Object.keys(world.baseOverrides)) world.baseOverrides[k] = Math.max(1, Math.round(world.baseOverrides[k] * f)); for (const it of world.items) it.bu = Math.max(0.01, +(it.bu * f).toPrecision(6)); }
+      world.content = CONTENT.id; worldChanged(); renderDrawer(); toast('Lists and money now match ' + base.name + '.'); break; }
+    case 'w-customize': { const w = clone(world); w.content = CONTENT.id; const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name = w.name + ' custom'; S.worlds.push(w); S.carts[w.id] = clone(cartOf()); useWorld(w.id); persist(); afterWorldSwitch(); toast('Made ' + w.name + '. Lists and money are now yours to change.'); break; }
     case 'wtab': st.wtab = d.id; st.dpageChanged = true; renderDrawer(); break;
     case 'jump': { const el = document.getElementById('ws-' + d.id.replace(/\W+/g, '-')); const panel = $('#drawerPanel'); if (el) panel.scrollTo({ top: el.offsetTop - 118, behavior: 'smooth' }); break; }
     case 'w-dup': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }
@@ -1285,8 +1337,8 @@ document.addEventListener('click', e => {
     case 'w-del-voc': world.vocabulary.splice(+d.i, 1); worldChanged(); break;
     case 'w-add-item': world.items.push({ id: newItemId(), name: 'New item', kind: 'good', bu: 100, unit: 'each', tags: [] }); worldChanged(); break;
     case 'w-del-item': { const gone = world.items.splice(+d.i, 1)[0]; if (gone) { const n = world.vocabulary.length; world.vocabulary = world.vocabulary.filter(v => v.means !== gone.id); if (n !== world.vocabulary.length) toast('Removed ' + (n - world.vocabulary.length) + ' word' + (n - world.vocabulary.length === 1 ? '' : 's') + ' that pointed at it.'); } worldChanged(); break; }
-    case 'w-copy': copyText(JSON.stringify(world, null, 1), 'World copied'); break;
-    case 'w-save-file': { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(world, null, 1)], { type: 'application/json' })); a.download = slug(world.name) + '.foolsgold.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Saving. If nothing happens, use Copy world.'); } catch (e2) { toast('Saving is blocked here. Use Copy world instead.'); } break; }
+    case 'w-copy': S.lastBackup = Date.now(); persist(); copyText(JSON.stringify(world, null, 1), 'World copied'); renderDrawer(); break;
+    case 'w-save-file': { S.lastBackup = Date.now(); persist(); if (canShare()) { shareOrCopy('Fool\'s Gold world: ' + world.name, JSON.stringify(world, null, 1), 'World copied'); renderDrawer(); break; } try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(world, null, 1)], { type: 'application/json' })); a.download = slug(world.name) + '.foolsgold.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Saving. If nothing happens, use Copy world.'); } catch (e2) { toast('Saving is blocked here. Use Copy world instead.'); } break; }
     case 'w-import': {
       try {
         const w = normalizeWorld(JSON.parse($('#importBox').value));
@@ -1331,6 +1383,7 @@ document.addEventListener('change', e => {
   const bind = t.dataset && t.dataset.bind;
   if (!bind) return;
   const w = world, p = bind.split('.');
+  if (bind === 'haptics') { S.haptics = !!t.checked; setHaptics(S.haptics); persist(); if (S.haptics) haptic('tap'); return; }
   if (bind === 'textsize') { S.textSize = t.value === 'auto' ? null : t.value; applyTextSize(); persist(); renderDrawer(); return; }
   if (bind === 'style') { const v = t.value; S.skin = SKIN_FONTS[v] ? v : null; S.theme = v === 'light' || v === 'dark' ? v : null; applyTheme(); applySkin(); persist(); renderDrawer(); return; }
   if (bind === 'theme') { S.theme = t.value === 'system' ? null : t.value; applyTheme(); persist(); renderDrawer(); return; }
@@ -1452,6 +1505,8 @@ checkForUpdate();
 if (window.__FG_WORLD && WORLD_PRESETS[window.__FG_WORLD] && !S.worlds.some(w => w.id === window.__FG_WORLD)) S.worlds.push(presetWorld(window.__FG_WORLD));
 if (window.__FG_WORLD) S.activeId = window.__FG_WORLD;
 useWorld(S.activeId);
+setHaptics(S.haptics !== false);
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* not available */ }
 pruneOneOffs();
 // a new content patch: say so once, and point at what changed
 if (S.contentSeen !== CONTENT.id) { const had = S.contentSeen; S.contentSeen = CONTENT.id; persist(); if (had) setTimeout(() => toast('Prices updated: ' + contentLabel() + '. See Settings, About.'), 4200); }

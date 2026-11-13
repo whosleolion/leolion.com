@@ -166,3 +166,8 @@ export const pyrite11 = [
 export const pyrite11Modern = [
   ...M('service', 'ride', ['service', 'transport'], ['City bus fare;2.75;;;bus ticket, bus fare, bus ride, bus, city bus, local bus']),
 ];
+
+// ---- Pyrite 1.2: things people rent, not buy ----
+export const pyrite12 = [
+  ...M('service', 'ride', ['service', 'rental'], ['Rental truck;120;day;;moving truck, u-haul, rent a truck, truck rental, moving van', 'Boat rental;250;day;;rent a boat, boat hire', 'Event hall rental;1500;day;;rent a hall, banquet hall, venue, hall rental', 'Tuxedo rental;120;;;rent a tux, rent a tuxedo, tux rental']),
+];

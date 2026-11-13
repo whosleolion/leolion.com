@@ -1260,3 +1260,11 @@ fieldset.locked { border: 0; padding: 0; margin: 0; min-width: 0; display: grid;
 fieldset.locked:disabled { opacity: .55; }
 .btn.quiet { background: none; color: var(--muted); }
 .world-row .chk { color: var(--accent); font-weight: 600; font-size: .875rem; }
+
+/* taps never zoom the page, pinch still does */
+html { touch-action: manipulation; }
+
+.basebox { display: grid; gap: .5rem; padding: .75rem .875rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: .75rem; }
+.basebox .chg { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -718,5 +718,28 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('SW1 no action name is handled twice', dup, []);
 }
 
+// ---- the phone bridge: haptics and share never throw, and use the native plugins when they exist ----
+{
+  const nat = await import('../../src/building/fools-gold/js/native.js');
+  let threw = 0; try { nat.haptic('success'); nat.haptic('tap'); nat.haptic('select'); nat.haptic('warn'); } catch (e) { threw++; }
+  eq('NB1 haptics are silent and safe with no phone', threw, 0);
+  eq('NB2 share is unsupported with no phone', await nat.shareText('t', 'x'), 'unsupported');
+  const calls = [];
+  globalThis.window = { Capacitor: { isNativePlatform: () => true, Plugins: { Haptics: { impact: o => calls.push(['impact', o.style]), notification: o => calls.push(['note', o.type]), selectionChanged: () => calls.push(['select']) }, Share: { share: async o => { calls.push(['share', o.title]); } } } } };
+  nat.haptic('tap'); nat.haptic('success'); nat.haptic('warn'); nat.haptic('select');
+  eq('NB3 native haptics map to the plugin', calls.slice(0, 4), [['impact', 'LIGHT'], ['note', 'SUCCESS'], ['note', 'WARNING'], ['select']]);
+  eq('NB4 native share uses the plugin', [await nat.shareText('Cart', 'x'), calls[4]], ['shared', ['share', 'Cart']]);
+  nat.setHaptics(false); const n0 = calls.length; nat.haptic('success'); eq('NB5 haptics can be switched off', calls.length, n0); nat.setHaptics(true);
+  delete globalThis.window;
+}
+
+// ---- following patches ----
+{
+  const { PATCHES: P2, patchesSince: ps } = await import('../../src/building/fools-gold/js/content.js');
+  eq('PS1 a world on the newest patch has nothing to follow', ps(P2[0].id).length, 0);
+  eq('PS2 a world on the oldest patch has every newer patch', ps(P2[P2.length - 1].id).length, P2.length - 1);
+  eq('PS3 an unknown content id follows nothing', ps('nonsense').length, 0);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
