@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=c398a7ac';
-import { libraryEntries, modernLibrary, modernWorld, modernEveryday, srdGearExtra, pyrite11, pyrite11Modern, pyrite12 } from './library.js?v=c398a7ac';
+import { scifiEntries } from './scifi.js?v=d34275a2';
+import { libraryEntries, modernLibrary, modernWorld, modernEveryday, srdGearExtra, pyrite11, pyrite11Modern, pyrite12, pyrite13, pyrite13Modern } from './library.js?v=d34275a2';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -52,7 +52,7 @@ const srdGoods = [
   ]),
   ...rows('good', 'srd', ['gear', 'manufactured', 'tool'], [
     'Backpack;2gp', 'Bedroll;1gp', 'Blanket;5sp', 'Hemp rope;1gp;;;rope, hempen rope', 'Silk rope;10gp', 'Torch;1cp;;;torches',
-    'Candle;1cp', 'Waterskin;2sp', 'Hooded lantern;5gp;;;lantern', 'Bullseye lantern;10gp', 'Oil flask;1sp;;;lamp oil, oil',
+    'Candle;1cp', 'Waterskin;2sp', 'Hooded lantern;5gp;;;lantern', 'Bullseye lantern;10gp', 'Oil flask;1sp;;;lamp oil, oil, flask of oil',
     "Healer's kit;5gp;;medicine;healers kit, medkit", 'Tent;2gp;;;two person tent', 'Crowbar;2gp', 'Grappling hook;2gp', 'Lock;10gp;;;padlock',
     'Manacles;2gp;;;shackles, handcuffs', 'Steel mirror;5gp;;;mirror', 'Ink bottle;10gp;;;ink', 'Paper sheet;2sp;;;paper', 'Parchment sheet;1sp;;;parchment',
     'Perfume vial;5gp;;luxury;perfume', 'Soap;2cp', 'Spyglass;1000gp;;luxury', 'Tinderbox;5sp', 'Whetstone;1cp', 'Iron chain;5gp;;metal;chain',
@@ -137,7 +137,7 @@ const coreEntries = [
   // Property
   ...rows('property', 'core', ['property'], [
     'Cottage;200gp;;;hut, cabin', 'Townhouse;1500gp;;;house, terrace house, row house', 'Manor;15000gp;;;mansion, estate', 'Castle;250000gp;;;keep, fortress',
-    'Shop;1000gp;;;storefront, store', 'Tavern building;5000gp;;;pub, alehouse', 'Warehouse;2000gp', 'Workshop;800gp;;;smithy, forge', 'Acre of farmland;3gp;;;acre, farmland, farm land',
+    'Shop;1000gp;;;storefront, store', 'Tavern building;5000gp;;;pub, alehouse, tavern', 'Warehouse;2000gp', 'Workshop;800gp;;;smithy, forge', 'Acre of farmland;3gp;;;acre, farmland, farm land',
     'Factory;20000gp;;industrial;mill, works', 'Dock berth;300gp;;;berth, mooring',
   ]),
   // Original goods for variety
@@ -169,7 +169,7 @@ const genericCats = [
   ['tool', 'Tool', '5gp', ['tool', 'manufactured'], 'tools, equipment, gear, supplies, kit'],
   ['clothing', 'Clothing', '2gp', ['clothing', 'textile', 'manufactured'], 'clothes, outfit, garment, coat, dress, boots'],
   ['jewelry', 'Jewelry', '50gp', ['jewelry', 'luxury', 'crafted'], 'jewellery, necklace, bracelet'],
-  ['gem', 'Gemstone', '100gp', ['gem', 'luxury'], 'gems, gemstones, jewel, jewels, diamond, ruby'],
+  ['gem', 'Gemstone', '100gp', ['gem', 'luxury'], 'gems, gemstones, jewel, jewels'],
   ['art', 'Art object', '250gp', ['luxury', 'art', 'crafted'], 'painting, statue, sculpture, artwork, art'],
   ['food', 'Food', '5sp', ['food', 'consumable'], 'meal food, groceries, provisions'],
   ['animal', 'Animal', '10gp', ['animal', 'livestock'], 'animals, livestock, pet, beast'],
@@ -266,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday, ...srdGearExtra, ...pyrite11, ...pyrite11Modern, ...pyrite12];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday, ...srdGearExtra, ...pyrite11, ...pyrite11Modern, ...pyrite12, ...pyrite13, ...pyrite13Modern];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {

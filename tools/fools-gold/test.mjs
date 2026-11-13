@@ -762,5 +762,11 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('VO7 a day-rate phrase is not split', rs2('5 rations a day', c4).items.length, 1);
 }
 
+// ---- coverage: a table's usual asks should all be known ----
+{
+  const { run: covRun, CORPUS: COV } = await import('./coverage.mjs');
+  for (const id of Object.keys(COV)) { const r = covRun(id); t(`CV ${id} coverage stays at 98% or better`, (r.total - r.miss.length) / r.total >= 0.98, r.miss.join('; ')); }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

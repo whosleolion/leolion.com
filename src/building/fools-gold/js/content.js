@@ -9,6 +9,16 @@ export const PATCH_KINDS = { Stock: 'Items added or removed', Tune: 'Prices or s
 
 export const PATCHES = [
   {
+    id: 'pyrite-1.3', name: 'Pyrite', patch: '1.3', date: '2026-11-16', title: 'Gaps closed: gems, instruments, food, hired folk, crews and starships',
+    lines: [
+      ['Stock', 'Gems by name at SRD treasure prices (azurite to diamond, about 35 stones); instruments, tableware and furniture; stew, mead, whiskey and feasts; baths, laundry and stabling; priests, tutors, musicians, jesters, torchbearers and cobblers for hire; silk, linen, cotton, wool, timber and spices; farms, taverns and strongholds.'],
+      ['Stock', 'Modern: tea, chocolate, bananas, pasta, mortgage, electric bill, insurance, wallet, ring, necklace, vitamins, manicure, yoga, caterer, museum and theme park tickets, bar tab, bottle service, gift card, magazine, guitar, piano.'],
+      ['Stock', 'Sci-fi: shield generator, helmet, jump pack, grav boots, translator, intrusion kit, ration bar, robots and androids, missiles, a frag grenade, light freighter and fighter, fusion reactor, cargo space; "laser pistol", "shotgun", "stun baton", "body armor", "pilot", "engineer", "rover" and more words now land on the right item.'],
+      ['Words', 'A coverage sweep of about 500 things a table asks for (fantasy, modern, sci-fi) now runs as a test; every one is known.'],
+      ['World', 'Settings, Back up and share lists the words the app did not know, on your phone only, so you can share the list and the next patch can teach them.'],
+    ],
+  },
+  {
     id: 'pyrite-1.2', name: 'Pyrite', patch: '1.2', date: '2026-11-15', title: 'Rentals, crews and a way to follow patches',
     lines: [
       ['Stock', 'Things people rent, not buy: "rent a car for a week" is the $70 a day rental, not a $38,000 car. Moving truck, boat, event hall and tuxedo rentals.'],

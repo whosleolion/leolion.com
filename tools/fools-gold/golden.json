@@ -282,6 +282,30 @@
   "item": "Thieves' tools"
  },
  {
+  "world": "srd",
+  "input": "pearl",
+  "price": "100 gp",
+  "item": "Pearl"
+ },
+ {
+  "world": "srd",
+  "input": "bagpipes",
+  "price": "30 gp",
+  "item": "Bagpipes"
+ },
+ {
+  "world": "srd",
+  "input": "stew",
+  "price": "1 sp",
+  "item": "Stew"
+ },
+ {
+  "world": "srd",
+  "input": "a feast",
+  "price": "5 gp",
+  "item": "Feast"
+ },
+ {
   "world": "modern",
   "input": "coffee",
   "price": "$4.50",
@@ -492,6 +516,24 @@
   "item": "Tuxedo rental"
  },
  {
+  "world": "modern",
+  "input": "tea",
+  "price": "$4.00",
+  "item": "Tea"
+ },
+ {
+  "world": "modern",
+  "input": "electricity bill",
+  "price": "$140",
+  "item": "Electricity bill"
+ },
+ {
+  "world": "modern",
+  "input": "guitar",
+  "price": "$350",
+  "item": "Guitar"
+ },
+ {
   "world": "scifi",
   "input": "pulse pistol",
   "price": "900 credits",
@@ -628,6 +670,24 @@
   "input": "rent a ship for a week",
   "price": "25,000 credits",
   "item": "Ship rental"
+ },
+ {
+  "world": "scifi",
+  "input": "laser pistol",
+  "price": "900 credits",
+  "item": "Pulse pistol"
+ },
+ {
+  "world": "scifi",
+  "input": "jetpack",
+  "price": "4,500 credits",
+  "item": "Jump pack"
+ },
+ {
+  "world": "scifi",
+  "input": "freighter",
+  "price": "4,500,000 credits",
+  "item": "Light freighter"
  },
  {
   "world": "vcm",

@@ -1,25 +1,25 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=c398a7ac';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=c398a7ac';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=c398a7ac';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=c398a7ac';
-import { findOffer } from './lists.js?v=c398a7ac';
-import { suggestPrompts } from './suggest.js?v=c398a7ac';
-import { readFact } from './facts.js?v=c398a7ac';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=c398a7ac';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=c398a7ac';
+import { compileWorld } from './world.js?v=d34275a2';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=d34275a2';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=d34275a2';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=d34275a2';
+import { findOffer } from './lists.js?v=d34275a2';
+import { suggestPrompts } from './suggest.js?v=d34275a2';
+import { readFact } from './facts.js?v=d34275a2';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=d34275a2';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=d34275a2';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=c398a7ac';
-import { applicable } from './engine.js?v=c398a7ac';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=c398a7ac';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=c398a7ac';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=c398a7ac';
-import { complete } from './complete.js?v=c398a7ac';
-import { haptic, shareText, canShare, setHaptics } from './native.js?v=c398a7ac';
-import { voiceSupport, startListening } from './voice.js?v=c398a7ac';
-import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=c398a7ac';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=c398a7ac';
+} from './data.js?v=d34275a2';
+import { applicable } from './engine.js?v=d34275a2';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=d34275a2';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=d34275a2';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=d34275a2';
+import { complete } from './complete.js?v=d34275a2';
+import { haptic, shareText, canShare, setHaptics } from './native.js?v=d34275a2';
+import { voiceSupport, startListening } from './voice.js?v=d34275a2';
+import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=d34275a2';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=d34275a2';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -444,7 +444,7 @@ function badRows(bad, where) {
 }
 function resolveBad(a, where, i, k) {
   const src = where === 'read' ? st.cartRead : st.cartOffer; if (!src) return;
-  const x = badInfo(src.bad[i]);
+  const x = badInfo(src.bad[i]); noteUnknown(x.phrase);
   if (a === 'rs-alias') { const c = x.cands[k]; if (!c) return; world.vocabulary.push({ term: x.phrase, means: c.entry.id }); toast('"' + x.phrase + '" now means ' + c.entry.name.toLowerCase() + '.'); }
   else if (a === 'rs-quick') { makeOneOff(x.phrase, x.tc, x.tc.bu); toast('Priced "' + capital(x.phrase) + '" once at ' + money(x.tc.bu) + '. Not saved to your lists.'); }
   else { const name = capital(x.phrase), item = newItemFrom(name, x.phrase, x.tc, storedPrice(ctx, name, x.tc, x.tc.bu)); item.id = newItemId(); world.items.push(item); toast('Saved "' + name + '" at a guess. Edit it under World, My items.'); }
@@ -813,8 +813,19 @@ function summaryLine(e) {
 }
 
 // ---------- history ----------
+// words the app did not know, kept on the phone only, so a DM can send them along and the next patch can teach them
+function noteUnknown(phrase) {
+  const k = String(phrase || '').toLowerCase().trim().slice(0, 60);
+  if (!k || k.length < 3 || /^[\d\s.,]+$/.test(k)) return;
+  S.unknowns = S.unknowns || {};
+  const u = S.unknowns[k] || (S.unknowns[k] = { n: 0, t: 0 }); u.n++; u.t = Date.now();
+  const keys = Object.keys(S.unknowns);
+  if (keys.length > 200) { keys.sort((a, b) => S.unknowns[a].t - S.unknowns[b].t); for (const x of keys.slice(0, keys.length - 200)) delete S.unknowns[x]; }
+  persist();
+}
 function recordHistory() {
   clearTimeout(st.histTimer);
+  if (st.guess && st.guess.phrase && !st.sheet.open) noteUnknown(st.guess.phrase);
   if (!st.est || !st.est.ok || !st.text) return;
   const item = { text: st.text, price: money(st.est.typical), ts: Date.now(), world: world.id, pin: false };
   const old = S.history.find(h => h.text === item.text && h.world === item.world);
@@ -1115,6 +1126,8 @@ function buildSettingsHtml() {
   <details class="sect" data-sec="Back up and share"${op('Back up and share')}><summary><h3>Back up and share</h3><span class="sv"></span></summary><div class="sbody">
     <p>Copy this world to keep it or share it. Paste one below to load it.</p>
     <textarea class="mono" id="exportBox" readonly aria-label="World data">${esc(json)}</textarea>
+    <div class="lab">Words it did not know</div>
+    ${(() => { const us = Object.entries(S.unknowns || {}).sort((a, b) => b[1].n - a[1].n || b[1].t - a[1].t).slice(0, 15); return us.length ? `<p class="mini">${us.map(([k, v]) => esc(k) + (v.n > 1 ? ' (' + v.n + ')' : '')).join(', ')}</p><p class="mini">These stay on this phone. Share the list and the next update can teach them.</p><div class="row"><button class="btn" data-act="unk-share">Share the list</button><button class="btn" data-act="unk-clear">Clear</button></div>` : '<p class="mini">Nothing yet. When you ask for something the app does not know, it is listed here, on this phone only.</p>'; })()}
     <p class="mini">${S.lastBackup ? 'Last backed up ' + ago(S.lastBackup) + '.' : 'Not backed up yet.'}</p>
     <div class="row"><button class="btn" data-act="w-copy">Copy world</button>${canShare() ? '<button class="btn" data-act="w-share">Share world</button>' : ''}<button class="btn" data-act="w-save-file">Save as file</button></div>
     <textarea class="mono" id="importBox" placeholder="Paste a world here" aria-label="Paste a world"></textarea>
@@ -1321,6 +1334,7 @@ document.addEventListener('click', e => {
     } break;
     case 'g-cmp': if (st.guess) { st.guess.cmp = true; renderResult(); } break;
     case 'g-quick': if (st.guess && st.guess.sel != null) {
+      noteUnknown(st.guess.phrase);
       const g = st.guess, c = guessAll()[g.sel], addable = st.query.action !== 'value';
       const it = makeOneOff(g.phrase, c, g.bu); st.guess = null; worldChanged();
       if (st.query.subject !== it.id) { const q = clone(st.query); q.subject = it.id; q.family = null; fromQuery(q); }
@@ -1332,6 +1346,7 @@ document.addEventListener('click', e => {
     case 'g-exact': if (st.guess) { st.guess.exact = true; renderResult(); const i = $('#gPrice'); if (i) i.focus(); } break;
     case 'g-raise': case 'g-lower': if (st.guess && st.guess.sel != null) { const f = a === 'g-raise' ? 1.25 : 0.8; st.guess.bu = niceRound(st.guess.bu * f, 3); renderResult(); } break;
     case 'g-set': if (st.guess && st.guess.sel != null) {
+      noteUnknown(st.guess.phrase);
       const c = guessAll()[st.guess.sel], name = capital(st.guess.phrase);
       const item = newItemFrom(name, st.guess.phrase, c, storedPrice(ctx, name, c, st.guess.bu));
       item.id = newItemId(); world.items.push(item); st.guess = null;
@@ -1364,6 +1379,8 @@ document.addEventListener('click', e => {
     case 'chk-ok': { const e = checkQueue()[0]; if (!e) break; const base = candidateFromEntry(e, ctx), mv = st.chkPrice && st.chkPrice.id === e.id && Math.abs(st.chkPrice.bu / base.bu - 1) > 0.005;
       if (mv) { world.baseOverrides[e.id] = baseFor(ctx, e.id, st.chkPrice.bu); world.checked[e.id] = 'edit'; st.chkPrice = null; worldChanged(); } else { world.checked[e.id] = 'ok'; st.chkPrice = null; persist(); }
       renderSheet(); break; }
+    case 'unk-share': { const us = Object.entries(S.unknowns || {}).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => k + (v.n > 1 ? ' x' + v.n : '')); shareOrCopy('Words Fool\'s Gold did not know', us.join('\n'), 'List copied'); break; }
+    case 'unk-clear': S.unknowns = {}; persist(); renderDrawer(); break;
     case 'w-settle': world.content = CONTENT.id; persist(); renderDrawer(); toast('Marked as checked against ' + contentLabel() + '.'); break;
     case 'w-rebase': {
       const base = WORLD_PRESETS[world.based] && WORLD_PRESETS[world.based](); if (!base) break;

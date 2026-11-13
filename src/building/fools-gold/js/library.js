@@ -142,7 +142,7 @@ function G(tags, list, library = 'packs') {
 export const srdGearExtra = [
   ...G(['manufactured', 'crafted', 'adventuring'], [
     'Ball bearings;1gp;;;bag of ball bearings, ball bearing, bearings, bag of 1000 ball bearings', 'Abacus;2gp', 'Acid vial;25gp;;;acid, vial of acid', "Alchemist's fire;50gp;;;alchemist fire, flask of alchemists fire", 'Antitoxin;50gp;;medicine;vial of antitoxin', 'Barrel;2gp', 'Basket;4sp', 'Block and tackle;1gp;;;pulley',
-    'Glass bottle;2gp;;;bottle', 'Bucket;5cp;;;pail', 'Map or scroll case;1gp;;;scroll case, map case, case', 'Chalk;1cp;;;piece of chalk', 'Chest;5gp;;;trunk, strongbox', 'Tankard;2cp;;;mug, flask or tankard', 'Holy water;25gp;;;flask of holy water',
+    'Glass bottle;2gp;;;bottle', 'Bucket;5cp;;;pail', 'Map or scroll case;1gp;;;scroll case, map case, case', 'Chalk;1cp;;;piece of chalk', 'Chest;5gp;;;trunk, strongbox', 'Flask or tankard;2cp;;;flask, tankard, mug', 'Holy water;25gp;;;flask of holy water',
     'Hunting trap;5gp;;;trap, bear trap', 'Jug;2cp;;;pitcher', 'Piton;5cp;;;pitons', 'Ten-foot pole;5cp;;;pole, 10 foot pole', 'Iron pot;2gp;;;pot, cooking pot', 'Quiver;1gp', "Merchant's scale;5gp;;;scale, balance", 'Sealing wax;5sp;;;wax, stick of wax',
     'Signet ring;5gp;;;seal ring', 'Iron spikes;1gp;;;spike, spikes, iron spike', 'String;1sp;;;ten feet of string, twine', 'Dice set;1sp;;;dice, a set of dice', 'Playing cards;5sp;;;deck of cards, card deck, cards', 'Marbles;1cp;;;bag of marbles, marble', 'Sledgehammer;2gp;;;sledge', 'Bag of sand;1cp;;;little bag of sand, sand'
   ]),
@@ -170,4 +170,42 @@ export const pyrite11Modern = [
 // ---- Pyrite 1.2: things people rent, not buy ----
 export const pyrite12 = [
   ...M('service', 'ride', ['service', 'rental'], ['Rental truck;120;day;;moving truck, u-haul, rent a truck, truck rental, moving van', 'Boat rental;250;day;;rent a boat, boat hire', 'Event hall rental;1500;day;;rent a hall, banquet hall, venue, hall rental', 'Tuxedo rental;120;;;rent a tux, rent a tuxedo, tux rental']),
+];
+
+// ---- Pyrite 1.3: closing the gaps a coverage sweep found (gems, instruments, food and drink, hired folk, furniture, trade goods) ----
+function C(kind, library, tags, list, src = 'core', unitDefault = 'each') {
+  return list.map(line => {
+    const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim());
+    return { id: kind + '.l-' + slug(name), name, kind, src, bu: parseP(price), unit: unit || unitDefault, tags: [...tags, 'derived', ...(more ? more.split(/\s+/) : [])], aliases: aliases ? aliases.split(',').map(x => x.trim()).filter(Boolean) : [], spread: 0.2, ...(library ? { library } : {}) };
+  });
+}
+export const pyrite13 = [
+  // gems by the tables in the SRD treasure rules
+  ...C('good', 'gems', ['gem', 'jewelry', 'valuable'], [
+    'Azurite;10gp', 'Obsidian;10gp', 'Turquoise;10gp', 'Lapis lazuli;10gp', 'Malachite;10gp',
+    'Quartz;50gp;;;rock crystal', 'Onyx;50gp', 'Moonstone;50gp', 'Citrine;50gp', 'Jasper;50gp',
+    'Amber;100gp', 'Amethyst;100gp', 'Coral;100gp', 'Garnet;100gp', 'Jade;100gp', 'Jet;100gp', 'Pearl;100gp', 'Spinel;100gp', 'Tourmaline;100gp',
+    'Aquamarine;500gp', 'Black pearl;500gp', 'Peridot;500gp', 'Topaz;500gp', 'Alexandrite;500gp',
+    'Opal;1000gp', 'Fire opal;1000gp', 'Black opal;1000gp', 'Emerald;1000gp', 'Sapphire;1000gp;;;blue sapphire', 'Star sapphire;1000gp',
+    'Ruby;5000gp', 'Diamond;5000gp', 'Jacinth;5000gp', 'Black sapphire;5000gp',
+  ], 'srd'),
+  ...C('good', 'gear', ['manufactured', 'crafted'], [
+    'Bit and bridle;2gp;;;bridle, bit', 'Saddlebags;4gp;;;saddle bags', 'Map;10gp;;;chart', 'Spoon;2cp;;;fork and spoon, cutlery', 'Candlestick;5sp;;;candle holder', 'Goblet;5sp;;;chalice, cup', 'Chair;5sp;;;stool', 'Table;2gp;;;desk', 'Candelabra;15gp', 'Chandelier;60gp', 'Tapestry;25gp;;;wall hanging', 'Brooch;25gp;;jewelry;pin, clasp', 'Coffin;5gp;;;casket', 'Sarcophagus;250gp;;;stone coffin',
+  ]),
+  ...C('good', 'instruments', ['instrument', 'crafted'], ['Harp;35gp', 'Horn;3gp;;;war horn, bugle', 'Bagpipes;30gp;;;pipes', 'Lyre;30gp;;;', 'Fiddle;30gp;;;viol']),
+  ...C('good', 'food', ['food'], ['Stew;1sp;;;bowl of stew', 'Mead;5cp;;;mug of mead', 'Whiskey;1gp;;;bottle of whiskey, spirits, liquor', 'Feast;5gp;;;banquet, noble feast', 'Side of beef;5gp;;;beef']),
+  ...C('good', 'trade', ['trade', 'raw'], ['Silk;10gp;;;fine fabric, bolt of silk', 'Linen;5sp;;;linen cloth', 'Cotton;5sp;;;cotton cloth', 'Wool;3sp;;;wool cloth, fleece', 'Timber;2sp;;;lumber, plank', 'Spices;5gp;lb;;spice']),
+  ...C('service', 'services', ['service'], ['Bath;3cp;;;hot bath, bathhouse', 'Laundry;5cp;;;washing, clothes washing', 'Stabling;5sp;day;;stable, stable a horse', 'Message delivery;5sp;;;']),
+  ...C('labor', 'hired', ['labor', 'service'], ['Priest;5gp;;;cleric, chaplain, temple healer', 'Tutor;1gp;day;;teacher, instructor', 'Musician;5sp;day;;bard, minstrel, performer', 'Jester;1gp;day;;fool, entertainer', 'Torchbearer;2sp;day;;link boy, lantern bearer', 'Thief for hire;3gp;day;;thief, pickpocket', 'Cobbler;1gp;day;;shoemaker, bootmaker']),
+  ...C('property', 'strongholds', ['property'], ['Farm;500gp;;;farmstead, smallholding', 'Stronghold;50000gp;;;fortress keep, citadel']),
+  ...C('good', 'wondrous', ['magic', 'wondrous'], ['Deck of many things;120000gp;;;deck of cards of fate']),
+];
+export const pyrite13Modern = [
+  ...M('good', 'food', ['food'], ['Tea;4;;;hot tea, iced tea', 'Chocolate;3;;;chocolate bar, candy', 'Banana;0.3;;;bananas', 'Pasta;3;;;box of pasta, noodles']),
+  ...M('service', 'bills', ['service', 'bills'], ['Mortgage payment;1900;month;;mortgage', 'Electricity bill;140;month;;electric bill, power bill', 'Insurance;180;month;;home insurance, renters insurance']),
+  ...M('good', 'electronics', ['gadget', 'manufactured'], ['Computer mouse;25;;;mouse', 'Generator;700;;;portable generator', 'Video game;60;;;game', 'Gift card;50;;;']),
+  ...M('good', 'clothes', ['clothing', 'crafted'], ['Wallet;45;;;billfold', 'Ring;250;;jewelry;wedding band, silver ring', 'Necklace;180;;jewelry;chain, pendant necklace']),
+  ...M('good', 'care', ['medicine', 'crafted'], ['Vitamins;18;;;supplements, multivitamin']),
+  ...M('service', 'services', ['service'], ['Manicure;40;;;nails, nail salon', 'Yoga class;25;;;fitness class, pilates class', 'Caterer;1800;;;catering', 'Florist arrangement;80;;;florist', 'Museum ticket;22;;;museum', 'Theme park ticket;130;;;amusement park, theme park', 'Bar tab;90;;;tab, a round of drinks', 'Bottle service;600;;;club table']),
+  ...M('good', 'media', ['manufactured'], ['Magazine;7;;;mag', 'Guitar;350;;;acoustic guitar, electric guitar', 'Piano;3500;;;upright piano, keyboard piano']),
 ];
