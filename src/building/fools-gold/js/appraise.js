@@ -1,7 +1,7 @@
 // Appraising a thing the app has no entry for, from tags a DM can read at a glance: what kind of thing it is,
 // how big, what it is made of, how much craft went in, how rare, how wanted. No AI: a plain product of multipliers,
 // started from the words of the phrase, then adjusted by tapping. All numbers are original estimates, 1 bu = 1 cp (fantasy scale).
-import { stem } from './world.js?v=4cde8796';
+import { stem } from './world.js?v=7bd0fa18';
 
 export const KINDS = [
   { id: 'thing', label: 'Everyday thing', base: 60, unit: 'each', words: 'thing item object box basket pot pan bowl cup jar bottle bucket candle brush mirror comb toy doll book' },

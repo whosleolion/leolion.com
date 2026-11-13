@@ -709,5 +709,14 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   t('UW3 the plain heist gear stays in either way', !!parse('lockpick set', c0).query.subject && !!parse('lockpick set', c1).query.subject);
 }
 
+// ---- the click handler's switch must not repeat an action name (the first case would silently win) ----
+{
+  const { readFileSync: rfs } = await import('node:fs');
+  const src = rfs(new URL('../../src/building/fools-gold/js/app.js', import.meta.url), 'utf8');
+  const seen = new Map(), dup = [];
+  for (const m of src.matchAll(/^ {4}case '([a-z0-9-]+)'/gm)) { if (seen.has(m[1])) dup.push(m[1]); seen.set(m[1], true); }
+  eq('SW1 no action name is handled twice', dup, []);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

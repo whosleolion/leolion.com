@@ -1,23 +1,23 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=4cde8796';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=4cde8796';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=4cde8796';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=4cde8796';
-import { findOffer } from './lists.js?v=4cde8796';
-import { suggestPrompts } from './suggest.js?v=4cde8796';
-import { readFact } from './facts.js?v=4cde8796';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=4cde8796';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=4cde8796';
+import { compileWorld } from './world.js?v=7bd0fa18';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=7bd0fa18';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=7bd0fa18';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=7bd0fa18';
+import { findOffer } from './lists.js?v=7bd0fa18';
+import { suggestPrompts } from './suggest.js?v=7bd0fa18';
+import { readFact } from './facts.js?v=7bd0fa18';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=7bd0fa18';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=7bd0fa18';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=4cde8796';
-import { applicable } from './engine.js?v=4cde8796';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=4cde8796';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=4cde8796';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=4cde8796';
-import { complete } from './complete.js?v=4cde8796';
-import { CONTENT, contentLabel, contentCounts } from './content.js?v=4cde8796';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=4cde8796';
+} from './data.js?v=7bd0fa18';
+import { applicable } from './engine.js?v=7bd0fa18';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=7bd0fa18';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=7bd0fa18';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=7bd0fa18';
+import { complete } from './complete.js?v=7bd0fa18';
+import { CONTENT, contentLabel, contentCounts } from './content.js?v=7bd0fa18';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=7bd0fa18';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -921,7 +921,7 @@ function resolveMeans(text) {
   return m ? 'mod:' + m.id : null;
 }
 
-const calNote = () => (isCalibrated(world) ? `<div class="calnote"><b>${esc(world.name)}</b> is a calibrated world (${esc(contentLabel())}). Its lists and money stay fixed so prices stay trustworthy. Your own items, words and facts still apply.<button class="btn" data-act="w-copy">Make my own copy to change them</button></div>` : '');
+const calNote = () => (isCalibrated(world) ? `<div class="calnote"><b>${esc(world.name)}</b> is a calibrated world (${esc(contentLabel())}). Its lists and money stay fixed so prices stay trustworthy. Your own items, words and facts still apply.<button class="btn" data-act="w-customize">Make my own copy to change them</button></div>` : '');
 const PAGES = {
   World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Changes']] },
 };
@@ -1250,7 +1250,7 @@ document.addEventListener('click', e => {
     case 'w-newtoggle': st.wnew = true; renderDrawer(); break;
     case 'w-open-preset': { st.wmodal = false; let w = S.worlds.find(x => x.preset === d.v && !x.custom); if (!w) { w = presetWorld(d.v); if (!w) break; w.id = uniqueWorldId(w.id); S.worlds.push(w); } useWorld(w.id); persist(); afterWorldSwitch(); break; }
     case 'w-new-preset': { st.wmodal = false; st.wnew = false; const w = presetWorld(d.v); if (!w) break; const base = w.name; delete w.preset; w.custom = true; w.based = d.v; w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.custom && x.name.startsWith(base + ' custom')).length; w.name = base + ' custom' + (n ? ' ' + (n + 1) : ''); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Started ' + w.name + '. Its lists and money are yours to change.'); break; }
-    case 'w-copy': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name = w.name + ' custom'; S.worlds.push(w); S.carts[w.id] = clone(cartOf()); useWorld(w.id); persist(); afterWorldSwitch(); toast('Made ' + w.name + '. Lists and money are now yours to change.'); break; }
+    case 'w-customize': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name = w.name + ' custom'; S.worlds.push(w); S.carts[w.id] = clone(cartOf()); useWorld(w.id); persist(); afterWorldSwitch(); toast('Made ' + w.name + '. Lists and money are now yours to change.'); break; }
     case 'wtab': st.wtab = d.id; st.dpageChanged = true; renderDrawer(); break;
     case 'jump': { const el = document.getElementById('ws-' + d.id.replace(/\W+/g, '-')); const panel = $('#drawerPanel'); if (el) panel.scrollTo({ top: el.offsetTop - 118, behavior: 'smooth' }); break; }
     case 'w-dup': { const w = clone(world); const base = w.preset || w.based; delete w.preset; w.custom = true; w.based = base; w.id = uniqueWorldId(w.id); w.name += ' copy'; S.worlds.push(w); useWorld(w.id); afterWorldSwitch(); break; }

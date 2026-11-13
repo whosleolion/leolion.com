@@ -1,6 +1,6 @@
 // Unspecified factors: find the unstated factors that would move the price most.
-import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js?v=4cde8796';
-import { estimate, applicable, timeUnit } from './engine.js?v=4cde8796';
+import { GROUPS, RARITIES, TIER_NAMES, FAMILIES } from './data.js?v=7bd0fa18';
+import { estimate, applicable, timeUnit } from './engine.js?v=7bd0fa18';
 
 const ORDER = {
   good: ['place', 'channel', 'condition', 'supply', 'relationship', 'urgency'],

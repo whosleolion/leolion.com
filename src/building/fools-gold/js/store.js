@@ -1,8 +1,8 @@
-import { normalizeCart } from './cart.js?v=4cde8796';
+import { normalizeCart } from './cart.js?v=7bd0fa18';
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=4cde8796';
-import { CONTENT } from './content.js?v=4cde8796';
-import { compileWorld } from './world.js?v=4cde8796';
+import { WORLD_PRESETS } from './data.js?v=7bd0fa18';
+import { CONTENT } from './content.js?v=7bd0fa18';
+import { compileWorld } from './world.js?v=7bd0fa18';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
