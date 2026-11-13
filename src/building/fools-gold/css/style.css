@@ -1247,3 +1247,8 @@ html[data-big] .jump .q { white-space: nowrap; }
   .gseg.n5:not(.wrapseg) button { margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
   .gseg.n5:not(.wrapseg) button.on { background: var(--accent); border-color: var(--accent); }
 }
+
+.whatsnew { margin-top: .75rem; font-size: .875rem; }
+.whatsnew summary { cursor: pointer; color: var(--accent); min-height: 2.75rem; display: flex; align-items: center; }
+.whatsnew ul { margin: .25rem 0 0; padding-left: 1.1rem; display: grid; gap: .375rem; color: var(--muted); }
+.whatsnew li b { color: var(--fg); }

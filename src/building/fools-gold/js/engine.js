@@ -1,8 +1,8 @@
 // Price engine: Query -> Estimate. Pure functions. Deterministic.
 import {
   RARITY_CURVES, TIER_FACTORS, TIER_WHY, BULK, GROUPS, INTERACTIONS, STACK_WEIGHTS,
-} from './data.js?v=63f3d017';
-import { niceRound } from './money.js?v=63f3d017';
+} from './data.js?v=45512745';
+import { niceRound } from './money.js?v=45512745';
 
 const DAYS = { day: 1, night: 1, week: 7, month: 30, year: 365 };
 // Entries priced per time unit: how many days one unit is, and the word to show.
@@ -90,7 +90,8 @@ export function estimate(q, ctx) {
     const per = ov.base > 0 ? ov.base : wbase > 0 ? wbase : entry.perMile && entry.mpd ? entry.perMile * entry.mpd : entry.bu;
     baseMid = per;
     const sp = entry.spread ?? (entry.src === 'user' ? 0.15 : 0.1);
-    baseLo = per * (1 - sp); baseHi = per * (1 + sp);
+    // symmetric on a log scale, so the middle of the range is exactly the listed price (1 gp rope reads 1 gp, not 99 cp)
+    baseLo = per / (1 + sp); baseHi = per * (1 + sp);
     baseLabel = entry.name;
     // magic on an ordinary thing: the item's own price plus an enchantment premium, set by rarity. A curse implies magic.
     const cursed = selected.some(m => m.id === 'cursed');

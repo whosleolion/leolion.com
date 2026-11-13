@@ -1,22 +1,23 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=63f3d017';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=63f3d017';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=63f3d017';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=63f3d017';
-import { findOffer } from './lists.js?v=63f3d017';
-import { suggestPrompts } from './suggest.js?v=63f3d017';
-import { readFact } from './facts.js?v=63f3d017';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=63f3d017';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=63f3d017';
+import { compileWorld } from './world.js?v=45512745';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=45512745';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=45512745';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=45512745';
+import { findOffer } from './lists.js?v=45512745';
+import { suggestPrompts } from './suggest.js?v=45512745';
+import { readFact } from './facts.js?v=45512745';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=45512745';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=45512745';
 import {
-  ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=63f3d017';
-import { applicable } from './engine.js?v=63f3d017';
-import { load, save, normalizeWorld, newItemId } from './store.js?v=63f3d017';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=63f3d017';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=63f3d017';
-import { complete } from './complete.js?v=63f3d017';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=63f3d017';
+  CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
+} from './data.js?v=45512745';
+import { applicable } from './engine.js?v=45512745';
+import { load, save, normalizeWorld, newItemId } from './store.js?v=45512745';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=45512745';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=45512745';
+import { complete } from './complete.js?v=45512745';
+import { CONTENT, contentLabel, contentCounts } from './content.js?v=45512745';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=45512745';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1051,7 +1052,9 @@ function buildSettingsHtml() {
     <p>A language parsing calculator for game masters. It does not use AI, and it works offline.</p>
     <p>A game tool by Firebird Games.<br>&copy; 2026 Firebird Games.</p>
     <p class="fine">${esc(SRD_ATTRIBUTION)}</p>
-    ${builtAs() ? `<p class="fine">Build ${esc(builtAs())}</p>` : ''}</div>
+    ${builtAs() ? `<p class="fine">Build ${esc(builtAs())}</p>` : ''}
+    <p class="fine">Content ${esc(contentLabel())} &middot; ${esc(String(contentCounts(CATALOG).total))} items in four lists</p></div>
+    <details class="whatsnew"><summary>What is in ${esc(contentLabel())}: ${esc(CONTENT.title)}</summary><ul>${CONTENT.lines.map(([k, s]) => `<li><b>${esc(k)}</b> ${esc(s)}</li>`).join('')}</ul></details>
   </div></div></details>`;
   return html;
 }
@@ -1441,6 +1444,8 @@ if (window.__FG_WORLD && WORLD_PRESETS[window.__FG_WORLD] && !S.worlds.some(w =>
 if (window.__FG_WORLD) S.activeId = window.__FG_WORLD;
 useWorld(S.activeId);
 pruneOneOffs();
+// a new content patch: say so once, and point at what changed
+if (S.contentSeen !== CONTENT.id) { const had = S.contentSeen; S.contentSeen = CONTENT.id; persist(); if (had) setTimeout(() => toast('Prices updated: ' + contentLabel() + '. See Settings, About.'), 4200); }
 const first = S.last ?? sampleList()[0];
 $('#q').value = first;
 fromText(first, { noHistory: true });

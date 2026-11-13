@@ -662,5 +662,16 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   eq('MG9 the words set the tag', inf('cursed tuning fork').tags.aura, 'cursed');
 }
 
+// ---- content patch ----
+{
+  const { PATCHES, CONTENT, contentCounts: cc } = await import('../../src/building/fools-gold/js/content.js');
+  const { CATALOG } = await import('../../src/building/fools-gold/js/data.js');
+  t('CP1 the current content is the newest patch', CONTENT === PATCHES[0] && PATCHES.every(p => p.id && p.name && p.patch && p.date && p.lines.length));
+  eq('CP2 patch ids are unique', new Set(PATCHES.map(p => p.id)).size, PATCHES.length);
+  const c = cc(CATALOG);
+  eq('CP3 the list counts add up', c.srd + c.fantasy + c.scifi + c.modern, c.total);
+  t('CP4 every patch line uses a known kind', PATCHES.every(p => p.lines.every(([k]) => ['Stock', 'Tune', 'Words', 'Rules', 'World', 'Fix'].includes(k))));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
