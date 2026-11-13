@@ -133,10 +133,10 @@ export const modernEveryday = [
 ];
 
 // ---- adventuring gear and the contents of the standard packs (SRD prices) ----
-function G(tags, list) {
+function G(tags, list, library = 'packs') {
   return list.map(line => {
     const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim());
-    return { id: 'good.' + slug(name), name, kind: 'good', src: 'srd', bu: parseP(price), unit: unit || 'each', tags: [...tags, ...(more ? more.split(/\s+/) : [])], aliases: aliases ? aliases.split(',').map(x => x.trim()).filter(Boolean) : [], spread: 0.1, library: 'packs' };
+    return { id: 'good.' + slug(name), name, kind: 'good', src: 'srd', bu: parseP(price), unit: unit || 'each', tags: [...tags, ...(more ? more.split(/\s+/) : [])], aliases: aliases ? aliases.split(',').map(x => x.trim()).filter(Boolean) : [], spread: 0.1, ...(library ? { library } : {}) };
   });
 }
 export const srdGearExtra = [
@@ -154,14 +154,14 @@ export const srdGearExtra = [
 
 // ---- Pyrite 1.1: potions and iconic items players ask for, strongholds, farm goods, city transport ----
 export const pyrite11 = [
-  ...G(['potion', 'consumable', 'magic', 'derived'], ['Potion of greater healing;100gp;;;greater healing potion, greater healing', 'Potion of superior healing;500gp;;;superior healing potion, superior healing', 'Potion of supreme healing;5000gp;;;supreme healing potion, supreme healing']),
+  ...G(['potion', 'consumable', 'magic', 'derived'], ['Potion of greater healing;100gp;;;greater healing potion, greater healing', 'Potion of superior healing;500gp;;;superior healing potion, superior healing', 'Potion of supreme healing;5000gp;;;supreme healing potion, supreme healing'], null),
   ...G(['magic', 'wondrous', 'derived'], [
     'Bag of holding;500gp;;;bag of holding, haversack of holding', 'Cloak of protection;500gp', 'Boots of elvenkind;500gp;;;elven boots', 'Cloak of elvenkind;500gp;;;elven cloak', 'Gauntlets of ogre power;500gp', 'Rope of climbing;500gp', 'Ring of protection;3500gp;;;protection ring',
-  ]),
+  ], null),
   ...G(['property', 'derived'], []).concat([
     ['Merchant house;5000gp;;;trading house, counting house'], ['Guildhall;5000gp;;;guild hall'], ['Fortified tower;25000gp;;;tower, watchtower, wizard tower'], ['Frontier fort;15000gp;;;small fort, frontier fort'], ['Noble estate;25000gp;;;country estate'], ['Temple;50000gp;;;church, shrine hall'], ['Abbey;50000gp;;;monastery'], ['Palace;500000gp;;;royal palace'],
   ].map(([line]) => { const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim()); return { id: 'property.l-' + slug(name), name, kind: 'property', src: 'core', bu: parseP(price), unit: 'each', tags: ['property', 'derived'], aliases: aliases.split(',').map(x => x.trim()), spread: 0.3, group: 'property', library: 'strongholds' }; })),
-  ...G(['plant', 'food', 'derived'], ['Egg;1cp;;;eggs']),
+  ...G(['plant', 'food', 'derived'], ['Egg;1cp;;;eggs'], null),
 ];
 export const pyrite11Modern = [
   ...M('service', 'ride', ['service', 'transport'], ['City bus fare;2.75;;;bus ticket, bus fare, bus ride, bus, city bus, local bus']),

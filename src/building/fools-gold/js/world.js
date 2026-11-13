@@ -1,8 +1,8 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
-import { listOf } from './lists.js?v=37879f67';
+import { listOf } from './lists.js?v=c398a7ac';
 import {
   CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, AURA_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
-} from './data.js?v=37879f67';
+} from './data.js?v=c398a7ac';
 
 export function stem(w) {
   w = w.toLowerCase();

@@ -1,25 +1,25 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=37879f67';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=37879f67';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=37879f67';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=37879f67';
-import { findOffer } from './lists.js?v=37879f67';
-import { suggestPrompts } from './suggest.js?v=37879f67';
-import { readFact } from './facts.js?v=37879f67';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=37879f67';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=37879f67';
+import { compileWorld } from './world.js?v=c398a7ac';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=c398a7ac';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=c398a7ac';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=c398a7ac';
+import { findOffer } from './lists.js?v=c398a7ac';
+import { suggestPrompts } from './suggest.js?v=c398a7ac';
+import { readFact } from './facts.js?v=c398a7ac';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=c398a7ac';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=c398a7ac';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=37879f67';
-import { applicable } from './engine.js?v=37879f67';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=37879f67';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=37879f67';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=37879f67';
-import { complete } from './complete.js?v=37879f67';
-import { haptic, shareText, canShare, setHaptics } from './native.js?v=37879f67';
-import { voiceSupport, startListening } from './voice.js?v=37879f67';
-import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=37879f67';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=37879f67';
+} from './data.js?v=c398a7ac';
+import { applicable } from './engine.js?v=c398a7ac';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=c398a7ac';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=c398a7ac';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=c398a7ac';
+import { complete } from './complete.js?v=c398a7ac';
+import { haptic, shareText, canShare, setHaptics } from './native.js?v=c398a7ac';
+import { voiceSupport, startListening } from './voice.js?v=c398a7ac';
+import { CONTENT, PATCHES, contentLabel, contentCounts, patchesSince } from './content.js?v=c398a7ac';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=c398a7ac';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -670,11 +670,14 @@ function renderSheet() {
   if (!s.open) { sh.hidden = true; return; }
   const body = $('#sheetBody'), top = body.scrollTop;
   sh.classList.toggle('cart', s.mode === 'cart');
-  sh.classList.toggle('full', s.mode === 'start' || s.mode === 'item');
+  sh.classList.toggle('full', s.mode === 'start' || s.mode === 'item' || s.mode === 'check');
   const acts = $('#sheetActs'); if (acts) acts.innerHTML = s.mode === 'cart' ? `${canShare() ? '<button class="sheet-x" data-act="cart-share" aria-label="Share the cart"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></svg></button>' : ''}<button class="sheet-x" data-act="cart-copy" aria-label="Copy the cart as text"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button>` : '';
   if (s.mode === 'cart') {
     $('#sheetTitle').textContent = 'Cart';
     body.innerHTML = cartHtml();
+  } else if (s.mode === 'check') {
+    $('#sheetTitle').textContent = 'Check prices';
+    body.innerHTML = checkHtml();
   } else if (s.mode === 'start') {
     $('#sheetTitle').textContent = 'Start with buttons';
     body.innerHTML = startHtml();
@@ -938,6 +941,30 @@ function resolveMeans(text) {
   return m ? 'mod:' + m.id : null;
 }
 
+// ---------- checking the estimates ----------
+// Some prices are estimates (tagged derived). This walks through them one at a time: looks right, too high, too low, or type your own.
+const isEst = e => (e.tags || []).includes('derived') && e.src !== 'user' && !e.isCategory && !e.curve && !e.perMile;
+const estTotal = () => ctx.entries.filter(isEst).length;
+const estDone = () => ctx.entries.filter(e => isEst(e) && world.checked[e.id]).length;
+function checkQueue() {
+  const order = id => { const g = FLOW_GROUPS.findIndex(x => x[2].includes(catOf({ ...ctx.byId.get(id) }))); return g < 0 ? 99 : g; };
+  return ctx.entries.filter(e => isEst(e) && !world.checked[e.id] && !(st.checkSkip || []).includes(e.id)).sort((a, b) => order(a.id) - order(b.id) || a.name.localeCompare(b.name));
+}
+function checkHtml() {
+  const q = checkQueue(), done = estDone(), total = estTotal();
+  const bar = `<div class="chkbar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}"><i style="width:${total ? (100 * done / total).toFixed(1) : 0}%"></i></div><p class="mini">${done} of ${total} checked</p>`;
+  if (!q.length) return bar + `<div class="chkdone"><h3>${total ? 'All checked' : 'Nothing to check here'}</h3><p>${total ? 'Every estimate in this world has been looked at. Your corrections are your prices now.' : 'This world has no estimated prices.'}</p><button class="btn primary" data-act="chk-close">Done</button></div>`;
+  const e = q[0], base = candidateFromEntry(e, ctx), now = st.chkPrice && st.chkPrice.id === e.id ? st.chkPrice.bu : (base ? base.bu : 0);
+  const changed = st.chkPrice && st.chkPrice.id === e.id && Math.abs(st.chkPrice.bu / (base ? base.bu : 1) - 1) > 0.005;
+  const unit = e.unit === 'each' ? 'each' : 'per ' + (timeUnit(e) ? timeUnit(e).word : e.unit);
+  const grp = (FLOW_GROUPS.find(x => x[2].includes(catOf(e))) || [])[1] || '';
+  return bar + `<div class="chkcard"><div class="mini">${esc(grp)}</div><h3>${esc(e.name)}</h3>
+    <div class="chkprice">${esc(money(now))}<small>${esc(unit)}</small></div>
+    ${changed ? `<p class="mini">You moved it from ${esc(money(base.bu))}.</p>` : `<p class="mini">${esc(e.basis || 'An estimate for a typical table.')}</p>`}
+    <button class="cta" data-act="chk-ok">${changed ? 'Use this price' : 'Looks right'}</button>
+    <div class="chkrow"><button class="btn" data-act="chk-adj" data-f="0.75">Too high</button><button class="btn" data-act="chk-adj" data-f="1.33">Too low</button><button class="btn" data-act="chk-skip">Not sure</button></div>
+    <div class="hgin"><input class="field" id="chkIn" inputmode="decimal" placeholder="Or type a price, like 4 gp" autocapitalize="none" autocomplete="off" spellcheck="false" aria-label="Type a price"><button class="btn primary" data-act="chk-type">Set</button></div></div>`;
+}
 // a custom world: where it began, what has changed since, and whose prices of yours now sit on top of list entries
 function baseBlock() {
   const w = world; if (isCalibrated(w)) return '';
@@ -957,7 +984,7 @@ function baseBlock() {
 }
 const calNote = () => (isCalibrated(world) ? `<div class="calnote"><b>${esc(world.name)}</b> is a calibrated world (${esc(contentLabel())}). Its lists and money stay fixed so prices stay trustworthy. Your own items, words and facts still apply.<button class="btn" data-act="w-customize">Make my own copy to change them</button></div>` : '');
 const PAGES = {
-  World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['My changes', 'Changes']] },
+  World: { title: 'World settings', subs: ['Item lists', 'Money', 'Economy', 'Dials', 'Check prices', 'My changes'], jump: [['Item lists', 'Lists'], ['Money', 'Money'], ['Economy', 'Economy'], ['Dials', 'Dials'], ['Check prices', 'Check'], ['My changes', 'Changes']] },
 };
 function worldPicker() {
   const cal = isCalibrated(world);
@@ -1073,6 +1100,10 @@ function buildSettingsHtml() {
     ${ctx.entries.some(e => e.group === 'rent') ? `<label class="dialrow"><span class="dt"><b>"Rent"</b><span class="mini">Which rental it prices.</span></span><select class="field" data-bind="defaults.rent">${ctx.entries.filter(e => e.group === 'rent').map(e => `<option value="${esc(e.id)}"${w.defaults.rent === e.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label>` : ''}
   </div></details>
 
+  <details class="sect" data-sec="Check prices"${op('Check prices')}><summary><h3>Check prices</h3><span class="sv">${estDone()} of ${estTotal()}</span></summary><div class="sbody">
+    <p>Some prices here are estimates. Look through them one at a time and say what feels right for your table. Anything you correct becomes your price.</p>
+    <button class="btn primary" data-act="chk-open">${estDone() ? 'Keep checking' : 'Start checking'}</button>${estDone() ? '<button class="linkbtn" data-act="chk-reset">Start over</button>' : ''}
+  </div></details>
   <details class="sect" data-sec="My changes"${op('My changes')}><summary><h3>My changes</h3><span class="sv">${w.items.length + w.vocabulary.length + Object.keys(w.overrides).length + Object.keys(w.baseOverrides).length || ''}</span></summary><div class="sbody">${baseBlock()}
     <div class="factbox"><div class="factrow"><input class="field" id="factIn" value="${esc(st.fact.text)}" placeholder="a healing potion costs 40 gp" aria-label="Tell it a fact" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"><button class="btn primary" data-act="fact-go">Add</button></div>
       ${st.fact.err ? `<p class="ferr">${esc(st.fact.err)}</p>` : ''}${factPreview()}</div>
@@ -1113,7 +1144,12 @@ function guessAll() {
   return [tc, ...g.cands, ...kindComps.filter(c => !seen.has(c.id)).slice(0, Math.max(0, 5 - g.cands.length)), ...found];
 }
 function toast(msg, undo) {
-  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  const t = $('#toast');
+  // sit above whatever is at the bottom (the input dock, or the cart's total bar), never on top of it
+  const sheet = $('#sheet'), anchor = sheet && !sheet.hidden ? (sheet.classList.contains('cart') ? sheet.querySelector('.cfoot') : null) : document.querySelector('.dock');
+  const r = anchor && anchor.getBoundingClientRect();
+  t.style.bottom = r ? Math.max(18, window.innerHeight - r.top + 10) + 'px' : '';
+  t.textContent = msg; t.hidden = false;
   if (undo) { const b = document.createElement('button'); b.className = 'tundo'; b.textContent = 'Undo'; b.onclick = () => { undo(); t.hidden = true; }; t.append(' ', b); }
   clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, undo ? 4200 : 2200);
 }
@@ -1319,6 +1355,15 @@ document.addEventListener('click', e => {
     case 'w-newtoggle': st.wnew = true; renderDrawer(); break;
     case 'w-open-preset': { st.wmodal = false; let w = S.worlds.find(x => x.preset === d.v && !x.custom); if (!w) { w = presetWorld(d.v); if (!w) break; w.id = uniqueWorldId(w.id); S.worlds.push(w); } useWorld(w.id); persist(); afterWorldSwitch(); break; }
     case 'w-new-preset': { st.wmodal = false; st.wnew = false; const w = presetWorld(d.v); if (!w) break; const base = w.name; delete w.preset; w.custom = true; w.based = d.v; w.id = uniqueWorldId(w.id); const n = S.worlds.filter(x => x.custom && x.name.startsWith(base + ' custom')).length; w.name = base + ' custom' + (n ? ' ' + (n + 1) : ''); S.worlds.push(w); useWorld(w.id); persist(); afterWorldSwitch(); toast('Started ' + w.name + '. Its lists and money are yours to change.'); break; }
+    case 'chk-open': st.checkSkip = []; st.chkPrice = null; closeDrawer(); st.sheet = { open: true, mode: 'check' }; renderSheet(); break;
+    case 'chk-close': st.sheet.open = false; st.chkPrice = null; renderSheet(); break;
+    case 'chk-reset': world.checked = {}; persist(); renderDrawer(); break;
+    case 'chk-skip': { const e = checkQueue()[0]; if (e) { (st.checkSkip = st.checkSkip || []).push(e.id); st.chkPrice = null; renderSheet(); } break; }
+    case 'chk-adj': { const e = checkQueue()[0]; if (!e) break; const base = candidateFromEntry(e, ctx), cur0 = st.chkPrice && st.chkPrice.id === e.id ? st.chkPrice.bu : base.bu; st.chkPrice = { id: e.id, bu: niceRound(cur0 * +d.f, 2) }; renderSheet(); break; }
+    case 'chk-type': { const e = checkQueue()[0], v = parseMoney(String(($('#chkIn') || {}).value || '').toLowerCase(), cur()); if (!e) break; if (!(v > 0)) { toast('Try a price like "4 gp".'); break; } st.chkPrice = { id: e.id, bu: v }; renderSheet(); break; }
+    case 'chk-ok': { const e = checkQueue()[0]; if (!e) break; const base = candidateFromEntry(e, ctx), mv = st.chkPrice && st.chkPrice.id === e.id && Math.abs(st.chkPrice.bu / base.bu - 1) > 0.005;
+      if (mv) { world.baseOverrides[e.id] = baseFor(ctx, e.id, st.chkPrice.bu); world.checked[e.id] = 'edit'; st.chkPrice = null; worldChanged(); } else { world.checked[e.id] = 'ok'; st.chkPrice = null; persist(); }
+      renderSheet(); break; }
     case 'w-settle': world.content = CONTENT.id; persist(); renderDrawer(); toast('Marked as checked against ' + contentLabel() + '.'); break;
     case 'w-rebase': {
       const base = WORLD_PRESETS[world.based] && WORLD_PRESETS[world.based](); if (!base) break;

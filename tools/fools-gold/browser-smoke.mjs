@@ -8,7 +8,7 @@ const browser = await chromium.launch();
 const errors = [];
 let failed = 0;
 const ok = (n, c, d) => { if (!c) { failed++; console.log('FAIL', n, d ?? ''); } else console.log('ok  ', n); };
-const WP = { Money: 1, Economy: 1, Dials: 1, 'Item list': 'Item lists', 'Custom words': 'My changes', 'My items': 'My changes', Adjustments: 'My changes' };
+const WP = { Money: 1, Economy: 1, Dials: 1, 'Check prices': 1, 'Item list': 'Item lists', 'Custom words': 'My changes', 'My items': 'My changes', Adjustments: 'My changes' };
 const goPage = async (page, p) => {
   if (p === 'Your worlds') { if (!(await page.$('.jump'))) await page.click('.nrow[data-p="World"]'); if (!(await page.$('.wmodal'))) await page.click('.wsq'); if (!(await page.$('[data-act=w-new-preset]'))) await page.click('[data-act=w-newtoggle]'); return; }
   const k = WP[p];
@@ -226,6 +226,12 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   await page.fill('#q', '');
   await page.fill('#q', 'ball bearings');
   ok(name + ' ball bearings are in the list', /Ball bearings/.test(await page.textContent('.price .what')));
+  await page.click('#gear'); await goPage(page, 'Check prices'); 
+  await page.click('[data-act=chk-open]');
+  ok(name + ' Check prices shows an estimate to confirm', !!(await page.$('.chkcard')) && /\d/.test(await page.textContent('.chkprice')));
+  const c0 = await page.textContent('.chkcard h3'); await page.click('[data-act=chk-ok]');
+  ok(name + ' confirming moves to the next estimate', (await page.textContent('.chkcard h3')) !== c0);
+  await page.click('[data-act=chk-skip]'); await page.click('button[data-act=sheet-close]');
   // haggle
   await page.fill('#q', 'buy a longsword');
   const hp0 = await price(page);

@@ -1276,3 +1276,15 @@ html { touch-action: manipulation; }
 @media (prefers-reduced-motion: no-preference) { .mic.on { animation: micpulse 1.4s ease-in-out infinite; } @keyframes micpulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 .5rem color-mix(in srgb, var(--accent) 0%, transparent); } } }
 .cin .mic { width: 2.75rem; }
 .cin:has(.mic) { grid-template-columns: auto minmax(0, 1fr) auto; }
+
+/* ---- checking estimates: one card at a time ---- */
+.toast { border-radius: 16px; text-align: center; max-width: calc(100vw - 32px); }
+.chkbar { height: .375rem; border-radius: 999px; background: var(--surface2); overflow: hidden; }
+.chkbar i { display: block; height: 100%; background: var(--accent); }
+.chkcard { display: grid; gap: .75rem; padding: 1rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.chkcard h3, .chkdone h3 { margin: 0; font: 700 1.5rem/1.2 var(--font-display); }
+.chkprice { font: 700 2.5rem/1 var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.chkprice small { font: 500 1rem var(--font-body); color: var(--muted); margin-left: .5rem; }
+.chkrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+.chkrow .btn { min-height: 2.75rem; }
+.chkdone { display: grid; gap: .75rem; padding: 1rem 0; }
