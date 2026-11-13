@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../src/building/fools-gold');
 const check = process.argv.includes('--check');
+const fontFiles = readdirSync(join(root, 'fonts')).filter(f => f.endsWith('.woff2')).sort().map(f => 'fonts/' + f);
 const jsFiles = readdirSync(join(root, 'js')).filter(f => f.endsWith('.js')).sort().map(f => 'js/' + f);
 const files = ['index.html', 'css/style.css', 'sw.js', ...jsFiles];
 
@@ -28,7 +29,7 @@ function stamped(f, text) {
     return t.replace(/(<meta name="fg-build" content=")"/, `$1${H}"`);
   }
   if (f === 'sw.js') {
-    const list = ["'./'", "'index.html'", "'manifest.json'", "'favicon.svg'", "'icon-180.png'", "'icon-192.png'", "'icon-512.png'", `'css/style.css?v=${H}'`, ...jsFiles.map(j => `'${j}?v=${H}'`)].join(', ');
+    const list = ["'./'", "'index.html'", "'manifest.json'", "'favicon.svg'", "'icon-180.png'", "'icon-192.png'", "'icon-512.png'", "'css/fonts.css'", "'privacy.html'", "'support.html'", ...fontFiles.map(f => `'${f}'`), `'css/style.css?v=${H}'`, ...jsFiles.map(j => `'${j}?v=${H}'`)].join(', ');
     return norm(f, text).replace("const BUILD = '';", `const BUILD = '${H}';`).replace('const FILES = [];', `const FILES = [${list}];`);
   }
   if (f.endsWith('.js')) return strip(text).replace(/(from\s+'\.\/[\w-]+\.js)'/g, `$1?v=${H}'`);

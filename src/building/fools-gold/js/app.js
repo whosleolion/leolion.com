@@ -1,23 +1,23 @@
 // Fool's Gold UI. All logic lives in the engine/parser modules; this file wires the page.
-import { compileWorld } from './world.js?v=55606634';
-import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=55606634';
-import { estimate, findConflicts, timeUnit } from './engine.js?v=55606634';
-import { buildFields, applyNumber, tokenRoles } from './fields.js?v=55606634';
-import { findOffer } from './lists.js?v=55606634';
-import { suggestPrompts } from './suggest.js?v=55606634';
-import { readFact } from './facts.js?v=55606634';
-import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=55606634';
-import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=55606634';
+import { compileWorld } from './world.js?v=4cde8796';
+import { parse, queryToText, chipsFor, emptyQuery } from './parser.js?v=4cde8796';
+import { estimate, findConflicts, timeUnit } from './engine.js?v=4cde8796';
+import { buildFields, applyNumber, tokenRoles } from './fields.js?v=4cde8796';
+import { findOffer } from './lists.js?v=4cde8796';
+import { suggestPrompts } from './suggest.js?v=4cde8796';
+import { readFact } from './facts.js?v=4cde8796';
+import { emptyCart, addToCart, cartTotals, lineResult, readSentence, withShop, stripShop, unitsInCart, cartText } from './cart.js?v=4cde8796';
+import { formatMoney, formatRange, formatFull, parseMoney, niceRound } from './money.js?v=4cde8796';
 import {
   CATALOG,   ECONOMY_TAGS, MODIFIERS, GROUPS, RARITIES, TIER_NAMES, FAMILIES, SAMPLE_QUERIES, WORLD_PRESETS, CURRENCY_PRESETS, currencyPresetOf, SRD_ATTRIBUTION, slug,
-} from './data.js?v=55606634';
-import { applicable } from './engine.js?v=55606634';
-import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=55606634';
-import { parseSetting, baseFor, storedFor } from './setting.js?v=55606634';
-import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=55606634';
-import { complete } from './complete.js?v=55606634';
-import { CONTENT, contentLabel, contentCounts } from './content.js?v=55606634';
-import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=55606634';
+} from './data.js?v=4cde8796';
+import { applicable } from './engine.js?v=4cde8796';
+import { load, save, normalizeWorld, newItemId, presetWorld, isCalibrated, CALIBRATED } from './store.js?v=4cde8796';
+import { parseSetting, baseFor, storedFor } from './setting.js?v=4cde8796';
+import { candidatesFor, candidateFromEntry, comparablesFor, previewWith, storedPrice, newItemFrom } from './guess.js?v=4cde8796';
+import { complete } from './complete.js?v=4cde8796';
+import { CONTENT, contentLabel, contentCounts } from './content.js?v=4cde8796';
+import { sameKind, guessScale, inferTags, tagCandidate, rowsFor, optionEffects, defaultsOf, rowLabel, KINDS } from './appraise.js?v=4cde8796';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1001,7 +1001,8 @@ function buildSettingsHtml() {
       <label class="listrow"><span class="lt"><b>Science fiction</b><span class="mini">Blasters, cyberware, ships, station rent and hired crew, priced in credits.</span></span><input type="checkbox" data-bind="list.scifi"${w.lists.includes('scifi') ? ' checked' : ''}></label>
       <label class="listrow"><span class="lt"><b>Modern day</b><span class="mini">Rent, groceries, flights, doctors and cars at current US prices. Pair it with US dollars under Money.</span></span><input type="checkbox" data-bind="list.modern"${w.lists.includes('modern') ? ' checked' : ''}></label>
     </div>
-  </div></fieldset></div></details>
+  </div></fieldset>
+    <label class="listrow"><span class="lt"><b>Crime and underworld</b><span class="mini">Forged papers, bribes, hired killers, suppressors and heist crew, for heist and noir games. Off by default.</span></span><input type="checkbox" data-bind="underworld"${w.underworld ? ' checked' : ''}></label></div></details>
 
   <details class="sect" data-sec="Money"${op('Money')}><summary><h3>Money</h3><span class="sv">${esc(w.currency.symbol ? 'US dollars' : dens.map(d => d.id).join(' / '))}</span></summary><div class="sbody">${calNote()}<fieldset class="locked"${isCalibrated(w) ? ' disabled' : ''}>
     ${dens.map((d, i) => `<div class="coin"><div class="denrow"><label class="lab">Short<input class="field" data-bind="den.${i}.id" value="${esc(d.id)}"></label><label class="lab">Name<input class="field" data-bind="den.${i}.name" value="${esc(d.name)}"></label>${dens.length > 1 ? `<button class="xbtn" data-act="w-del-den" data-i="${i}" aria-label="Remove coin">&times;</button>` : '<span></span>'}</div>
@@ -1059,6 +1060,7 @@ function buildSettingsHtml() {
     <p>A game tool by Firebird Games.<br>&copy; 2026 Firebird Games.</p>
     <p class="fine">${esc(SRD_ATTRIBUTION)}</p>
     ${builtAs() ? `<p class="fine">Build ${esc(builtAs())}</p>` : ''}
+    <p class="fine"><a href="privacy.html">Privacy policy</a> &middot; <a href="support.html">Support</a></p>
     <p class="fine">Content ${esc(contentLabel())} &middot; ${esc(String(contentCounts(CATALOG).total))} items in four lists</p></div>
     <details class="whatsnew"><summary>What is in ${esc(contentLabel())}: ${esc(CONTENT.title)}</summary><ul>${CONTENT.lines.map(([k, s]) => `<li><b>${esc(k)}</b> ${esc(s)}</li>`).join('')}</ul></details>
   </div></div></details>`;
@@ -1341,6 +1343,7 @@ document.addEventListener('change', e => {
     worldChanged(); return;
   }
   else if (p[0] === 'den') { const d = w.currency.denominations[+p[1]]; if (p[2] === 'bu') d.bu = Math.max(0.01, +t.value || 1); else { d[p[2]] = t.value.trim() || d[p[2]]; if (p[2] === 'name') d.plural = d.name.endsWith('s') ? d.name : d.name + 's'; } }
+  else if (bind === 'underworld') w.underworld = !!t.checked;
   else if (bind === 'belowSmallest') w.currency.belowSmallest = t.value;
   else if (bind === 'note') w.currency.note = t.value;
   else if (bind === 'wage') { const v = parseMoney(t.value, w.currency); if (v > 0) w.anchors.wage = v; }
@@ -1403,8 +1406,6 @@ function applySkin() {
   const sk = window.__FG_SKIN || S.skin, k = sk && SKIN_FONTS[sk] ? sk : null;
   if (k) {
     document.documentElement.dataset.skin = k;
-    if (!document.getElementById('skinFont')) { const l = document.createElement('link'); l.id = 'skinFont'; l.rel = 'stylesheet'; document.head.appendChild(l); }
-    document.getElementById('skinFont').href = 'https://fonts.googleapis.com/css2?' + SKIN_FONTS[k] + '&display=swap';
   } else delete document.documentElement.dataset.skin;
 }
 applySkin();

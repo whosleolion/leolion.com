@@ -1,5 +1,5 @@
-import { scifiEntries } from './scifi.js?v=55606634';
-import { libraryEntries, modernLibrary, modernWorld, modernEveryday, srdGearExtra } from './library.js?v=55606634';
+import { scifiEntries } from './scifi.js?v=4cde8796';
+import { libraryEntries, modernLibrary, modernWorld, modernEveryday, srdGearExtra, pyrite11, pyrite11Modern } from './library.js?v=4cde8796';
 // Fool's Gold data: catalog, modifiers, economy tags, presets.
 // All money is in Base Units (BU). 1 BU = 1 copper piece by default.
 // SRD rows follow the 5e SRD 5.1 equipment tables (CC-BY-4.0). Verify before publishing.
@@ -128,11 +128,11 @@ const coreEntries = [
     'Wizard for hire;12gp;day;magic;wizard, mage, hedge wizard, mage for hire, sorcerer', 'Spy;10gp;day;;informant, agent', 'Thug;1gp;day;combat;ruffian, muscle',
   ]),
   ...rows('spell', 'core', ['spell', 'magic', 'service'], [
-    'Cantrip casting;15gp;each;;cantrip', '1st level spell casting;40gp;each;;1st level spell, first level spell', '2nd level spell casting;90gp;each;;2nd level spell, second level spell',
-    '3rd level spell casting;220gp;each;;3rd level spell, third level spell', '4th level spell casting;500gp;each;;4th level spell, fourth level spell',
-    '5th level spell casting;1200gp;each;;5th level spell, fifth level spell', '6th level spell casting;2800gp;each;;6th level spell, sixth level spell',
-    '7th level spell casting;6500gp;each;;7th level spell, seventh level spell', '8th level spell casting;15000gp;each;;8th level spell, eighth level spell',
-    '9th level spell casting;35000gp;each;;9th level spell, ninth level spell',
+    'Cantrip casting;15gp;each;;cantrip, fire bolt, light, mage hand, prestidigitation, sacred flame, mending, guidance, minor illusion, druidcraft', '1st level spell casting;40gp;each;;1st level spell, first level spell, cure wounds, healing word, healing spell, magic missile, shield spell, bless, detect magic, sleep, burning hands, identify, feather fall, charm person, thunderwave, mage armor, find familiar', '2nd level spell casting;90gp;each;;2nd level spell, second level spell, invisibility, misty step, lesser restoration, web, hold person, scorching ray, darkness, knock, spiritual weapon, silence, augury',
+    '3rd level spell casting;220gp;each;;3rd level spell, third level spell, fireball, lightning bolt, counterspell, dispel magic, revivify, fly, haste, remove curse, speak with dead, animate dead, tongues, clairvoyance, dispel curse', '4th level spell casting;500gp;each;;4th level spell, fourth level spell, polymorph, greater invisibility, dimension door, banishment, stoneskin, wall of fire, death ward, locate creature',
+    '5th level spell casting;1200gp;each;;5th level spell, fifth level spell, raise dead, cone of cold, wall of force, scrying, greater restoration, teleportation circle, animate objects, commune, contact other plane', '6th level spell casting;2800gp;each;;6th level spell, sixth level spell, disintegrate, heal, true seeing, chain lightning, globe of invulnerability, find the path, harm, word of recall',
+    '7th level spell casting;6500gp;each;;7th level spell, seventh level spell, resurrection, teleport, plane shift, finger of death, forcecage, etherealness, regenerate', '8th level spell casting;15000gp;each;;8th level spell, eighth level spell, power word stun, mind blank, sunburst, earthquake, antimagic field, dominate monster',
+    '9th level spell casting;35000gp;each;;9th level spell, ninth level spell, wish, true resurrection, meteor swarm, power word kill, time stop, gate',
   ]),
   // Property
   ...rows('property', 'core', ['property'], [
@@ -210,7 +210,7 @@ const modernEntries = [
     'Childcare;1400;month;;daycare, day care',
   ], { noTier: true }),
   ...modern('service', ['service', 'food', 'meal'], [
-    'Coffee;4.50;;;latte, espresso', 'Fast food meal;13;;;burger, fast food', 'Restaurant meal;28;;;dinner, lunch, breakfast, meal, restaurant, casual dinner, sit down meal',
+    'Coffee;4.50;;;latte, espresso', 'Fast food meal;13;;;fast food, drive through', 'Restaurant meal;28;;;dinner, lunch, breakfast, meal, restaurant, casual dinner, sit down meal',
     'Fine dining dinner;140;;;fancy dinner, tasting menu, fine dining, upscale dinner', 'Pizza;22', 'Sandwich;11;;;sub',
   ]),
   ...modern('service', ['service', 'food'], ['Weekly groceries;150;week;;groceries, grocery shopping, grocery run']),
@@ -221,7 +221,7 @@ const modernEntries = [
   ]),
   ...modern('service', ['service', 'transport'], ['Rental car;70;day;;car rental, hire car']),
   { id: 'travel.intercity-train', name: 'Intercity train', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 28, mpd: 500, tags: ['transport', 'rail'], aliases: ['train', 'train ticket', 'train ride', 'railway', 'rail', 'amtrak style train'], basis: 'Fool\'s Gold estimate: about 28 cents a mile on a typical intercity line, 500 miles in a long day.' },
-  { id: 'travel.intercity-bus', name: 'Intercity bus', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 11, mpd: 500, tags: ['transport', 'coach'], aliases: ['bus', 'bus ticket', 'coach bus', 'long distance bus'], basis: 'Fool\'s Gold estimate: about 11 cents a mile.' },
+  { id: 'travel.intercity-bus', name: 'Intercity bus', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 11, mpd: 500, tags: ['transport', 'coach'], aliases: ['coach bus', 'long distance bus', 'intercity bus ticket'], basis: 'Fool\'s Gold estimate: about 11 cents a mile.' },
   { id: 'travel.commercial-flight', name: 'Commercial flight', kind: 'travel', src: 'modern', group: 'travel', unit: 'day', perMile: 14, mpd: 2400, tags: ['transport', 'air'], aliases: ['flight', 'plane', 'plane ticket', 'airplane', 'airline', 'air ticket', 'flight ticket'], basis: 'Fool\'s Gold estimate: about 14 cents a mile, 2,400 miles in a day of travel.' },
   ...modern('labor', ['labor', 'unskilled'], ['Day laborer;120;day;;laborer, labourer, unskilled worker, hand, hired hand'], {}),
   ...modern('labor', ['labor', 'skilled'], [
@@ -266,7 +266,7 @@ export const FAMILIES = [
   { id: 'rent', name: 'Rent', kind: 'lodging', terms: ['rent', 'rental', 'lease', 'rent payment'], defaultKey: 'rent', fallback: 'lodging.m-apartment-rent-medium', ask: 'Kind of rental', offer: true },
 ];
 
-export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday, ...srdGearExtra];
+export const CATALOG = [...srdGoods, ...srdServices, ...coreEntries, ...magicCats, ...genericCats, componentCat, ...modernEntries, ...modernCats, ...scifiEntries, ...libraryEntries, ...modernLibrary, ...modernWorld, ...modernEveryday, ...srdGearExtra, ...pyrite11, ...pyrite11Modern];
 // Not every weapon or armor is metal; not everything labelled in the SRD tables is SRD.
 const NONMETAL = new Set(['Club', 'Greatclub', 'Quarterstaff', 'Sling', 'Shortbow', 'Longbow', 'Whip', 'Blowgun', 'Padded armor', 'Leather armor', 'Studded leather armor', 'Hide armor']);
 for (const e of CATALOG) {

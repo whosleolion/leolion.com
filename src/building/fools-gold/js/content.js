@@ -9,6 +9,18 @@ export const PATCH_KINDS = { Stock: 'Items added or removed', Tune: 'Prices or s
 
 export const PATCHES = [
   {
+    id: 'pyrite-1.1', name: 'Pyrite', patch: '1.1', date: '2026-11-14', title: 'Game-likely gear, spells and strongholds',
+    lines: [
+      ['Stock', 'Potions of greater, superior and supreme healing; the iconic magic items players ask for (bag of holding, cloak of protection, boots of elvenkind, ring of protection and others); strongholds (tower, fort, estate, temple, abbey, palace) at DMG-scale prices.'],
+      ['Words', 'About 90 spell names now point at their casting level, so "cast raise dead" is a 5th level casting and "scroll of fireball" is an uncommon scroll (cantrip and 1st common, 2nd and 3rd uncommon, 4th and 5th rare, 6th to 8th very rare, 9th legendary).'],
+      ['Stock', 'Sci-fi: pulse rifle, datapad (laptop), handheld scanner, recon drone; hacker, space suit, meal, drink and hotel room now answer to the words players use.'],
+      ['Stock', 'Eggs by the piece, so "a dozen eggs" is 12; a city bus fare ($2.75) alongside the intercity bus.'],
+      ['Fix', '"flask of oil" was priced as a tankard (2 cp); it is the oil flask (1 sp). "burger" is the $6 hamburger, not a $13 fast food meal.'],
+      ['World', 'Crime and underworld items (forged papers, bribes, hired killers, suppressors, heist crew) sit behind a setting in Item lists, off by default.'],
+      ['World', 'Golden prices: about 110 recorded phrases across the four calibrated worlds are now tests, so any price change shows up as a diff.'],
+    ],
+  },
+  {
     id: 'pyrite-1.0', name: 'Pyrite', patch: '1.0', date: '2026-11-13', title: 'The calibration baseline',
     lines: [
       ['Stock', 'Four item lists: SRD equipment, Fantasy (setting, services, hired help, magic categories), Sci-fi, and Modern day. About 980 entries.'],

@@ -1,0 +1,656 @@
+[
+ {
+  "world": "srd",
+  "input": "dagger",
+  "price": "2 gp",
+  "item": "Dagger"
+ },
+ {
+  "world": "srd",
+  "input": "longsword",
+  "price": "15 gp",
+  "item": "Longsword"
+ },
+ {
+  "world": "srd",
+  "input": "greatsword",
+  "price": "50 gp",
+  "item": "Greatsword"
+ },
+ {
+  "world": "srd",
+  "input": "longbow",
+  "price": "50 gp",
+  "item": "Longbow"
+ },
+ {
+  "world": "srd",
+  "input": "arrows",
+  "price": "5 cp",
+  "item": "Arrow"
+ },
+ {
+  "world": "srd",
+  "input": "shield",
+  "price": "10 gp",
+  "item": "Shield"
+ },
+ {
+  "world": "srd",
+  "input": "chain mail",
+  "price": "75 gp",
+  "item": "Chain mail"
+ },
+ {
+  "world": "srd",
+  "input": "plate armor",
+  "price": "1,500 gp",
+  "item": "Plate armor"
+ },
+ {
+  "world": "srd",
+  "input": "leather armor",
+  "price": "10 gp",
+  "item": "Leather armor"
+ },
+ {
+  "world": "srd",
+  "input": "backpack",
+  "price": "2 gp",
+  "item": "Backpack"
+ },
+ {
+  "world": "srd",
+  "input": "bedroll",
+  "price": "1 gp",
+  "item": "Bedroll"
+ },
+ {
+  "world": "srd",
+  "input": "rations",
+  "price": "5 sp",
+  "item": "Rations"
+ },
+ {
+  "world": "srd",
+  "input": "rope",
+  "price": "1 gp",
+  "item": "Hemp rope"
+ },
+ {
+  "world": "srd",
+  "input": "torch",
+  "price": "1 cp",
+  "item": "Torch"
+ },
+ {
+  "world": "srd",
+  "input": "lantern",
+  "price": "5 gp",
+  "item": "Hooded lantern"
+ },
+ {
+  "world": "srd",
+  "input": "flask of oil",
+  "price": "1 sp",
+  "item": "Oil flask"
+ },
+ {
+  "world": "srd",
+  "input": "ball bearings",
+  "price": "1 gp",
+  "item": "Ball bearings"
+ },
+ {
+  "world": "srd",
+  "input": "explorer's pack",
+  "price": "10 gp",
+  "item": "Explorer's pack"
+ },
+ {
+  "world": "srd",
+  "input": "healing potion",
+  "price": "50 gp",
+  "item": "Potion of healing"
+ },
+ {
+  "world": "srd",
+  "input": "potion of greater healing",
+  "price": "100 gp",
+  "item": "Potion of greater healing"
+ },
+ {
+  "world": "srd",
+  "input": "scroll of fireball",
+  "price": "190 gp",
+  "item": "Scroll"
+ },
+ {
+  "world": "srd",
+  "input": "bag of holding",
+  "price": "500 gp",
+  "item": "Bag of holding"
+ },
+ {
+  "world": "srd",
+  "input": "enchanted dagger",
+  "price": "120 gp",
+  "item": "Dagger"
+ },
+ {
+  "world": "srd",
+  "input": "rare enchanted dagger",
+  "price": "3,000 gp",
+  "item": "Dagger"
+ },
+ {
+  "world": "srd",
+  "input": "ring of protection",
+  "price": "3,500 gp",
+  "item": "Ring of protection"
+ },
+ {
+  "world": "srd",
+  "input": "night at an inn",
+  "price": "5 sp",
+  "item": "Inn room"
+ },
+ {
+  "world": "srd",
+  "input": "a meal",
+  "price": "3 sp",
+  "item": "Meal"
+ },
+ {
+  "world": "srd",
+  "input": "ale",
+  "price": "4 cp",
+  "item": "Ale mug"
+ },
+ {
+  "world": "srd",
+  "input": "riding horse",
+  "price": "75 gp",
+  "item": "Riding horse"
+ },
+ {
+  "world": "srd",
+  "input": "warhorse",
+  "price": "400 gp",
+  "item": "Warhorse"
+ },
+ {
+  "world": "srd",
+  "input": "cart",
+  "price": "15 gp",
+  "item": "Cart"
+ },
+ {
+  "world": "srd",
+  "input": "rowboat",
+  "price": "50 gp",
+  "item": "Rowboat"
+ },
+ {
+  "world": "srd",
+  "input": "sailing ship",
+  "price": "10,000 gp",
+  "item": "Sailing ship"
+ },
+ {
+  "world": "srd",
+  "input": "hire a skilled blacksmith for a day",
+  "price": "3 gp",
+  "item": "Blacksmith"
+ },
+ {
+  "world": "srd",
+  "input": "hire a guide for a day",
+  "price": "2 gp",
+  "item": "Guide"
+ },
+ {
+  "world": "srd",
+  "input": "hire a mercenary for a week",
+  "price": "21 gp",
+  "item": "Mercenary"
+ },
+ {
+  "world": "srd",
+  "input": "cast raise dead",
+  "price": "1,200 gp",
+  "item": "5th level spell casting"
+ },
+ {
+  "world": "srd",
+  "input": "a cottage",
+  "price": "200 gp",
+  "item": "Cottage"
+ },
+ {
+  "world": "srd",
+  "input": "a tower",
+  "price": "25,000 gp",
+  "item": "Fortified tower"
+ },
+ {
+  "world": "srd",
+  "input": "a sheep",
+  "price": "2 gp",
+  "item": "Sheep"
+ },
+ {
+  "world": "srd",
+  "input": "a cow",
+  "price": "10 gp",
+  "item": "Cow"
+ },
+ {
+  "world": "srd",
+  "input": "chicken",
+  "price": "2 cp",
+  "item": "Chicken"
+ },
+ {
+  "world": "srd",
+  "input": "a dozen eggs",
+  "price": "1 sp 2 cp",
+  "item": "Egg"
+ },
+ {
+  "world": "srd",
+  "input": "loaf of bread",
+  "price": "2 cp",
+  "item": "Bread loaf"
+ },
+ {
+  "world": "srd",
+  "input": "haircut",
+  "price": "5 cp",
+  "item": "Haircut"
+ },
+ {
+  "world": "srd",
+  "input": "assassin",
+  "price": "300 gp",
+  "item": "Assassin"
+ },
+ {
+  "world": "srd",
+  "input": "thieves' tools",
+  "price": "25 gp",
+  "item": "Thieves' tools"
+ },
+ {
+  "world": "modern",
+  "input": "coffee",
+  "price": "$4.50",
+  "item": "Coffee"
+ },
+ {
+  "world": "modern",
+  "input": "burger",
+  "price": "$6.00",
+  "item": "Hamburger"
+ },
+ {
+  "world": "modern",
+  "input": "pizza",
+  "price": "$22.00",
+  "item": "Pizza"
+ },
+ {
+  "world": "modern",
+  "input": "a beer",
+  "price": "$7.50",
+  "item": "Beer"
+ },
+ {
+  "world": "modern",
+  "input": "groceries for a week",
+  "price": "$150",
+  "item": "Weekly groceries"
+ },
+ {
+  "world": "modern",
+  "input": "taxi ride",
+  "price": "$26.00",
+  "item": "Taxi ride"
+ },
+ {
+  "world": "modern",
+  "input": "bus ticket",
+  "price": "$2.80",
+  "item": "City bus fare"
+ },
+ {
+  "world": "modern",
+  "input": "subway ride",
+  "price": "$3.00",
+  "item": "Subway ride"
+ },
+ {
+  "world": "modern",
+  "input": "motel room",
+  "price": "$95.00",
+  "item": "Motel room"
+ },
+ {
+  "world": "modern",
+  "input": "hotel room",
+  "price": "$170",
+  "item": "Hotel room"
+ },
+ {
+  "world": "modern",
+  "input": "apartment rent",
+  "price": "$1,700",
+  "item": "Apartment rent, medium"
+ },
+ {
+  "world": "modern",
+  "input": "plane ticket to europe",
+  "price": "$1,000",
+  "item": "International flight"
+ },
+ {
+  "world": "modern",
+  "input": "smartphone",
+  "price": "$850",
+  "item": "Smartphone"
+ },
+ {
+  "world": "modern",
+  "input": "laptop",
+  "price": "$1,200",
+  "item": "Laptop"
+ },
+ {
+  "world": "modern",
+  "input": "jeans",
+  "price": "$75.00",
+  "item": "Jeans"
+ },
+ {
+  "world": "modern",
+  "input": "sneakers",
+  "price": "$120",
+  "item": "Sneakers"
+ },
+ {
+  "world": "modern",
+  "input": "winter coat",
+  "price": "$180",
+  "item": "Winter coat"
+ },
+ {
+  "world": "modern",
+  "input": "haircut",
+  "price": "$38.00",
+  "item": "Haircut"
+ },
+ {
+  "world": "modern",
+  "input": "doctor visit",
+  "price": "$220",
+  "item": "Doctor visit"
+ },
+ {
+  "world": "modern",
+  "input": "lawyer for 2 hours",
+  "price": "$600",
+  "item": "Lawyer"
+ },
+ {
+  "world": "modern",
+  "input": "used car",
+  "price": "$12,000",
+  "item": "Used car"
+ },
+ {
+  "world": "modern",
+  "input": "new car",
+  "price": "$38,000",
+  "item": "Car"
+ },
+ {
+  "world": "modern",
+  "input": "bicycle",
+  "price": "$520",
+  "item": "Bicycle"
+ },
+ {
+  "world": "modern",
+  "input": "pistol",
+  "price": "$600",
+  "item": "Handgun"
+ },
+ {
+  "world": "modern",
+  "input": "kitchen knife",
+  "price": "$30.00",
+  "item": "Kitchen knife"
+ },
+ {
+  "world": "modern",
+  "input": "a dog",
+  "price": "$300",
+  "item": "Adopted dog"
+ },
+ {
+  "world": "modern",
+  "input": "a cat",
+  "price": "$150",
+  "item": "Adopted cat"
+ },
+ {
+  "world": "modern",
+  "input": "movie ticket",
+  "price": "$16.00",
+  "item": "Movie ticket"
+ },
+ {
+  "world": "modern",
+  "input": "wedding",
+  "price": "$35,000",
+  "item": "Wedding"
+ },
+ {
+  "world": "modern",
+  "input": "burner phone",
+  "price": "$45.00",
+  "item": "Burner phone"
+ },
+ {
+  "world": "modern",
+  "input": "lockpick set",
+  "price": "$25.00",
+  "item": "Lockpick set"
+ },
+ {
+  "world": "modern",
+  "input": "locksmith",
+  "price": "$150",
+  "item": "Locksmith call"
+ },
+ {
+  "world": "scifi",
+  "input": "pulse pistol",
+  "price": "900 credits",
+  "item": "Pulse pistol"
+ },
+ {
+  "world": "scifi",
+  "input": "pulse rifle",
+  "price": "1,400 credits",
+  "item": "Pulse rifle"
+ },
+ {
+  "world": "scifi",
+  "input": "vibro blade",
+  "price": "350 credits",
+  "item": "Vibro blade"
+ },
+ {
+  "world": "scifi",
+  "input": "medkit",
+  "price": "120 credits",
+  "item": "Medkit"
+ },
+ {
+  "world": "scifi",
+  "input": "oxygen canister",
+  "price": "45 credits",
+  "item": "Oxygen canister"
+ },
+ {
+  "world": "scifi",
+  "input": "space suit",
+  "price": "1,900 credits",
+  "item": "Pressure suit"
+ },
+ {
+  "world": "scifi",
+  "input": "cyberdeck",
+  "price": "3,400 credits",
+  "item": "Cyberdeck"
+ },
+ {
+  "world": "scifi",
+  "input": "cybernetic eye",
+  "price": "3,800 credits",
+  "item": "Cybernetic eye"
+ },
+ {
+  "world": "scifi",
+  "input": "laptop",
+  "price": "250 credits",
+  "item": "Datapad"
+ },
+ {
+  "world": "scifi",
+  "input": "interstellar passage for a week",
+  "price": "6,300 credits",
+  "item": "Interstellar passage"
+ },
+ {
+  "world": "scifi",
+  "input": "docking fee",
+  "price": "120 credits",
+  "item": "Docking fee"
+ },
+ {
+  "world": "scifi",
+  "input": "hire a ship pilot for a week",
+  "price": "2,900 credits",
+  "item": "Ship pilot"
+ },
+ {
+  "world": "scifi",
+  "input": "hire a hacker for 2 days",
+  "price": "1,100 credits",
+  "item": "Hacker for hire"
+ },
+ {
+  "world": "scifi",
+  "input": "station apartment rent",
+  "price": "1,900 credits",
+  "item": "Station apartment rent"
+ },
+ {
+  "world": "scifi",
+  "input": "meal",
+  "price": "12 credits",
+  "item": "Station meal"
+ },
+ {
+  "world": "scifi",
+  "input": "drink",
+  "price": "11 credits",
+  "item": "Cantina drink"
+ },
+ {
+  "world": "scifi",
+  "input": "scanner",
+  "price": "300 credits",
+  "item": "Handheld scanner"
+ },
+ {
+  "world": "scifi",
+  "input": "drone",
+  "price": "900 credits",
+  "item": "Recon drone"
+ },
+ {
+  "world": "scifi",
+  "input": "hotel room",
+  "price": "210 credits",
+  "item": "Station hotel"
+ },
+ {
+  "world": "vcm",
+  "input": "longsword",
+  "price": "11 gp",
+  "item": "Longsword"
+ },
+ {
+  "world": "vcm",
+  "input": "revolver",
+  "price": "45 gp",
+  "item": "Revolver"
+ },
+ {
+  "world": "vcm",
+  "input": "healing potion",
+  "price": "26 gp",
+  "item": "Potion of healing"
+ },
+ {
+  "world": "vcm",
+  "input": "night at an inn",
+  "price": "5 sp",
+  "item": "Inn room"
+ },
+ {
+  "world": "vcm",
+  "input": "hire a skilled blacksmith for a week",
+  "price": "26 gp",
+  "item": "Blacksmith"
+ },
+ {
+  "world": "vcm",
+  "input": "airship passage",
+  "price": "32 gp",
+  "item": "Airship passage"
+ },
+ {
+  "world": "vcm",
+  "input": "steamer passage",
+  "price": "11 gp",
+  "item": "Steamer passage"
+ },
+ {
+  "world": "vcm",
+  "input": "meal",
+  "price": "3 sp 4 cp",
+  "item": "Meal"
+ },
+ {
+  "world": "vcm",
+  "input": "newspaper",
+  "price": "1 cp",
+  "item": "Newspaper"
+ },
+ {
+  "world": "vcm",
+  "input": "wand",
+  "price": "100 gp",
+  "item": "Wand"
+ },
+ {
+  "world": "vcm",
+  "input": "a cottage",
+  "price": "290 gp",
+  "item": "Cottage"
+ }
+]

@@ -1,8 +1,8 @@
 // Compile a world definition into a working context: catalog, lexicon, helpers.
-import { listOf } from './lists.js?v=55606634';
+import { listOf } from './lists.js?v=4cde8796';
 import {
   CATALOG, MODIFIERS, FAMILIES, ECONOMY_TAGS, ACTION_TERMS, RARITY_TERMS, AURA_TERMS, TIER_TERMS, UNIT_TERMS, COUNT_TERMS, slug,
-} from './data.js?v=55606634';
+} from './data.js?v=4cde8796';
 
 export function stem(w) {
   w = w.toLowerCase();
@@ -58,7 +58,7 @@ export function worldLists(world) {
 export function compileWorld(world) {
   const lists = worldLists(world);
   const base = lists.includes('modern') && !lists.includes('fantasy') && !lists.includes('srd') && !lists.includes('scifi') ? 'modern' : 'other';
-  const entries = CATALOG.filter(e => e.src === 'modern' ? lists.includes('modern') : e.src === 'scifi' ? lists.includes('scifi') : (e.src === 'srd' && !e.generic) ? lists.includes('srd') : lists.includes('fantasy')).map(e => ({ ...e }));
+  const entries = CATALOG.filter(e => e.src === 'modern' ? lists.includes('modern') : e.src === 'scifi' ? lists.includes('scifi') : (e.src === 'srd' && !e.generic) ? lists.includes('srd') : lists.includes('fantasy')).filter(e => world.underworld || !(e.tags || []).includes('underworld')).map(e => ({ ...e }));
   // a dollar world counts cents, while the fantasy and sci-fi lists count roughly one coin to the dollar:
   // lift those entries by 100 so a 5 sp blanket reads as about $5, not 50 cents
   const cur = world.currency || {};

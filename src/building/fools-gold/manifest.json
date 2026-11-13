@@ -1,7 +1,7 @@
 {
   "name": "Fool's Gold",
   "short_name": "Fool's Gold",
-  "description": "A price estimator for game masters.",
+  "description": "A price estimator for game masters: type what the party wants to buy and get a believable price. Works offline. No accounts, no tracking.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -25,6 +25,21 @@
       "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
+    }
+  ],
+  "id": "./",
+  "categories": [
+    "utilities",
+    "games",
+    "productivity"
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Price something",
+      "short_name": "Price",
+      "url": "./index.html"
     }
   ]
 }

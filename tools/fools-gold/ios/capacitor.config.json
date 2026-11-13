@@ -1,0 +1,13 @@
+{
+  "appId": "nyc.firebird.foolsgold",
+  "appName": "Fool's Gold",
+  "webDir": "../../../src/building/fools-gold",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#0c0d0f",
+  "ios": {
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false,
+    "preferredContentMode": "mobile",
+    "scrollEnabled": false
+  }
+}

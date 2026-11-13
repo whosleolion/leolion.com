@@ -1,8 +1,8 @@
-import { normalizeCart } from './cart.js?v=55606634';
+import { normalizeCart } from './cart.js?v=4cde8796';
 // Local-first storage. Every access is guarded: storage can be blocked or empty.
-import { WORLD_PRESETS } from './data.js?v=55606634';
-import { CONTENT } from './content.js?v=55606634';
-import { compileWorld } from './world.js?v=55606634';
+import { WORLD_PRESETS } from './data.js?v=4cde8796';
+import { CONTENT } from './content.js?v=4cde8796';
+import { compileWorld } from './world.js?v=4cde8796';
 
 const KEY = 'foolsgold.v1';
 let mem = null;
@@ -121,6 +121,7 @@ export function normalizeWorld(w) {
   w.name = str(w.name).trim().slice(0, 80) || 'My world';
   w.preset = typeof w.preset === 'string' && WORLD_PRESETS[w.preset] ? w.preset : undefined;
   w.custom = !!w.custom || !w.preset;
+  w.underworld = !!w.underworld;
   w.based = typeof w.based === 'string' && WORLD_PRESETS[w.based] ? w.based : undefined;
   w.content = typeof w.content === 'string' ? w.content.slice(0, 40) : undefined;
   w.blurb = typeof w.blurb === 'string' ? w.blurb.slice(0, 200) : undefined;

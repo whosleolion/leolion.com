@@ -1,7 +1,7 @@
 // Plain-text parser: sentence -> Query. No AI. Dictionary matching, number parsing, slot filling.
-import { tokenize, stem } from './world.js?v=55606634';
-import { parseMoney, formatFull } from './money.js?v=55606634';
-import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=55606634';
+import { tokenize, stem } from './world.js?v=4cde8796';
+import { parseMoney, formatFull } from './money.js?v=4cde8796';
+import { NUMBER_WORDS, FILLERS, INTENSIFIERS, TIER_NAMES, RARITIES, ROUTE_TEXT, FAMILIES } from './data.js?v=4cde8796';
 
 const SKIP_SUGGEST = new Set(['unit', 'count', 'money']);
 const BIGNUM = { hundred: 100, thousand: 1000, million: 1000000, dozen: 12 };
@@ -189,6 +189,12 @@ export function parse(text, ctx) {
   const isComm = s => s.type === 'entry' && (() => { const e = ctx.byId.get(s.id); return e && (e.tags || []).some(t => t === 'trade' || t === 'raw'); })();
   // a raw material word next to a real item is a material (gold dagger), not a bullion order
   const hasNonComm = subs.some(s => !isComm(s));
+  // "scroll of fireball": a scroll of that spell. The spell's level sets the rarity (cantrip and 1st common, 2nd and 3rd uncommon, 4th and 5th rare, 6th to 8th very rare, 9th legendary)
+  const scrollP = subs.find(s => s.type === 'entry' && s.id === 'good.cat-scroll'), spellP = scrollP && subs.find(s => s.type === 'entry' && /^spell\./.test(s.id));
+  if (scrollP && spellP) {
+    const m = /^spell\.(\d)/.exec(spellP.id), lv = m ? +m[1] : /cantrip/.test(spellP.id) ? 0 : null;
+    if (lv != null) { if (!q.rarity) q.rarity = lv <= 1 ? 'common' : lv <= 3 ? 'uncommon' : lv <= 5 ? 'rare' : lv <= 8 ? 'very rare' : 'legendary'; subs.splice(subs.indexOf(spellP), 1); spellP.used = true; }
+  }
   subs.sort((a, b) => (hasNonComm ? (isComm(a) ? 1 : 0) - (isComm(b) ? 1 : 0) : 0) || (a.p.prio - b.p.prio) || (b.n - a.n) || (a.start - b.start));
   let subjectEntry = null;
   if (subs.length) {

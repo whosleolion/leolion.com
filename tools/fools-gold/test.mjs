@@ -689,5 +689,25 @@ t('22 no engine code names gp', !/'gp'|"gp"/.test(await (await import('node:fs')
   t('CW8 a custom copy is not calibrated', (() => { const w = pw('srd'); w.custom = true; delete w.preset; nw2(w); return !ic(w); })());
 }
 
+// ---- golden prices: the calibrated worlds give the recorded price for each recorded phrase ----
+{
+  const { table } = await import('./golden-update.mjs');
+  const { readFileSync } = await import('node:fs');
+  const want = JSON.parse(readFileSync(new URL('./golden.json', import.meta.url), 'utf8')), got = table();
+  const diff = want.map((w, i) => (got[i] && got[i].world === w.world && got[i].input === w.input && got[i].price === w.price && got[i].item === w.item ? null : `${w.world}: ${w.input} was ${w.price} (${w.item}), now ${got[i] && got[i].price} (${got[i] && got[i].item})`)).filter(Boolean);
+  t('GP1 golden prices hold (run tools/fools-gold/golden-update.mjs after a deliberate patch)', diff.length === 0 && got.length === want.length, '\n   ' + diff.slice(0, 12).join('\n   '));
+  t('GP2 no golden phrase is unknown', want.every(w => w.price !== 'unknown'));
+}
+
+// ---- underworld items stay out unless the world asks for them ----
+{
+  const { presetWorld: pw3, normalizeWorld: nw3 } = await import('../../src/building/fools-gold/js/store.js');
+  const off = pw3('modern'); nw3(off); const on = pw3('modern'); on.underworld = true; nw3(on);
+  const c0 = compileWorld(off), c1 = compileWorld(on);
+  t('UW1 off by default: forged papers and hitmen are not in a calibrated world', !c0.byId.has('good.m-fake-id') && !c0.byId.has('service.m-hitman') && !c0.entries.some(e => (e.tags || []).includes('underworld')));
+  t('UW2 on: they are, and they price', c1.byId.has('good.m-fake-id') && estimate(parse('fake id', c1).query, c1).ok);
+  t('UW3 the plain heist gear stays in either way', !!parse('lockpick set', c0).query.subject && !!parse('lockpick set', c1).query.subject);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

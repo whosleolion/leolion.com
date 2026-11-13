@@ -22,6 +22,7 @@ export const scifiEntries = [
     'Monoedge sword;1400;;;mono sword, edge sabre',
     'Combat baton;120;;;riot baton, breaker stick',
     'Slugthrower;450;;;slug pistol, cartridge pistol',
+    'Pulse rifle;1400;;;plasma rifle, battle rifle',
     'Autocarbine;1100;;;auto carbine, burst carbine',
     'Scattergun;700;;;breach shotgun, scatter gun',
     'Marksman rifle;2300;;;long rifle, sniper carbine',
@@ -45,7 +46,7 @@ export const scifiEntries = [
     'Ablative cloak;650;;;heat cloak, ablation cloak',
     'Riot helmet;180;;;visor helm, brow guard',
     'Deflector bracer;4200;;energy tech;shield bracer, barrier band',
-    'Pressure suit;1900;;;vac suit, void suit',
+    'Pressure suit;1900;;;vac suit, void suit, space suit, spacesuit',
   ]),
   ...s('good', ['tool', 'manufactured', 'crafted', 'tech'], [
     'Multitool;140;;;pocket kit, field driver',
@@ -196,13 +197,13 @@ export const scifiEntries = [
     'Regeneration treatment;9000;;tech;organ regrowth, cell therapy',
   ]),
   ...s('service', ['service', 'food', 'meal'], [
-    'Station meal;12;;;canteen meal, dock lunch',
+    'Station meal;12;;;canteen meal, dock lunch, meal, food, dinner, lunch',
     'Restaurant dinner;55;;luxury;orbital dinner, upscale meal',
-    'Cantina drink;11;;;bar round, canteen cup',
+    'Cantina drink;11;;;bar round, canteen cup, drink, a drink',
   ]),
   ...s('lodging', ['lodging'], [
     'Hab pod night;60;day;;sleep pod, capsule bunk',
-    'Station hotel;210;day;;orbital hotel, dock inn',
+    'Station hotel;210;day;;orbital hotel, dock inn, hotel, hotel room',
     'Luxury suite;1400;day;luxury;sky suite, grand suite',
     'Ship berth;90;day;;crew bunk, bunk space',
   ], { placeScale: 2 }),
@@ -222,7 +223,7 @@ export const scifiEntries = [
     'Ship pilot;420;day;;starpilot, helmsman',
     'Ship engineer;360;day;;drive tech, engine hand',
     'Field medic;320;day;medicine;combat medic, ship doctor',
-    'Hacker for hire;550;day;data;netrunner, intrusion specialist',
+    'Hacker for hire;550;day;data;netrunner, intrusion specialist, hacker, hackers',
     'Fixer;380;day;;broker, go between',
     'Mercenary;300;day;weapon;merc, hired gun',
     'Navigator;340;day;;astrogator, route plotter',
@@ -244,6 +245,11 @@ export const scifiEntries = [
     'Cargo hitch;220;day;ship;freighter ride, hitchhike ride',
     'Chartered courier;3800;day;ship;private charter, charter flight',
   ], { group: 'travel' }),
+  ...s('good', ['gadget', 'manufactured'], [
+    'Datapad;250;;;laptop, tablet, handheld computer, computer',
+    'Handheld scanner;300;;;scanner, bio scanner, tricorder',
+    'Recon drone;900;;;drone, scout drone, flying drone',
+  ]),
 ];
 const cats = [
   ['energy-weapon', 'Energy weapon', 1400, 'weapon energy manufactured crafted', 'blaster, ray gun, directed energy weapon'],

@@ -105,7 +105,7 @@ export const modernWorld = [
     'Router;80;;;wifi router', 'Printer;150', 'Monitor;200;;;computer monitor, screen', 'Keyboard;60', 'Walkie-talkie;40;;;walkie talkie, two-way radio, radio', 'Binoculars;80;;;field glasses', 'GPS unit;120;;;gps, satnav',
   ]),
   ...M('good', 'food', ['food'], [
-    'Loaf of bread;4;;;bread', 'Gallon of milk;4;;;milk', 'Egg;0.4;;;eggs', 'Hamburger;6;;;cheeseburger', 'Hot dog;4', 'Bottled water;2;;;water bottle, water', 'Soda;2;;;pop, soft drink, cola', 'Candy bar;2;;;chocolate bar, candy', 'Ice cream;5;;;ice cream cone',
+    'Loaf of bread;4;;;bread', 'Gallon of milk;4;;;milk', 'Egg;0.4;;;eggs', 'Hamburger;6;;;cheeseburger, burger', 'Hot dog;4', 'Bottled water;2;;;water bottle, water', 'Soda;2;;;pop, soft drink, cola', 'Candy bar;2;;;chocolate bar, candy', 'Ice cream;5;;;ice cream cone',
     'Bag of rice;12;;;rice', 'Block of cheese;6;;;cheese', 'Steak;18;;;steak dinner, ribeye', 'Bottle of whiskey;35;;;whiskey, whisky, liquor, bourbon', 'Cigar;12;;;cigars',
   ]),
   ...M('service', 'services', ['service'], [
@@ -123,13 +123,13 @@ export const modernEveryday = [
   ...M('service', 'ride', ['service', 'transport'], ['Rental van;90;day;;rent a van, van rental', 'Tow;150;;;tow truck, towing', 'Limo;300;;;limousine, limo rental', 'Ferry ticket;25;;;ferry', 'International flight;1000;;;plane ticket to europe, overseas flight, flight abroad', 'Gallon of gas;3.2;;;gas, gasoline, petrol, fuel']),
   ...M('good', 'heist', ['manufactured', 'tool', 'crafted'], [
     'Lockpick set;25;;;lockpick, lockpicks, lock pick, picks, lock picks', 'Zip ties;8;;;zip tie, cable ties, flex cuffs', 'Bolt cutters;40;;;bolt cutter', 'Duffel bag;40;;;duffle bag, gym bag, suitcase, luggage, briefcase', 'Night vision goggles;600;;;night vision, nvg', 'Ski mask;12;;;balaclava, mask, face mask',
-    'Disguise kit;60;;;wig, costume, fake mustache', 'Burner SIM;15;;;sim card, prepaid sim', 'USB drive;12;;;flash drive, thumb drive, usb stick', 'Toolbox;45;;;tool kit', 'Chainsaw;250', 'Welding torch;150;;;blowtorch, cutting torch', 'Gas mask;40;;;respirator', 'Hazmat suit;60;;;hazmat', 'Flare gun;40;;;signal flare', 'Surveillance bug;50;;;bug, wiretap, listening device',
-    'Lighter;3;;;matches, book of matches', 'Rope ladder;60', 'Glow sticks;8;;;glowsticks', 'Fake ID;150;;;forged id, fake license, fake driver license', 'Fake passport;2500;;;forged passport, forged documents, forged papers', 'Suppressor;600;;;silencer',
-    'Handgun, cheap;250;;;saturday night special, cheap pistol', 'Glock;650;;;glock 19, semi-automatic pistol, 9mm', 'Bandages;8;;;bandage, gauze, dressing', 'Antibiotics;40;;;antibiotic', 'Lawn mower;300;;;mower',
+    'Disguise kit;60;;;wig, costume, fake mustache', 'Burner SIM;15;;;sim card, prepaid sim', 'USB drive;12;;;flash drive, thumb drive, usb stick', 'Toolbox;45;;;tool kit', 'Chainsaw;250', 'Welding torch;150;;;blowtorch, cutting torch', 'Gas mask;40;;;respirator', 'Hazmat suit;60;;;hazmat', 'Flare gun;40;;;signal flare', 'Surveillance bug;50;;underworld;bug, wiretap, listening device',
+    'Lighter;3;;;matches, book of matches', 'Rope ladder;60', 'Glow sticks;8;;;glowsticks', 'Fake ID;150;;underworld;forged id, fake license, fake driver license', 'Fake passport;2500;;underworld;forged passport, forged documents, forged papers', 'Suppressor;600;;underworld;silencer',
+    'Handgun, cheap;250;;underworld;saturday night special, cheap pistol', 'Glock;650;;;glock 19, semi-automatic pistol, 9mm', 'Bandages;8;;;bandage, gauze, dressing', 'Antibiotics;40;;;antibiotic', 'Lawn mower;300;;;mower',
   ]),
   ...M('good', 'places', ['property'], ['Penthouse apartment;6000;month;;penthouse', 'Mansion;4000000;;;luxury mansion, estate', 'Yacht;400000;;;luxury yacht', 'Helicopter;1500000;;;chopper', 'Private jet;5000000;;;jet, learjet', 'Coffin;2500;;;casket']),
   ...M('good', 'foods', ['food'], ['Taco;3;;;tacos', 'Salad;9', 'Fries;4;;;french fries, chips', 'Sushi roll;10;;;sushi', 'Noodles;12;;;ramen, pad thai', 'Kebab;8;;;doner, gyro', 'Apple;1;;;apples', 'Energy drink;3;;;red bull, monster energy', 'Gum;2;;;chewing gum', 'Shot of whiskey;9;;;shot, a drink, drink', 'Takeout;18;;;take-out, takeaway, delivery food', 'Big Mac;6;;;mcdonalds, burger combo']),
-  ...M('service', 'crime', ['service', 'dangerous'], ['Hacker;800;day;;hack, hackers, black hat', 'Forger;500;;;document forger', 'Hitman;15000;;;assassin, hit man, contract killer', 'Getaway driver;600;day;;wheelman, driver for hire', 'Fixer;400;day;;fence', 'Cop bribe;300;;;bribe cop, pay off a cop, bribe', 'Official bribe;5000;;;bribe official, bribe a judge', 'Burglar;400;day;;thief, safecracker']),
+  ...M('service', 'crime', ['service', 'dangerous'], ['Hacker;800;day;underworld;hack, hackers, black hat', 'Forger;500;;underworld;document forger', 'Hitman;15000;;underworld;assassin, hit man, contract killer', 'Getaway driver;600;day;underworld;wheelman, driver for hire', 'Fixer;400;day;;fence', 'Cop bribe;300;;underworld;bribe cop, pay off a cop, bribe', 'Official bribe;5000;;underworld;bribe official, bribe a judge', 'Burglar;400;day;underworld;thief, safecracker']),
 ];
 
 // ---- adventuring gear and the contents of the standard packs (SRD prices) ----
@@ -142,7 +142,7 @@ function G(tags, list) {
 export const srdGearExtra = [
   ...G(['manufactured', 'crafted', 'adventuring'], [
     'Ball bearings;1gp;;;bag of ball bearings, ball bearing, bearings, bag of 1000 ball bearings', 'Abacus;2gp', 'Acid vial;25gp;;;acid, vial of acid', "Alchemist's fire;50gp;;;alchemist fire, flask of alchemists fire", 'Antitoxin;50gp;;medicine;vial of antitoxin', 'Barrel;2gp', 'Basket;4sp', 'Block and tackle;1gp;;;pulley',
-    'Glass bottle;2gp;;;bottle', 'Bucket;5cp;;;pail', 'Map or scroll case;1gp;;;scroll case, map case, case', 'Chalk;1cp;;;piece of chalk', 'Chest;5gp;;;trunk, strongbox', 'Tankard;2cp;;;flask, mug', 'Holy water;25gp;;;flask of holy water',
+    'Glass bottle;2gp;;;bottle', 'Bucket;5cp;;;pail', 'Map or scroll case;1gp;;;scroll case, map case, case', 'Chalk;1cp;;;piece of chalk', 'Chest;5gp;;;trunk, strongbox', 'Tankard;2cp;;;mug, flask or tankard', 'Holy water;25gp;;;flask of holy water',
     'Hunting trap;5gp;;;trap, bear trap', 'Jug;2cp;;;pitcher', 'Piton;5cp;;;pitons', 'Ten-foot pole;5cp;;;pole, 10 foot pole', 'Iron pot;2gp;;;pot, cooking pot', 'Quiver;1gp', "Merchant's scale;5gp;;;scale, balance", 'Sealing wax;5sp;;;wax, stick of wax',
     'Signet ring;5gp;;;seal ring', 'Iron spikes;1gp;;;spike, spikes, iron spike', 'String;1sp;;;ten feet of string, twine', 'Dice set;1sp;;;dice, a set of dice', 'Playing cards;5sp;;;deck of cards, card deck, cards', 'Marbles;1cp;;;bag of marbles, marble', 'Sledgehammer;2gp;;;sledge', 'Bag of sand;1cp;;;little bag of sand, sand'
   ]),
@@ -150,4 +150,19 @@ export const srdGearExtra = [
   ...G(['manufactured', 'pack', 'adventuring'], [
     "Burglar's pack;16gp;;;burglar pack, burglars kit", "Diplomat's pack;39gp;;;diplomat pack", "Dungeoneer's pack;12gp;;;dungeoneer pack, dungeon pack", "Entertainer's pack;40gp;;;entertainer pack", "Explorer's pack;10gp;;;explorer pack, adventurers pack, adventurer pack", "Priest's pack;19gp;;;priest pack", "Scholar's pack;40gp;;;scholar pack",
   ]),
+];
+
+// ---- Pyrite 1.1: potions and iconic items players ask for, strongholds, farm goods, city transport ----
+export const pyrite11 = [
+  ...G(['potion', 'consumable', 'magic', 'derived'], ['Potion of greater healing;100gp;;;greater healing potion, greater healing', 'Potion of superior healing;500gp;;;superior healing potion, superior healing', 'Potion of supreme healing;5000gp;;;supreme healing potion, supreme healing']),
+  ...G(['magic', 'wondrous', 'derived'], [
+    'Bag of holding;500gp;;;bag of holding, haversack of holding', 'Cloak of protection;500gp', 'Boots of elvenkind;500gp;;;elven boots', 'Cloak of elvenkind;500gp;;;elven cloak', 'Gauntlets of ogre power;500gp', 'Rope of climbing;500gp', 'Ring of protection;3500gp;;;protection ring',
+  ]),
+  ...G(['property', 'derived'], []).concat([
+    ['Merchant house;5000gp;;;trading house, counting house'], ['Guildhall;5000gp;;;guild hall'], ['Fortified tower;25000gp;;;tower, watchtower, wizard tower'], ['Frontier fort;15000gp;;;small fort, frontier fort'], ['Noble estate;25000gp;;;country estate'], ['Temple;50000gp;;;church, shrine hall'], ['Abbey;50000gp;;;monastery'], ['Palace;500000gp;;;royal palace'],
+  ].map(([line]) => { const [name, price, unit, more, aliases] = line.split(';').map(x => x.trim()); return { id: 'property.l-' + slug(name), name, kind: 'property', src: 'core', bu: parseP(price), unit: 'each', tags: ['property', 'derived'], aliases: aliases.split(',').map(x => x.trim()), spread: 0.3, group: 'property', library: 'strongholds' }; })),
+  ...G(['plant', 'food', 'derived'], ['Egg;1cp;;;eggs']),
+];
+export const pyrite11Modern = [
+  ...M('service', 'ride', ['service', 'transport'], ['City bus fare;2.75;;;bus ticket, bus fare, bus ride, bus, city bus, local bus']),
 ];

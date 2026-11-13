@@ -22,6 +22,7 @@ const price = page => page.textContent('.pricebtn .num');
 for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'dark'], ['desktop-light', { width: 1100, height: 900 }, 'light']]) {
   const ctx = await browser.newContext({ viewport: vp, colorScheme: scheme, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
+  const external = new Set(); page.on('request', r => { const h = new URL(r.url()); if (/^https?:$/.test(h.protocol) && h.host !== new URL(url).host) external.add(h.host); });
   page.on('console', m => { if (m.type() === 'error' && !/fonts\.g|ERR_|Failed to load resource/.test(m.text())) errors.push(name + ': ' + m.text()); });
   page.on('pageerror', e => errors.push(name + ': ' + e.message));
   await page.goto(url, { waitUntil: 'load' });
@@ -53,6 +54,7 @@ for (const [name, vp, scheme] of [['phone-dark', { width: 390, height: 844 }, 'd
   ok(name + ' fields list the set values', /3 days/.test(await page.textContent('.fields')) && /expensive/.test(await page.textContent('.fields')));
   ok(name + ' an empty field shows its swing', / to /.test(await page.textContent('[data-id="g:urgency"]')));
   ok(name + ' home fits without scrolling', (await page.evaluate(() => { const m = document.querySelector('#main'); return m.scrollHeight - m.clientHeight; })) <= 4);
+  ok(name + ' no request ever leaves the app (fonts and lists are bundled)', external.size === 0, [...external]);
   await page.screenshot({ path: `${out}/${name}-1.png` });
   const p0 = await price(page);
   await page.click('[data-act=slot][data-id="g:urgency"]');
