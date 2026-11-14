@@ -97,23 +97,23 @@ export function buildStreet(data, scene, env, city) {
   const PAL = { 'honeylocust': [1.25, 1.2, .5], 'pin oak': [.95, .8, .5], 'London planetree': [.95, 1.0, .55], 'Callery pear': [1.15, .7, .5], 'littleleaf linden': [1.2, 1.15, .5],
     'ginkgo': [1.5, 1.3, .4], 'red maple': [1.4, .6, .4], 'Japanese zelkova': [1.25, .85, .45], 'yard': [.8, .95, .6] };
   const trunkG = new THREE.CylinderGeometry(.5, .85, 1, 7); trunkG.translate(0, .5, 0);
-  const leafG = new THREE.IcosahedronGeometry(1, 2);
+  const leafG = new THREE.SphereGeometry(1, 8, 5);
   { const p = leafG.attributes.position, n = (x, y, z) => Math.sin(x * 4.1 + y * 2.3) * Math.cos(z * 3.7 - y * 1.9) * .5 + Math.sin(x * 9 + z * 7 + y * 8) * .25;
     for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), f = 1 + n(x, y, z) * .32; p.setXYZ(i, x * f, y * f * (y < 0 ? .7 : .95), z * f); }
     leafG.computeVertexNormals(); }
   const trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x5a4a3e, roughness: 1 }), trees.length);
-  const leaves = new THREE.InstancedMesh(leafG, new THREE.MeshStandardMaterial({ map: foliage(), roughness: 1 }), trees.length * 5);
+  const leaves = new THREE.InstancedMesh(leafG, new THREE.MeshStandardMaterial({ map: foliage(), roughness: 1 }), trees.length * 4);
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), T = new THREE.Vector3(), col = new THREE.Color();
   trees.forEach((t, i) => {
     const d = Math.min(30, Math.max(2, t.d)), h = 3.6 + d * .4, cr = 1.2 + d * .115, tr = .06 + d * .012;
     M.compose(T.set(t.x, t.yard ? 0 : SWY, t.z), Q.identity(), S.set(tr, h * .62, tr)); trunks.setMatrixAt(i, M);
     const base = PAL[t.s] || [.85 + R() * .3, .95 + R() * .15, .55];
-    for (let k = 0; k < 5; k++) {
-      const a = k * 1.57 + R(), o = k ? cr * .62 : 0, s = cr * (k ? .6 + R() * .22 : .95);
+    for (let k = 0; k < 4; k++) {
+      const a = k * 2.09 + R(), o = k ? cr * .62 : 0, s = cr * (k ? .6 + R() * .22 : .95);
       Q.setFromEuler(new THREE.Euler(R(), R() * 6, R()));
       M.compose(T.set(t.x + Math.cos(a) * o, (t.yard ? 0 : SWY) + h * (.7 + (k ? R() * .2 - .06 : .14)), t.z + Math.sin(a) * o), Q, S.set(s, s * .86, s));
-      leaves.setMatrixAt(i * 5 + k, M);
-      const v = .8 + R() * .3; leaves.setColorAt(i * 5 + k, col.setRGB(base[0] * v, base[1] * v, base[2] * v));
+      leaves.setMatrixAt(i * 4 + k, M);
+      const v = .8 + R() * .3; leaves.setColorAt(i * 4 + k, col.setRGB(base[0] * v, base[1] * v, base[2] * v));
     }
     if (!t.yard) { paint.quad([t.x - .7, SWY + .012, t.z - .7], [t.x - .7, SWY + .012, t.z + .7], [t.x + .7, SWY + .012, t.z + .7], [t.x + .7, SWY + .012, t.z - .7], null, [.2, .16, .12]);
       if (Math.hypot(t.x, t.z) < 240) { const r = tr * .8 + .1; city.segGrid.add(t.x - r, t.z, t.x, t.z + r); city.segGrid.add(t.x, t.z + r, t.x + r, t.z); city.segGrid.add(t.x + r, t.z, t.x, t.z - r); city.segGrid.add(t.x, t.z - r, t.x - r, t.z); } }
