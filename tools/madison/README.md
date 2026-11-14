@@ -35,5 +35,5 @@ touch controls. URL helpers: `?walk=1` skips the title, `&pos=x,z,yawDeg,pitchDe
 
 ## Ideas not done yet
 
-Per-building facade overrides from photos (`OVERRIDE` in `city.js` has a few), traffic signals, pedestrians, interiors,
+More hand-matched facades (932, 936 and 940 Madison are done from Leo's photos: styles `m932`/`m936`/`m940` and the `GROUND` painters in `textures.js`, bays + awning in `city.js`), traffic signals, pedestrians, interiors,
 terrain (the area is within ~2 m of flat, so it is modelled flat).

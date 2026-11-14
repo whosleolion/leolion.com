@@ -44,34 +44,38 @@ export const STYLES = {
   modernB:    { kind: 'modern', c: [34, 14, 74], trim: '#33302c', accent: '#5b6770' },
   modernC:    { kind: 'modern', c: [215, 8, 34], trim: '#17181a', accent: '#b9773f' },
   stucco:     { kind: 'stucco', c: [38, 14, 72], trim: '#8a8478', cornice: [.5, .47, .42] },
+  // hand-matched to photos of the Madison & Broadway corner
+  m932:       { kind: 'brick', sp: 'm932', painted: true, c: [5, 64, 38], trim: '#ece9e2', cornice: [.3, .19, .14] },
+  m936:       { kind: 'modern', base: 'brick', sp: 'm936', painted: true, c: [40, 5, 86], trim: '#141416', accent: '#141416' },
+  m940:       { kind: 'brick', sp: 'm940', c: [13, 56, 43], trim: '#b56a4c', cornice: [.36, .2, .15] },
   cinder:     { kind: 'cinder', c: [30, 4, 56],  trim: '#666', cornice: [.4, .4, .4] },
 };
 
 function base(g, w, h, st, r, y0 = 0) {
-  const [H, S, L] = st.c;
-  if (st.kind === 'brick') {
-    g.fillStyle = hsl(H + 12, S * .25, L + 18); g.fillRect(0, y0, w, h);
+  const [H, S, L] = st.c, kind = st.base || st.kind, pv = st.painted ? .3 : 1;
+  if (kind === 'brick') {
+    g.fillStyle = st.painted ? hsl(H, S, L - 8) : hsl(H + 12, S * .25, L + 18); g.fillRect(0, y0, w, h);
     for (let y = y0, row = 0; y < y0 + h; y += 8, row++)
       for (let x = -((row % 2) * 11); x < w; x += 22) {
-        g.fillStyle = hsl(H + (r() - .5) * 8, S + (r() - .5) * 12, L + (r() - .5) * 11 - (r() < .06 ? 9 : 0));
+        g.fillStyle = hsl(H + (r() - .5) * 8 * pv, S + (r() - .5) * 12 * pv, L + ((r() - .5) * 11 - (r() < .06 ? 9 : 0)) * pv);
         g.fillRect(x + 1, y + 1, 20.4, 6.4);
       }
-  } else if (st.kind === 'stone') {
+  } else if (kind === 'stone') {
     g.fillStyle = hsl(H, S, L); g.fillRect(0, y0, w, h);
     for (let y = y0; y < y0 + h; y += 32) { g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, y, w, 1.5); g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, y + 2, w, 1); }
     for (let y = y0, row = 0; y < y0 + h; y += 32, row++) for (let x = (row % 2) * 48; x < w; x += 96) { g.fillStyle = 'rgba(0,0,0,.09)'; g.fillRect(x, y, 1.5, 32); }
-  } else if (st.kind === 'siding') {
+  } else if (kind === 'siding') {
     g.fillStyle = hsl(H, S, L); g.fillRect(0, y0, w, h);
     for (let y = y0; y < y0 + h; y += 10) { g.fillStyle = 'rgba(0,0,0,.16)'; g.fillRect(0, y + 8.5, w, 1.5); g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(0, y, w, 1.5); }
-  } else if (st.kind === 'modern') {
+  } else if (kind === 'modern') {
     g.fillStyle = hsl(H, S, L); g.fillRect(0, y0, w, h);
     for (let x = 0; x < w; x += 64) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x, y0, 1.5, h); }
     for (let y = y0; y < y0 + h; y += 128) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, y, w, 1.5); }
-  } else if (st.kind === 'cinder') {
+  } else if (kind === 'cinder') {
     g.fillStyle = hsl(H, S, L); g.fillRect(0, y0, w, h);
     for (let y = y0, row = 0; y < y0 + h; y += 20, row++) for (let x = -((row % 2) * 20); x < w; x += 40) { g.strokeStyle = 'rgba(0,0,0,.18)'; g.strokeRect(x + .5, y + .5, 40, 20); }
   } else { g.fillStyle = hsl(H, S, L); g.fillRect(0, y0, w, h); }
-  speckle(g, w, h + y0, r, st.kind === 'brick' ? 500 : 900);
+  speckle(g, w, h + y0, r, kind === 'brick' ? 500 : 900);
 }
 
 function glass(g, x, y, w, h, r, night) {
@@ -83,7 +87,40 @@ function glass(g, x, y, w, h, r, night) {
   g.beginPath(); g.moveTo(x, y + h * .5); g.lineTo(x + w * .6, y); g.lineTo(x + w * .85, y); g.lineTo(x, y + h * .8); g.fill();
 }
 
+function specialWindow(g, cx, cy, st, r) {
+  if (st.sp === 'm936') {                                        // black metal spandrel + wide glazing with a glass rail
+    const x = cx + .2 * C, y = cy + 34, w = .6 * C, h = C - 34;
+    g.fillStyle = '#141416'; g.fillRect(x - 10, cy, w + 20, C);
+    glass(g, x, y + 6, w, h - 12, r);
+    if (r() < .5) { g.fillStyle = 'rgba(232,226,210,.55)'; g.fillRect(x + 4, y + 8, w * .45, h - 16); }
+    g.fillStyle = '#141416'; g.fillRect(x + w / 2 - 3, y, 6, h); g.fillRect(x, y + h * .28, w, 4);
+    g.fillStyle = 'rgba(190,215,225,.28)'; g.fillRect(x, y + h * .6, w, h * .4 - 6); g.fillStyle = 'rgba(230,240,245,.8)'; g.fillRect(x, y + h * .6, w, 2.5);
+    return;
+  }
+  const x = cx + WIN.x0 * C, y = cy + WIN.y0 * C, w = (WIN.x1 - WIN.x0) * C, h = (WIN.y1 - WIN.y0) * C;
+  if (st.sp === 'm932') {                                        // painted brick, white stone trim, pierced-brick panels
+    g.fillStyle = hsl(4, 48, 22); g.fillRect(cx, cy + 4, C, 7); g.fillRect(cx, cy + C - 9, C, 5);
+    g.fillStyle = st.trim; g.fillRect(x - 10, y - 22, w + 20, h + 34);
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x - 10, y + h + 12, w + 20, 3);
+    g.fillStyle = hsl(5, 60, 31); g.fillRect(x - 6, y + h + 18, w + 12, 26);
+    g.fillStyle = hsl(4, 55, 17); for (let i = 0; i < 9; i++) for (let j = 0; j < 3; j++) g.fillRect(x - 1 + i * (w + 2) / 9 + (j % 2) * 5, y + h + 21 + j * 8, 6, 4);
+    glass(g, x, y, w, h, r);
+    g.strokeStyle = '#f4f2ec'; g.lineWidth = 6; g.strokeRect(x + 3, y + 3, w - 6, h - 6); g.fillStyle = '#f4f2ec'; g.fillRect(x, y + h * .48, w, 6);
+  } else {                                                        // m940: plain punched openings, dark sashes
+    g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(x - 5, y - 5, w + 10, h + 8);
+    glass(g, x, y, w, h, r);
+    g.strokeStyle = '#2a2624'; g.lineWidth = 6; g.strokeRect(x + 3, y + 3, w - 6, h - 6); g.fillStyle = '#2a2624'; g.fillRect(x, y + h * .48, w, 6);
+    g.fillStyle = hsl(14, 40, 52); g.fillRect(x - 8, y + h + 3, w + 16, 7);
+    if (r() < .5) { g.fillStyle = hsl(12, 50, 33); for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) g.fillRect(cx + 14 + i * 9 + (j % 2) * 4, y + 20 + j * 9, 5, 5); }
+  }
+  const v = r();
+  if (v < .35) { g.fillStyle = 'rgba(238,234,222,.85)'; g.fillRect(x + 6, y + 6, w - 12, h * (.2 + r() * .25)); }
+  else if (v < .55) { g.fillStyle = hsl(200 + r() * 40, 30, 60, .6); g.fillRect(x + 6, y + 6, w - 12, h - 12); }
+  if (r() < .3) { g.fillStyle = '#c9c7be'; g.fillRect(x + 12, y + h - 38, w - 24, 34); g.fillStyle = 'rgba(0,0,0,.3)'; for (let s = 0; s < 26; s += 5) g.fillRect(x + 16, y + h - 34 + s, w - 32, 2); }
+}
+
 function windowCell(g, cx, cy, st, r, wide) {
+  if (st.sp) return specialWindow(g, cx, cy, st, r);
   const x = cx + (wide ? .14 : WIN.x0) * C, y = cy + WIN.y0 * C, w = (wide ? .72 : WIN.x1 - WIN.x0) * C, h = (WIN.y1 - WIN.y0) * C;
   const k = st.kind;
   if (k === 'brick' || k === 'stone' || k === 'stucco') {         // stone lintel + sill
@@ -116,7 +153,7 @@ export function styleTextures(name) {
   const wide = st.kind === 'modern';
   const [cu, gu] = canvas(C * 2, C * 2);
   base(gu, C * 2, C * 2, st, r);
-  if (st.kind === 'modern') { gu.fillStyle = st.accent; gu.fillRect(0, 0, 40, C * 2); }
+  if (st.kind === 'modern' && !st.sp) { gu.fillStyle = st.accent; gu.fillRect(0, 0, 40, C * 2); }
   for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) windowCell(gu, i * C, j * C, st, r, wide);
   if (st.kind !== 'modern' && st.kind !== 'siding') { gu.fillStyle = 'rgba(0,0,0,.12)'; gu.fillRect(0, 0, C * 2, 3); }
   finish(gu, C * 2, C * 2, r);
@@ -283,4 +320,93 @@ export function foliage() {
   g.fillStyle = '#7d8648'; g.fillRect(0, 0, 128, 128);
   for (let i = 0; i < 900; i++) { g.fillStyle = hsl(66 + r() * 22, 30 + r() * 12, 30 + r() * 16, .55); g.beginPath(); g.ellipse(r() * 128, r() * 128, 2 + r() * 4, 1.5 + r() * 2.5, r() * 3.14, 0, 7); g.fill(); }
   return tex(c, 3, 2);
+}
+
+// ---- hand-painted ground floors for the buildings in the reference photos (canvas spans the whole wall) ----
+function board(L) {
+  const w = Math.min(2048, Math.round(L * 110)), h = 420, [c, g] = canvas(w, h), sx = w / L, sy = h / 3.9;
+  const R = (x, y, ww, hh, col) => { g.fillStyle = col; g.fillRect(x * sx, y * sy, ww * sx, hh * sy); };
+  const T = (s, x, y, size, col, font = '800', align = 'center') => { g.fillStyle = col; g.font = `${font} ${size * sy}px "Helvetica Neue",Arial,sans-serif`; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x * sx, y * sy); };
+  const courses = (x, y, ww, hh, a = .1) => { g.fillStyle = `rgba(0,0,0,${a})`; for (let q = y; q < y + hh; q += .075) g.fillRect(x * sx, q * sy, ww * sx, 1); };
+  const slats = (x, y, ww, hh) => { for (let q = y; q < y + hh; q += .07) { g.fillStyle = 'rgba(0,0,0,.16)'; g.fillRect(x * sx, (q + .05) * sy, ww * sx, 2); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x * sx, q * sy, ww * sx, 1.5); } };
+  const shop = (x, y, ww, hh, r, warm = .22) => { glass(g, x * sx, y * sy, ww * sx, hh * sy, r); g.fillStyle = `rgba(255,214,150,${warm})`; g.fillRect(x * sx, y * sy, ww * sx, hh * sy); };
+  const done = () => { const t = tex(c); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; };
+  return { c, g, sx, sy, R, T, courses, slats, shop, done };
+}
+function flower(g, x, y, s) {
+  for (let i = 0; i < 5; i++) { const a = i * 1.257 - .3; g.fillStyle = i % 2 ? '#f6a3b8' : '#ee5d86'; g.beginPath(); g.ellipse(x + Math.cos(a) * s * .55, y + Math.sin(a) * s * .55, s * .5, s * .36, a, 0, 7); g.fill(); }
+  g.fillStyle = '#f4c531'; g.beginPath(); g.arc(x, y, s * .26, 0, 7); g.fill(); g.strokeStyle = '#1a1a1a'; g.lineWidth = Math.max(1.5, s * .05); g.stroke();
+}
+function luckyCat(g, x, y, s) {                  // beckoning cat, after the gate mural at no. 934
+  const ink = '#161616'; g.lineJoin = 'round'; g.strokeStyle = ink; g.lineWidth = s * .05;
+  const blob = (px, py, rx, ry, col, rot = 0) => { g.fillStyle = col; g.beginPath(); g.ellipse(x + px * s, y + py * s, rx * s, ry * s, rot, 0, 7); g.fill(); g.stroke(); };
+  blob(0, .75, .62, .6, '#f7f5ef'); blob(-.2, .95, .28, .22, '#d98a2b', .3);                 // body + patch
+  blob(.52, .1, .17, .42, '#f7f5ef', -.25); blob(.6, -.28, .17, .15, '#f7f5ef');              // raised arm, paw
+  for (const e of [-1, 1]) { g.fillStyle = '#f7f5ef'; g.beginPath(); g.moveTo(x + e * .5 * s, y - .32 * s); g.lineTo(x + e * .46 * s, y - .86 * s); g.lineTo(x + e * .12 * s, y - .52 * s); g.fill(); g.stroke();
+    g.fillStyle = '#e8463e'; g.beginPath(); g.moveTo(x + e * .43 * s, y - .42 * s); g.lineTo(x + e * .42 * s, y - .72 * s); g.lineTo(x + e * .22 * s, y - .5 * s); g.fill(); }
+  blob(0, 0, .58, .5, '#f7f5ef'); blob(.3, -.3, .2, .14, '#d98a2b', .5); blob(-.34, -.24, .15, .12, '#8a4b25', -.5);
+  g.lineWidth = s * .045; for (const e of [-1, 1]) { g.beginPath(); g.arc(x + e * .24 * s, y - .02 * s, .12 * s, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+    for (const k of [-.08, .06]) { g.beginPath(); g.moveTo(x + e * .34 * s, y + (.16 + k) * s); g.lineTo(x + e * .72 * s, y + (.14 + k * 2.2) * s); g.stroke(); } }
+  g.fillStyle = '#e8463e'; g.beginPath(); g.ellipse(x, y + .22 * s, .08 * s, .12 * s, 0, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#e8463e'; g.fillRect(x - .42 * s, y + .42 * s, .84 * s, .09 * s); g.fillStyle = '#f0b730'; g.beginPath(); g.arc(x, y + .56 * s, .13 * s, 0, 7); g.fill(); g.stroke();
+}
+export const GROUND = {
+  '932 Madison Street': L => {
+    const b = board(L), { g, sx, sy, R, T } = b, r = rng(932), m = L / 2;
+    // east half: no. 934, white-painted brick, blue awning zone, muralled roll gates
+    R(0, 0, m, 3.9, '#e6e3dc'); b.courses(0, 0, m, 3.9, .07); R(0, .28, m - .2, 1.15, '#2343cf');
+    R(.25, 1.5, .8, 2.4, '#1c2f86'); R(.33, 1.6, .64, 1.1, '#101a44'); T('934', .65, 2.95, .2, '#e8e8e8');
+    for (const [x0, ww] of [[1.25, 1.75], [3.15, m - 3.55]]) { R(x0 - .06, 1.45, ww + .12, 2.45, '#1a2f8f'); R(x0, 1.5, ww, 2.4, '#2b62cf'); }
+    g.save(); g.beginPath(); g.rect(3.15 * sx, 1.5 * sy, (m - 3.55) * sx, 2.4 * sy); g.clip();
+    g.fillStyle = '#5ec2e6'; g.beginPath(); g.ellipse(4.5 * sx, 3.2 * sy, 1.3 * sx, .5 * sy, -.3, 0, 7); g.fill();
+    for (const [fx, fy, fs] of [[3.6, 1.9, .34], [4.5, 1.8, .4], [5.4, 2.0, .36], [3.5, 2.9, .3], [5.5, 3.3, .32], [4.1, 2.5, .26]]) flower(g, fx * sx, fy * sy, fs * sy);
+    luckyCat(g, 4.75 * sx, 3.45 * sy, .52 * sy); g.restore();
+    g.save(); g.beginPath(); g.rect(1.25 * sx, 1.5 * sy, 1.75 * sx, 2.4 * sy); g.clip();
+    flower(g, 1.5 * sx, 1.75 * sy, .3 * sy); flower(g, 2.8 * sx, 1.8 * sy, .26 * sy); flower(g, 2.75 * sx, 3.6 * sy, .3 * sy); flower(g, 1.45 * sx, 3.65 * sy, .24 * sy);
+    luckyCat(g, 2.1 * sx, 2.5 * sy, .62 * sy); g.restore();
+    b.slats(1.25, 1.5, 1.75, 2.4); b.slats(3.15, 1.5, m - 3.55, 2.4);
+    // middle: residential entry behind an iron gate
+    R(m - .2, 0, 1.4, 3.9, '#17171b'); g.strokeStyle = '#050505'; g.lineWidth = 2; for (let q = m - .1; q < m + 1.15; q += .11) { g.beginPath(); g.moveTo(q * sx, 1.2 * sy); g.lineTo(q * sx, 3.9 * sy); g.stroke(); }
+    // west half: the navy shopfront
+    const x0 = m + 1.2, ww = L - x0; R(x0, 0, ww, 3.9, '#1b2444'); b.courses(x0, 0, ww, 1.2, .25);
+    R(x0 + .2, .5, ww - .4, .5, '#141b36'); T('and company', L - .5, .76, .2, '#d9dbe6', '500', 'right');
+    R(x0, 1.2, ww, .16, '#252f5c'); b.shop(x0 + .3, 1.5, ww - 1.7, 1.75, r, .3); R(x0 + .3, 3.25, ww - 1.7, .65, '#161d3a');
+    b.shop(L - 1.25, 1.5, .95, 2.4, r, .3); g.strokeStyle = '#0f1530'; g.lineWidth = 5; g.strokeRect((L - 1.25) * sx, 1.5 * sy, .95 * sx, 2.4 * sy); g.strokeRect((x0 + .3) * sx, 1.5 * sy, (ww - 1.7) * sx, 1.75 * sy);
+    R(0, 0, m - .2, .26, '#efede8'); R(0, .24, m - .2, .04, 'rgba(0,0,0,.25)');
+    return b.done();
+  },
+  '936 Madison Street': L => {
+    const b = board(L), { g, sx, sy, R, T } = b, r = rng(936);
+    R(0, 0, L, 3.9, '#121214'); R(0, .3, L, .08, '#26262a');
+    b.shop(.5, 1.25, 1.5, 2.2, r, .1); R(.6, 1.35, 1.3, 2.0, 'rgba(214,190,90,.5)'); R(.5, 3.45, 1.5, .45, '#0c0c0e');
+    R(L * .42, .72, 2.5, .42, '#f4f2ee'); T('MEI HUI SPA', L * .42 + 1.25, .94, .3, '#c8201e');
+    b.shop(L * .42 + .1, 1.4, 1.0, 2.5, r, .15); b.shop(L * .42 + 1.25, 1.4, 1.0, 2.5, r, .15);
+    T('OPEN', L * .42 + .6, 2.0, .16, '#ff4fd0'); g.strokeStyle = '#3ad0ff'; g.lineWidth = 2; g.strokeRect((L * .42 + .3) * sx, 1.86 * sy, .6 * sx, .28 * sy);
+    R(L - 2.3, 1.2, 1.1, 2.7, '#1b1b1f'); R(L - 2.2, 1.3, .9, 1.6, '#0a0a0c'); T('936', L - 1.75, 1.0, .18, '#d8d8d8');
+    for (const x of [L * .42 - .25, L - 2.55, L - 1.0]) { g.fillStyle = '#ffe2a8'; g.beginPath(); g.arc(x * sx, 1.15 * sy, .07 * sy, 0, 7); g.fill(); }
+    return b.done();
+  },
+  '940 Madison Street': (L, street) => {                          // Prince Broadway Deli wraps the corner
+    const b = board(L), { g, sx, sy, R, T } = b, r = rng(940 + L * 10 | 0), side = street === 'Madison St', gw = side ? L - 1.5 : L;
+    R(0, 0, L, 3.9, '#c7a57a');
+    g.fillStyle = 'rgba(90,60,30,.3)'; for (let x = 0; x < L; x += .1) g.fillRect(x * sx, 0, 1, 3.9 * sy); for (let y = 0; y < 3.9; y += .2) g.fillRect(0, y * sy, L * sx, 1);
+    R(0, 0, L, .62, '#141416'); R(0, .62, L, .5, '#0b0b0c'); R(0, 1.12, L, .05, '#2a2a2c');
+    const name = L > 6 ? 'PRINCE BROADWAY DELI' : L > 3.6 ? 'PRINCE BROADWAY' : 'DELI';
+    T(name, gw * (L > 6 ? .4 : .5), .88, .25, '#f2f2f2', '800'); if (L > 6) T('1432 Broadway', gw * .86, .88, .22, '#f2f2f2', 'italic 500');
+    const win = (x, ww) => { b.shop(x, 1.3, ww, 1.75, r, .34); for (let k = 0; k < ww * 14; k++) { g.fillStyle = hsl(r() * 360, 55, 45 + r() * 30, .85); g.fillRect((x + .08 + r() * (ww - .3)) * sx, (1.5 + (r() * 6 | 0) * .25) * sy, (.08 + r() * .12) * sx, .17 * sy); }
+      g.fillStyle = 'rgba(245,245,240,.9)'; for (let q = 1.47; q < 3; q += .25) g.fillRect(x * sx, (q + .19) * sy, ww * sx, 2); g.strokeStyle = '#d8d8d4'; g.lineWidth = 4; g.strokeRect(x * sx, 1.3 * sy, ww * sx, 1.75 * sy); };
+    const door = gw > 4.5 ? gw * .36 : -1;
+    if (door > 0) { win(.3, door - .45); b.shop(door, 1.3, .85, 2.6, r, .4); g.strokeStyle = '#e4e4e0'; g.lineWidth = 5; g.strokeRect(door * sx, 1.3 * sy, .85 * sx, 2.6 * sy); win(door + 1.0, gw - door - 1.3); R(door + 1.6, 2.2, Math.min(1.6, gw - door - 2.1), .8, '#c9402b'); for (let k = 0; k < 6; k++) { g.fillStyle = '#e9b55a'; g.beginPath(); g.arc((door + 1.8 + (k % 3) * .5) * sx, (2.42 + (k / 3 | 0) * .36) * sy, .13 * sy, 0, 7); g.fill(); } }
+    else win(.3, gw - .6);
+    if (side) { R(gw, 0, 1.5, 3.9, '#8d8f93'); R(gw + .3, 1.5, .95, 2.4, '#6f747b'); g.strokeStyle = 'rgba(20,20,20,.7)'; g.lineWidth = 3; g.beginPath(); let px = gw + .4, py = 2.9; g.moveTo(px * sx, py * sy); for (let k = 0; k < 7; k++) { px += .11; py = 2.6 + r() * .7; g.lineTo(px * sx, py * sy); } g.stroke(); }
+    return b.done();
+  },
+};
+export function awning(text) {
+  const [c, g] = canvas(1024, 256);
+  g.fillStyle = '#2140d6'; g.fillRect(0, 0, 1024, 256); g.fillStyle = '#1a33b0'; g.fillRect(0, 196, 1024, 60);
+  g.font = 'italic 900 118px "Arial Black","Helvetica Neue",Arial,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 10; g.strokeStyle = '#e9efff'; g.strokeText(text, 512, 104, 900); g.fillStyle = '#5b86ea'; g.fillText(text, 512, 104, 900);
+  g.fillStyle = '#e9efff'; g.font = '700 30px Arial'; g.fillText('NYC', 512, 28); g.fillText('INC.', 600, 176);
+  const t = tex(c); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
