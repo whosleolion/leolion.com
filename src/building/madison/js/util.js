@@ -104,9 +104,11 @@ export class SegGrid {
     return out;
   }
   // push a circle out of walls; returns corrected [x,z]
-  resolve(x, z, r) {
+  // y = feet height: walls whose top is at or below it don't block (so you can stand on roofs)
+  resolve(x, z, r, y = 0) {
     for (let it = 0; it < 3; it++) {
       for (const s of this.near(x, z, r + .1, TMP)) {
+        if (y >= (s.ref ? s.ref.h : 5.6) - .35) continue;
         const dx = s.bx - s.ax, dz = s.bz - s.az, l2 = dx * dx + dz * dz || 1;
         const t = clamp(((x - s.ax) * dx + (z - s.az) * dz) / l2, 0, 1);
         const px = s.ax + dx * t, pz = s.az + dz * t, ex = x - px, ez = z - pz, d = Math.hypot(ex, ez);

@@ -39,7 +39,11 @@
   #look.on { opacity: 1; }
   #look b { font-size: 15px; font-weight: 700; } #look span { display: block; font-size: 12px; opacity: .72; }
   #reticle { position: fixed; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: rgba(255,255,255,.75); box-shadow: 0 0 0 1px rgba(0,0,0,.35); pointer-events: none; }
-  #photoBtn { position: fixed; right: calc(14px + var(--sar)); bottom: calc(84px + var(--sab)); padding: 10px 14px; display: none; align-items: center; gap: 8px; font-weight: 700; border-left: 3px solid #f2c230; }
+  #jump { position: fixed; right: calc(22px + var(--sar)); bottom: calc(30px + var(--sab)); width: 72px; height: 72px; border-radius: 50%; background: rgba(12,12,13,.72); border: 2px solid rgba(255,255,255,.75); display: grid; place-items: center; touch-action: none; }
+  #jump:active { transform: scale(.92); background: rgba(255,255,255,.25); }
+  #jump svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  @media (pointer: fine) { #jump { display: none; } }
+  #photoBtn { position: fixed; right: calc(14px + var(--sar)); bottom: calc(118px + var(--sab)); padding: 10px 14px; display: none; align-items: center; gap: 8px; font-weight: 700; border-left: 3px solid #f2c230; }
   #photoBtn.on { display: flex; }
   #toast { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); padding: 8px 14px; opacity: 0; transition: opacity .3s; pointer-events: none; font-weight: 600; }
   #toast.on { opacity: 1; }
@@ -97,6 +101,7 @@
 <div id="reticle"></div>
 <div id="look" class="chip"><b></b><span></span></div>
 <button id="photoBtn" class="chip">Compare with the street photo</button>
+<button id="jump" class="walk-only" aria-label="Jump"><svg viewBox="0 0 24 24"><path d="M12 20V5M5 11l7-7 7 7"/></svg></button>
 <div id="toast" class="chip"></div>
 <div id="stick"><i></i></div>
 <div id="hint"><span>move</span><span>look</span></div>

@@ -32,6 +32,16 @@ check(Math.hypot(p1.x - p0.x, p1.z - p0.z) > 1, `touch stick walks (${Math.hypot
 check(Math.abs(p1.yaw - p0.yaw) > .2, 'right-thumb drag turns the view');
 check(!(await page.evaluate(() => { const m = window.__madison; return !!m.city.buildingAt(m.P.x, m.P.z); })), 'player is not inside a building');
 check(await page.evaluate(() => document.getElementById('street').textContent.length > 3), 'street chip names a street');
+// jumping: three taps should clear the 14.5 m roof of no. 932
+await page.evaluate(() => { const m = window.__madison; m.P.x = 0; m.P.z = -15.2; m.P.yaw = Math.PI; });
+await page.evaluate(() => { window.__peak = 0; setInterval(() => { window.__peak = Math.max(window.__peak, window.__madison.P.y); }, 10); });
+for (let j = 0; j < 3; j++) { await page.tap('#jump'); await page.waitForTimeout(700); }
+await touch('touchStart', [[90, 650, 1]]); await touch('touchMove', [[90, 590, 1]]);
+await page.waitForFunction(() => window.__madison.P.grounded, null, { timeout: 30000 }); await touch('touchEnd', []);
+const peak = await page.evaluate(() => window.__peak);
+check(peak > 15, `triple jump clears the roofline (${peak.toFixed(1)} m)`);
+const roof = await page.evaluate(() => { const m = window.__madison; return { y: m.P.y, on: m.P.on && m.P.on.a }; });
+check(roof.y > 10, `landed on a roof (${roof.y.toFixed(1)} m, ${roof.on})`); await shot('roof');
 await page.tap('#bTime'); await page.waitForTimeout(2500);
 check(await page.evaluate(() => window.__madison.sky.name) === 'night', 'time-of-day button cycles to night'); await shot('night');
 await page.tap('#bView'); await page.waitForFunction(() => window.__madison.mode === 'orbit', null, { timeout: 60000 }); await shot('overview');

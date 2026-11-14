@@ -28,6 +28,11 @@ Street-level imagery: Google Street View needs a paid key and its terms don't al
 - `js/el.js` elevated structure, trains, Broadway traffic. `js/sky.js` sky dome + the three times of day.
 - `js/audio.js` synthesised sound (hum, train rumble + rail joints, footsteps). `js/main.js` boot, controls, HUD, loop.
 
+## Jumping
+
+Space / the arrow button: one big jump plus two more in the air (`JUMP`, `AIR_JUMP`, `GRAVITY` in `js/main.js`). A wall only blocks
+while your feet are below its roof (`SegGrid.resolve(x, z, r, y)`), so you can land on any roof and on the el's deck.
+
 ## Checking it
 
 `NODE_PATH=$(npm root -g) node tools/madison/playtest.mjs [shotsDir]` boots it headless on a phone viewport and drives the

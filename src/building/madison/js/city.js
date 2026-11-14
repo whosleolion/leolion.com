@@ -91,6 +91,13 @@ export function buildCity(data, scene, env) {
               trim.tri([o[2][0], y, o[2][1]], [o[1][0], y, o[1][1]], [o[0][0], y, o[0][1]], st.cornice); trim.tri([o[3][0], y, o[3][1]], [o[2][0], y, o[2][1]], [o[0][0], y, o[0][1]], st.cornice); }
           }
           for (let q = .25; q < L; q += .5) { const e = pt(q / L, .34); trim.box(e[0], h - .78, e[1], .14, .34, .22, rot, st.cornice.map(v => v * .75)); }
+          { const NV = [.06, .09, .25], f0 = .5 + 1.75 / L, fm = (f0 + 1) / 2, e = pt(fm, .5), d = pt(.5 + .62 / L, 0), SC = [.3, .3, .31];   // west shop's flat awning, the stoop + iron gate
+            trim.box(e[0], gh - 1.36, e[1], (1 - f0) * L, .1, 1.0, rot, NV); trim.box(e[0] + nx * .48, gh - 1.5, e[1] + nz * .48, (1 - f0) * L, .34, .05, rot, NV);
+            for (let s = 0; s < 3; s++) trim.box(d[0] + nx * (.16 + s * .3), .15 + (3 - s) * .09, d[1] + nz * (.16 + s * .3), 1.1, (3 - s) * .18, .32, rot, SC);
+            const gA = pt(.5 - .1 / L, 1.25), gB = pt(.5 + 1.3 / L, 1.25), gm = [(gA[0] + gB[0]) / 2, (gA[1] + gB[1]) / 2];
+            for (const y of [.35, 1.15]) iron.box(gm[0], y, gm[1], 1.4, .04, .04, rot, IRON);
+            for (let q = 0; q <= 9; q++) iron.box(gA[0] + (gB[0] - gA[0]) * q / 9, .7, gA[1] + (gB[1] - gA[1]) * q / 9, .03, 1.1, .03, rot, IRON);
+            for (const s of [0, 1]) { const o = s ? gB : gA, w = pt(.5 + (s ? 1.3 : -.1) / L, .1); iron.boxB([(o[0] + w[0]) / 2, 1.15, (o[1] + w[1]) / 2], [(o[0] - w[0]) / 2, 0, (o[1] - w[1]) / 2], [0, .02, 0], [tx * .02, 0, tz * .02], IRON); } }
           const l0 = pt(.012, 0), r0 = pt(.47, 0), l1 = pt(.012, 1.0), r1 = pt(.47, 1.0), yh = gh - .28, yl = gh - 1.3;
           awn.quad([l1[0], yl, l1[1]], [r1[0], yl, r1[1]], [r0[0], yh, r0[1]], [l0[0], yh, l0[1]], [0, .24, 1, 1]);
           awn.quad([l1[0], yl - .24, l1[1]], [r1[0], yl - .24, r1[1]], [r1[0], yl, r1[1]], [l1[0], yl, l1[1]], [0, 0, 1, .22]);

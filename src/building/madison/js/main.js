@@ -61,7 +61,9 @@ const markers = [];
 
 // ---------------------------------------------------------------- player
 const EYE = 1.68, LIMIT = 238;
-const P = { x: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, bob: 0, stride: 0 };
+const P = { x: 0, z: 0, y: 0, vy: 0, air: 0, grounded: true, yaw: 0, pitch: 0, vx: 0, vz: 0, bob: 0, stride: 0, on: null };
+const JUMP = 27, AIR_JUMP = 21, AIR_JUMPS = 2, GRAVITY = 23, DECK = 7.5;   // first jump clears ~16 m; two more in the air reach any roof here
+let jumpQ = false;
 { // start on the far sidewalk of Madison St, facing no. 932
   let best = null;
   for (const s of data.streets) if (s.n === 'Madison St') for (let k = 0; k < s.p.length - 1; k++) {
@@ -78,6 +80,7 @@ if (qs.get('pos')) { const v = qs.get('pos').split(',').map(Number); P.x = v[0];
 const keys = new Set(), stick = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, lookPtr = { id: null, x: 0, y: 0 };
 let mode = 'orbit', orbitA = .9, orbitH = 105, tween = null, started = false;
 addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat) { jumpQ = true; e.preventDefault(); }
   keys.add(e.code);
   if (!started) return;
   if (e.code === 'KeyT') cycleTime(); else if (e.code === 'KeyO') toggleView(); else if (e.code === 'KeyM') $('bSound').click(); else if (e.code === 'KeyF') $('bFull').click();
@@ -124,7 +127,7 @@ function orbitPose(out) {
   const r = 150 + orbitH * .55; out.pos.set(12 + Math.cos(orbitA) * r, orbitH, 4 + Math.sin(orbitA) * r);
   M4.lookAt(out.pos, V.set(12, 6, 4), UP); out.quat.setFromRotationMatrix(M4); return out;
 }
-function walkPose(out) { out.pos.set(P.x, EYE, P.z); E.set(P.pitch, -P.yaw, 0, 'YXZ'); out.quat.setFromEuler(E); return out; }
+function walkPose(out) { out.pos.set(P.x, P.y + EYE, P.z); E.set(P.pitch, -P.yaw, 0, 'YXZ'); out.quat.setFromEuler(E); return out; }
 const M4 = new THREE.Matrix4(), V = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), E = new THREE.Euler();
 const poseA = { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }, poseB = { pos: new THREE.Vector3(), quat: new THREE.Quaternion() };
 function toggleView(to) {
@@ -153,7 +156,8 @@ $('photoBtn').onclick = () => {
   $('photo').querySelector('p').innerHTML = `Taken here on ${new Date(nearPhoto.date + 'T12:00').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}. <a href="${nearPhoto.src}" target="_blank" rel="noopener" style="color:inherit">KartaView</a> contributor, CC BY-SA 4.0.`;
   sheet('photo', true);
 };
-$('how').textContent = mobile ? 'Left thumb walks, right thumb looks. Best in landscape, with sound.' : 'WASD or arrows to walk, mouse to look, Shift to jog. T changes the light, O flies up.';
+$('how').textContent = mobile ? 'Left thumb walks, right thumb looks, the arrow jumps (three times, up to the roofs).' : 'WASD to walk, mouse to look, Shift to jog, Space to jump (up to three times, onto the roofs). T changes the light, O flies up.';
+$('jump').addEventListener('pointerdown', e => { e.preventDefault(); jumpQ = true; });
 go.disabled = false; go.textContent = 'Walk the block';
 go.onclick = () => {
   if (started) return; started = true;
@@ -175,10 +179,10 @@ function updateHud(dt) {
   if (best && best.n !== lastStreet) { lastStreet = best.n; $('street').textContent = best.n; }
   const deg = ((P.yaw * 180 / Math.PI) % 360 + 360) % 360;
   $('compass').textContent = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8];
-  $('sub').textContent = el.under(P.x, P.z) > .5 ? 'under the J · Z tracks' : 'Brooklyn 11221';
+  $('sub').textContent = P.on === 'deck' ? 'on the J · Z tracks' : P.on ? 'on the roof of ' + (P.on.a || 'a garage') : el.under(P.x, P.z) > .5 ? 'under the J · Z tracks' : 'Brooklyn 11221';
   // what am I looking at?
   const fx = Math.sin(P.yaw), fz = -Math.cos(P.yaw), tp = Math.tan(P.pitch);
-  const hit = city.segGrid.ray(P.x, P.z, fx, fz, 70, (s, t) => s.ref && s.ref.h !== undefined && EYE + tp * t >= 0 && EYE + tp * t <= s.ref.h);
+  const hit = city.segGrid.ray(P.x, P.z, fx, fz, 70, (s, t) => s.ref && s.ref.h !== undefined && s.ref !== P.on && P.y + EYE + tp * t >= 0 && P.y + EYE + tp * t <= s.ref.h);
   if (hit) {
     const b = hit.s.ref, bits = [];
     if (b.y > 1700) bits.push('built ' + b.y); if (b.floors) bits.push(b.floors + (b.floors === 1 ? ' floor' : ' floors')); if (USE[(b.c || '')[0]]) bits.push(USE[b.c[0]]);
@@ -199,16 +203,27 @@ function updatePlayer(dt) {
   if (keys.has('ArrowLeft')) P.yaw -= dt * 1.9; if (keys.has('ArrowRight')) P.yaw += dt * 1.9;
   const l = Math.hypot(mx, mz), run = keys.has('ShiftLeft') || keys.has('ShiftRight') || Math.hypot(stick.x, stick.y) > .93;
   if (l > 1) { mx /= l; mz /= l; }
-  const sp = run ? 6.2 : 2.7, sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
+  const sp = (run ? 6.2 : 2.7) * (P.grounded ? 1 : 1.7), sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
   const tx = (sn * mz + cs * mx) * sp, tz = (-cs * mz + sn * mx) * sp, k = 1 - Math.exp(-dt * 10);
   P.vx += (tx - P.vx) * k; P.vz += (tz - P.vz) * k;
   let nx = P.x + P.vx * dt, nz = P.z + P.vz * dt;
-  [nx, nz] = city.segGrid.resolve(nx, nz, .38);
+  [nx, nz] = city.segGrid.resolve(nx, nz, .38, P.y);
   const r = Math.hypot(nx, nz);
   if (r > LIMIT) { nx *= LIMIT / r; nz *= LIMIT / r; if (edgeT <= 0) { toast('The model ends here'); edgeT = 4; } }
   edgeT -= dt;
   const v = Math.hypot(nx - P.x, nz - P.z) / Math.max(dt, 1e-4);
   P.x = nx; P.z = nz;
+  // vertical: what is under my feet? a roof (if I'm above it), the el's deck, the sidewalk or the street
+  const b = city.buildingAt(nx, nz); let floor = street.onWalk(nx, nz) ? .15 : 0, on = null;
+  if (b && P.y >= b.h - .4) { floor = b.h; on = b; }
+  if (P.y >= DECK - .4 && floor < DECK && el.under(nx, nz) > .93) { floor = DECK; on = 'deck'; }
+  if (jumpQ) { jumpQ = false; if (P.grounded) { P.vy = JUMP; P.grounded = false; P.air = 0; audio.step(true); } else if (P.air < AIR_JUMPS) { P.air++; P.vy = Math.max(P.vy, 0) * .3 + AIR_JUMP; audio.step(true); } }
+  if (!P.grounded || P.y > floor + .02) {
+    P.vy -= GRAVITY * dt; P.y += P.vy * dt; P.grounded = false;
+    if (P.y <= floor && P.vy <= 0) { if (P.vy < -6) { audio.step(true); P.dip = Math.min(.35, -P.vy * .012); } P.y = floor; P.vy = 0; P.grounded = true; P.air = 0; }
+  } else P.y = floor;
+  P.on = P.grounded ? on : null; P.dip = (P.dip || 0) * Math.exp(-dt * 9);
+  if (!P.grounded) return 0;
   P.stride += v * dt; if (P.stride > (run ? 1.9 : 1.45) / 2) { P.stride = 0; audio.step(run); }
   P.bob += v * dt * (run ? 3.4 : 4.3);
   return v;
@@ -219,8 +234,9 @@ function frame(now) {
   if (toastT > 0 && (toastT -= dt) <= 0) toastEl.classList.remove('on');
   let range = 95;
   if (mode === 'walk') {
-    const v = updatePlayer(dt), onWalk = street.onWalk(P.x, P.z) ? .15 : 0;
-    camera.position.set(P.x, EYE + onWalk + Math.sin(P.bob) * .028 * Math.min(1, v / 2), P.z);
+    range = 95 + Math.min(120, P.y * 4);
+    const v = updatePlayer(dt);
+    camera.position.set(P.x, P.y + EYE - (P.dip || 0) + Math.sin(P.bob) * .028 * Math.min(1, v / 2), P.z);
     camera.rotation.set(P.pitch, -P.yaw, 0);
     updateHud(dt);
   } else if (mode === 'orbit') {
@@ -231,9 +247,10 @@ function frame(now) {
     (tween.to === 'walk' ? walkPose : orbitPose)(poseB);
     camera.position.lerpVectors(poseA.pos, poseB.pos, f); camera.quaternion.slerpQuaternions(poseA.quat, poseB.quat, f);
     range = camera.position.y > 30 ? 300 : 95;
+    if (tween.to === 'orbit' && tween.t === 0) { /* leaving the street */ }
     if (tween.t >= 1) { mode = tween.to; tween = null; }
   }
-  const walkish = camera.position.y < 30;
+  const walkish = mode === 'walk' || camera.position.y < 30;
   for (const m of markers) { m.visible = walkish; m.position.y = 2.6 + Math.sin(time * 1.6 + m.position.x) * .12; }
   const focus = walkish ? camera.position : V.set(12, 0, 4);
   const nightF = sky.update(dt, time, focus, range);

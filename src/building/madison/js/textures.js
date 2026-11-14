@@ -365,13 +365,23 @@ export const GROUND = {
     flower(g, 1.5 * sx, 1.75 * sy, .3 * sy); flower(g, 2.8 * sx, 1.8 * sy, .26 * sy); flower(g, 2.75 * sx, 3.6 * sy, .3 * sy); flower(g, 1.45 * sx, 3.65 * sy, .24 * sy);
     luckyCat(g, 2.1 * sx, 2.5 * sy, .62 * sy); g.restore();
     b.slats(1.25, 1.5, 1.75, 2.4); b.slats(3.15, 1.5, m - 3.55, 2.4);
-    // middle: residential entry behind an iron gate
-    R(m - .2, 0, 1.4, 3.9, '#17171b'); g.strokeStyle = '#050505'; g.lineWidth = 2; for (let q = m - .1; q < m + 1.15; q += .11) { g.beginPath(); g.moveTo(q * sx, 1.2 * sy); g.lineTo(q * sx, 3.9 * sy); g.stroke(); }
-    // west half: the navy shopfront
-    const x0 = m + 1.2, ww = L - x0; R(x0, 0, ww, 3.9, '#1b2444'); b.courses(x0, 0, ww, 1.2, .25);
-    R(x0 + .2, .5, ww - .4, .5, '#141b36'); T('and company', L - .5, .76, .2, '#d9dbe6', '500', 'right');
-    R(x0, 1.2, ww, .16, '#252f5c'); b.shop(x0 + .3, 1.5, ww - 1.7, 1.75, r, .3); R(x0 + .3, 3.25, ww - 1.7, .65, '#161d3a');
-    b.shop(L - 1.25, 1.5, .95, 2.4, r, .3); g.strokeStyle = '#0f1530'; g.lineWidth = 5; g.strokeRect((L - 1.25) * sx, 1.5 * sy, .95 * sx, 2.4 * sy); g.strokeRect((x0 + .3) * sx, 1.5 * sy, (ww - 1.7) * sx, 1.75 * sy);
+    // middle: the door to 932, recessed in navy-painted brick, up a short stoop
+    R(m - .2, 0, 1.6, 3.9, '#1b2a70'); b.courses(m - .2, 0, 1.6, 3.9, .22);
+    R(m + .12, .75, 1.0, 2.6, '#1d1411'); R(m + .2, .85, .84, 2.5, '#2b1d17');
+    R(m + .3, 1.0, .5, 1.35, '#cdbf9f'); b.shop(m + .35, 1.05, .4, 1.25, r, .05); T('932', m + .55, 1.42, .17, '#f0c419');
+    g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 2; for (const yy of [2.5, 2.72, 2.94]) g.strokeRect((m + .3) * sx, yy * sy, .5 * sx, .16 * sy);
+    R(m + .86, .9, .18, 2.4, '#20150f'); R(m + .12, 3.35, 1.0, .55, '#3a3a3c'); R(m + .32, .55, .3, .16, '#d9d6cf');
+    // west half: the navy shopfront with its rust-red sign band
+    const x0 = m + 1.4, ww = L - x0; R(x0, 0, ww, 3.9, '#1c2a6e'); b.courses(x0, 0, ww, .4, .25);
+    for (let k = 0; k < 90; k++) { g.fillStyle = `rgba(${170 + r() * 50 | 0},${80 + r() * 40 | 0},40,${.3 + r() * .5})`; g.beginPath(); g.ellipse((x0 + r() * .32) * sx, (.4 + r() * 3.5) * sy, (.01 + r() * .05) * sx, (.02 + r() * .08) * sy, r() * 3, 0, 7); g.fill(); }
+    R(x0 + .35, .35, ww - .35, .62, '#6f3028'); for (let k = 0; k < 40; k++) R(x0 + .35 + r() * (ww - .5), .35 + r() * .55, .05 + r() * .2, .02 + r() * .05, `rgba(40,30,60,${r() * .35})`);
+    T('and company', x0 + .6, .68, .19, '#d8cfc4', '500', 'left');
+    R(x0 + .35, .97, ww - .35, .45, '#17225c');
+    const gx = x0 + .5, gw2 = ww - 2.2; glass(g, gx * sx, 1.45 * sy, gw2 * sx, 2.1 * sy, r);
+    { const gr = g.createLinearGradient(0, 1.45 * sy, 0, 3.55 * sy); gr.addColorStop(0, 'rgba(120,80,45,.55)'); gr.addColorStop(1, 'rgba(70,45,28,.6)'); g.fillStyle = gr; g.fillRect(gx * sx, 1.45 * sy, gw2 * sx, 2.1 * sy); }
+    R(gx + .3, 2.75, gw2 - .6, .12, 'rgba(40,26,16,.8)'); R(gx, 3.55, gw2, .35, '#141c48');
+    for (const dx of [0, .82]) { const xx = L - 1.75 + dx; b.shop(xx, 1.45, .78, 2.45, r, .28); g.strokeStyle = '#e6e6e2'; g.lineWidth = 5; g.strokeRect(xx * sx, 1.45 * sy, .78 * sx, 2.45 * sy); R(xx + (dx ? .08 : .6), 2.55, .1, .3, '#e6e6e2'); }
+    g.strokeStyle = '#e6e6e2'; g.lineWidth = 4; g.strokeRect(gx * sx, 1.45 * sy, gw2 * sx, 2.1 * sy);
     R(0, 0, m - .2, .26, '#efede8'); R(0, .24, m - .2, .04, 'rgba(0,0,0,.25)');
     return b.done();
   },
