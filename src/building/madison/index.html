@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0c0c0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="932 Madison">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>932 Madison St</title>
+<style>
+  :root { --ink: #0c0c0d; --paper: #f5f3ee; --line: #996633; --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--ink); color: var(--paper);
+    font: 500 14px/1.35 "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-user-select: none; user-select: none;
+    touch-action: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+  canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  /* sign-style chips */
+  .chip { background: var(--ink); color: #fff; border-radius: 4px; box-shadow: 0 2px 14px rgba(0,0,0,.35); }
+  #where { position: fixed; top: calc(12px + var(--sat)); left: calc(12px + var(--sal)); padding: 8px 12px 8px 10px; display: flex; align-items: center; gap: 10px;
+    border-top: 3px solid #fff; transition: opacity .4s; max-width: 62vw; }
+  #where .dot { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-weight: 800; font-size: 13px; transition: transform .5s; }
+  #where b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #where span { display: block; font-size: 11px; opacity: .7; letter-spacing: .04em; }
+  #bar { position: fixed; top: calc(12px + var(--sat)); right: calc(12px + var(--sar)); display: flex; gap: 8px; transition: opacity .4s; }
+  #bar button { width: 44px; height: 44px; display: grid; place-items: center; }
+  #bar button:active { transform: scale(.94); }
+  #bar svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #bar button.off svg { opacity: .4; }
+  #look { position: fixed; left: 50%; bottom: calc(22px + var(--sab)); transform: translateX(-50%); padding: 8px 14px; text-align: center; pointer-events: none;
+    opacity: 0; transition: opacity .25s; max-width: min(88vw, 520px); }
+  #look.on { opacity: 1; }
+  #look b { font-size: 15px; font-weight: 700; } #look span { display: block; font-size: 12px; opacity: .72; }
+  #reticle { position: fixed; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: rgba(255,255,255,.75); box-shadow: 0 0 0 1px rgba(0,0,0,.35); pointer-events: none; }
+  #photoBtn { position: fixed; right: calc(14px + var(--sar)); bottom: calc(84px + var(--sab)); padding: 10px 14px; display: none; align-items: center; gap: 8px; font-weight: 700; border-left: 3px solid #f2c230; }
+  #photoBtn.on { display: flex; }
+  #toast { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); padding: 8px 14px; opacity: 0; transition: opacity .3s; pointer-events: none; font-weight: 600; }
+  #toast.on { opacity: 1; }
+  @media (max-width: 620px) and (orientation: portrait) { #bar { flex-direction: column; } #where { max-width: calc(100vw - 92px); } }
+  body:not(.walk) #look, body:not(.walk) #photoBtn { display: none; }
+  .walk-only { opacity: 0; pointer-events: none; }
+  body.walk .walk-only { opacity: 1; pointer-events: auto; }
+  body.walk #reticle { opacity: 1; } #reticle { opacity: 0; }
+
+  /* touch stick */
+  #stick { position: fixed; width: 116px; height: 116px; margin: -58px; border-radius: 50%; border: 2px solid rgba(255,255,255,.45); background: rgba(0,0,0,.18); display: none; pointer-events: none; }
+  #stick i { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px; border-radius: 50%; background: rgba(255,255,255,.85); }
+  #hint { position: fixed; left: 0; right: 0; bottom: calc(78px + var(--sab)); display: flex; justify-content: space-around; pointer-events: none; opacity: 0; transition: opacity .6s; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+  #hint.on { opacity: .9; }
+
+  /* title card */
+  #start { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: calc(28px + var(--sat)) calc(24px + var(--sar)) calc(34px + var(--sab)) calc(24px + var(--sal));
+    background: linear-gradient(to top, rgba(8,8,9,.86) 0%, rgba(8,8,9,.45) 38%, rgba(8,8,9,0) 68%); transition: opacity .7s; }
+  #start.gone { opacity: 0; pointer-events: none; }
+  #start .route { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+  #start .route i { width: 22px; height: 22px; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 12px; letter-spacing: 0; }
+  #start h1 { font-size: clamp(40px, 11vw, 92px); line-height: .95; letter-spacing: -.035em; font-weight: 800; margin: 10px 0 12px; border-top: 4px solid #fff; padding-top: 14px; max-width: 12ch; }
+  #start p { max-width: 44ch; font-size: 15px; opacity: .86; }
+  #go { margin-top: 22px; align-self: flex-start; background: #fff; color: var(--ink); font-weight: 800; font-size: 16px; padding: 15px 26px; border-radius: 4px; min-width: 200px; text-align: left; }
+  #go[disabled] { opacity: .55; }
+  #go:not([disabled]):active { transform: scale(.98); }
+  #start small { margin-top: 14px; font-size: 12px; opacity: .6; }
+
+  /* panels */
+  .sheet { position: fixed; inset: 0; background: rgba(8,8,9,.82); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 5; }
+  .sheet.on { display: flex; }
+  .sheet .box { background: var(--paper); color: var(--ink); border-radius: 6px; max-width: 560px; width: 100%; max-height: 86vh; overflow: auto; padding: 22px; touch-action: pan-y; -webkit-user-select: text; user-select: text; border-top: 6px solid var(--ink); }
+  .sheet h2 { font-size: 22px; letter-spacing: -.02em; margin-bottom: 10px; }
+  .sheet h3 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin: 16px 0 6px; opacity: .6; }
+  .sheet p, .sheet li { font-size: 14px; line-height: 1.5; } .sheet ul { padding-left: 18px; }
+  .sheet a { color: inherit; }
+  .sheet .close { margin-top: 18px; background: var(--ink); color: #fff; font-weight: 700; padding: 12px 20px; border-radius: 4px; }
+  #photo .box { max-width: 900px; padding: 12px; background: var(--ink); color: #fff; border-top-color: #f2c230; }
+  #photo img { width: 100%; display: block; border-radius: 3px; }
+  #photo p { font-size: 12px; opacity: .75; margin-top: 8px; }
+  #photo .close { background: #fff; color: var(--ink); margin-top: 10px; }
+</style>
+</head>
+<body>
+<canvas id="view" tabindex="0"></canvas>
+
+<div id="where" class="chip walk-only"><div class="dot" id="compass">N</div><div><b id="street">Madison St</b><span id="sub">Brooklyn</span></div></div>
+<div id="bar">
+  <button class="chip" id="bTime" title="Time of day (T)" aria-label="Time of day"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg></button>
+  <button class="chip" id="bView" title="Overview (O)" aria-label="Overview"><svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5-9 5-9-5zM3 14l9 5 9-5"/></svg></button>
+  <button class="chip" id="bSound" title="Sound (M)" aria-label="Sound"><svg viewBox="0 0 24 24"><path d="M4 10v4h3l5 4V6L7 10H4zM16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg></button>
+  <button class="chip" id="bFull" title="Fullscreen (F)" aria-label="Fullscreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  <button class="chip" id="bInfo" title="About" aria-label="About this model"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+</div>
+<div id="reticle"></div>
+<div id="look" class="chip"><b></b><span></span></div>
+<button id="photoBtn" class="chip">Compare with the street photo</button>
+<div id="toast" class="chip"></div>
+<div id="stick"><i></i></div>
+<div id="hint"><span>move</span><span>look</span></div>
+
+<div id="start">
+  <div class="route"><i>J</i><span>Broadway &amp; Madison · Brooklyn 11221</span></div>
+  <h1>932 Madison St</h1>
+  <p>The block as the city's own records draw it: every footprint, roof height, curb, hydrant and street tree, under the elevated tracks on Broadway.</p>
+  <button id="go" disabled>Loading the block…</button>
+  <small id="how"></small>
+</div>
+
+<div id="about" class="sheet"><div class="box">
+  <h2>What you're looking at</h2>
+  <p>A model of the blocks around 932 Madison St, generated from public records. Positions and sizes are real; surface detail is an informed reconstruction.</p>
+  <h3>From the records</h3>
+  <ul>
+    <li>Building footprints, roof heights, floors, year built and use: NYC Building Footprints and PLUTO (NYC Open Data)</li>
+    <li>Sidewalks, pavement edges and street centrelines: NYC Planimetric Database and CSCL</li>
+    <li>Street trees with species and trunk size: NYC Parks Forestry Tree Points</li>
+    <li>Hydrants: NYC DEP</li>
+    <li>Rooftops and back yards: New York State orthoimagery</li>
+  </ul>
+  <h3>Reconstructed</h3>
+  <ul>
+    <li>Facades are procedural, matched by building class and age to what street photos of these blocks show. Individual windows, doors and shop names are not the real ones.</li>
+    <li>The elevated structure follows Broadway's real centreline; its steelwork is modelled from photos.</li>
+    <li>Parked cars, lamp posts and yard trees are placed by rule.</li>
+  </ul>
+  <h3>Street photos</h3>
+  <p>The yellow markers open real photos taken at that spot in autumn 2018, from <a href="https://kartaview.org" target="_blank" rel="noopener">KartaView</a> contributors, licensed CC BY-SA 4.0.</p>
+  <button class="close">Back to the block</button>
+</div></div>
+<div id="photo" class="sheet"><div class="box"><img alt="Street photo taken at this spot"><p></p><button class="close">Close</button></div></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
