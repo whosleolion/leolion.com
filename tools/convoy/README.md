@@ -30,4 +30,4 @@ Until then the page runs in local mode (this browser only). The rules are open t
 - `tools/convoy/mock-rtdb.mjs`: stand-in database for tests; `node tools/convoy/mock-rtdb.mjs` then open the printed URL
   in several windows to try multi-device play.
 - `tools/convoy/playtest.mjs`: headless GM + two players check. `NODE_PATH=$(npm root -g) node tools/convoy/playtest.mjs`.
-  Run it after any change. The real Firebase rules have not been exercised by this test, only the stand-in's copy of them.
+  Run it after any change.

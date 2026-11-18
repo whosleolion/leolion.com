@@ -4,4 +4,4 @@
 // To go live: create a Firebase project, add a Realtime Database, paste its URL here
 // (looks like https://your-project-default-rtdb.firebaseio.com), and publish the rules
 // in tools/convoy/firebase-rules.json. See tools/convoy/README.md.
-export const FIREBASE_DB_URL = '';
+export const FIREBASE_DB_URL = 'https://convoy-backend-default-rtdb.firebaseio.com';
