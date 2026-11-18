@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "convoy": {
+      "$game": {
+        ".read": true,
+        ".write": true,
+        "inv": {
+          "$holder": {
+            "$item": { ".validate": "newData.isNumber() && newData.val() >= 0" }
+          }
+        },
+        "trades": {
+          "$trade": {
+            "status": { ".validate": "!data.exists() || data.val() == 'open'" }
+          }
+        }
+      }
+    }
+  }
+}

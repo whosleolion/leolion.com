@@ -63,3 +63,6 @@ Neocities site `leolioncom` (leolion.com). Pushing to `master` runs `.github/wor
 
 ## INTERMACHINAS (3D stealth / parkour / combat prototype)
 `src/building/intermachinas/` (leolion.com/building/intermachinas, noindexed, unlinked) is a white-box mechanical build: three.js r170 vendored in `js/vendor/`, plain ES modules, no build step. Level + box collision `js/world.js`, procedural mannequin poses `js/rig.js`, player state machine `js/player.js`, guard AI `js/enemy.js`, numbers live in `js/tuning.js` (in-game panel: backquote). Textures are Kenney Prototype Textures (CC0). `tools/intermachinas/README.md` maps every mechanic and lists the asset plan; `tools/intermachinas/playtest.mjs` is the headless mechanics check (steps the sim via `G.advance()`; run it after gameplay changes).
+
+## Convoy (sci-fi LARP backend)
+`src/building/convoy/` (leolion.com/building/convoy, noindexed, unlinked): live multi-table inventory and trading, a linear-decay star map, and shared table / character sheets. Plain ES modules, no build; data is one JSON tree in Firebase Realtime Database over REST (URL in `config.js`; empty = local mode in one browser). All game logic is in `js/core.js`. `tools/convoy/README.md` explains the systems and Firebase setup; run `tools/convoy/playtest.mjs` after changes. Design is deliberately bare until the mechanics settle.
